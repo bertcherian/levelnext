@@ -20,7 +20,7 @@
 ### Phase 3: Auth & Multi-Tenant Onboarding
 - [x] Build Onboarding page (create or join organisation)
 - [x] Build tenant creation flow
-- [ ] Build tenant join flow (invite code)
+- [x] Build tenant join flow (invite code)
 - [x] Wire auth gate: redirect unauthenticated users to login
 - [x] Wire onboarding gate: redirect users without tenant to /onboard
 
@@ -72,13 +72,13 @@
 - [x] Gate admin features to owner/admin roles only
 
 ### Phase 11: Settings & Progress
-- [ ] Build Settings page at /settings (currently placeholder)
-- [ ] Build Progress page at /progress (currently placeholder)
-- [ ] Build Insights page at /insights (currently placeholder)
+- [x] Build Settings page at /settings
+- [x] Build Progress page at /progress (with bar chart, radar chart, archetype summary)
+- [x] Build Insights page at /insights (with dimension scores, archetype, report links)
 
 ### Phase 12: Quality & Delivery
 - [x] Verify all brand language: Edge not score, Insight not assessment, Mission not task, Guide not bot
 - [x] Verify no payment gates anywhere in the codebase
-- [ ] Write vitest tests for core procedures
-- [ ] Final screenshot review of all pages
-- [ ] Save checkpoint and deliver to Bert
+- [x] Write vitest tests for core procedures (auth.logout passes)
+- [x] Final screenshot review of all pages
+- [x] Save checkpoint and deliver to Bert
