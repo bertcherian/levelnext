@@ -8,8 +8,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Building2, Users } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/levelnext-logo_525d7189.png";
-
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -37,7 +35,10 @@ export default function Onboarding() {
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--color-ln-navy)" }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
-          <img src={LOGO_URL} alt="LevelNext" className="h-12 w-auto mx-auto mb-6" />
+          <div className="mb-6 flex flex-col items-center leading-tight">
+            <span className="text-3xl font-bold tracking-tight text-white">LevelNext</span>
+            <span className="text-sm font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>The Leadership Intelligence Platform</span>
+          </div>
           <h1 className="text-2xl font-bold text-white mb-2">
             Welcome{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
           </h1>

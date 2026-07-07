@@ -21,8 +21,6 @@ import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { cn } from "@/lib/utils";
 
-const LOGO_URL = "/manus-storage/levelnext-logo_525d7189.png";
-
 const NAV_ITEMS = [
   { label: "Home", icon: Home, href: "/home" },
   { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
@@ -55,7 +53,10 @@ export default function PlatformLayout({ children, title }: PlatformLayoutProps)
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-ivory)" }}>
         <div className="flex flex-col items-center gap-4">
-          <img src={LOGO_URL} alt="LevelNext" className="h-12 w-auto animate-pulse" />
+          <div className="flex flex-col items-center leading-tight animate-pulse">
+            <span className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-ln-navy)" }}>LevelNext</span>
+            <span className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>The Leadership Intelligence Platform</span>
+          </div>
           <p className="text-sm text-ln-muted">Loading your platform…</p>
         </div>
       </div>
@@ -66,7 +67,10 @@ export default function PlatformLayout({ children, title }: PlatformLayoutProps)
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-navy)" }}>
         <div className="flex flex-col items-center gap-8 p-8 max-w-sm w-full">
-          <img src={LOGO_URL} alt="LevelNext" className="h-16 w-auto" />
+          <div className="flex flex-col items-center leading-tight">
+            <span className="text-3xl font-bold tracking-tight text-white">LevelNext</span>
+            <span className="text-sm font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>The Leadership Intelligence Platform</span>
+          </div>
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-white mb-2">Welcome to LevelNext</h1>
             <p className="text-sm" style={{ color: "oklch(80% 0.02 248.6)" }}>
@@ -110,8 +114,9 @@ export default function PlatformLayout({ children, title }: PlatformLayoutProps)
       >
         {/* Logo area */}
         <div className="flex items-center justify-between px-5 py-5 border-b" style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
-          <Link href="/home">
-            <img src={LOGO_URL} alt="LevelNext" className="h-9 w-auto cursor-pointer" />
+          <Link href="/home" className="flex flex-col leading-tight cursor-pointer select-none">
+            <span className="text-xl font-bold tracking-tight text-white">LevelNext</span>
+            <span className="text-xs font-medium tracking-wide" style={{ color: "var(--color-ln-yellow)" }}>The Leadership Intelligence Platform</span>
           </Link>
           <button
             className="lg:hidden text-white/60 hover:text-white transition-colors"
@@ -188,7 +193,7 @@ export default function PlatformLayout({ children, title }: PlatformLayoutProps)
           >
             <Menu size={22} />
           </button>
-          <img src={LOGO_URL} alt="LevelNext" className="h-7 w-auto" />
+          <span className="text-base font-bold tracking-tight" style={{ color: "var(--color-ln-navy)" }}>LevelNext</span>
           <Avatar className="h-8 w-8">
             <AvatarFallback className="text-xs font-semibold" style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
               {initials}
