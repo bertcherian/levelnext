@@ -1,0 +1,84 @@
+# LevelNext — The Leadership Intelligence Platform
+## Project TODO
+
+### Phase 1: Brand Design System & Foundation
+- [x] Upload LevelNext logo to CDN and configure VITE_APP_LOGO
+- [x] Apply brand design system: Executive Navy (#12345A), Chrome Yellow (#F2B705), Inter typography
+- [x] Configure index.css with LevelNext CSS variables and global theme
+- [x] Update client/index.html with Google Fonts (Inter) and correct title
+- [x] Build persistent PlatformLayout with LevelNext sidebar (Home, My Edge, Guide, Insights, Diagnostics, Progress, Organisation, Settings)
+
+### Phase 2: Database Schema
+- [x] Extend schema with tenants table (multi-tenant)
+- [x] Extend schema with tenant_users table (roles: owner, admin, member)
+- [x] Extend schema with leadership_graph table
+- [x] Extend schema with assessment_sessions table
+- [x] Extend schema with unified reports table (moduleType: ECI | LII | GCC)
+- [x] Extend schema with daily_missions table
+- [x] Run migration and apply SQL
+
+### Phase 3: Auth & Multi-Tenant Onboarding
+- [x] Build Onboarding page (create or join organisation)
+- [x] Build tenant creation flow
+- [ ] Build tenant join flow (invite code)
+- [x] Wire auth gate: redirect unauthenticated users to login
+- [x] Wire onboarding gate: redirect users without tenant to /onboard
+
+### Phase 4: Daily Home Screen
+- [x] Build Home page with personalised greeting
+- [x] Build Today's Focus card (driven by Leadership Graph)
+- [x] Build Today's Mission card
+- [x] Build Edge summary widget (cross-diagnostic)
+- [x] Build Guide recommendation panel
+
+### Phase 5: Unified Assessment Engine
+- [x] Copy eciData.ts from eci-diagnostic repo to shared/modules/
+- [x] Copy lii-data.ts from leadership-influence-intelligence repo to shared/modules/
+- [x] Copy gccData.ts from gcc-readiness repo to shared/modules/
+- [x] Build unified assessment router (server) with moduleType routing
+- [x] Build dynamic Assessment page (client) routing by moduleType
+- [x] Wire /diagnostics/eci, /diagnostics/lii, /diagnostics/gcc routes
+- [x] Build Diagnostics hub page listing all three modules
+- [x] Strip all payment gate logic (no isPaid, no funnelMode, no Pricing page)
+
+### Phase 6: Leadership Graph Engine
+- [x] Build server-side Leadership Graph aggregator (fires on report completion)
+- [x] Build leadershipGraph tRPC procedures (get, update)
+- [x] Ensure Leadership Graph is cumulative and cross-diagnostic
+
+### Phase 7: Guide AI Coach
+- [x] Build Guide chat interface
+- [x] Wire Leadership Graph context injection into Guide LLM prompt
+- [x] Build Guide page at /guide
+- [x] Implement suggested prompts and daily coaching flow
+
+### Phase 8: Report Pages (no payment gate)
+- [x] Build unified Report page (renders by moduleType)
+- [x] Build shareable report by slug (/report/:slug)
+- [ ] Wire PDF generation (server-side)
+- [ ] Wire email delivery (Brevo SMTP)
+
+### Phase 9: My Edge Dashboard
+- [x] Build My Edge page at /my-edge
+- [x] Build module cards with Edge scores
+- [x] Build Edge profile waiting state (pre-diagnostic)
+- [ ] Build Edge evolution timeline chart (post first diagnostic)
+
+### Phase 10: Admin & Organisation Dashboard
+- [x] Build Organisation page at /organisation
+- [x] Build tenant Edge heatmap by module
+- [x] Build bench strength indicators
+- [x] Build diagnostic completion tracking
+- [x] Gate admin features to owner/admin roles only
+
+### Phase 11: Settings & Progress
+- [ ] Build Settings page at /settings (currently placeholder)
+- [ ] Build Progress page at /progress (currently placeholder)
+- [ ] Build Insights page at /insights (currently placeholder)
+
+### Phase 12: Quality & Delivery
+- [x] Verify all brand language: Edge not score, Insight not assessment, Mission not task, Guide not bot
+- [x] Verify no payment gates anywhere in the codebase
+- [ ] Write vitest tests for core procedures
+- [ ] Final screenshot review of all pages
+- [ ] Save checkpoint and deliver to Bert
