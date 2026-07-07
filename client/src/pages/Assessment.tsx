@@ -44,6 +44,20 @@ const ECI_PILLAR_META: Record<string, { label: string; shortLabel: string; color
   conversational_leadership: { label: "Conversational Leadership", shortLabel: "Conversational", color: "#8B5CF6" },
 };
 
+// LII Dimension metadata for completion screen
+const LII_DIM_META: Record<string, { label: string; color: string }> = {
+  trust_capital:             { label: "Trust Capital",             color: "#D4AF37" },
+  decision_influence:        { label: "Decision Influence",        color: "#3B82F6" },
+  stakeholder_alignment:     { label: "Stakeholder Alignment",     color: "#22C55E" },
+  coalition_building:        { label: "Coalition Building",        color: "#F59E0B" },
+  organizational_navigation: { label: "Organisational Navigation", color: "#8B5CF6" },
+  inspirational_leadership:  { label: "Inspirational Leadership",  color: "#EC4899" },
+  change_mobilization:       { label: "Change Mobilisation",       color: "#EF4444" },
+  conflict_resistance:       { label: "Conflict Resilience",       color: "#14B8A6" },
+  adaptive_influence:        { label: "Adaptive Influence",        color: "#F97316" },
+  leadership_reputation:     { label: "Leadership Reputation",     color: "#6366F1" },
+};
+
 // ECI Archetype icons (emoji fallback)
 const ARCHETYPE_ICONS: Record<string, string> = {
   strategic_influencer: "⚡",
@@ -69,6 +83,7 @@ type SubmitResult = {
   edgeScore: number;
   archetype: string;
   archetypeLabel?: string;
+  archetypeTagline?: string;
   archetypeDescription?: string;
   archetypeStrengths?: string[];
   archetypeRisks?: string[];
@@ -78,6 +93,7 @@ type SubmitResult = {
   zoneImplication?: string;
   dimensionScores?: Record<string, number>;
   reportSlug?: string;
+  slug?: string;
 };
 
 export default function Assessment() {
@@ -248,9 +264,15 @@ export default function Assessment() {
   if (phase === "complete" && result) {
     const archetypeIcon = ARCHETYPE_ICONS[result.archetype] ?? "✦";
     const zoneColor = ZONE_COLORS[result.zone] ?? "#22C55E";
+    // ECI: filter to pillar-level scores only
     const pillarScores = result.dimensionScores
       ? Object.entries(result.dimensionScores).filter(([k]) => ECI_PILLAR_META[k])
       : [];
+    // LII: filter to dimension-level scores
+    const liiDimScores = result.dimensionScores
+      ? Object.entries(result.dimensionScores).filter(([k]) => LII_DIM_META[k])
+      : [];
+    const reportSlug = (result as any).slug;
 
     return (
       <div className="min-h-screen flex flex-col animate-fade-in" style={{ background: "var(--color-ln-navy)" }}>
@@ -285,7 +307,7 @@ export default function Assessment() {
             {/* Archetype Card */}
             <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
               <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--color-ln-yellow)" }}>
-                Your Communication Archetype
+                {moduleType === "lii" ? "Your Influence Archetype" : moduleType === "gcc" ? "Your GCC Archetype" : "Your Communication Archetype"}
               </p>
               <div className="flex items-start gap-4 mb-4">
                 <span className="text-3xl flex-shrink-0">{archetypeIcon}</span>
@@ -293,6 +315,11 @@ export default function Assessment() {
                   <h2 className="text-xl font-bold text-white mb-1">
                     {result.archetypeLabel ?? result.archetype.replace(/_/g, " ")}
                   </h2>
+                  {result.archetypeTagline && (
+                    <p className="text-sm font-medium mb-2" style={{ color: "var(--color-ln-yellow)" }}>
+                      {result.archetypeTagline}
+                    </p>
+                  )}
                   {result.archetypeDescription && (
                     <p className="text-sm leading-relaxed" style={{ color: "oklch(75% 0.02 248.6)" }}>
                       {result.archetypeDescription}
@@ -345,8 +372,40 @@ export default function Assessment() {
               </div>
             )}
 
+            {/* LII Dimension Scores */}
+            {moduleType === "lii" && liiDimScores.length > 0 && (
+              <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
+                <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--color-ln-yellow)" }}>
+                  Influence Dimension Breakdown
+                </p>
+                <div className="space-y-4">
+                  {liiDimScores
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([dimId, rawScore]) => {
+                      const dm = LII_DIM_META[dimId];
+                      // LII scores are on 1-5 scale; convert to 0-100 for display
+                      const pct = Math.round(((rawScore - 1) / 4) * 100);
+                      return (
+                        <div key={dimId}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-sm font-medium text-white">{dm?.label ?? dimId}</span>
+                            <span className="text-sm font-bold" style={{ color: dm?.color ?? "var(--color-ln-yellow)" }}>{pct}</span>
+                          </div>
+                          <div className="h-2 rounded-full overflow-hidden" style={{ background: "oklch(30% 0.072 248.6)" }}>
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${pct}%`, background: dm?.color ?? "var(--color-ln-yellow)" }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
             {/* Pillar Scores (ECI only) */}
-            {pillarScores.length > 0 && (
+            {moduleType === "eci" && pillarScores.length > 0 && (
               <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
                 <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--color-ln-yellow)" }}>
                   Pillar Breakdown
@@ -391,6 +450,17 @@ export default function Assessment() {
                 View My Edge Profile
               </Button>
             </div>
+            {reportSlug && (
+              <div className="text-center pb-6">
+                <button
+                  onClick={() => navigate(`/report/${reportSlug}`)}
+                  className="text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
+                  style={{ color: "oklch(55% 0.02 248.6)" }}
+                >
+                  View full diagnostic report →
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

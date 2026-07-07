@@ -123,9 +123,15 @@ export default function Guide() {
   const firstName = user?.name?.split(" ")[0] ?? "Leader";
   const graph = graphData as any;
   const hasEci = graph?.modules?.ECI;
+  const hasLii = graph?.modules?.LII;
   const eciArchetype = hasEci ? graph.modules.ECI.archetype : null;
+  const eciArchetypeLabel = hasEci ? graph.modules.ECI.archetypeLabel : null;
   const eciEdge = hasEci ? Math.round(graph.modules.ECI.edgeScore ?? 0) : null;
+  const liiArchetype = hasLii ? graph.modules.LII.archetype : null;
+  const liiArchetypeLabel = hasLii ? graph.modules.LII.archetypeLabel : null;
+  const liiEdge = hasLii ? Math.round(graph.modules.LII.edgeScore ?? 0) : null;
   const compositeEdge = graph?.compositeEdge ? Math.round(graph.compositeEdge) : null;
+  const sessionCount = messages.length > 0 ? Math.ceil(messages.length / 4) : 0;
   const dailyPrompts = getDailyPrompts();
 
   if (loading || convLoading) {
@@ -164,8 +170,8 @@ export default function Guide() {
             </div>
           </div>
 
-          {/* Edge Context Card (if diagnostics completed) */}
-          {hasEci && (
+          {/* Edge Context Card — shows all completed modules */}
+          {(hasEci || hasLii) && (
             <div className="rounded-2xl p-5 border"
               style={{ background: "var(--color-ln-navy)", borderColor: "var(--color-ln-navy)" }}>
               <div className="flex items-center justify-between mb-3">
@@ -178,28 +184,73 @@ export default function Guide() {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "oklch(25% 0.072 248.6)" }}>
-                  <span className="text-lg">⚡</span>
+
+              {/* ECI module row */}
+              {hasEci && (
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "oklch(25% 0.072 248.6)" }}>
+                    <span className="text-base">⚡</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-white">
+                      {eciArchetypeLabel ?? eciArchetype?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                    </p>
+                    <p className="text-xs" style={{ color: "oklch(70% 0.02 248.6)" }}>
+                      Executive Communication · Edge {eciEdge}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handlePromptClick(`I completed the Executive Communication diagnostic and I'm a ${eciArchetypeLabel ?? eciArchetype}. Based on my profile, what are the 2-3 most important practices I should focus on this week?`)}
+                    className="text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all hover:opacity-80"
+                    style={{ background: "oklch(30% 0.072 248.6)", color: "oklch(80% 0.02 248.6)" }}
+                  >
+                    Ask Guide <ChevronRight size={12} style={{ color: "var(--color-ln-yellow)" }} />
+                  </button>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    {eciArchetype?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                  </p>
-                  <p className="text-xs" style={{ color: "oklch(70% 0.02 248.6)" }}>
-                    Executive Communication · Edge {eciEdge}
-                  </p>
+              )}
+
+              {/* LII module row */}
+              {hasLii && (
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "oklch(25% 0.072 248.6)" }}>
+                    <span className="text-base">🤝</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-white">
+                      {liiArchetypeLabel ?? liiArchetype?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                    </p>
+                    <p className="text-xs" style={{ color: "oklch(70% 0.02 248.6)" }}>
+                      Leadership Influence · Edge {liiEdge}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handlePromptClick(`I completed the Leadership Influence diagnostic and I'm a ${liiArchetypeLabel ?? liiArchetype}. What specific influence practices should I prioritise in the next 2 weeks?`)}
+                    className="text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all hover:opacity-80"
+                    style={{ background: "oklch(30% 0.072 248.6)", color: "oklch(80% 0.02 248.6)" }}
+                  >
+                    Ask Guide <ChevronRight size={12} style={{ color: "var(--color-ln-yellow)" }} />
+                  </button>
                 </div>
-              </div>
-              <button
-                onClick={() => handlePromptClick(`I'm a ${eciArchetype?.replace(/_/g, " ")}. What are the most important leadership practices I should focus on right now to strengthen my Edge?`)}
-                className="mt-4 w-full text-left text-xs px-3 py-2.5 rounded-xl flex items-center justify-between transition-all hover:opacity-80"
-                style={{ background: "oklch(25% 0.072 248.6)", color: "oklch(80% 0.02 248.6)" }}
-              >
-                <span>Ask Guide about your archetype</span>
-                <ChevronRight size={14} style={{ color: "var(--color-ln-yellow)" }} />
-              </button>
+              )}
+
+              {/* Session history indicator */}
+              {sessionCount > 0 && (
+                <div className="mt-3 pt-3 border-t flex items-center justify-between"
+                  style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
+                  <p className="text-xs" style={{ color: "oklch(60% 0.02 248.6)" }}>
+                    {messages.length} message{messages.length !== 1 ? "s" : ""} in this session
+                  </p>
+                  <button
+                    onClick={() => setView("chat")}
+                    className="text-xs font-medium transition-all hover:opacity-80"
+                    style={{ color: "var(--color-ln-yellow)" }}
+                  >
+                    Continue conversation →
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

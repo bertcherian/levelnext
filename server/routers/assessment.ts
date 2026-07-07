@@ -34,9 +34,51 @@ function scoreLii(responses: Record<string, number>) {
   const overall = Object.values(dimensionScores).reduce((a, b) => a + b, 0) / Object.keys(dimensionScores).length;
   // Normalise 1–5 scale to 0–100
   const edgeScore = Math.round(((overall - 1) / 4) * 100);
-  const band = getScoreBand(edgeScore);
-  const archetype = LII_ARCHETYPES.find((a: any) => a.scoreBand === band) ?? LII_ARCHETYPES[0];
-  return { edgeScore, dimensionScores, zone: band, archetype: (archetype as any)?.id ?? "developing" };
+  const band = getScoreBand(overall); // band uses 1-5 scale
+  const bandLabel = { excellent: "Exceptional", good: "Strong", developing: "Developing", atRisk: "At Risk" }[band];
+
+  // Assign archetype based on top-scoring dimensions
+  const sortedDims = Object.entries(dimensionScores)
+    .sort(([, a], [, b]) => b - a)
+    .map(([id]) => id);
+  const topTwo = sortedDims.slice(0, 2);
+
+  // Find archetype whose topDimensions best match the leader's top dimensions
+  let bestArchetype = LII_ARCHETYPES[0];
+  let bestMatch = -1;
+  for (const arch of LII_ARCHETYPES) {
+    const a = arch as any;
+    if (!a.topDimensions?.length) continue;
+    const matchCount = a.topDimensions.filter((d: string) => topTwo.includes(d)).length;
+    if (matchCount > bestMatch) {
+      bestMatch = matchCount;
+      bestArchetype = arch;
+    }
+  }
+  // Fallback: use score-based assignment if no dimension match
+  if (bestMatch === 0) {
+    if (edgeScore >= 75) bestArchetype = LII_ARCHETYPES[0]; // strategic_influencer
+    else if (edgeScore >= 60) bestArchetype = LII_ARCHETYPES[2]; // organizational_navigator
+    else if (edgeScore >= 45) bestArchetype = LII_ARCHETYPES[4]; // quiet_expert
+    else bestArchetype = LII_ARCHETYPES[5]; // emerging_influencer
+  }
+
+  const arch = bestArchetype as any;
+  return {
+    edgeScore,
+    dimensionScores,
+    zone: band,
+    zoneLabel: bandLabel,
+    zoneDescription: `Your leadership influence is in the ${bandLabel} zone.`,
+    archetype: arch.id,
+    archetypeLabel: arch.name,
+    archetypeTagline: arch.tagline,
+    archetypeDescription: arch.description,
+    archetypeStrengths: arch.topDimensions?.map((d: string) =>
+      LII_DIMENSIONS.find((dim: any) => dim.id === d)?.name ?? d
+    ) ?? [],
+    archetypeRisks: [],
+  };
 }
 
 function scoreGcc(responses: Record<string, number>) {
@@ -212,6 +254,7 @@ export const assessmentRouter = router({
         edgeScore: scored.edgeScore,
         archetype: scored.archetype,
         archetypeLabel: (scored as any).archetypeLabel,
+        archetypeTagline: (scored as any).archetypeTagline,
         archetypeDescription: (scored as any).archetypeDescription,
         archetypeStrengths: (scored as any).archetypeStrengths,
         archetypeRisks: (scored as any).archetypeRisks,

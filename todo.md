@@ -95,3 +95,10 @@
 - [ ] Add "Daily Session" framing — Guide opens with a coaching question, not a blank screen
 - [ ] Ensure Guide never uses words: AI Coach, bot, chatbot, score, assessment
 - [ ] Wire Guide opening message to Leadership Graph (personalised to ECI archetype if available)
+
+### Phase 15: LII Integration, ECI Enhancement, Guide Features, Skill Packaging
+
+- [ ] Integrate LII diagnostic — full scoring, archetypes, zone, rich completion screen
+- [ ] Enhance ECI results/completion page — pillar breakdown, archetype card, zone narrative, report actions
+- [ ] Add Guide features — session history panel, mission tracking, post-diagnostic coaching prompt
+- [ ] Package diagnostic integration process as a reusable Manus skill
