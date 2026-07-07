@@ -58,6 +58,24 @@ const LII_DIM_META: Record<string, { label: string; color: string }> = {
   leadership_reputation:     { label: "Leadership Reputation",     color: "#6366F1" },
 };
 
+// GCC Dimension metadata for completion screen
+const GCC_DIM_META: Record<string, { label: string; color: string }> = {
+  strategic_influence:  { label: "Strategic Influence",  color: "#D4AF37" },
+  operating_excellence: { label: "Operating Excellence", color: "#3B82F6" },
+  leadership_talent:    { label: "Leadership & Talent",  color: "#22C55E" },
+  innovation_ai:        { label: "Innovation & AI",       color: "#F59E0B" },
+  enterprise_alignment: { label: "Enterprise Alignment", color: "#8B5CF6" },
+};
+
+// GCC Zone colours
+const GCC_ZONE_COLORS: Record<string, string> = {
+  critical:   "#EF4444",
+  developing: "#F97316",
+  emerging:   "#F59E0B",
+  capable:    "#3B82F6",
+  strategic:  "#22C55E",
+};
+
 // ECI Archetype icons (emoji fallback)
 const ARCHETYPE_ICONS: Record<string, string> = {
   strategic_influencer: "⚡",
@@ -68,6 +86,18 @@ const ARCHETYPE_ICONS: Record<string, string> = {
   defensive_specialist: "🛡️",
   emerging_executive_voice: "🌱",
   narrative_leader: "📖",
+};
+
+// GCC Archetype icons
+const GCC_ARCHETYPE_ICONS: Record<string, string> = {
+  delivery_engine:          "⚙️",
+  efficient_executor:       "📊",
+  scaling_gcc:              "📈",
+  enterprise_contributor:   "🤝",
+  innovation_hub:           "💡",
+  strategic_partner:        "🎯",
+  ai_accelerated_gcc:       "🤖",
+  enterprise_growth_engine: "🚀",
 };
 
 // ECI Zone colours
@@ -262,8 +292,13 @@ export default function Assessment() {
 
   // ── Completion Screen ────────────────────────────────────────────────────────
   if (phase === "complete" && result) {
-    const archetypeIcon = ARCHETYPE_ICONS[result.archetype] ?? "✦";
-    const zoneColor = ZONE_COLORS[result.zone] ?? "#22C55E";
+    const isGcc = moduleType === "gcc";
+    const archetypeIcon = isGcc
+      ? (GCC_ARCHETYPE_ICONS[result.archetype] ?? "🏢")
+      : (ARCHETYPE_ICONS[result.archetype] ?? "✦");
+    const zoneColor = isGcc
+      ? (GCC_ZONE_COLORS[result.zone] ?? "#22C55E")
+      : (ZONE_COLORS[result.zone] ?? "#22C55E");
     // ECI: filter to pillar-level scores only
     const pillarScores = result.dimensionScores
       ? Object.entries(result.dimensionScores).filter(([k]) => ECI_PILLAR_META[k])
@@ -271,6 +306,10 @@ export default function Assessment() {
     // LII: filter to dimension-level scores
     const liiDimScores = result.dimensionScores
       ? Object.entries(result.dimensionScores).filter(([k]) => LII_DIM_META[k])
+      : [];
+    // GCC: filter to module-level scores
+    const gccDimScores = result.dimensionScores
+      ? Object.entries(result.dimensionScores).filter(([k]) => GCC_DIM_META[k])
       : [];
     const reportSlug = (result as any).slug;
 
@@ -369,6 +408,37 @@ export default function Assessment() {
                 <p className="text-sm leading-relaxed" style={{ color: "oklch(80% 0.02 248.6)" }}>
                   {result.zoneImplication}
                 </p>
+              </div>
+            )}
+
+            {/* GCC Module Scores */}
+            {moduleType === "gcc" && gccDimScores.length > 0 && (
+              <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
+                <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--color-ln-yellow)" }}>
+                  Readiness Dimension Breakdown
+                </p>
+                <div className="space-y-4">
+                  {gccDimScores
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([dimId, score]) => {
+                      const dm = GCC_DIM_META[dimId];
+                      const pct = Math.round(score);
+                      return (
+                        <div key={dimId}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-sm font-medium text-white">{dm?.label ?? dimId}</span>
+                            <span className="text-sm font-bold" style={{ color: dm?.color ?? "var(--color-ln-yellow)" }}>{pct}</span>
+                          </div>
+                          <div className="h-2 rounded-full overflow-hidden" style={{ background: "oklch(30% 0.072 248.6)" }}>
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${pct}%`, background: dm?.color ?? "var(--color-ln-yellow)" }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
               </div>
             )}
 

@@ -124,12 +124,16 @@ export default function Guide() {
   const graph = graphData as any;
   const hasEci = graph?.modules?.ECI;
   const hasLii = graph?.modules?.LII;
+  const hasGcc = graph?.modules?.GCC;
   const eciArchetype = hasEci ? graph.modules.ECI.archetype : null;
   const eciArchetypeLabel = hasEci ? graph.modules.ECI.archetypeLabel : null;
   const eciEdge = hasEci ? Math.round(graph.modules.ECI.edgeScore ?? 0) : null;
   const liiArchetype = hasLii ? graph.modules.LII.archetype : null;
   const liiArchetypeLabel = hasLii ? graph.modules.LII.archetypeLabel : null;
   const liiEdge = hasLii ? Math.round(graph.modules.LII.edgeScore ?? 0) : null;
+  const gccArchetypeLabel = hasGcc ? graph.modules.GCC.archetypeLabel : null;
+  const gccArchetype = hasGcc ? graph.modules.GCC.archetype : null;
+  const gccEdge = hasGcc ? Math.round(graph.modules.GCC.edgeScore ?? 0) : null;
   const compositeEdge = graph?.compositeEdge ? Math.round(graph.compositeEdge) : null;
   const sessionCount = messages.length > 0 ? Math.ceil(messages.length / 4) : 0;
   const dailyPrompts = getDailyPrompts();
@@ -171,7 +175,7 @@ export default function Guide() {
           </div>
 
           {/* Edge Context Card — shows all completed modules */}
-          {(hasEci || hasLii) && (
+          {(hasEci || hasLii || hasGcc) && (
             <div className="rounded-2xl p-5 border"
               style={{ background: "var(--color-ln-navy)", borderColor: "var(--color-ln-navy)" }}>
               <div className="flex items-center justify-between mb-3">
@@ -227,6 +231,31 @@ export default function Guide() {
                   </div>
                   <button
                     onClick={() => handlePromptClick(`I completed the Leadership Influence diagnostic and I'm a ${liiArchetypeLabel ?? liiArchetype}. What specific influence practices should I prioritise in the next 2 weeks?`)}
+                    className="text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all hover:opacity-80"
+                    style={{ background: "oklch(30% 0.072 248.6)", color: "oklch(80% 0.02 248.6)" }}
+                  >
+                    Ask Guide <ChevronRight size={12} style={{ color: "var(--color-ln-yellow)" }} />
+                  </button>
+                </div>
+              )}
+
+              {/* GCC module row */}
+              {hasGcc && (
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "oklch(25% 0.072 248.6)" }}>
+                    <span className="text-base">🏢</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-white">
+                      {gccArchetypeLabel ?? gccArchetype?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                    </p>
+                    <p className="text-xs" style={{ color: "oklch(70% 0.02 248.6)" }}>
+                      GCC Readiness · Edge {gccEdge}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handlePromptClick(`I completed the GCC Readiness diagnostic and my organisation is a ${gccArchetypeLabel ?? gccArchetype}. What are the most critical leadership actions I should take to advance our GCC's strategic readiness?`)}
                     className="text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all hover:opacity-80"
                     style={{ background: "oklch(30% 0.072 248.6)", color: "oklch(80% 0.02 248.6)" }}
                   >
@@ -423,18 +452,31 @@ export default function Guide() {
               ))}
               {sendMessage.isPending && (
                 <div className="flex justify-start animate-slide-up">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mr-3"
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mr-3 mt-1"
                     style={{ background: "var(--color-ln-navy)" }}>
                     <span className="text-xs font-bold" style={{ color: "var(--color-ln-yellow)" }}>G</span>
                   </div>
-                  <div className="rounded-2xl rounded-tl-sm px-4 py-3"
-                    style={{ background: "white", boxShadow: "var(--shadow-sm)" }}>
-                    <div className="flex gap-1.5 items-center h-5">
+                  <div className="rounded-2xl rounded-tl-sm px-5 py-4"
+                    style={{ background: "white", boxShadow: "var(--shadow-sm)", minWidth: "80px" }}>
+                    <div className="flex gap-1 items-end h-5">
                       {[0, 1, 2].map((j) => (
-                        <div key={j} className="w-1.5 h-1.5 rounded-full animate-bounce"
-                          style={{ background: "var(--color-ln-muted)", animationDelay: `${j * 150}ms` }} />
+                        <div
+                          key={j}
+                          style={{
+                            width: "6px",
+                            height: "6px",
+                            borderRadius: "50%",
+                            background: "var(--color-ln-navy)",
+                            opacity: 0.7,
+                            animation: "guideTyping 1.2s ease-in-out infinite",
+                            animationDelay: `${j * 0.2}s`,
+                          }}
+                        />
                       ))}
                     </div>
+                    <p className="text-xs mt-2" style={{ color: "var(--color-ln-muted)", fontSize: "10px" }}>
+                      Guide is thinking…
+                    </p>
                   </div>
                 </div>
               )}

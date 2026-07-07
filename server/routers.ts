@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { tenantRouter } from "./routers/tenant";
 import { assessmentRouter } from "./routers/assessment";
+import { pdfReportRouter } from "./routers/pdfReport";
 import { reportRouter } from "./routers/report";
 import { guideRouter } from "./routers/guide";
 import { leadershipGraphRouter } from "./routers/leadershipGraph";
@@ -21,6 +22,7 @@ export const appRouter = router({
   }),
   tenant: tenantRouter,
   assessment: assessmentRouter,
+  pdfReport: pdfReportRouter,
   report: reportRouter,
   guide: guideRouter,
   leadershipGraph: leadershipGraphRouter,

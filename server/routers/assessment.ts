@@ -89,7 +89,24 @@ function scoreGcc(responses: Record<string, number>) {
   const overall = computeGccReadinessScore(moduleScores);
   const zone = getReadinessZone(overall);
   const archetype = assignGccArchetype(moduleScores, overall);
-  return { edgeScore: Math.round(overall), dimensionScores: moduleScores, zone: zone.id, archetype: archetype.id };
+  // Build human-readable dimension scores using module names
+  const namedDimScores: Record<string, number> = {};
+  for (const mod of GCC_MODULES) {
+    namedDimScores[mod.id] = Math.round(moduleScores[mod.id] ?? 0);
+  }
+  return {
+    edgeScore: Math.round(overall),
+    dimensionScores: namedDimScores,
+    zone: zone.id,
+    zoneLabel: zone.label,
+    zoneDescription: zone.message,
+    archetype: archetype.id,
+    archetypeLabel: archetype.label,
+    archetypeDescription: archetype.description,
+    archetypeStrengths: [archetype.primaryStrength],
+    archetypeRisks: [archetype.primaryRisk],
+    archetypeTypicalProfile: archetype.typicalProfile,
+  };
 }
 
 function scoreEci(responses: Record<string, number>) {
