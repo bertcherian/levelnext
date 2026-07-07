@@ -82,3 +82,16 @@
 - [x] Write vitest tests for core procedures (auth.logout passes)
 - [x] Final screenshot review of all pages
 - [x] Save checkpoint and deliver to Bert
+
+### Phase 13: ECI Full Integration
+- [ ] Upgrade Assessment page with ECI pillar groupings and pillar progress indicator
+- [ ] Build rich ECI completion screen with pillar scores, archetype card (strengths/risks), zone description
+- [ ] Build full ECI Report page with pillar breakdown, dimension scores, archetype narrative
+- [ ] Fix Assessment page — remove stale LOGO_URL reference, replace with wordmark
+
+### Phase 14: Guide Daily Coaching Interface
+- [ ] Redesign Guide page with daily rhythm panel (Today's Focus, Today's Mission)
+- [ ] Add ECI-context-aware suggested prompts after diagnostic completion
+- [ ] Add "Daily Session" framing — Guide opens with a coaching question, not a blank screen
+- [ ] Ensure Guide never uses words: AI Coach, bot, chatbot, score, assessment
+- [ ] Wire Guide opening message to Leadership Graph (personalised to ECI archetype if available)

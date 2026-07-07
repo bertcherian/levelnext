@@ -7,12 +7,26 @@ import { users, type LeadershipGraph } from "../../drizzle/schema";
 export async function updateLeadershipGraph(
   userId: number,
   moduleType: "ECI" | "LII" | "GCC",
-  scored: { edgeScore: number; zone: string; archetype: string }
+  scored: {
+    edgeScore: number;
+    zone: string;
+    archetype: string;
+    zoneLabel?: string;
+    archetypeLabel?: string;
+    archetypeDescription?: string;
+    archetypeStrengths?: string[];
+    archetypeRisks?: string[];
+    dimensionScores?: Record<string, number>;
+  }
 ) {
   const db = await getDb();
   if (!db) return;
 
-  const result = await db.select({ leadershipGraph: users.leadershipGraph }).from(users).where(eq(users.id, userId)).limit(1);
+  const result = await db
+    .select({ leadershipGraph: users.leadershipGraph })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
   const existing: LeadershipGraph = (result[0]?.leadershipGraph as LeadershipGraph) ?? {};
 
   const completedModules = Array.from(
@@ -23,20 +37,39 @@ export async function updateLeadershipGraph(
   const archetypes = { ...(existing.archetypes ?? {}), [moduleType]: scored.archetype };
   const zones = { ...(existing.zones ?? {}), [moduleType]: scored.zone };
 
+  // Store full module data for Guide context
+  const existingModules = (existing as any).modules ?? {};
+  const modules = {
+    ...existingModules,
+    [moduleType]: {
+      edgeScore: scored.edgeScore,
+      zone: scored.zone,
+      zoneLabel: scored.zoneLabel,
+      archetype: scored.archetype,
+      archetypeLabel: scored.archetypeLabel,
+      archetypeDescription: scored.archetypeDescription,
+      archetypeStrengths: scored.archetypeStrengths ?? [],
+      archetypeRisks: scored.archetypeRisks ?? [],
+      dimensionScores: scored.dimensionScores ?? {},
+      completedAt: new Date().toISOString(),
+    },
+  };
+
   // Composite Edge: average of all completed module scores
   const compositeEdge = Math.round(
     Object.values(moduleEdges).reduce((a, b) => a + b, 0) / Object.values(moduleEdges).length
   );
 
-  const updated: LeadershipGraph = {
+  const updated = {
     ...existing,
     compositeEdge,
     moduleEdges,
     archetypes,
     zones,
     completedModules,
+    modules,
     lastUpdated: new Date().toISOString(),
-  };
+  } as LeadershipGraph;
 
   await db.update(users).set({ leadershipGraph: updated }).where(eq(users.id, userId));
 }

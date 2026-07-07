@@ -60,7 +60,14 @@ function scoreEci(responses: Record<string, number>) {
     edgeScore: Math.round(overall),
     dimensionScores: { ...pillarScores, ...dimensionScores },
     zone: zone.id,
+    zoneLabel: zone.label,
+    zoneDescription: zone.description,
+    zoneImplication: zone.implication,
     archetype: archetype.id,
+    archetypeLabel: archetype.label,
+    archetypeDescription: archetype.description,
+    archetypeStrengths: archetype.strengths,
+    archetypeRisks: archetype.risks,
   };
 }
 
@@ -199,7 +206,21 @@ export const assessmentRouter = router({
       // Update the Leadership Graph
       await updateLeadershipGraph(ctx.user.id, input.moduleType, scored);
 
-      return { reportId: report.id, slug, edgeScore: scored.edgeScore, archetype: scored.archetype };
+      return {
+        reportId: report.id,
+        slug,
+        edgeScore: scored.edgeScore,
+        archetype: scored.archetype,
+        archetypeLabel: (scored as any).archetypeLabel,
+        archetypeDescription: (scored as any).archetypeDescription,
+        archetypeStrengths: (scored as any).archetypeStrengths,
+        archetypeRisks: (scored as any).archetypeRisks,
+        zone: scored.zone,
+        zoneLabel: (scored as any).zoneLabel,
+        zoneDescription: (scored as any).zoneDescription,
+        zoneImplication: (scored as any).zoneImplication,
+        dimensionScores: scored.dimensionScores,
+      };
     }),
 
   // Get user's assessment history

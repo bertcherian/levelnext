@@ -6,33 +6,57 @@ import { getDb } from "../db";
 import { guideConversations, users, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
-const GUIDE_SYSTEM_PROMPT = (graph: LeadershipGraph | null, userName: string) => `
-You are Guide — the personal AI leadership coach inside LevelNext, The Leadership Intelligence Platform.
+const GUIDE_SYSTEM_PROMPT = (graph: LeadershipGraph | null, userName: string): string => {
+  const g = graph as any;
+  const modules = g?.modules ?? {};
+
+  const moduleContext = Object.keys(modules).length > 0
+    ? Object.entries(modules).map(([key, mod]: [string, any]) => {
+        const moduleLabel = key === 'ECI' ? 'Executive Communication' : key === 'LII' ? 'Leadership Influence' : 'GCC Readiness';
+        const lines = [
+          `[${moduleLabel} Diagnostic]`,
+          `- Edge: ${Math.round(mod.edgeScore ?? 0)}/100`,
+          `- Zone: ${mod.zoneLabel ?? mod.zone}`,
+          `- Archetype: ${mod.archetypeLabel ?? mod.archetype}`,
+        ];
+        if (mod.archetypeDescription) lines.push(`- Profile: ${mod.archetypeDescription}`);
+        if (mod.archetypeStrengths?.length) lines.push(`- Strengths: ${mod.archetypeStrengths.join('; ')}`);
+        if (mod.archetypeRisks?.length) lines.push(`- Growth Edges: ${mod.archetypeRisks.join('; ')}`);
+        if (mod.dimensionScores && Object.keys(mod.dimensionScores).length > 0) {
+          const topDims = Object.entries(mod.dimensionScores as Record<string, number>)
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+            .slice(0, 3)
+            .map(([k, v]) => `${k.replace(/_/g, ' ')} (${Math.round(v as number)})`)
+            .join(', ');
+          lines.push(`- Strongest dimensions: ${topDims}`);
+        }
+        return lines.join('\n');
+      }).join('\n\n')
+    : 'No diagnostic data yet — encourage the leader to complete their first diagnostic to unlock personalised coaching.';
+
+  return `You are Guide — the personal AI leadership coach inside LevelNext, The Leadership Intelligence Platform.
 
 Your role is to help ${userName} grow their leadership Edge through practical, personalised coaching conversations.
 
-LEADERSHIP PROFILE:
-${graph ? `
-- Composite Edge: ${graph.compositeEdge ?? "Not yet assessed"}/100
-- Completed Modules: ${(graph.completedModules ?? []).join(", ") || "None yet"}
-- Module Edges: ${JSON.stringify(graph.moduleEdges ?? {})}
-- Archetypes: ${JSON.stringify(graph.archetypes ?? {})}
-- Key Strengths: ${(graph.strengths ?? []).join(", ") || "To be discovered through diagnostics"}
-- Growth Opportunities: ${(graph.growthOpportunities ?? []).join(", ") || "To be discovered through diagnostics"}
-` : "No diagnostic data yet — encourage the leader to complete their first diagnostic."}
+LEADERSHIP PROFILE FOR ${userName.toUpperCase()}:
+- Composite Edge: ${g?.compositeEdge ?? 'Not yet assessed'}/100
+- Completed Diagnostics: ${(g?.completedModules ?? []).join(', ') || 'None yet'}
+
+${moduleContext}
 
 COACHING PRINCIPLES:
 1. Be direct, practical, and executive in tone — never generic or classroom-like
-2. Reference the leader's actual profile data when giving advice
+2. Always reference ${userName}'s actual archetype, strengths, and growth edges when giving advice
 3. Suggest specific, actionable "Missions" — short leadership practices for today or this week
 4. Never use the words: score, assessment, test, training, course, module, bot, chatbot, weakness, failure
 5. Always use: Edge, Insight, Mission, Growth, Capability, Influence, Progress
 6. Keep responses concise — 2-4 paragraphs maximum unless asked for depth
 7. End with a question or a suggested Mission to maintain momentum
 8. You are a trusted advisor, not a cheerleader — be honest when growth is needed
+9. When referencing archetypes, use their full label (e.g. "Strategic Influencer", "Invisible Expert")
 
-Respond in a warm, executive, and confident tone.
-`.trim();
+Respond in a warm, executive, and confident tone.`.trim();
+};
 
 export const guideRouter = router({
   // Get or create a conversation for the current user

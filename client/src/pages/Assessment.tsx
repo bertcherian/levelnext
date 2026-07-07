@@ -1,17 +1,30 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation, useParams } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, ChevronRight } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/levelnext-logo_525d7189.png";
-
-const MODULE_META: Record<string, { label: string; description: string; color: string }> = {
-  eci: { label: "Executive Communication", description: "Understand how you communicate, influence, and command presence.", color: "#12345A" },
-  lii: { label: "Leadership Influence", description: "Measure your ability to lead through trust and influence.", color: "#1a4a7a" },
-  gcc: { label: "GCC Readiness", description: "Assess your organisation's strategic readiness as a GCC.", color: "#0f2d4a" },
+const MODULE_META: Record<string, { label: string; tagline: string; color: string; questionCount: number }> = {
+  eci: {
+    label: "Executive Communication",
+    tagline: "Understand how you communicate, influence, and command presence at the executive level.",
+    color: "#12345A",
+    questionCount: 30,
+  },
+  lii: {
+    label: "Leadership Influence",
+    tagline: "Measure your ability to lead through trust, influence, and authentic authority.",
+    color: "#1a4a7a",
+    questionCount: 40,
+  },
+  gcc: {
+    label: "GCC Readiness",
+    tagline: "Assess your organisation's strategic readiness as a Global Capability Centre.",
+    color: "#0f2d4a",
+    questionCount: 50,
+  },
 };
 
 const SCALE_LABELS: Record<number, string> = {
@@ -22,26 +35,71 @@ const SCALE_LABELS: Record<number, string> = {
   5: "Strongly Agree",
 };
 
+// ECI Pillar colours and labels for progress display
+const ECI_PILLAR_META: Record<string, { label: string; shortLabel: string; color: string }> = {
+  strategic_communication: { label: "Strategic Communication", shortLabel: "Strategic", color: "#D4AF37" },
+  executive_presence:      { label: "Executive Presence",      shortLabel: "Presence",  color: "#3B82F6" },
+  influence_stakeholder:   { label: "Influence & Stakeholder", shortLabel: "Influence", color: "#22C55E" },
+  narrative_visibility:    { label: "Narrative & Visibility",  shortLabel: "Narrative", color: "#F59E0B" },
+  conversational_leadership: { label: "Conversational Leadership", shortLabel: "Conversational", color: "#8B5CF6" },
+};
+
+// ECI Archetype icons (emoji fallback)
+const ARCHETYPE_ICONS: Record<string, string> = {
+  strategic_influencer: "⚡",
+  invisible_expert: "🔍",
+  executive_diplomat: "🤝",
+  technical_operator: "⚙️",
+  trusted_integrator: "🔗",
+  defensive_specialist: "🛡️",
+  emerging_executive_voice: "🌱",
+  narrative_leader: "📖",
+};
+
+// ECI Zone colours
+const ZONE_COLORS: Record<string, string> = {
+  emerging_voice: "#EF4444",
+  developing_communicator: "#F97316",
+  capable_communicator: "#EAB308",
+  executive_communicator: "#22C55E",
+  elite_communicator: "#10B981",
+};
+
+type SubmitResult = {
+  edgeScore: number;
+  archetype: string;
+  archetypeLabel?: string;
+  archetypeDescription?: string;
+  archetypeStrengths?: string[];
+  archetypeRisks?: string[];
+  zone: string;
+  zoneLabel?: string;
+  zoneDescription?: string;
+  zoneImplication?: string;
+  dimensionScores?: Record<string, number>;
+  reportSlug?: string;
+};
+
 export default function Assessment() {
   const params = useParams<{ moduleType: string }>();
   const moduleType = params.moduleType?.toLowerCase() ?? "eci";
   const { isAuthenticated, loading, user } = useAuth();
   const [, navigate] = useLocation();
 
+  const [phase, setPhase] = useState<"intro" | "questions" | "complete">("intro");
   const [currentQ, setCurrentQ] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>({});
-  const [submitted, setSubmitted] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SubmitResult | null>(null);
 
-  const { data: questions, isLoading: questionsLoading } = trpc.assessment.getQuestions.useQuery(
+  const { data: questionsData, isLoading: questionsLoading } = trpc.assessment.getQuestions.useQuery(
     { moduleType: moduleType.toUpperCase() as "ECI" | "LII" | "GCC" },
     { enabled: isAuthenticated }
   );
 
   const submitAssessment = trpc.assessment.submit.useMutation({
     onSuccess: (data) => {
-      setResult(data);
-      setSubmitted(true);
+      setResult(data as SubmitResult);
+      setPhase("complete");
     },
     onError: () => toast.error("Could not submit your diagnostic. Please try again."),
   });
@@ -49,23 +107,45 @@ export default function Assessment() {
   useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [loading, isAuthenticated, navigate]);
 
   const meta = MODULE_META[moduleType] ?? MODULE_META.eci;
-  // Normalize questions from any module shape into a flat array
-  const allQuestions: { id: string; text: string }[] = useMemo(() => {
-    if (!questions) return [];
-    if (Array.isArray(questions)) return questions as { id: string; text: string }[];
-    const q = questions as { questions?: { id: string; text: string }[] };
+
+  // Normalise questions from any module shape
+  const allQuestions: { id: string; text: string; pillarId?: string; dimensionId?: string }[] = useMemo(() => {
+    if (!questionsData) return [];
+    const q = questionsData as { questions?: { id: string; text: string; pillarId?: string; dimensionId?: string }[] };
     return q.questions ?? [];
-  }, [questions]);
+  }, [questionsData]);
+
+  // ECI: group questions by pillar for progress display
+  const pillarGroups = useMemo(() => {
+    if (moduleType !== "eci" || allQuestions.length === 0) return [];
+    const groups: Record<string, { pillarId: string; questions: typeof allQuestions }> = {};
+    for (const q of allQuestions) {
+      const pid = q.pillarId ?? "unknown";
+      if (!groups[pid]) groups[pid] = { pillarId: pid, questions: [] };
+      groups[pid].questions.push(q);
+    }
+    return Object.values(groups);
+  }, [allQuestions, moduleType]);
+
+  // Current pillar for ECI
+  const currentPillarId = useMemo(() => {
+    if (moduleType !== "eci" || allQuestions.length === 0) return null;
+    return allQuestions[currentQ]?.pillarId ?? null;
+  }, [allQuestions, currentQ, moduleType]);
+
   const totalQ = allQuestions.length;
-  const progress = totalQ > 0 ? Math.round((currentQ / totalQ) * 100) : 0;
+  const progress = totalQ > 0 ? Math.round(((currentQ + 1) / totalQ) * 100) : 0;
   const currentQuestion = allQuestions[currentQ];
+  const answeredCount = Object.keys(responses).length;
+  const isLastQuestion = currentQ === totalQ - 1;
+  const currentAnswer = currentQuestion ? responses[currentQuestion.id] : undefined;
 
   const handleAnswer = (value: number) => {
     if (!currentQuestion) return;
     const newResponses = { ...responses, [currentQuestion.id]: value };
     setResponses(newResponses);
     if (currentQ < totalQ - 1) {
-      setTimeout(() => setCurrentQ((q) => q + 1), 200);
+      setTimeout(() => setCurrentQ((q) => q + 1), 220);
     }
   };
 
@@ -79,10 +159,7 @@ export default function Assessment() {
     });
   };
 
-  const answeredCount = Object.keys(responses).length;
-  const isLastQuestion = currentQ === totalQ - 1;
-  const currentAnswer = currentQuestion ? responses[currentQuestion.id] : undefined;
-
+  // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading || questionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-ivory)" }}>
@@ -91,90 +168,290 @@ export default function Assessment() {
     );
   }
 
-  // Completion screen
-  if (submitted && result) {
+  // ── Intro Screen ─────────────────────────────────────────────────────────────
+  if (phase === "intro") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 animate-fade-in"
-        style={{ background: "var(--color-ln-navy)" }}>
-        <img src={LOGO_URL} alt="LevelNext" className="h-10 w-auto mb-10" />
-        <div className="w-full max-w-lg text-center">
-          <div className="w-24 h-24 rounded-full flex flex-col items-center justify-center border-4 mx-auto mb-6"
-            style={{ borderColor: "var(--color-ln-yellow)" }}>
-            <span className="text-3xl font-bold" style={{ color: "var(--color-ln-yellow)" }}>
-              {Math.round(result.edgeScore)}
+      <div className="min-h-screen flex flex-col" style={{ background: "var(--color-ln-navy)" }}>
+        {/* Top bar */}
+        <header className="px-6 py-4 flex items-center justify-between">
+          <button
+            onClick={() => navigate("/diagnostics")}
+            className="flex items-center gap-2 text-sm transition-colors hover:opacity-70"
+            style={{ color: "oklch(70% 0.02 248.6)" }}
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+          <span className="text-base font-bold tracking-tight text-white">LevelNext</span>
+          <div className="w-16" />
+        </header>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
+          <div className="w-full max-w-lg text-center">
+            {/* Module badge */}
+            <span className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-6"
+              style={{ background: "oklch(25% 0.072 248.6)", color: "var(--color-ln-yellow)" }}>
+              {moduleType.toUpperCase()} Diagnostic
             </span>
-            <span className="text-xs" style={{ color: "oklch(65% 0.02 248.6)" }}>Edge</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Your Insight is ready.</h1>
-          <p className="text-base mb-2" style={{ color: "oklch(75% 0.02 248.6)" }}>
-            {meta.label}
-          </p>
-          {result.archetype && (
-            <p className="text-lg font-semibold mb-6" style={{ color: "var(--color-ln-yellow)" }}>
-              {result.archetype}
+
+            <h1 className="text-3xl font-bold text-white mb-4 leading-tight">{meta.label}</h1>
+            <p className="text-base mb-8 leading-relaxed" style={{ color: "oklch(75% 0.02 248.6)" }}>
+              {meta.tagline}
             </p>
-          )}
-          {result.zone && (
-            <p className="text-sm mb-8" style={{ color: "oklch(65% 0.02 248.6)" }}>{result.zone}</p>
-          )}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+
+            {/* What to expect */}
+            <div className="rounded-2xl p-6 mb-8 text-left space-y-4"
+              style={{ background: "oklch(20% 0.072 248.6)" }}>
+              <p className="text-sm font-semibold text-white mb-3">What to expect</p>
+              {moduleType === "eci" && pillarGroups.length > 0 ? (
+                <div className="space-y-2">
+                  {pillarGroups.map((g) => {
+                    const pm = ECI_PILLAR_META[g.pillarId];
+                    return (
+                      <div key={g.pillarId} className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: pm?.color ?? "#F2B705" }} />
+                        <span className="text-sm" style={{ color: "oklch(80% 0.02 248.6)" }}>
+                          {pm?.label ?? g.pillarId} — {g.questions.length} questions
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm" style={{ color: "oklch(75% 0.02 248.6)" }}>
+                  {totalQ} questions across key leadership dimensions. Takes approximately 8–12 minutes.
+                </p>
+              )}
+              <div className="pt-3 border-t" style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
+                <p className="text-xs" style={{ color: "oklch(60% 0.02 248.6)" }}>
+                  Answer based on your typical behaviour, not your ideal. There are no right or wrong answers.
+                </p>
+              </div>
+            </div>
+
             <Button
-              onClick={() => navigate("/my-edge")}
-              className="font-semibold h-12 px-8"
-              style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-              View My Edge
+              onClick={() => setPhase("questions")}
+              className="w-full h-14 text-base font-semibold rounded-xl"
+              style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+            >
+              Begin Diagnostic <ChevronRight size={18} className="ml-2" />
             </Button>
-            <Button
-              onClick={() => navigate("/guide")}
-              variant="outline"
-              className="font-semibold h-12 px-8 border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent">
-              Talk to Guide
-            </Button>
+            <p className="text-xs mt-4" style={{ color: "oklch(50% 0.02 248.6)" }}>
+              Your responses are private and feed directly into your Leadership Edge profile.
+            </p>
           </div>
         </div>
       </div>
     );
   }
 
+  // ── Completion Screen ────────────────────────────────────────────────────────
+  if (phase === "complete" && result) {
+    const archetypeIcon = ARCHETYPE_ICONS[result.archetype] ?? "✦";
+    const zoneColor = ZONE_COLORS[result.zone] ?? "#22C55E";
+    const pillarScores = result.dimensionScores
+      ? Object.entries(result.dimensionScores).filter(([k]) => ECI_PILLAR_META[k])
+      : [];
+
+    return (
+      <div className="min-h-screen flex flex-col animate-fade-in" style={{ background: "var(--color-ln-navy)" }}>
+        {/* Top bar */}
+        <header className="px-6 py-4 flex items-center justify-between">
+          <div />
+          <span className="text-base font-bold tracking-tight text-white">LevelNext</span>
+          <div />
+        </header>
+
+        <div className="flex-1 overflow-y-auto px-6 py-8">
+          <div className="w-full max-w-2xl mx-auto space-y-6">
+
+            {/* Edge Score Hero */}
+            <div className="text-center py-8">
+              <div className="w-28 h-28 rounded-full flex flex-col items-center justify-center border-4 mx-auto mb-5"
+                style={{ borderColor: "var(--color-ln-yellow)" }}>
+                <span className="text-4xl font-bold" style={{ color: "var(--color-ln-yellow)" }}>
+                  {Math.round(result.edgeScore)}
+                </span>
+                <span className="text-xs font-medium mt-0.5" style={{ color: "oklch(65% 0.02 248.6)" }}>Edge</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3"
+                style={{ background: zoneColor + "22", color: zoneColor, border: `1px solid ${zoneColor}44` }}>
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: zoneColor }} />
+                {result.zoneLabel ?? result.zone.replace(/_/g, " ")}
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">Your Insight is ready.</h1>
+              <p className="text-sm" style={{ color: "oklch(70% 0.02 248.6)" }}>{meta.label} Diagnostic</p>
+            </div>
+
+            {/* Archetype Card */}
+            <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
+              <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--color-ln-yellow)" }}>
+                Your Communication Archetype
+              </p>
+              <div className="flex items-start gap-4 mb-4">
+                <span className="text-3xl flex-shrink-0">{archetypeIcon}</span>
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-1">
+                    {result.archetypeLabel ?? result.archetype.replace(/_/g, " ")}
+                  </h2>
+                  {result.archetypeDescription && (
+                    <p className="text-sm leading-relaxed" style={{ color: "oklch(75% 0.02 248.6)" }}>
+                      {result.archetypeDescription}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Strengths & Risks */}
+              {(result.archetypeStrengths?.length || result.archetypeRisks?.length) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t"
+                  style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
+                  {result.archetypeStrengths && result.archetypeStrengths.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold mb-2" style={{ color: "#22C55E" }}>Strengths</p>
+                      <ul className="space-y-1">
+                        {result.archetypeStrengths.map((s, i) => (
+                          <li key={i} className="text-xs flex items-start gap-2" style={{ color: "oklch(75% 0.02 248.6)" }}>
+                            <span className="text-green-400 mt-0.5 flex-shrink-0">✓</span> {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {result.archetypeRisks && result.archetypeRisks.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold mb-2" style={{ color: "#F97316" }}>Growth Edges</p>
+                      <ul className="space-y-1">
+                        {result.archetypeRisks.map((r, i) => (
+                          <li key={i} className="text-xs flex items-start gap-2" style={{ color: "oklch(75% 0.02 248.6)" }}>
+                            <span className="text-orange-400 mt-0.5 flex-shrink-0">→</span> {r}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Zone Implication */}
+            {result.zoneImplication && (
+              <div className="rounded-2xl p-5" style={{ background: "oklch(20% 0.072 248.6)", borderLeft: `3px solid ${zoneColor}` }}>
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: zoneColor }}>
+                  What This Means For You
+                </p>
+                <p className="text-sm leading-relaxed" style={{ color: "oklch(80% 0.02 248.6)" }}>
+                  {result.zoneImplication}
+                </p>
+              </div>
+            )}
+
+            {/* Pillar Scores (ECI only) */}
+            {pillarScores.length > 0 && (
+              <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
+                <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--color-ln-yellow)" }}>
+                  Pillar Breakdown
+                </p>
+                <div className="space-y-4">
+                  {pillarScores.map(([pillarId, score]) => {
+                    const pm = ECI_PILLAR_META[pillarId];
+                    const pct = Math.round(score);
+                    return (
+                      <div key={pillarId}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm font-medium text-white">{pm?.label ?? pillarId}</span>
+                          <span className="text-sm font-bold" style={{ color: pm?.color ?? "var(--color-ln-yellow)" }}>{pct}</span>
+                        </div>
+                        <div className="h-2 rounded-full overflow-hidden" style={{ background: "oklch(30% 0.072 248.6)" }}>
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{ width: `${pct}%`, background: pm?.color ?? "var(--color-ln-yellow)" }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pb-8">
+              <Button
+                onClick={() => navigate("/guide")}
+                className="flex-1 font-semibold h-12"
+                style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+              >
+                Talk to Guide About This
+              </Button>
+              <Button
+                onClick={() => navigate("/my-edge")}
+                variant="outline"
+                className="flex-1 font-semibold h-12 border-white/20 text-white hover:bg-white/10 hover:text-white bg-transparent"
+              >
+                View My Edge Profile
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Question Screen ──────────────────────────────────────────────────────────
+  const currentPillarMeta = currentPillarId ? ECI_PILLAR_META[currentPillarId] : null;
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--color-ln-ivory)" }}>
       {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between border-b"
         style={{ background: "white", borderColor: "var(--color-ln-border)" }}>
-        <button onClick={() => navigate("/diagnostics")} className="flex items-center gap-2 text-sm transition-colors hover:opacity-70"
-          style={{ color: "var(--color-ln-muted)" }}>
+        <button
+          onClick={() => setPhase("intro")}
+          className="flex items-center gap-2 text-sm transition-colors hover:opacity-70"
+          style={{ color: "var(--color-ln-muted)" }}
+        >
           <ArrowLeft size={16} /> Back
         </button>
-        <img src={LOGO_URL} alt="LevelNext" className="h-7 w-auto" />
-        <span className="text-sm" style={{ color: "var(--color-ln-muted)" }}>
+        <span className="text-base font-bold tracking-tight" style={{ color: "var(--color-ln-navy)" }}>LevelNext</span>
+        <span className="text-sm font-medium tabular-nums" style={{ color: "var(--color-ln-muted)" }}>
           {answeredCount}/{totalQ}
         </span>
       </header>
 
       {/* Progress bar */}
-      <div className="h-1 w-full" style={{ background: "var(--color-ln-border)" }}>
-        <div className="h-full transition-all duration-500"
-          style={{ width: `${progress}%`, background: "var(--color-ln-yellow)" }} />
+      <div className="h-1.5 w-full" style={{ background: "var(--color-ln-border)" }}>
+        <div
+          className="h-full transition-all duration-500"
+          style={{
+            width: `${progress}%`,
+            background: currentPillarMeta?.color ?? "var(--color-ln-yellow)",
+          }}
+        />
       </div>
 
-      {/* Module info */}
-      <div className="px-6 py-5 text-center border-b" style={{ background: "white", borderColor: "var(--color-ln-border)" }}>
-        <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-          style={{ background: "var(--color-ln-navy)", color: "var(--color-ln-yellow)" }}>
-          {moduleType.toUpperCase()}
-        </span>
-        <p className="text-sm font-semibold mt-1" style={{ color: "var(--color-ln-navy)" }}>{meta.label}</p>
-      </div>
+      {/* Pillar indicator (ECI only) */}
+      {moduleType === "eci" && currentPillarMeta && (
+        <div className="px-6 py-3 flex items-center gap-2 border-b"
+          style={{ background: "white", borderColor: "var(--color-ln-border)" }}>
+          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+            style={{ background: currentPillarMeta.color }} />
+          <span className="text-xs font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+            {currentPillarMeta.label}
+          </span>
+          <span className="text-xs ml-auto" style={{ color: "var(--color-ln-muted)" }}>
+            Q{currentQ + 1} of {totalQ}
+          </span>
+        </div>
+      )}
 
       {/* Question */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
         <div className="w-full max-w-2xl animate-fade-in" key={currentQ}>
           {currentQuestion ? (
             <>
-              <p className="text-xs font-medium mb-4 text-center" style={{ color: "var(--color-ln-muted)" }}>
-                Question {currentQ + 1} of {totalQ}
-              </p>
-              <h2 className="text-xl font-semibold text-center mb-10 leading-relaxed" style={{ color: "var(--color-ln-navy)" }}>
+              {/* Question text */}
+              <h2 className="text-xl font-semibold text-center mb-10 leading-relaxed"
+                style={{ color: "var(--color-ln-navy)" }}>
                 {currentQuestion.text}
               </h2>
 
@@ -184,25 +461,30 @@ export default function Assessment() {
                   <button
                     key={val}
                     onClick={() => handleAnswer(val)}
-                    className="w-full rounded-xl px-5 py-4 text-left flex items-center gap-4 transition-all duration-150 hover:scale-[1.01] active:scale-[0.99]"
+                    className="w-full rounded-xl px-5 py-4 text-left flex items-center gap-4 transition-all duration-150 hover:scale-[1.01] active:scale-[0.98]"
                     style={{
                       background: currentAnswer === val ? "var(--color-ln-navy)" : "white",
                       border: `1.5px solid ${currentAnswer === val ? "var(--color-ln-navy)" : "var(--color-ln-border)"}`,
                       boxShadow: currentAnswer === val ? "none" : "var(--shadow-sm)",
                     }}
                   >
-                    <span className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                    <span
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
                       style={{
                         background: currentAnswer === val ? "var(--color-ln-yellow)" : "var(--color-ln-ivory-dark)",
                         color: currentAnswer === val ? "var(--color-ln-navy)" : "var(--color-ln-muted)",
-                      }}>
+                      }}
+                    >
                       {val}
                     </span>
                     <span className="text-sm font-medium"
                       style={{ color: currentAnswer === val ? "white" : "var(--color-ln-text)" }}>
                       {SCALE_LABELS[val]}
                     </span>
-                    {currentAnswer === val && <CheckCircle2 size={16} className="ml-auto" style={{ color: "var(--color-ln-yellow)" }} />}
+                    {currentAnswer === val && (
+                      <CheckCircle2 size={16} className="ml-auto flex-shrink-0"
+                        style={{ color: "var(--color-ln-yellow)" }} />
+                    )}
                   </button>
                 ))}
               </div>
@@ -225,7 +507,9 @@ export default function Assessment() {
                     className="font-semibold h-11 px-8"
                     style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
                   >
-                    {submitAssessment.isPending ? <><Loader2 size={16} className="animate-spin mr-2" />Processing…</> : "Get My Insight"}
+                    {submitAssessment.isPending
+                      ? <><Loader2 size={16} className="animate-spin mr-2" />Processing…</>
+                      : "Get My Insight"}
                   </Button>
                 ) : currentAnswer !== undefined && !isLastQuestion ? (
                   <button

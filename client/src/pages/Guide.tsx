@@ -6,17 +6,65 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Send, Loader2, RotateCcw } from "lucide-react";
+import { Send, Loader2, RotateCcw, Sparkles, Target, ChevronRight, BookOpen } from "lucide-react";
 import { Streamdown } from "streamdown";
+
+// Daily prompts rotate based on day of week
+const DAILY_PROMPTS = [
+  "What should I focus on to strengthen my Edge this week?",
+  "Help me prepare for a high-stakes stakeholder conversation.",
+  "What does my Edge profile tell you about my leadership blind spots?",
+  "Give me a Mission for today that will build my executive presence.",
+  "How can I communicate with more strategic clarity in my next leadership meeting?",
+  "What's the most important growth edge I should be working on right now?",
+  "Help me think through a difficult accountability conversation I need to have.",
+];
+
+const getDailyPrompts = () => {
+  const day = new Date().getDay();
+  const start = day % DAILY_PROMPTS.length;
+  return [
+    DAILY_PROMPTS[start % DAILY_PROMPTS.length],
+    DAILY_PROMPTS[(start + 1) % DAILY_PROMPTS.length],
+    DAILY_PROMPTS[(start + 2) % DAILY_PROMPTS.length],
+    DAILY_PROMPTS[(start + 3) % DAILY_PROMPTS.length],
+  ];
+};
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
+
+const getSessionLabel = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Morning Session";
+  if (hour < 17) return "Afternoon Session";
+  return "Evening Reflection";
+};
+
+type Message = { role: "user" | "assistant"; content: string; timestamp: string };
 
 export default function Guide() {
   const { isAuthenticated, loading, user } = useAuth();
   const [, navigate] = useLocation();
   const [input, setInput] = useState("");
+  const [view, setView] = useState<"home" | "chat">("home");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const utils = trpc.useUtils();
 
-  const { data: conversation, isLoading } = trpc.guide.getConversation.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: conversation, isLoading: convLoading } = trpc.guide.getConversation.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
+
+  const { data: graphData } = trpc.leadershipGraph.get.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
 
   const sendMessage = trpc.guide.sendMessage.useMutation({
     onSuccess: () => {
@@ -27,7 +75,10 @@ export default function Guide() {
   });
 
   const clearConversation = trpc.guide.clearConversation.useMutation({
-    onSuccess: () => utils.guide.getConversation.invalidate(),
+    onSuccess: () => {
+      utils.guide.getConversation.invalidate();
+      setView("home");
+    },
   });
 
   useEffect(() => {
@@ -35,12 +86,30 @@ export default function Guide() {
   }, [loading, isAuthenticated, navigate]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [conversation?.messages]);
+    if (view === "chat") {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [conversation?.messages, view]);
 
-  const handleSend = () => {
-    if (!input.trim() || sendMessage.isPending) return;
-    sendMessage.mutate({ message: input.trim() });
+  // Auto-switch to chat if there are existing messages
+  useEffect(() => {
+    if (!convLoading && conversation?.messages && conversation.messages.length > 0) {
+      setView("chat");
+    }
+  }, [convLoading, conversation]);
+
+  const handleSend = (msg?: string) => {
+    const text = (msg ?? input).trim();
+    if (!text || sendMessage.isPending) return;
+    setView("chat");
+    sendMessage.mutate({ message: text });
+    if (!msg) setInput("");
+  };
+
+  const handlePromptClick = (prompt: string) => {
+    setInput(prompt);
+    setView("chat");
+    sendMessage.mutate({ message: prompt });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -50,17 +119,187 @@ export default function Guide() {
     }
   };
 
-  const messages = conversation?.messages ?? [];
+  const messages = (conversation?.messages ?? []) as Message[];
   const firstName = user?.name?.split(" ")[0] ?? "Leader";
+  const graph = graphData as any;
+  const hasEci = graph?.modules?.ECI;
+  const eciArchetype = hasEci ? graph.modules.ECI.archetype : null;
+  const eciEdge = hasEci ? Math.round(graph.modules.ECI.edgeScore ?? 0) : null;
+  const compositeEdge = graph?.compositeEdge ? Math.round(graph.compositeEdge) : null;
+  const dailyPrompts = getDailyPrompts();
 
+  if (loading || convLoading) {
+    return (
+      <PlatformLayout title="Guide">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="animate-spin" size={24} style={{ color: "var(--color-ln-muted)" }} />
+        </div>
+      </PlatformLayout>
+    );
+  }
+
+  // ── Guide Home View ──────────────────────────────────────────────────────────
+  if (view === "home") {
+    return (
+      <PlatformLayout title="Guide">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6 animate-fade-in">
+
+          {/* Guide Header */}
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "var(--color-ln-navy)" }}>
+              <span className="text-2xl font-bold" style={{ color: "var(--color-ln-yellow)" }}>G</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Guide</h1>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                  style={{ background: "oklch(95% 0.02 248.6)", color: "var(--color-ln-navy)" }}>
+                  {getSessionLabel()}
+                </span>
+              </div>
+              <p className="text-sm" style={{ color: "var(--color-ln-muted)" }}>
+                {getGreeting()}, {firstName}. I'm here to help you build your Edge — one conversation at a time.
+              </p>
+            </div>
+          </div>
+
+          {/* Edge Context Card (if diagnostics completed) */}
+          {hasEci && (
+            <div className="rounded-2xl p-5 border"
+              style={{ background: "var(--color-ln-navy)", borderColor: "var(--color-ln-navy)" }}>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-yellow)" }}>
+                  Your Current Edge
+                </p>
+                {compositeEdge && (
+                  <span className="text-2xl font-bold" style={{ color: "var(--color-ln-yellow)" }}>
+                    {compositeEdge}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "oklch(25% 0.072 248.6)" }}>
+                  <span className="text-lg">⚡</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    {eciArchetype?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                  </p>
+                  <p className="text-xs" style={{ color: "oklch(70% 0.02 248.6)" }}>
+                    Executive Communication · Edge {eciEdge}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => handlePromptClick(`I'm a ${eciArchetype?.replace(/_/g, " ")}. What are the most important leadership practices I should focus on right now to strengthen my Edge?`)}
+                className="mt-4 w-full text-left text-xs px-3 py-2.5 rounded-xl flex items-center justify-between transition-all hover:opacity-80"
+                style={{ background: "oklch(25% 0.072 248.6)", color: "oklch(80% 0.02 248.6)" }}
+              >
+                <span>Ask Guide about your archetype</span>
+                <ChevronRight size={14} style={{ color: "var(--color-ln-yellow)" }} />
+              </button>
+            </div>
+          )}
+
+          {/* Today's Suggested Conversations */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles size={14} style={{ color: "var(--color-ln-yellow)" }} />
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>
+                Today's Conversations
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {dailyPrompts.map((prompt, i) => (
+                <button
+                  key={i}
+                  onClick={() => handlePromptClick(prompt)}
+                  className="text-left text-sm px-4 py-4 rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99] group"
+                  style={{
+                    background: "white",
+                    border: "1.5px solid var(--color-ln-border)",
+                    color: "var(--color-ln-navy)",
+                    boxShadow: "var(--shadow-sm)",
+                  }}
+                >
+                  <span className="leading-snug block">{prompt}</span>
+                  <ChevronRight size={14} className="mt-2 transition-transform group-hover:translate-x-1"
+                    style={{ color: "var(--color-ln-yellow)" }} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mission Prompt */}
+          <div className="rounded-2xl p-5 border"
+            style={{ background: "oklch(98% 0.01 248.6)", borderColor: "var(--color-ln-border)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Target size={14} style={{ color: "var(--color-ln-navy)" }} />
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>
+                Request a Mission
+              </p>
+            </div>
+            <p className="text-sm mb-3" style={{ color: "var(--color-ln-muted)" }}>
+              Ask Guide to design a specific leadership practice for today or this week.
+            </p>
+            <button
+              onClick={() => handlePromptClick("Give me a specific leadership Mission for today — something practical I can do in the next few hours to build my Edge.")}
+              className="text-sm font-semibold px-4 py-2.5 rounded-xl transition-all hover:opacity-80 flex items-center gap-2"
+              style={{ background: "var(--color-ln-navy)", color: "white" }}
+            >
+              <Target size={14} /> Get Today's Mission
+            </button>
+          </div>
+
+          {/* Open Chat */}
+          <div className="rounded-2xl p-5 border"
+            style={{ background: "white", borderColor: "var(--color-ln-border)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <BookOpen size={14} style={{ color: "var(--color-ln-navy)" }} />
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>
+                Open Conversation
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask Guide anything about your leadership…"
+                className="flex-1 resize-none min-h-[44px] max-h-[100px] text-sm"
+                rows={2}
+              />
+              <Button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || sendMessage.isPending}
+                className="h-11 w-11 p-0 flex-shrink-0 rounded-xl self-end"
+                style={{ background: "var(--color-ln-navy)", color: "white" }}
+              >
+                {sendMessage.isPending
+                  ? <Loader2 size={16} className="animate-spin" />
+                  : <Send size={16} />}
+              </Button>
+            </div>
+          </div>
+
+        </div>
+      </PlatformLayout>
+    );
+  }
+
+  // ── Chat View ────────────────────────────────────────────────────────────────
   return (
     <PlatformLayout title="Guide">
       <div className="flex flex-col h-[calc(100vh-4rem)] lg:h-screen max-w-3xl mx-auto">
-        {/* Header */}
+
+        {/* Chat Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0"
           style={{ borderColor: "var(--color-ln-border)", background: "white" }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center"
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: "var(--color-ln-navy)" }}>
               <span className="text-sm font-bold" style={{ color: "var(--color-ln-yellow)" }}>G</span>
             </div>
@@ -69,69 +308,58 @@ export default function Guide() {
               <p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>Your personal leadership coach</p>
             </div>
           </div>
-          {messages.length > 0 && (
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => clearConversation.mutate()}
-              className="text-xs flex items-center gap-1 transition-colors hover:opacity-70"
-              style={{ color: "var(--color-ln-muted)" }}
+              onClick={() => setView("home")}
+              className="text-xs flex items-center gap-1 transition-colors hover:opacity-70 px-3 py-1.5 rounded-lg"
+              style={{ color: "var(--color-ln-muted)", background: "var(--color-ln-ivory)" }}
             >
-              <RotateCcw size={12} /> Clear
+              Home
             </button>
-          )}
+            {messages.length > 0 && (
+              <button
+                onClick={() => clearConversation.mutate()}
+                className="text-xs flex items-center gap-1 transition-colors hover:opacity-70"
+                style={{ color: "var(--color-ln-muted)" }}
+              >
+                <RotateCcw size={12} /> Clear
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6" style={{ background: "var(--color-ln-ivory)" }}>
-          {isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <Loader2 className="animate-spin" size={24} style={{ color: "var(--color-ln-muted)" }} />
-            </div>
-          ) : messages.length === 0 ? (
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6"
+          style={{ background: "var(--color-ln-ivory)" }}>
+          {messages.length === 0 && sendMessage.isPending ? null : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-16 animate-fade-in">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
                 style={{ background: "var(--color-ln-navy)" }}>
                 <span className="text-xl font-bold" style={{ color: "var(--color-ln-yellow)" }}>G</span>
               </div>
-              <h2 className="text-xl font-semibold mb-2" style={{ color: "var(--color-ln-navy)" }}>
-                Hello, {firstName}.
-              </h2>
-              <p className="text-sm max-w-sm" style={{ color: "var(--color-ln-muted)" }}>
-                I'm Guide — your personal leadership coach inside LevelNext. I'm here to help you build your Edge through practical, daily coaching. What's on your mind today?
+              <p className="text-sm" style={{ color: "var(--color-ln-muted)" }}>
+                Starting your session with Guide…
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-md">
-                {[
-                  "What should I focus on today?",
-                  "Help me prepare for a difficult conversation",
-                  "What does my Edge profile tell you?",
-                  "Give me a leadership mission for this week",
-                ].map((prompt) => (
-                  <button
-                    key={prompt}
-                    onClick={() => { setInput(prompt); }}
-                    className="text-left text-sm px-4 py-3 rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99]"
-                    style={{ background: "white", border: "1px solid var(--color-ln-border)", color: "var(--color-ln-navy)" }}
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
             </div>
           ) : (
             <>
               {messages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-slide-up`}>
+                <div key={i}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-slide-up`}>
                   {msg.role === "assistant" && (
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mr-3 mt-1"
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mr-3 mt-1"
                       style={{ background: "var(--color-ln-navy)" }}>
                       <span className="text-xs font-bold" style={{ color: "var(--color-ln-yellow)" }}>G</span>
                     </div>
                   )}
-                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === "user" ? "rounded-tr-sm" : "rounded-tl-sm"}`}
+                  <div
+                    className={`max-w-[82%] rounded-2xl px-4 py-3 ${msg.role === "user" ? "rounded-tr-sm" : "rounded-tl-sm"}`}
                     style={{
                       background: msg.role === "user" ? "var(--color-ln-navy)" : "white",
                       color: msg.role === "user" ? "white" : "var(--color-ln-text)",
                       boxShadow: "var(--shadow-sm)",
-                    }}>
+                    }}
+                  >
                     {msg.role === "assistant" ? (
                       <div className="text-sm leading-relaxed prose prose-sm max-w-none">
                         <Streamdown>{msg.content}</Streamdown>
@@ -144,15 +372,16 @@ export default function Guide() {
               ))}
               {sendMessage.isPending && (
                 <div className="flex justify-start animate-slide-up">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mr-3"
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mr-3"
                     style={{ background: "var(--color-ln-navy)" }}>
                     <span className="text-xs font-bold" style={{ color: "var(--color-ln-yellow)" }}>G</span>
                   </div>
-                  <div className="rounded-2xl rounded-tl-sm px-4 py-3" style={{ background: "white", boxShadow: "var(--shadow-sm)" }}>
+                  <div className="rounded-2xl rounded-tl-sm px-4 py-3"
+                    style={{ background: "white", boxShadow: "var(--shadow-sm)" }}>
                     <div className="flex gap-1.5 items-center h-5">
-                      {[0, 1, 2].map((i) => (
-                        <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce"
-                          style={{ background: "var(--color-ln-muted)", animationDelay: `${i * 150}ms` }} />
+                      {[0, 1, 2].map((j) => (
+                        <div key={j} className="w-1.5 h-1.5 rounded-full animate-bounce"
+                          style={{ background: "var(--color-ln-muted)", animationDelay: `${j * 150}ms` }} />
                       ))}
                     </div>
                   </div>
@@ -164,23 +393,26 @@ export default function Guide() {
         </div>
 
         {/* Input */}
-        <div className="px-6 py-4 border-t flex-shrink-0" style={{ borderColor: "var(--color-ln-border)", background: "white" }}>
+        <div className="px-6 py-4 border-t flex-shrink-0"
+          style={{ borderColor: "var(--color-ln-border)", background: "white" }}>
           <div className="flex gap-3 items-end">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Guide anything about your leadership…"
+              placeholder="Continue your conversation with Guide…"
               className="flex-1 resize-none min-h-[44px] max-h-[120px] text-sm"
               rows={1}
             />
             <Button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={!input.trim() || sendMessage.isPending}
               className="h-11 w-11 p-0 flex-shrink-0 rounded-xl"
               style={{ background: "var(--color-ln-navy)", color: "white" }}
             >
-              {sendMessage.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              {sendMessage.isPending
+                ? <Loader2 size={16} className="animate-spin" />
+                : <Send size={16} />}
             </Button>
           </div>
           <p className="text-xs mt-2 text-center" style={{ color: "var(--color-ln-muted)" }}>
