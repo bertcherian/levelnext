@@ -126,3 +126,12 @@
 - [x] Fix archetype labels to show human-readable names across all pages (Insights, Progress, Home, MyEdge)
 - [x] Add modules property to LeadershipGraph TypeScript type
 - [x] Add staleTime: 0 to leadershipGraph.get queries for fresh data on mount
+
+### Phase 19: Onboarding Page Redesign
+- [x] Redesign Onboarding page with split-panel layout (navy left brand panel + ivory right form panel)
+- [x] Left panel: LevelNext logo, value proposition headline, three platform pillars with checkmarks, Meta Results footer
+- [x] Right panel Choose mode: white cards with icons, arrow indicators, privacy note
+- [x] Right panel Create mode: Organisation Name (required), Industry (optional), Team Size selector grid, CTA button
+- [x] Right panel Join mode: invite code input, "What happens next" info box, CTA button
+- [x] Back navigation on Create and Join forms
+- [x] Mobile-responsive (left panel hidden on small screens, mobile logo shown)
