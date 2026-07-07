@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Download, CheckCircle } from "lucide-react";
+import { Loader2, ArrowLeft, Download, CheckCircle, FileText, Upload, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const MODULE_LABELS: Record<string, string> = {
@@ -56,26 +56,59 @@ const ZONE_COLORS: Record<string, string> = {
   strategic: "#22C55E",
 };
 
+// PDF generation steps with realistic timing
+const PDF_STEPS = [
+  { key: "narrative", label: "Generating Guide's narrative…", icon: Sparkles, duration: 4000 },
+  { key: "building",  label: "Building your report PDF…",    icon: FileText,  duration: 3000 },
+  { key: "uploading", label: "Uploading to secure storage…", icon: Upload,    duration: 2000 },
+  { key: "ready",     label: "Your report is ready!",        icon: CheckCircle, duration: 0 },
+];
+
 export default function Report() {
   const params = useParams<{ slug: string }>();
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [pdfStep, setPdfStep] = useState(0);
+  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: report, isLoading } = trpc.report.bySlug.useQuery(
     { slug: params.slug ?? "" },
     { enabled: !!params.slug }
   );
 
+  // Advance through steps while generating
+  useEffect(() => {
+    if (!pdfGenerating) {
+      if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+      return;
+    }
+    setPdfStep(0);
+    let current = 0;
+    const advance = () => {
+      current += 1;
+      // Stop at the second-to-last step ("uploading") — the last step fires on success
+      if (current < PDF_STEPS.length - 1) {
+        setPdfStep(current);
+        stepTimerRef.current = setTimeout(advance, PDF_STEPS[current]?.duration ?? 2000);
+      }
+    };
+    stepTimerRef.current = setTimeout(advance, PDF_STEPS[0]?.duration ?? 4000);
+    return () => { if (stepTimerRef.current) clearTimeout(stepTimerRef.current); };
+  }, [pdfGenerating]);
+
   const generatePdf = trpc.pdfReport.generate.useMutation({
     onSuccess: (data) => {
+      setPdfStep(PDF_STEPS.length - 1); // jump to "ready"
       setPdfUrl(data.pdfUrl);
-      setPdfGenerating(false);
-      // Open in new tab
-      window.open(data.pdfUrl, "_blank");
-      toast.success("Your report PDF is ready.");
+      setTimeout(() => {
+        setPdfGenerating(false);
+        window.open(data.pdfUrl, "_blank");
+        toast.success("Your report PDF is ready.");
+      }, 800);
     },
     onError: () => {
       setPdfGenerating(false);
+      setPdfStep(0);
       toast.error("PDF generation failed. Please try again.");
     },
   });
@@ -158,10 +191,10 @@ export default function Report() {
           disabled={pdfGenerating}
           size="sm"
           className="flex items-center gap-2 font-semibold"
-          style={{ background: "var(--color-ln-navy)", color: "white" }}
+          style={{ background: pdfUrl ? "#16a34a" : "var(--color-ln-navy)", color: "white", minWidth: 140 }}
         >
           {pdfGenerating ? (
-            <><Loader2 size={14} className="animate-spin" /> Generating…</>
+            <><Loader2 size={14} className="animate-spin" /> {PDF_STEPS[pdfStep]?.label ?? "Working…"}</>
           ) : pdfUrl ? (
             <><CheckCircle size={14} /> Download PDF</>
           ) : (
@@ -265,29 +298,69 @@ export default function Report() {
 
         {/* PDF Export CTA */}
         <div
-          className="rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+          className="rounded-2xl p-6"
           style={{ background: "var(--color-ln-navy)" }}
         >
-          <div>
-            <p className="text-white font-semibold mb-1">Export this report as a PDF</p>
-            <p className="text-xs" style={{ color: "oklch(65% 0.02 248.6)" }}>
-              Includes Guide's coaching narrative. Branded by LevelNext · Meta Results.
-            </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-0">
+            <div>
+              <p className="text-white font-semibold mb-1">Export this report as a PDF</p>
+              <p className="text-xs" style={{ color: "oklch(65% 0.02 248.6)" }}>
+                Includes Guide's coaching narrative. Branded by LevelNext · Meta Results.
+              </p>
+            </div>
+            <Button
+              onClick={handleDownload}
+              disabled={pdfGenerating}
+              className="flex items-center gap-2 font-semibold flex-shrink-0"
+              style={{ background: pdfUrl ? "#16a34a" : "var(--color-ln-yellow)", color: "var(--color-ln-navy)", minWidth: 160 }}
+            >
+              {pdfGenerating ? (
+                <><Loader2 size={14} className="animate-spin" /> {PDF_STEPS[pdfStep]?.label ?? "Working…"}</>
+              ) : pdfUrl ? (
+                <><CheckCircle size={14} /> Download PDF</>
+              ) : (
+                <><Download size={14} /> Export PDF</>
+              )}
+            </Button>
           </div>
-          <Button
-            onClick={handleDownload}
-            disabled={pdfGenerating}
-            className="flex items-center gap-2 font-semibold flex-shrink-0"
-            style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
-          >
-            {pdfGenerating ? (
-              <><Loader2 size={14} className="animate-spin" /> Generating…</>
-            ) : pdfUrl ? (
-              <><CheckCircle size={14} /> Download PDF</>
-            ) : (
-              <><Download size={14} /> Export PDF</>
-            )}
-          </Button>
+
+          {/* Step progress indicator */}
+          {pdfGenerating && (
+            <div className="mt-5 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+              <div className="flex items-center gap-3">
+                {PDF_STEPS.map((step, i) => {
+                  const StepIcon = step.icon;
+                  const isDone = i < pdfStep;
+                  const isActive = i === pdfStep;
+                  return (
+                    <div key={step.key} className="flex items-center gap-2">
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
+                        style={{
+                          background: isDone ? "#16a34a" : isActive ? "var(--color-ln-yellow)" : "rgba(255,255,255,0.1)",
+                          color: isDone || isActive ? "var(--color-ln-navy)" : "rgba(255,255,255,0.4)",
+                        }}
+                      >
+                        {isDone ? <CheckCircle size={14} /> : isActive ? <Loader2 size={14} className="animate-spin" /> : <StepIcon size={14} />}
+                      </div>
+                      <span
+                        className="text-xs hidden sm:block"
+                        style={{ color: isDone ? "#86efac" : isActive ? "var(--color-ln-yellow)" : "rgba(255,255,255,0.3)" }}
+                      >
+                        {step.label.replace("…", "")}
+                      </span>
+                      {i < PDF_STEPS.length - 1 && (
+                        <div
+                          className="w-4 h-px mx-1 hidden sm:block"
+                          style={{ background: isDone ? "#16a34a" : "rgba(255,255,255,0.15)" }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

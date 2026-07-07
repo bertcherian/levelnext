@@ -164,6 +164,81 @@ export const guideRouter = router({
       return { message: assistantMessage, conversationId: convId };
     }),
 
+  // Generate follow-up questions based on the latest completed diagnostic report
+  generateFollowUpQuestions: protectedProcedure
+    .input(z.object({ reportId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Get the report
+      const { reports } = await import('../../drizzle/schema');
+      const reportResult = await db
+        .select()
+        .from(reports)
+        .where(eq(reports.id, input.reportId))
+        .limit(1);
+
+      const report = reportResult[0];
+      if (!report || report.userId !== ctx.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      const moduleLabel = report.moduleType === 'ECI' ? 'Executive Communication'
+        : report.moduleType === 'LII' ? 'Leadership Influence'
+        : 'GCC Readiness';
+
+      const archetypeLabel = (report.archetype as string)
+        ?.replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Unknown';
+
+      const zoneLabel = (report.zone as string)
+        ?.replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Unknown';
+
+      const dimScores = report.dimensionScores as Record<string, number> | null;
+      const topDims = dimScores
+        ? Object.entries(dimScores)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 3)
+            .map(([k]) => k.replace(/_/g, ' '))
+            .join(', ')
+        : '';
+
+      const prompt = `You are Guide, a leadership coach inside LevelNext. A leader just completed the ${moduleLabel} diagnostic.
+
+Their results:
+- Archetype: ${archetypeLabel}
+- Zone: ${zoneLabel}
+- Edge Score: ${Math.round(report.edgeScore)}/100
+- Top Dimensions: ${topDims}
+
+Generate exactly 4 specific, practical follow-up questions this leader should ask you to deepen their understanding and start acting on their results. Each question should be directly tied to their archetype or zone.
+
+Return ONLY a JSON array of 4 strings. No explanation, no markdown, just the array. Example format:
+["Question 1?", "Question 2?", "Question 3?", "Question 4?"]`;
+
+      const llmResult = await invokeLLM({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        maxTokens: 400,
+      });
+
+      const raw = llmResult.choices[0]?.message?.content ?? '[]';
+      const content = typeof raw === 'string' ? raw : raw.map((c: any) => c.text ?? '').join('');
+
+      try {
+        // Extract JSON array from response (avoid dotAll flag for TS compat)
+        const start = content.indexOf('[');
+        const end = content.lastIndexOf(']');
+        const jsonStr = start !== -1 && end !== -1 ? content.slice(start, end + 1) : '[]';
+        const questions: string[] = JSON.parse(jsonStr);
+        return { questions: questions.slice(0, 4) };
+      } catch {
+        return { questions: [] as string[] };
+      }
+    }),
+
   // Clear conversation history
   clearConversation: protectedProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();

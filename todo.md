@@ -102,3 +102,9 @@
 - [ ] Enhance ECI results/completion page — pillar breakdown, archetype card, zone narrative, report actions
 - [ ] Add Guide features — session history panel, mission tracking, post-diagnostic coaching prompt
 - [ ] Package diagnostic integration process as a reusable Manus skill
+
+### Phase 16: PDF Spinner, Unified Dashboard, Guide Follow-ups
+- [ ] PDF export: multi-step loading spinner with status text (Generating narrative → Building PDF → Uploading → Ready)
+- [ ] Unified user dashboard (My Edge): archetype cards per module, completion progress ring, composite Edge, next recommended diagnostic
+- [ ] Guide: generate context-aware follow-up questions after diagnostic completion, surfaced as tappable prompts
+- [ ] Guide: fetch latest report and inject specific dimension scores into follow-up prompt suggestions

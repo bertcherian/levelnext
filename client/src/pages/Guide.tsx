@@ -6,7 +6,7 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Send, Loader2, RotateCcw, Sparkles, Target, ChevronRight, BookOpen } from "lucide-react";
+import { Send, Loader2, RotateCcw, Sparkles, Target, ChevronRight, BookOpen, MessageCircle } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 // Daily prompts rotate based on day of week
@@ -137,6 +137,31 @@ export default function Guide() {
   const compositeEdge = graph?.compositeEdge ? Math.round(graph.compositeEdge) : null;
   const sessionCount = messages.length > 0 ? Math.ceil(messages.length / 4) : 0;
   const dailyPrompts = getDailyPrompts();
+
+  // Follow-up questions from latest report
+  const { data: reportsData } = trpc.report.myReports.useQuery(undefined, { enabled: isAuthenticated });
+  const latestReport = reportsData?.[0];
+  const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [followUpGenerated, setFollowUpGenerated] = useState(false);
+
+  const generateFollowUp = trpc.guide.generateFollowUpQuestions.useMutation({
+    onSuccess: (data) => {
+      setFollowUpQuestions(data.questions);
+      setFollowUpLoading(false);
+      setFollowUpGenerated(true);
+    },
+    onError: () => {
+      setFollowUpLoading(false);
+      toast.error("Could not generate follow-up questions. Please try again.");
+    },
+  });
+
+  const handleGenerateFollowUp = () => {
+    if (!latestReport?.id) return;
+    setFollowUpLoading(true);
+    generateFollowUp.mutate({ reportId: latestReport.id });
+  };
 
   if (loading || convLoading) {
     return (
@@ -278,6 +303,71 @@ export default function Guide() {
                   >
                     Continue conversation →
                   </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Follow-up Questions from Latest Insight */}
+          {latestReport && (
+            <div className="rounded-2xl p-5"
+              style={{ background: "white", border: "1.5px solid var(--color-ln-border)" }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <MessageCircle size={14} style={{ color: "var(--color-ln-navy)" }} />
+                  <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>
+                    Questions from Your Latest Insight
+                  </p>
+                </div>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                  style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", color: "var(--color-ln-navy)" }}>
+                  {latestReport.moduleType === 'ECI' ? 'Exec Comm' : latestReport.moduleType === 'LII' ? 'Leadership Influence' : 'GCC Readiness'}
+                </span>
+              </div>
+
+              {!followUpGenerated ? (
+                <>
+                  <p className="text-sm mb-4" style={{ color: "var(--color-ln-muted)" }}>
+                    Guide can generate specific questions based on your{" "}
+                    <strong style={{ color: "var(--color-ln-navy)" }}>
+                      {(latestReport.archetype as string)?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                    </strong>{" "}archetype and results.
+                  </p>
+                  <button
+                    onClick={handleGenerateFollowUp}
+                    disabled={followUpLoading}
+                    className="text-sm font-semibold px-4 py-2.5 rounded-xl transition-all hover:opacity-80 flex items-center gap-2"
+                    style={{ background: "var(--color-ln-navy)", color: "white" }}
+                  >
+                    {followUpLoading ? (
+                      <><Loader2 size={14} className="animate-spin" /> Generating questions…</>
+                    ) : (
+                      <><Sparkles size={14} /> Generate My Follow-up Questions</>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <div className="space-y-2">
+                  {followUpQuestions.map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handlePromptClick(q)}
+                      className="w-full text-left text-sm px-4 py-3 rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99] group flex items-start gap-3"
+                      style={{
+                        background: "oklch(98% 0.01 248.6)",
+                        border: "1px solid var(--color-ln-border)",
+                        color: "var(--color-ln-navy)",
+                      }}
+                    >
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5"
+                        style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
+                        {i + 1}
+                      </span>
+                      <span className="leading-snug flex-1">{q}</span>
+                      <ChevronRight size={14} className="flex-shrink-0 mt-0.5 transition-transform group-hover:translate-x-1"
+                        style={{ color: "var(--color-ln-yellow)" }} />
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
