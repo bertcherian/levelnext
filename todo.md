@@ -55,14 +55,14 @@
 ### Phase 8: Report Pages (no payment gate)
 - [x] Build unified Report page (renders by moduleType)
 - [x] Build shareable report by slug (/report/:slug)
-- [ ] Wire PDF generation (server-side)
+- [x] Wire PDF generation (server-side)
 - [ ] Wire email delivery (Brevo SMTP)
 
 ### Phase 9: My Edge Dashboard
 - [x] Build My Edge page at /my-edge
 - [x] Build module cards with Edge scores
 - [x] Build Edge profile waiting state (pre-diagnostic)
-- [ ] Build Edge evolution timeline chart (post first diagnostic)
+- [x] Build Edge evolution timeline chart (post first diagnostic)
 
 ### Phase 10: Admin & Organisation Dashboard
 - [x] Build Organisation page at /organisation
@@ -84,27 +84,35 @@
 - [x] Save checkpoint and deliver to Bert
 
 ### Phase 13: ECI Full Integration
-- [ ] Upgrade Assessment page with ECI pillar groupings and pillar progress indicator
-- [ ] Build rich ECI completion screen with pillar scores, archetype card (strengths/risks), zone description
-- [ ] Build full ECI Report page with pillar breakdown, dimension scores, archetype narrative
-- [ ] Fix Assessment page — remove stale LOGO_URL reference, replace with wordmark
+- [x] Upgrade Assessment page with ECI pillar groupings and pillar progress indicator
+- [x] Build rich ECI completion screen with pillar scores, archetype card (strengths/risks), zone description
+- [x] Build full ECI Report page with pillar breakdown, dimension scores, archetype narrative
+- [x] Fix Assessment page — remove stale LOGO_URL reference, replace with wordmark
 
 ### Phase 14: Guide Daily Coaching Interface
-- [ ] Redesign Guide page with daily rhythm panel (Today's Focus, Today's Mission)
-- [ ] Add ECI-context-aware suggested prompts after diagnostic completion
-- [ ] Add "Daily Session" framing — Guide opens with a coaching question, not a blank screen
-- [ ] Ensure Guide never uses words: AI Coach, bot, chatbot, score, assessment
-- [ ] Wire Guide opening message to Leadership Graph (personalised to ECI archetype if available)
+- [x] Redesign Guide page with daily rhythm panel (Today's Focus, Today's Mission)
+- [x] Add ECI-context-aware suggested prompts after diagnostic completion
+- [x] Add "Daily Session" framing — Guide opens with a coaching question, not a blank screen
+- [x] Ensure Guide never uses words: AI Coach, bot, chatbot, score, assessment
+- [x] Wire Guide opening message to Leadership Graph (personalised to ECI archetype if available)
 
 ### Phase 15: LII Integration, ECI Enhancement, Guide Features, Skill Packaging
 
-- [ ] Integrate LII diagnostic — full scoring, archetypes, zone, rich completion screen
-- [ ] Enhance ECI results/completion page — pillar breakdown, archetype card, zone narrative, report actions
-- [ ] Add Guide features — session history panel, mission tracking, post-diagnostic coaching prompt
-- [ ] Package diagnostic integration process as a reusable Manus skill
+- [x] Integrate LII diagnostic — full scoring, archetypes, zone, rich completion screen
+- [x] Enhance ECI results/completion page — pillar breakdown, archetype card, zone narrative, report actions
+- [x] Add Guide features — session history panel, mission tracking, post-diagnostic coaching prompt
+- [x] Package diagnostic integration process as a reusable Manus skill
 
 ### Phase 16: PDF Spinner, Unified Dashboard, Guide Follow-ups
-- [ ] PDF export: multi-step loading spinner with status text (Generating narrative → Building PDF → Uploading → Ready)
-- [ ] Unified user dashboard (My Edge): archetype cards per module, completion progress ring, composite Edge, next recommended diagnostic
-- [ ] Guide: generate context-aware follow-up questions after diagnostic completion, surfaced as tappable prompts
-- [ ] Guide: fetch latest report and inject specific dimension scores into follow-up prompt suggestions
+- [x] PDF export: multi-step loading spinner with status text (Generating narrative → Building PDF → Uploading → Ready)
+- [x] Unified user dashboard (My Edge): archetype cards per module, completion progress ring, composite Edge, next recommended diagnostic
+- [x] Guide: generate context-aware follow-up questions after diagnostic completion, surfaced as tappable prompts
+- [x] Guide: fetch latest report and inject specific dimension scores into follow-up prompt suggestions
+
+### Phase 17: Mock Data, PDF Update, Guide Favorites
+- [ ] Seed mock ECI diagnostic report for Bert with realistic dimension scores and archetype
+- [ ] Update Leadership Graph for Bert with ECI module data
+- [ ] Update PDF export feature (Node-compatible, branded, Meta Results footer)
+- [ ] Add Save to Favorites button to Guide chat messages
+- [ ] Build favorites storage (DB table + tRPC procedures)
+- [ ] Build Saved Insights panel in Guide home view

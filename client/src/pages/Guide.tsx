@@ -6,7 +6,7 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Send, Loader2, RotateCcw, Sparkles, Target, ChevronRight, BookOpen, MessageCircle } from "lucide-react";
+import { Send, Loader2, RotateCcw, Sparkles, Target, ChevronRight, BookOpen, MessageCircle, Bookmark, BookmarkCheck, Trash2 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 // Daily prompts rotate based on day of week
@@ -46,6 +46,19 @@ const getSessionLabel = () => {
 };
 
 type Message = { role: "user" | "assistant"; content: string; timestamp: string };
+type FavoriteInsight = { id: string; content: string; savedAt: string; preview: string };
+
+const FAVORITES_KEY = "levelnext_guide_favorites";
+
+function loadFavorites(): FavoriteInsight[] {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY) ?? "[]");
+  } catch { return []; }
+}
+
+function saveFavorites(favs: FavoriteInsight[]) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+}
 
 export default function Guide() {
   const { isAuthenticated, loading, user } = useAuth();
@@ -141,6 +154,7 @@ export default function Guide() {
   // Follow-up questions from latest report
   const { data: reportsData } = trpc.report.myReports.useQuery(undefined, { enabled: isAuthenticated });
   const latestReport = reportsData?.[0];
+  const [favorites, setFavorites] = useState<FavoriteInsight[]>(() => loadFavorites());
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpGenerated, setFollowUpGenerated] = useState(false);
@@ -156,6 +170,34 @@ export default function Guide() {
       toast.error("Could not generate follow-up questions. Please try again.");
     },
   });
+
+  const handleSaveToFavorites = (msg: Message) => {
+    const existing = loadFavorites();
+    const alreadySaved = existing.some(f => f.id === msg.timestamp);
+    if (alreadySaved) {
+      const updated = existing.filter(f => f.id !== msg.timestamp);
+      saveFavorites(updated);
+      setFavorites(updated);
+      toast.success("Removed from Saved Insights");
+    } else {
+      const newFav: FavoriteInsight = {
+        id: msg.timestamp,
+        content: msg.content,
+        savedAt: new Date().toISOString(),
+        preview: msg.content.replace(/[#*`]/g, "").slice(0, 120) + (msg.content.length > 120 ? "…" : ""),
+      };
+      const updated = [newFav, ...existing].slice(0, 20); // max 20 saved
+      saveFavorites(updated);
+      setFavorites(updated);
+      toast.success("Saved to Insights");
+    }
+  };
+
+  const handleDeleteFavorite = (id: string) => {
+    const updated = favorites.filter(f => f.id !== id);
+    saveFavorites(updated);
+    setFavorites(updated);
+  };
 
   const handleGenerateFollowUp = () => {
     if (!latestReport?.id) return;
@@ -423,6 +465,51 @@ export default function Guide() {
             </button>
           </div>
 
+          {/* Saved Insights */}
+          {favorites.length > 0 && (
+            <div className="rounded-2xl p-5 border" style={{ background: "white", borderColor: "var(--color-ln-border)" }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <BookmarkCheck size={14} style={{ color: "var(--color-ln-yellow)" }} />
+                  <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>
+                    Saved Insights
+                  </p>
+                </div>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                  style={{ background: "oklch(95% 0.02 248.6)", color: "var(--color-ln-navy)" }}>
+                  {favorites.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {favorites.slice(0, 3).map((fav) => (
+                  <div key={fav.id} className="flex items-start gap-3 p-3 rounded-xl group"
+                    style={{ background: "var(--color-ln-ivory)", border: "1px solid var(--color-ln-border)" }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs leading-relaxed" style={{ color: "var(--color-ln-text)" }}>
+                        {fav.preview}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: "var(--color-ln-muted)" }}>
+                        {new Date(fav.savedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteFavorite(fav.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-red-50"
+                      title="Remove"
+                    >
+                      <Trash2 size={12} style={{ color: "var(--color-ln-muted)" }} />
+                    </button>
+                  </div>
+                ))}
+                {favorites.length > 3 && (
+                  <p className="text-xs text-center pt-1" style={{ color: "var(--color-ln-muted)" }}>
+                    +{favorites.length - 3} more saved insights
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Open Chat */}
           <div className="rounded-2xl p-5 border"
             style={{ background: "white", borderColor: "var(--color-ln-border)" }}>
@@ -522,20 +609,38 @@ export default function Guide() {
                       <span className="text-xs font-bold" style={{ color: "var(--color-ln-yellow)" }}>G</span>
                     </div>
                   )}
-                  <div
-                    className={`max-w-[82%] rounded-2xl px-4 py-3 ${msg.role === "user" ? "rounded-tr-sm" : "rounded-tl-sm"}`}
-                    style={{
-                      background: msg.role === "user" ? "var(--color-ln-navy)" : "white",
-                      color: msg.role === "user" ? "white" : "var(--color-ln-text)",
-                      boxShadow: "var(--shadow-sm)",
-                    }}
-                  >
-                    {msg.role === "assistant" ? (
-                      <div className="text-sm leading-relaxed prose prose-sm max-w-none">
-                        <Streamdown>{msg.content}</Streamdown>
-                      </div>
-                    ) : (
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                  <div className="group relative">
+                    <div
+                      className={`max-w-[82%] rounded-2xl px-4 py-3 ${msg.role === "user" ? "rounded-tr-sm" : "rounded-tl-sm"}`}
+                      style={{
+                        background: msg.role === "user" ? "var(--color-ln-navy)" : "white",
+                        color: msg.role === "user" ? "white" : "var(--color-ln-text)",
+                        boxShadow: "var(--shadow-sm)",
+                      }}
+                    >
+                      {msg.role === "assistant" ? (
+                        <div className="text-sm leading-relaxed prose prose-sm max-w-none">
+                          <Streamdown>{msg.content}</Streamdown>
+                        </div>
+                      ) : (
+                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                      )}
+                    </div>
+                    {msg.role === "assistant" && (
+                      <button
+                        onClick={() => handleSaveToFavorites(msg)}
+                        className="absolute -bottom-2 right-0 opacity-0 group-hover:opacity-100 transition-all duration-150 p-1.5 rounded-lg"
+                        style={{
+                          background: favorites.some(f => f.id === msg.timestamp) ? "var(--color-ln-yellow)" : "white",
+                          border: "1px solid var(--color-ln-border)",
+                          boxShadow: "var(--shadow-sm)",
+                        }}
+                        title={favorites.some(f => f.id === msg.timestamp) ? "Remove from Saved Insights" : "Save to Insights"}
+                      >
+                        {favorites.some(f => f.id === msg.timestamp)
+                          ? <BookmarkCheck size={12} style={{ color: "var(--color-ln-navy)" }} />
+                          : <Bookmark size={12} style={{ color: "var(--color-ln-muted)" }} />}
+                      </button>
                     )}
                   </div>
                 </div>

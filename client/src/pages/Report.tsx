@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,16 @@ const DIMENSION_LABELS: Record<string, Record<string, string>> = {
     influence_stakeholder: "Influence & Stakeholder",
     narrative_visibility: "Narrative & Visibility",
     conversational_leadership: "Conversational Leadership",
+    strategic_clarity: "Strategic Clarity",
+    message_architecture: "Message Architecture",
+    gravitas_composure: "Gravitas & Composure",
+    executive_presence_signals: "Executive Presence Signals",
+    stakeholder_influence: "Stakeholder Influence",
+    political_intelligence: "Political Intelligence",
+    narrative_construction: "Narrative Construction",
+    executive_visibility: "Executive Visibility",
+    accountability_conversations: "Accountability Conversations",
+    psychological_safety_creation: "Psychological Safety Creation",
   },
   LII: {
     trust_capital: "Trust Capital",
@@ -46,6 +56,7 @@ const ZONE_COLORS: Record<string, string> = {
   capable_communicator: "#EAB308",
   executive_communicator: "#22C55E",
   elite_communicator: "#10B981",
+  high_performer: "#22C55E",
   atRisk: "#EF4444",
   developing: "#F97316",
   good: "#EAB308",
@@ -56,71 +67,258 @@ const ZONE_COLORS: Record<string, string> = {
   strategic: "#22C55E",
 };
 
-// PDF generation steps with realistic timing
+const NAVY = "#12345A";
+const YELLOW = "#F2B705";
+const IVORY = "#FAFAF7";
+const CHARCOAL = "#2D3748";
+
+// PDF generation steps
 const PDF_STEPS = [
-  { key: "narrative", label: "Generating Guide's narrative…", icon: Sparkles, duration: 4000 },
-  { key: "building",  label: "Building your report PDF…",    icon: FileText,  duration: 3000 },
-  { key: "uploading", label: "Uploading to secure storage…", icon: Upload,    duration: 2000 },
-  { key: "ready",     label: "Your report is ready!",        icon: CheckCircle, duration: 0 },
+  { key: "narrative", label: "Generating Guide's narrative…", icon: Sparkles, duration: 5000 },
+  { key: "building",  label: "Building your PDF…",            icon: FileText,  duration: 3000 },
+  { key: "uploading", label: "Finalising report…",            icon: Upload,    duration: 1500 },
+  { key: "ready",     label: "Your report is ready!",         icon: CheckCircle, duration: 0 },
 ];
+
+async function generateClientPdf(reportData: any, narrative: string): Promise<void> {
+  // Dynamically import jspdf to keep bundle lean
+  const { jsPDF } = await import("jspdf");
+
+  const moduleType = reportData.moduleType as string;
+  const dimLabels = DIMENSION_LABELS[moduleType] ?? {};
+  const dimScores = (reportData.dimensionScores ?? {}) as Record<string, number>;
+  const zoneColor = ZONE_COLORS[reportData.zone ?? ""] ?? "#22C55E";
+
+  const labeledDimensions = Object.entries(dimScores)
+    .filter(([k]) => dimLabels[k])
+    .sort(([, a], [, b]) => b - a)
+    .map(([k, v]) => ({
+      label: dimLabels[k] ?? k.replace(/_/g, " "),
+      score: moduleType === "LII" ? Math.round(((v - 1) / 4) * 100) : Math.round(v),
+    }));
+
+  const archetypeLabel = (reportData.archetype ?? "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+  const zoneLabel = (reportData.zone ?? "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+  const completedDate = new Date(reportData.createdAt).toLocaleDateString("en-IN", {
+    day: "numeric", month: "long", year: "numeric",
+  });
+
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const W = 210; // A4 width mm
+  let y = 0;
+
+  // ── Cover block ──────────────────────────────────────────────────────────────
+  doc.setFillColor(NAVY);
+  doc.rect(0, 0, W, 80, "F");
+
+  // LevelNext wordmark
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(255, 255, 255);
+  doc.text("LevelNext", 20, 22);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(242, 183, 5); // yellow
+  doc.text("THE LEADERSHIP INTELLIGENCE PLATFORM", 20, 29);
+
+  // Module label
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(242, 183, 5);
+  doc.text(`${MODULE_LABELS[moduleType] ?? moduleType} · Leadership Insight Report`.toUpperCase(), 20, 42);
+
+  // Participant name
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(255, 255, 255);
+  doc.text(reportData.participantName ?? "Leader", 20, 54);
+
+  // Role + date
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(200, 210, 225);
+  const roleDate = [reportData.participantRole, completedDate].filter(Boolean).join("  ·  ");
+  doc.text(roleDate, 20, 62);
+
+  // Edge circle
+  doc.setDrawColor(242, 183, 5);
+  doc.setLineWidth(1.5);
+  doc.circle(185, 40, 16, "S");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(242, 183, 5);
+  doc.text(String(Math.round(reportData.edgeScore ?? 0)), 185, 38, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(200, 210, 225);
+  doc.text("Edge", 185, 44, { align: "center" });
+
+  y = 90;
+
+  // ── Zone & Archetype ─────────────────────────────────────────────────────────
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(242, 183, 5);
+  doc.text("YOUR LEADERSHIP PROFILE", 20, y);
+  y += 7;
+
+  // Zone badge
+  const zoneRgb = hexToRgb(zoneColor);
+  doc.setFillColor(zoneRgb.r, zoneRgb.g, zoneRgb.b);
+  doc.roundedRect(20, y, 50, 7, 3, 3, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(255, 255, 255);
+  doc.text(zoneLabel, 45, y + 4.5, { align: "center" });
+  y += 11;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(NAVY);
+  doc.text(archetypeLabel, 20, y);
+  y += 16;
+
+  // ── Dimension Breakdown ───────────────────────────────────────────────────────
+  if (labeledDimensions.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(242, 183, 5);
+    doc.text("DIMENSION BREAKDOWN", 20, y);
+    y += 6;
+
+    for (const dim of labeledDimensions) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(CHARCOAL);
+      doc.text(dim.label, 20, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(NAVY);
+      doc.text(String(dim.score), 190, y, { align: "right" });
+
+      // Bar background
+      doc.setFillColor(226, 232, 240);
+      doc.roundedRect(20, y + 2, 160, 3, 1.5, 1.5, "F");
+
+      // Bar fill
+      const barW = Math.min(160, (dim.score / 100) * 160);
+      const barColor = dim.score >= 75 ? "#16a34a" : dim.score >= 55 ? YELLOW : dim.score >= 40 ? "#d97706" : "#dc2626";
+      const barRgb = hexToRgb(barColor);
+      doc.setFillColor(barRgb.r, barRgb.g, barRgb.b);
+      doc.roundedRect(20, y + 2, barW, 3, 1.5, 1.5, "F");
+
+      y += 11;
+    }
+    y += 4;
+  }
+
+  // ── Guide's Narrative ─────────────────────────────────────────────────────────
+  if (narrative) {
+    if (y > 220) { doc.addPage(); y = 20; }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(242, 183, 5);
+    doc.text("GUIDE'S ANALYSIS", 20, y);
+    y += 7;
+
+    const paragraphs = narrative.split(/\n\n+/).filter(Boolean);
+    for (const para of paragraphs) {
+      if (y > 260) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(CHARCOAL);
+      const lines = doc.splitTextToSize(para, 170) as string[];
+      doc.text(lines, 20, y);
+      y += lines.length * 5 + 5;
+    }
+  }
+
+  // ── Footer ────────────────────────────────────────────────────────────────────
+  const pageCount = doc.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setFillColor(NAVY);
+    doc.rect(0, 282, W, 15, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    doc.text("LevelNext — The Leadership Intelligence Platform", 20, 289);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(200, 210, 225);
+    doc.text("Copyright: Meta Results Pvt. Ltd., Bangalore, India  ·  reports@metaresults.com", 190, 289, { align: "right" });
+  }
+
+  const filename = `LevelNext_${moduleType}_${(reportData.participantName ?? "Report").replace(/\s+/g, "_")}.pdf`;
+  doc.save(filename);
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
+    : { r: 18, g: 52, b: 90 };
+}
 
 export default function Report() {
   const params = useParams<{ slug: string }>();
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [pdfDone, setPdfDone] = useState(false);
   const [pdfStep, setPdfStep] = useState(0);
-  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: report, isLoading } = trpc.report.bySlug.useQuery(
     { slug: params.slug ?? "" },
     { enabled: !!params.slug }
   );
 
-  // Advance through steps while generating
-  useEffect(() => {
-    if (!pdfGenerating) {
-      if (stepTimerRef.current) clearInterval(stepTimerRef.current);
-      return;
-    }
-    setPdfStep(0);
-    let current = 0;
-    const advance = () => {
-      current += 1;
-      // Stop at the second-to-last step ("uploading") — the last step fires on success
-      if (current < PDF_STEPS.length - 1) {
-        setPdfStep(current);
-        stepTimerRef.current = setTimeout(advance, PDF_STEPS[current]?.duration ?? 2000);
+  const generateNarrative = trpc.pdfReport.generateNarrative.useMutation({
+    onSuccess: async (data) => {
+      setPdfStep(2); // "Finalising report…"
+      try {
+        await generateClientPdf(data.report, data.narrative);
+        setPdfStep(3); // "Ready!"
+        setPdfDone(true);
+        toast.success("Your PDF has been downloaded.");
+      } catch {
+        toast.error("PDF generation failed. Please try again.");
+      } finally {
+        setTimeout(() => setPdfGenerating(false), 1000);
       }
-    };
-    stepTimerRef.current = setTimeout(advance, PDF_STEPS[0]?.duration ?? 4000);
-    return () => { if (stepTimerRef.current) clearTimeout(stepTimerRef.current); };
-  }, [pdfGenerating]);
-
-  const generatePdf = trpc.pdfReport.generate.useMutation({
-    onSuccess: (data) => {
-      setPdfStep(PDF_STEPS.length - 1); // jump to "ready"
-      setPdfUrl(data.pdfUrl);
-      setTimeout(() => {
-        setPdfGenerating(false);
-        window.open(data.pdfUrl, "_blank");
-        toast.success("Your report PDF is ready.");
-      }, 800);
     },
     onError: () => {
       setPdfGenerating(false);
       setPdfStep(0);
-      toast.error("PDF generation failed. Please try again.");
+      toast.error("Failed to generate narrative. Please try again.");
     },
   });
 
   const handleDownload = () => {
-    if (pdfUrl) {
-      window.open(pdfUrl, "_blank");
-      return;
-    }
     if (!report?.id) return;
     setPdfGenerating(true);
-    generatePdf.mutate({ reportId: report.id });
+    setPdfDone(false);
+    setPdfStep(0);
+
+    // Advance through visual steps while waiting for LLM
+    let current = 0;
+    const advance = () => {
+      current += 1;
+      if (current < 2) { // stop at step 1 ("Building your PDF…") — step 2 fires on success
+        setPdfStep(current);
+        stepTimerRef.current = setTimeout(advance, PDF_STEPS[current]?.duration ?? 3000);
+      }
+    };
+    stepTimerRef.current = setTimeout(advance, PDF_STEPS[0]?.duration ?? 5000);
+
+    generateNarrative.mutate({ reportId: report.id });
   };
 
   if (isLoading) {
@@ -147,11 +345,29 @@ export default function Report() {
 
   const moduleType = report.moduleType as string;
   const dimensionScores = (report.dimensionScores ?? null) as Record<string, number> | null;
-  const llmAnalysisText = report.llmAnalysis != null ? String(report.llmAnalysis) : null;
+  const llmAnalysis = report.llmAnalysis as any;
+  const llmSummary: string | null =
+    llmAnalysis && typeof llmAnalysis === "object" && "summary" in llmAnalysis
+      ? String(llmAnalysis.summary)
+      : typeof llmAnalysis === "string"
+      ? llmAnalysis
+      : null;
+  const llmStrengths: string[] =
+    llmAnalysis && typeof llmAnalysis === "object" && Array.isArray(llmAnalysis.strengths)
+      ? llmAnalysis.strengths
+      : [];
+  const llmGrowthEdges: string[] =
+    llmAnalysis && typeof llmAnalysis === "object" && Array.isArray(llmAnalysis.growthEdges)
+      ? llmAnalysis.growthEdges
+      : [];
+  const llmThirtyDay: string | null =
+    llmAnalysis && typeof llmAnalysis === "object" && "thirtyDayPlan" in llmAnalysis
+      ? String(llmAnalysis.thirtyDayPlan)
+      : null;
+
   const zoneColor = ZONE_COLORS[report.zone ?? ""] ?? "#22C55E";
   const dimLabels = DIMENSION_LABELS[moduleType] ?? {};
 
-  // Filter and label dimension scores
   const labeledDimensions = dimensionScores
     ? Object.entries(dimensionScores)
         .filter(([k]) => dimLabels[k])
@@ -170,6 +386,24 @@ export default function Report() {
     ?.replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
+  const PdfButton = ({ style }: { style?: React.CSSProperties }) => (
+    <Button
+      onClick={handleDownload}
+      disabled={pdfGenerating}
+      size="sm"
+      className="flex items-center gap-2 font-semibold"
+      style={{ minWidth: 150, ...style }}
+    >
+      {pdfGenerating ? (
+        <><Loader2 size={14} className="animate-spin" /> {PDF_STEPS[pdfStep]?.label ?? "Working…"}</>
+      ) : pdfDone ? (
+        <><CheckCircle size={14} /> Download Again</>
+      ) : (
+        <><Download size={14} /> Export PDF</>
+      )}
+    </Button>
+  );
+
   return (
     <div className="min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
       {/* Header */}
@@ -186,24 +420,46 @@ export default function Report() {
           <p className="text-sm font-bold" style={{ color: "var(--color-ln-navy)" }}>LevelNext</p>
           <p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>The Leadership Intelligence Platform</p>
         </div>
-        <Button
-          onClick={handleDownload}
-          disabled={pdfGenerating}
-          size="sm"
-          className="flex items-center gap-2 font-semibold"
-          style={{ background: pdfUrl ? "#16a34a" : "var(--color-ln-navy)", color: "white", minWidth: 140 }}
-        >
-          {pdfGenerating ? (
-            <><Loader2 size={14} className="animate-spin" /> {PDF_STEPS[pdfStep]?.label ?? "Working…"}</>
-          ) : pdfUrl ? (
-            <><CheckCircle size={14} /> Download PDF</>
-          ) : (
-            <><Download size={14} /> Export PDF</>
-          )}
-        </Button>
+        <PdfButton style={{ background: pdfDone ? "#16a34a" : "var(--color-ln-navy)", color: "white" }} />
       </header>
 
-      <div className="max-w-3xl mx-auto px-6 py-10 animate-fade-in space-y-6">
+      {/* PDF Step Progress Bar */}
+      {pdfGenerating && (
+        <div
+          className="px-6 py-3 flex items-center gap-3 border-b"
+          style={{ background: "var(--color-ln-navy)", borderColor: "rgba(255,255,255,0.1)" }}
+        >
+          {PDF_STEPS.map((step, i) => {
+            const StepIcon = step.icon;
+            const isDone = i < pdfStep;
+            const isActive = i === pdfStep;
+            return (
+              <div key={step.key} className="flex items-center gap-2">
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
+                  style={{
+                    background: isDone ? "#16a34a" : isActive ? "var(--color-ln-yellow)" : "rgba(255,255,255,0.1)",
+                    color: isDone || isActive ? NAVY : "rgba(255,255,255,0.4)",
+                  }}
+                >
+                  {isDone ? <CheckCircle size={12} /> : isActive ? <Loader2 size={12} className="animate-spin" /> : <StepIcon size={12} />}
+                </div>
+                <span
+                  className="text-xs hidden sm:block"
+                  style={{ color: isDone ? "#86efac" : isActive ? "var(--color-ln-yellow)" : "rgba(255,255,255,0.3)" }}
+                >
+                  {step.label.replace("…", "")}
+                </span>
+                {i < PDF_STEPS.length - 1 && (
+                  <div className="w-4 h-px mx-1 hidden sm:block" style={{ background: isDone ? "#16a34a" : "rgba(255,255,255,0.15)" }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="max-w-3xl mx-auto px-6 py-10 space-y-6">
 
         {/* Cover Card */}
         <div className="rounded-2xl p-8 text-center" style={{ background: "var(--color-ln-navy)" }}>
@@ -214,7 +470,6 @@ export default function Report() {
             {new Date(report.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
           </p>
 
-          {/* Edge circle */}
           <div
             className="w-28 h-28 rounded-full flex flex-col items-center justify-center border-4 mx-auto mb-5"
             style={{ borderColor: "var(--color-ln-yellow)" }}
@@ -225,7 +480,6 @@ export default function Report() {
             <span className="text-xs mt-1" style={{ color: "oklch(65% 0.02 248.6)" }}>Edge</span>
           </div>
 
-          {/* Zone badge */}
           {zoneLabel && (
             <div
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-3"
@@ -244,6 +498,45 @@ export default function Report() {
             {report.participantRole ? ` · ${report.participantRole}` : ""}
           </p>
         </div>
+
+        {/* Strengths & Growth Edges */}
+        {(llmStrengths.length > 0 || llmGrowthEdges.length > 0) && (
+          <div
+            className="rounded-2xl p-6 grid grid-cols-1 sm:grid-cols-2 gap-6"
+            style={{ background: "white", border: "1px solid var(--color-ln-border)" }}
+          >
+            {llmStrengths.length > 0 && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--color-ln-yellow)" }}>
+                  Strengths
+                </p>
+                <ul className="space-y-2">
+                  {llmStrengths.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--color-ln-text)" }}>
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#16a34a" }} />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {llmGrowthEdges.length > 0 && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--color-ln-yellow)" }}>
+                  Growth Edges
+                </p>
+                <ul className="space-y-2">
+                  {llmGrowthEdges.map((g, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--color-ln-text)" }}>
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--color-ln-yellow)" }} />
+                      {g}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Dimension Breakdown */}
         {labeledDimensions.length > 0 && (
@@ -279,8 +572,8 @@ export default function Report() {
           </div>
         )}
 
-        {/* LLM Analysis */}
-        {llmAnalysisText && (
+        {/* Guide's Analysis (from seeded llmAnalysis) */}
+        {llmSummary && (
           <div
             className="rounded-2xl p-6"
             style={{ background: "white", border: "1px solid var(--color-ln-border)" }}
@@ -288,79 +581,34 @@ export default function Report() {
             <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--color-ln-yellow)" }}>
               Guide's Analysis
             </p>
-            <div className="text-sm leading-relaxed space-y-3" style={{ color: "var(--color-ln-text)" }}>
-              {llmAnalysisText.split("\n\n").map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
-            </div>
+            <p className="text-sm leading-relaxed" style={{ color: "var(--color-ln-text)" }}>{llmSummary}</p>
+          </div>
+        )}
+
+        {/* 30-Day Plan */}
+        {llmThirtyDay && (
+          <div
+            className="rounded-2xl p-6"
+            style={{ background: "var(--color-ln-ivory)", border: `2px solid var(--color-ln-yellow)` }}
+          >
+            <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--color-ln-yellow)" }}>
+              Your 30-Day Leadership Focus
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: "var(--color-ln-navy)" }}>{llmThirtyDay}</p>
           </div>
         )}
 
         {/* PDF Export CTA */}
-        <div
-          className="rounded-2xl p-6"
-          style={{ background: "var(--color-ln-navy)" }}
-        >
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-0">
+        <div className="rounded-2xl p-6" style={{ background: "var(--color-ln-navy)" }}>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <p className="text-white font-semibold mb-1">Export this report as a PDF</p>
               <p className="text-xs" style={{ color: "oklch(65% 0.02 248.6)" }}>
                 Includes Guide's coaching narrative. Branded by LevelNext · Meta Results.
               </p>
             </div>
-            <Button
-              onClick={handleDownload}
-              disabled={pdfGenerating}
-              className="flex items-center gap-2 font-semibold flex-shrink-0"
-              style={{ background: pdfUrl ? "#16a34a" : "var(--color-ln-yellow)", color: "var(--color-ln-navy)", minWidth: 160 }}
-            >
-              {pdfGenerating ? (
-                <><Loader2 size={14} className="animate-spin" /> {PDF_STEPS[pdfStep]?.label ?? "Working…"}</>
-              ) : pdfUrl ? (
-                <><CheckCircle size={14} /> Download PDF</>
-              ) : (
-                <><Download size={14} /> Export PDF</>
-              )}
-            </Button>
+            <PdfButton style={{ background: pdfDone ? "#16a34a" : "var(--color-ln-yellow)", color: NAVY }} />
           </div>
-
-          {/* Step progress indicator */}
-          {pdfGenerating && (
-            <div className="mt-5 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-              <div className="flex items-center gap-3">
-                {PDF_STEPS.map((step, i) => {
-                  const StepIcon = step.icon;
-                  const isDone = i < pdfStep;
-                  const isActive = i === pdfStep;
-                  return (
-                    <div key={step.key} className="flex items-center gap-2">
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
-                        style={{
-                          background: isDone ? "#16a34a" : isActive ? "var(--color-ln-yellow)" : "rgba(255,255,255,0.1)",
-                          color: isDone || isActive ? "var(--color-ln-navy)" : "rgba(255,255,255,0.4)",
-                        }}
-                      >
-                        {isDone ? <CheckCircle size={14} /> : isActive ? <Loader2 size={14} className="animate-spin" /> : <StepIcon size={14} />}
-                      </div>
-                      <span
-                        className="text-xs hidden sm:block"
-                        style={{ color: isDone ? "#86efac" : isActive ? "var(--color-ln-yellow)" : "rgba(255,255,255,0.3)" }}
-                      >
-                        {step.label.replace("…", "")}
-                      </span>
-                      {i < PDF_STEPS.length - 1 && (
-                        <div
-                          className="w-4 h-px mx-1 hidden sm:block"
-                          style={{ background: isDone ? "#16a34a" : "rgba(255,255,255,0.15)" }}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer */}
