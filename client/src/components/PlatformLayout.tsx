@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { label: "Home", icon: Home, href: "/home" },
   { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
   { label: "Guide", icon: MessageSquare, href: "/guide" },
+  { label: "AI Practice Coach", icon: Zap, href: "/practice" },
   { label: "Insights", icon: Lightbulb, href: "/insights" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
   { label: "Progress", icon: BarChart3, href: "/progress" },

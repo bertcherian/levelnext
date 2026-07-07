@@ -208,3 +208,72 @@ export type GuideMessage = {
   content: string;
   timestamp: string;
 };
+
+// ─── Practice Coach Types ─────────────────────────────────────────────────────
+export type PracticeScenario = {
+  conversationType: string;
+  userRole: string;
+  avatarRole: string;
+  relationship: string;
+  context: string;
+  stakes: string;
+  desiredOutcome: string;
+  avatarPersonality: string;
+  difficultyLevel: "Easy" | "Medium" | "Hard" | "Executive";
+  successCriteria: string;
+  category: string;
+};
+
+export type PracticeMessage = {
+  role: "user" | "avatar" | "coach";
+  content: string;
+  timestamp: string;
+};
+
+export type DimensionScore = {
+  dimension: string;
+  score: number; // 1-5
+  comment: string;
+};
+
+export type PracticeFeedback = {
+  overallScore: number; // 0-100
+  dimensionScores: DimensionScore[];
+  whatWorked: string;
+  whatDidNotWork: string;
+  missedOpportunities: string;
+  strongerPhrases: string[];
+  whereConversationShifted: string;
+  whatOtherPersonHeard: string;
+  oneBehaviourToImprove: string;
+  recommendedNextAttempt: string;
+  suggestedRealWorldAction: string;
+};
+
+// ─── Practice Sessions ────────────────────────────────────────────────────────
+export const practiceSessions = mysqlTable("practice_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  issueText: text("issueText").notNull(),
+  scenario: json("scenario").$type<PracticeScenario>(),
+  coachingTranscript: json("coachingTranscript").$type<PracticeMessage[]>(),
+  status: varchar("status", { length: 50 }).default("setup").notNull(), // setup | coaching | roleplay | feedback | complete
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Practice Attempts ────────────────────────────────────────────────────────
+export const practiceAttempts = mysqlTable("practice_attempts", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull().references(() => practiceSessions.id),
+  userId: int("userId").notNull().references(() => users.id),
+  attemptNumber: int("attemptNumber").default(1).notNull(),
+  transcript: json("transcript").$type<PracticeMessage[]>().notNull(),
+  feedback: json("feedback").$type<PracticeFeedback>(),
+  overallScore: int("overallScore"),
+  userReflection: text("userReflection"),
+  actionCommitment: text("actionCommitment"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});

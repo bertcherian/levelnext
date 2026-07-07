@@ -11,6 +11,7 @@ import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import MyEdge from "./pages/MyEdge";
 import Guide from "./pages/Guide";
+import PracticeCoach from "./pages/PracticeCoach";
 import Insights from "./pages/Insights";
 import Diagnostics from "./pages/Diagnostics";
 import Progress from "./pages/Progress";
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/home" component={Home} />
       <Route path="/my-edge" component={MyEdge} />
       <Route path="/guide" component={Guide} />
+      <Route path="/practice" component={PracticeCoach} />
       <Route path="/insights" component={Insights} />
       <Route path="/diagnostics" component={Diagnostics} />
       <Route path="/diagnostics/:moduleType" component={Assessment} />

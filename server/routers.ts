@@ -9,6 +9,7 @@ import { reportRouter } from "./routers/report";
 import { guideRouter } from "./routers/guide";
 import { leadershipGraphRouter } from "./routers/leadershipGraph";
 import { missionRouter } from "./routers/mission";
+import { practiceRouter } from "./routers/practice";
 
 export const appRouter = router({
   system: systemRouter,
@@ -27,6 +28,7 @@ export const appRouter = router({
   guide: guideRouter,
   leadershipGraph: leadershipGraphRouter,
   mission: missionRouter,
+  practice: practiceRouter,
 });
 
 export type AppRouter = typeof appRouter;
