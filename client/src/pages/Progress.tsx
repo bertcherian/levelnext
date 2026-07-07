@@ -17,7 +17,7 @@ const MODULE_COLORS: Record<string, string> = { ECI: "#12345A", LII: "#F2B705", 
 export default function Progress() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
-  const { data: graph, isLoading: graphLoading } = trpc.leadershipGraph.get.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: graph, isLoading: graphLoading } = trpc.leadershipGraph.get.useQuery(undefined, { enabled: isAuthenticated, staleTime: 0, refetchOnMount: true });
   const { data: reports, isLoading: reportsLoading } = trpc.report.myReports.useQuery(undefined, { enabled: isAuthenticated });
 
   useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [loading, isAuthenticated, navigate]);
@@ -107,7 +107,9 @@ export default function Progress() {
                   {Object.entries(graph.archetypes).map(([mod, archetype]) => (
                     <div key={mod} className="rounded-xl p-4" style={{ background: "var(--color-ln-navy)" }}>
                       <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "var(--color-ln-yellow)" }}>{mod}</p>
-                      <p className="text-sm font-semibold text-white">{archetype as string}</p>
+                      <p className="text-sm font-semibold text-white">
+                        {(graph?.modules?.[mod as "ECI" | "LII" | "GCC"])?.archetypeLabel ?? (archetype as string).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                      </p>
                       <p className="text-xs mt-1" style={{ color: "oklch(70% 0.02 248.6)" }}>{MODULE_LABELS[mod]}</p>
                     </div>
                   ))}

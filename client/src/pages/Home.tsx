@@ -28,7 +28,7 @@ export default function Home() {
   const { data: tenant, isLoading: tenantLoading } = trpc.tenant.myTenant.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const { data: graph } = trpc.leadershipGraph.get.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: graph } = trpc.leadershipGraph.get.useQuery(undefined, { enabled: isAuthenticated, staleTime: 0, refetchOnMount: true });
   const { data: missions, refetch: refetchMissions } = trpc.mission.today.useQuery(undefined, { enabled: isAuthenticated });
 
   const generateMission = trpc.mission.generate.useMutation({
@@ -252,7 +252,7 @@ export default function Home() {
                         {MODULE_LABELS[mod]}
                       </p>
                       <p className="text-xs mt-1" style={{ color: done ? "oklch(70% 0.02 248.6)" : "var(--color-ln-muted)" }}>
-                        {done ? `${graph?.archetypes?.[mod] ?? "Complete"}` : "Tap to begin →"}
+                        {done ? (graph?.modules?.[mod as "ECI" | "LII" | "GCC"])?.archetypeLabel ?? (graph?.archetypes?.[mod] ?? "Complete") : "Tap to begin →"}
                       </p>
                     </div>
                   </Link>

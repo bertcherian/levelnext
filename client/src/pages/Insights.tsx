@@ -72,7 +72,9 @@ export default function Insights() {
                           {r.archetype && (
                             <div>
                               <p className="text-xs font-medium uppercase tracking-wide mb-0.5" style={{ color: "var(--color-ln-muted)" }}>Archetype</p>
-                              <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>{r.archetype}</p>
+                              <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+                                {r.archetype.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                              </p>
                             </div>
                           )}
                           {topDim && (

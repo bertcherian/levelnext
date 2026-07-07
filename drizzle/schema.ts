@@ -161,6 +161,45 @@ export type LeadershipGraph = {
   completedModules?: ("ECI" | "LII" | "GCC")[];
   // Last updated timestamp
   lastUpdated?: string;
+  // Full per-module data (stored after each diagnostic completion)
+  modules?: {
+    ECI?: {
+      edgeScore?: number;
+      zone?: string;
+      zoneLabel?: string;
+      archetype?: string;
+      archetypeLabel?: string;
+      archetypeDescription?: string;
+      archetypeStrengths?: string[];
+      archetypeRisks?: string[];
+      dimensionScores?: Record<string, number>;
+      completedAt?: string;
+    };
+    LII?: {
+      edgeScore?: number;
+      zone?: string;
+      zoneLabel?: string;
+      archetype?: string;
+      archetypeLabel?: string;
+      archetypeTagline?: string;
+      strengths?: string[];
+      growthEdges?: string[];
+      dimensionScores?: Record<string, number>;
+      completedAt?: string;
+    };
+    GCC?: {
+      edgeScore?: number;
+      zone?: string;
+      zoneLabel?: string;
+      archetype?: string;
+      archetypeLabel?: string;
+      archetypeDescription?: string;
+      archetypeStrengths?: string[];
+      archetypeRisks?: string[];
+      dimensionScores?: Record<string, number>;
+      completedAt?: string;
+    };
+  };
 };
 
 // ─── Guide Message Type ───────────────────────────────────────────────────────

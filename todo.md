@@ -110,9 +110,19 @@
 - [x] Guide: fetch latest report and inject specific dimension scores into follow-up prompt suggestions
 
 ### Phase 17: Mock Data, PDF Update, Guide Favorites
-- [ ] Seed mock ECI diagnostic report for Bert with realistic dimension scores and archetype
-- [ ] Update Leadership Graph for Bert with ECI module data
-- [ ] Update PDF export feature (Node-compatible, branded, Meta Results footer)
-- [ ] Add Save to Favorites button to Guide chat messages
-- [ ] Build favorites storage (DB table + tRPC procedures)
-- [ ] Build Saved Insights panel in Guide home view
+- [x] Seed mock ECI diagnostic report for Bert with realistic dimension scores and archetype
+- [x] Update Leadership Graph for Bert with ECI module data
+- [x] Update PDF export feature (Node-compatible, client-side jspdf + html2canvas, branded)
+- [x] Add Save to Favorites button to Guide chat messages (bookmark icon on hover)
+- [x] Build favorites storage (localStorage, max 20 saved, persists across sessions)
+- [x] Build Saved Insights panel in Guide home view (shows up to 3 with delete, count badge)
+
+### Phase 18: Mock Data Population & Composite Edge Ring
+- [x] Seed mock LII diagnostic report for Bert (Strategic Influencer, Edge 82)
+- [x] Update Leadership Graph with LII module data (completedModules: ECI + LII)
+- [x] Update composite Edge ring to reflect two completed modules (compositeEdge: 80)
+- [x] Seed mock GCC diagnostic report for Bert (Strategic Partner, Edge 76)
+- [x] Update Leadership Graph with all three modules (compositeEdge: 79)
+- [x] Fix archetype labels to show human-readable names across all pages (Insights, Progress, Home, MyEdge)
+- [x] Add modules property to LeadershipGraph TypeScript type
+- [x] Add staleTime: 0 to leadershipGraph.get queries for fresh data on mount

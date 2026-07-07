@@ -76,7 +76,7 @@ export default function Guide() {
 
   const { data: graphData } = trpc.leadershipGraph.get.useQuery(
     undefined,
-    { enabled: isAuthenticated }
+    { enabled: isAuthenticated, staleTime: 0, refetchOnMount: true }
   );
 
   const sendMessage = trpc.guide.sendMessage.useMutation({
