@@ -137,8 +137,8 @@ export default function PlatformLayout({ children, title }: PlatformLayoutProps)
               const Icon = item.icon;
               return (
                 <li key={item.href}>
-                  <Link href={item.href}>
-                    <a
+                  <Link href={item.href} onClick={() => setSidebarOpen(false)}>
+                    <div
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
                         isActive
@@ -150,12 +150,11 @@ export default function PlatformLayout({ children, title }: PlatformLayoutProps)
                         borderLeftColor: "var(--color-ln-yellow)",
                         color: "var(--color-ln-yellow)",
                       } : {}}
-                      onClick={() => setSidebarOpen(false)}
                     >
                       <Icon size={18} className={cn("flex-shrink-0", isActive ? "" : "group-hover:scale-105 transition-transform")} />
                       <span>{item.label}</span>
                       {isActive && <ChevronRight size={14} className="ml-auto opacity-60" />}
-                    </a>
+                    </div>
                   </Link>
                 </li>
               );
