@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -2398,148 +2399,129 @@ export default function PracticeCoach() {
     setFeedback(null);
   };
 
-  if (screen === 'home') {
-    return (
-      <HomeScreen
-        onCoachFirst={(iss) => { setIssue(iss); setScreen('coaching'); }}
-        onSimulateFirst={(iss) => { setIssue(iss); setScreen('scenario-setup'); }}
-        onBeforeMeeting={() => setScreen('before-meeting-form')}
-        onAfterMeeting={() => setScreen('after-meeting-form')}
-        onSayItBetter={() => setScreen('say-it-better')}
-        onScriptBuilder={() => setScreen('script-builder')}
-        onGrowthProfile={() => setScreen('growth-profile')}
-        onHistory={() => setScreen('history')}
-      />
-    );
-  }
-
-  if (screen === 'coaching') {
-    return (
-      <CoachingScreen
-        issue={issue}
-        onBack={goHome}
-        onProceedToSimulation={(sid) => { setSessionId(sid); setScreen('scenario-setup'); }}
-      />
-    );
-  }
-
-  if (screen === 'scenario-setup') {
-    // If coming from simulate-first, create a session first
-    if (!sessionId) {
+  function renderScreen() {
+    if (screen === 'home') {
       return (
-        <div className="max-w-2xl mx-auto px-4 py-8">
-          <BackButton onBack={goHome} />
-          <SimulateFirstSetup
-            issue={issue}
-            onSessionCreated={(sid) => setSessionId(sid)}
-          />
-        </div>
+        <HomeScreen
+          onCoachFirst={(iss) => { setIssue(iss); setScreen('coaching'); }}
+          onSimulateFirst={(iss) => { setIssue(iss); setScreen('scenario-setup'); }}
+          onBeforeMeeting={() => setScreen('before-meeting-form')}
+          onAfterMeeting={() => setScreen('after-meeting-form')}
+          onSayItBetter={() => setScreen('say-it-better')}
+          onScriptBuilder={() => setScreen('script-builder')}
+          onGrowthProfile={() => setScreen('growth-profile')}
+          onHistory={() => setScreen('history')}
+        />
       );
     }
-    return (
-      <ScenarioSetupScreen
-        sessionId={sessionId}
-        onBack={goHome}
-        onStart={(sc) => { setScenario(sc); setScreen('roleplay'); }}
-      />
-    );
+    if (screen === 'coaching') {
+      return (
+        <CoachingScreen
+          issue={issue}
+          onBack={goHome}
+          onProceedToSimulation={(sid) => { setSessionId(sid); setScreen('scenario-setup'); }}
+        />
+      );
+    }
+    if (screen === 'scenario-setup') {
+      if (!sessionId) {
+        return (
+          <div className="max-w-2xl mx-auto px-4 py-8">
+            <BackButton onBack={goHome} />
+            <SimulateFirstSetup
+              issue={issue}
+              onSessionCreated={(sid) => setSessionId(sid)}
+            />
+          </div>
+        );
+      }
+      return (
+        <ScenarioSetupScreen
+          sessionId={sessionId}
+          onBack={goHome}
+          onStart={(sc) => { setScenario(sc); setScreen('roleplay'); }}
+        />
+      );
+    }
+    if (screen === 'roleplay' && sessionId && scenario) {
+      return (
+        <RolePlayScreen
+          sessionId={sessionId}
+          scenario={scenario}
+          onBack={() => setScreen('scenario-setup')}
+          onFeedback={(fb, score, aid) => { setFeedback({ feedback: fb, score, attemptId: aid }); setScreen('feedback'); }}
+        />
+      );
+    }
+    if (screen === 'feedback' && feedback && sessionId) {
+      return (
+        <FeedbackScreen
+          feedback={feedback.feedback}
+          score={feedback.score}
+          sessionId={sessionId}
+          attemptId={feedback.attemptId}
+          onRetry={() => setScreen('scenario-setup')}
+          onHome={goHome}
+        />
+      );
+    }
+    if (screen === 'before-meeting-form') {
+      return (
+        <BeforeMeetingFormScreen
+          onBack={goHome}
+          onBriefGenerated={(briefId, brief) => { setBriefData({ briefId, brief }); setScreen('before-meeting-brief'); }}
+        />
+      );
+    }
+    if (screen === 'before-meeting-brief' && briefData) {
+      return (
+        <BeforeMeetingBriefScreen
+          briefId={briefData.briefId}
+          brief={briefData.brief}
+          onBack={() => setScreen('before-meeting-form')}
+          onPractice={(iss) => { setIssue(iss); setScreen('scenario-setup'); }}
+        />
+      );
+    }
+    if (screen === 'after-meeting-form') {
+      return (
+        <AfterMeetingFormScreen
+          onBack={goHome}
+          onDebriefGenerated={(debriefId, report) => { setDebriefData({ debriefId, report }); setScreen('after-meeting-debrief'); }}
+        />
+      );
+    }
+    if (screen === 'after-meeting-debrief' && debriefData) {
+      return (
+        <AfterMeetingDebriefScreen
+          report={debriefData.report}
+          onBack={() => setScreen('after-meeting-form')}
+          onPractice={(iss) => { setIssue(iss); setScreen('scenario-setup'); }}
+        />
+      );
+    }
+    if (screen === 'say-it-better') return <SayItBetterScreen onBack={goHome} />;
+    if (screen === 'script-builder') return <ScriptBuilderScreen onBack={goHome} />;
+    if (screen === 'growth-profile') {
+      return (
+        <GrowthProfileScreen
+          onBack={goHome}
+          onCoachBrief={() => setScreen('coach-brief')}
+          onPrivacy={() => setScreen('privacy-settings')}
+        />
+      );
+    }
+    if (screen === 'coach-brief') return <CoachBriefScreen onBack={() => setScreen('growth-profile')} />;
+    if (screen === 'privacy-settings') return <PrivacySettingsScreen onBack={() => setScreen('growth-profile')} />;
+    if (screen === 'history') return <HistoryScreen onBack={goHome} />;
+    return null;
   }
 
-  if (screen === 'roleplay' && sessionId && scenario) {
-    return (
-      <RolePlayScreen
-        sessionId={sessionId}
-        scenario={scenario}
-        onBack={() => setScreen('scenario-setup')}
-        onFeedback={(fb, score, aid) => { setFeedback({ feedback: fb, score, attemptId: aid }); setScreen('feedback'); }}
-      />
-    );
-  }
-
-  if (screen === 'feedback' && feedback && sessionId) {
-    return (
-      <FeedbackScreen
-        feedback={feedback.feedback}
-        score={feedback.score}
-        sessionId={sessionId}
-        attemptId={feedback.attemptId}
-        onRetry={() => setScreen('scenario-setup')}
-        onHome={goHome}
-      />
-    );
-  }
-
-  if (screen === 'before-meeting-form') {
-    return (
-      <BeforeMeetingFormScreen
-        onBack={goHome}
-        onBriefGenerated={(briefId, brief) => { setBriefData({ briefId, brief }); setScreen('before-meeting-brief'); }}
-      />
-    );
-  }
-
-  if (screen === 'before-meeting-brief' && briefData) {
-    return (
-      <BeforeMeetingBriefScreen
-        briefId={briefData.briefId}
-        brief={briefData.brief}
-        onBack={() => setScreen('before-meeting-form')}
-        onPractice={(iss) => { setIssue(iss); setScreen('scenario-setup'); }}
-      />
-    );
-  }
-
-  if (screen === 'after-meeting-form') {
-    return (
-      <AfterMeetingFormScreen
-        onBack={goHome
-}
-        onDebriefGenerated={(debriefId, report) => { setDebriefData({ debriefId, report }); setScreen('after-meeting-debrief'); }}
-      />
-    );
-  }
-
-  if (screen === 'after-meeting-debrief' && debriefData) {
-    return (
-      <AfterMeetingDebriefScreen
-        report={debriefData.report}
-        onBack={() => setScreen('after-meeting-form')}
-        onPractice={(iss) => { setIssue(iss); setScreen('scenario-setup'); }}
-      />
-    );
-  }
-
-  if (screen === 'say-it-better') {
-    return <SayItBetterScreen onBack={goHome} />;
-  }
-
-  if (screen === 'script-builder') {
-    return <ScriptBuilderScreen onBack={goHome} />;
-  }
-
-  if (screen === 'growth-profile') {
-    return (
-      <GrowthProfileScreen
-        onBack={goHome}
-        onCoachBrief={() => setScreen('coach-brief')}
-        onPrivacy={() => setScreen('privacy-settings')}
-      />
-    );
-  }
-
-  if (screen === 'coach-brief') {
-    return <CoachBriefScreen onBack={() => setScreen('growth-profile')} />;
-  }
-
-  if (screen === 'privacy-settings') {
-    return <PrivacySettingsScreen onBack={() => setScreen('growth-profile')} />;
-  }
-
-  if (screen === 'history') {
-    return <HistoryScreen onBack={goHome} />;
-  }
-
-  return null;
+  return (
+    <PlatformLayout title="AI Practice Coach">
+      {renderScreen()}
+    </PlatformLayout>
+  );
 }
 
 // ── Simulate First Setup ──────────────────────────────────────────────────────
