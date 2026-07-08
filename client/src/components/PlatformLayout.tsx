@@ -45,6 +45,9 @@ export default function PlatformLayout({ children, title }: PlatformLayoutProps)
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Full URL including query params for active state matching
+  const fullLocation = location + (typeof window !== 'undefined' ? window.location.search : '');
+
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
       logout();
@@ -133,7 +136,14 @@ export default function PlatformLayout({ children, title }: PlatformLayoutProps)
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-0.5">
             {NAV_ITEMS.map((item) => {
-              const isActive = location === item.href || location.startsWith(item.href + "/");
+              // For items with query params (e.g. /practice?screen=growth-profile),
+              // match against the full URL; for plain paths, match pathname only
+              const itemHasQuery = item.href.includes('?');
+              const isActive = itemHasQuery
+                ? fullLocation === item.href
+                : (location === item.href || location.startsWith(item.href + '/')) &&
+                  // Ensure /practice doesn't stay active when growth-profile is selected
+                  !(item.href === '/practice' && fullLocation.includes('screen=growth-profile'));
               const Icon = item.icon;
               return (
                 <li key={item.href}>
