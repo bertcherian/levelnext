@@ -305,22 +305,13 @@ function HomeScreen({
             <Zap className="w-5 h-5 text-[var(--color-ln-gold)]" />
             <h1 className="text-xl font-bold text-[var(--color-ln-navy)]">AI Practice Coach</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onGrowthProfile}
-              className="flex items-center gap-1.5 text-xs text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
-            >
-              <TrendingUp className="w-3.5 h-3.5" />
-              Growth Profile
-            </button>
-            <button
-              onClick={onHistory}
-              className="flex items-center gap-1.5 text-xs text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
-            >
-              <History className="w-3.5 h-3.5" />
-              History
-            </button>
-          </div>
+          <button
+            onClick={onHistory}
+            className="flex items-center gap-1.5 text-xs text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
+          >
+            <History className="w-3.5 h-3.5" />
+            History
+          </button>
         </div>
         <p className="text-sm text-[var(--color-ln-navy)]/60">
           Your private leadership practice space. Everything here is confidential.
