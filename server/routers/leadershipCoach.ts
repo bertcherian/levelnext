@@ -764,7 +764,9 @@ Identify the most important blind spot. Return ONLY valid JSON:
     }),
 
   // ── Diagnostic-Based Recommendations ─────────────────────────────────────
-  refreshRecommendations: protectedProcedure.mutation(async ({ ctx }) => {
+  refreshRecommendations: protectedProcedure
+    .input(z.object({ topic: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) return [];
     const leaderCtx = await getLeaderContext(ctx.user.id);
@@ -776,11 +778,10 @@ Identify the most important blind spot. Return ONLY valid JSON:
       .sort(([, a], [, b]) => a - b)
       .map(([k, v]) => `${MODULE_FULL_NAMES[k] ?? k} (${v}/100)`)
       .join(', ');
-    const prompt = `You are an expert executive leadership coach. Generate fresh, varied practice scenario suggestions for a leader.${contextPrompt}
-
+        const topicLine = input.topic ? `\n\nTopic Filter: The user has selected "${input.topic}" as their focus area. Prioritise scenarios related to this topic across all recommendation groups.` : '';
+    const prompt = `You are an expert executive leadership coach. Generate fresh, varied practice scenario suggestions for a leader.${contextPrompt}${topicLine}
 Focus modules (lowest scores first): ${focusModules || 'All modules'}
-
-Generate 3 recommendation groups, one per focus module. Each group should have 3 fresh, specific, real-world practice scenarios that are different from generic examples. Return ONLY valid JSON:
+Generate 3 recommendation groups, one per focus module. Each group should have 3 fresh, specific, real-world practice scenarios${input.topic ? ` related to the topic "${input.topic}"` : ''} that are different from generic examples. Return ONLY valid JSON:
 [
   {
     "module": "Module name",

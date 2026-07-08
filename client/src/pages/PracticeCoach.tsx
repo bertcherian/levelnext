@@ -201,6 +201,26 @@ function HomeScreen({
 }) {
   const [issue, setIssue] = useState("");
   const [showAllChips, setShowAllChips] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState<string>("");
+  const [topicDropdownOpen, setTopicDropdownOpen] = useState(false);
+
+  const LEADERSHIP_TOPICS = [
+    "Executive Presence",
+    "Stakeholder Influence",
+    "Difficult Conversations",
+    "Strategic Communication",
+    "Managing Up",
+    "Cross-Cultural Leadership",
+    "Conflict Resolution",
+    "Giving Feedback",
+    "Negotiation",
+    "Change Leadership",
+    "Team Alignment",
+    "Accountability",
+    "Resilience & Composure",
+    "Coaching & Developing Others",
+    "Influence Without Authority",
+  ];
 
   const { data: memory } = trpc.leadershipCoach.getMemory.useQuery();
   const { data: commitments } = trpc.leadershipCoach.getCommitments.useQuery();
@@ -211,6 +231,14 @@ function HomeScreen({
     onError: () => toast.error('Could not refresh suggestions. Try again.'),
   });
   const activeRecs = refreshedRecs ?? recommendations;
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!topicDropdownOpen) return;
+    const handler = () => setTopicDropdownOpen(false);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [topicDropdownOpen]);
 
   const visibleChips = showAllChips ? SUGGESTION_CHIPS : SUGGESTION_CHIPS.slice(0, 6);
   const pendingCommitments = commitments?.filter(c => c.status === 'pending').slice(0, 3) ?? [];
@@ -408,14 +436,55 @@ function HomeScreen({
               <Award className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
               Recommended Practice (based on your diagnostics)
             </p>
-            <button
-              onClick={() => refreshRecs.mutate()}
-              disabled={refreshRecs.isPending}
-              className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:text-[var(--color-ln-navy)] hover:border-[var(--color-ln-navy)]/30 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3 h-3 ${refreshRecs.isPending ? 'animate-spin' : ''}`} />
-              {refreshRecs.isPending ? 'Refreshing…' : 'Refresh'}
-            </button>
+            <div className="flex items-center gap-1.5">
+              {/* Topic dropdown */}
+              <div className="relative" onClick={e => e.stopPropagation()}>
+                <button
+                  onClick={() => setTopicDropdownOpen(o => !o)}
+                  className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                    selectedTopic
+                      ? 'bg-[var(--color-ln-navy)] text-white border-[var(--color-ln-navy)]'
+                      : 'border-gray-200 text-gray-500 hover:text-[var(--color-ln-navy)] hover:border-[var(--color-ln-navy)]/30'
+                  }`}
+                >
+                  {selectedTopic || 'All Topics'}
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                {topicDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1 max-h-64 overflow-y-auto">
+                    <button
+                      onClick={() => { setSelectedTopic(''); setTopicDropdownOpen(false); }}
+                      className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors ${
+                        !selectedTopic ? 'font-semibold text-[var(--color-ln-navy)]' : 'text-gray-600'
+                      }`}
+                    >
+                      All Topics (diagnostic-based)
+                    </button>
+                    <div className="border-t border-gray-100 my-1" />
+                    {LEADERSHIP_TOPICS.map(t => (
+                      <button
+                        key={t}
+                        onClick={() => { setSelectedTopic(t); setTopicDropdownOpen(false); }}
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors ${
+                          selectedTopic === t ? 'font-semibold text-[var(--color-ln-navy)]' : 'text-gray-600'
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Refresh button */}
+              <button
+                onClick={() => refreshRecs.mutate({ topic: selectedTopic || undefined })}
+                disabled={refreshRecs.isPending}
+                className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:text-[var(--color-ln-navy)] hover:border-[var(--color-ln-navy)]/30 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${refreshRecs.isPending ? 'animate-spin' : ''}`} />
+                {refreshRecs.isPending ? 'Refreshing…' : 'Refresh'}
+              </button>
+            </div>
           </div>
           <div className="space-y-2">
             {activeRecs.map(rec => (
