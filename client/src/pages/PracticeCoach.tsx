@@ -2381,10 +2381,19 @@ function HistoryScreen({ onBack }: { onBack: () => void }) {
 export default function PracticeCoach() {
   const [location] = useLocation();
   const [screen, setScreen] = useState<Screen>(() => {
-    const params = new URLSearchParams(location.split('?')[1]);
+    const params = new URLSearchParams(window.location.search);
     const screenParam = params.get('screen');
     return (screenParam as Screen) || "home";
   });
+
+  // Re-sync screen state when URL changes
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const screenParam = params.get('screen') as Screen | null;
+    if (screenParam && screenParam !== screen) {
+      setScreen(screenParam);
+    }
+  }, [location]);
   const [issue, setIssue] = useState('');
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [scenario, setScenario] = useState<PracticeScenario | null>(null);
@@ -2398,6 +2407,8 @@ export default function PracticeCoach() {
     setSessionId(null);
     setScenario(null);
     setFeedback(null);
+    // Clear URL query params
+    window.history.replaceState({}, '', '/practice');
   };
 
   function renderScreen() {
