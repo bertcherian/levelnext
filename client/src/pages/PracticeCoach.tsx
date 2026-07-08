@@ -5,11 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   MessageSquare,
   Play,
-  Pause,
   RotateCcw,
   ChevronRight,
   Star,
@@ -20,15 +20,39 @@ import {
   Lightbulb,
   User,
   Bot,
-  Pencil,
   CheckCircle,
   ArrowLeft,
   History,
   Zap,
   Shield,
   Award,
+  Calendar,
+  FileText,
+  Eye,
+  EyeOff,
+  Pencil,
+  Copy,
+  Check,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  Brain,
+  Sparkles,
+  Lock,
+  Send,
+  Pause,
 } from "lucide-react";
-import type { PracticeScenario, PracticeMessage, PracticeFeedback } from "../../../drizzle/schema";
+import type {
+  PracticeScenario,
+  PracticeMessage,
+  PracticeFeedback,
+  BeforeMeetingBriefData,
+  AfterMeetingDebriefData,
+  ImprovedMessageData,
+  ConversationScriptData,
+  GrowthPlanData,
+} from "../../../drizzle/schema";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Screen =
@@ -37,7 +61,16 @@ type Screen =
   | "scenario-setup"
   | "roleplay"
   | "feedback"
-  | "history";
+  | "history"
+  | "before-meeting-form"
+  | "before-meeting-brief"
+  | "after-meeting-form"
+  | "after-meeting-debrief"
+  | "say-it-better"
+  | "script-builder"
+  | "growth-profile"
+  | "coach-brief"
+  | "privacy-settings";
 
 const SUGGESTION_CHIPS = [
   "Give feedback to a defensive team member",
@@ -54,12 +87,23 @@ const SUGGESTION_CHIPS = [
   "Reset expectations with a team member",
 ];
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  Easy: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  Medium: "bg-amber-100 text-amber-800 border-amber-200",
-  Hard: "bg-orange-100 text-orange-800 border-orange-200",
-  Executive: "bg-purple-100 text-purple-800 border-purple-200",
-};
+const SCRIPT_TYPES = [
+  "Give difficult feedback",
+  "Have an accountability conversation",
+  "Push back on an unrealistic request",
+  "Ask for a promotion or raise",
+  "Address a performance issue",
+  "Influence without authority",
+  "Pitch a strategic idea",
+  "Navigate a conflict between team members",
+  "Reset a relationship after a difficult moment",
+  "Say no professionally",
+  "Deliver bad news",
+  "Align a resistant stakeholder",
+  "Request resources or budget",
+  "Have a skip-level conversation",
+  "Address a trust breakdown",
+];
 
 const SCORE_COLOR = (score: number) => {
   if (score >= 80) return "text-emerald-600";
@@ -67,294 +111,1676 @@ const SCORE_COLOR = (score: number) => {
   return "text-red-500";
 };
 
+const DEBRIEF_QUESTIONS = [
+  "What was the purpose of this conversation and what outcome were you hoping for?",
+  "How did the conversation actually go? What happened?",
+  "What was the moment the conversation shifted — positively or negatively?",
+  "What did you handle well?",
+  "What would you do differently?",
+  "What do you think the other person heard vs what you intended?",
+];
+
+// ── Shared Back Button ────────────────────────────────────────────────────────
+function BackButton({ onBack, label = "Back" }: { onBack: () => void; label?: string }) {
+  return (
+    <button
+      onClick={onBack}
+      className="flex items-center gap-1.5 text-sm text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] transition-colors mb-6"
+    >
+      <ArrowLeft className="w-4 h-4" />
+      {label}
+    </button>
+  );
+}
+
+// ── Copy Button ───────────────────────────────────────────────────────────────
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button onClick={copy} className="p-1.5 rounded hover:bg-gray-100 transition-colors" title="Copy">
+      {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-gray-400" />}
+    </button>
+  );
+}
+
+// ── Section Card ──────────────────────────────────────────────────────────────
+function SectionCard({ title, icon: Icon, children, accent = false }: {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  accent?: boolean;
+}) {
+  return (
+    <div className={`rounded-xl border p-5 ${accent ? 'border-[var(--color-ln-gold)]/30 bg-[var(--color-ln-gold)]/5' : 'border-gray-200 bg-white'}`}>
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className={`w-4 h-4 ${accent ? 'text-[var(--color-ln-gold)]' : 'text-[var(--color-ln-navy)]'}`} />
+        <span className="text-sm font-semibold text-[var(--color-ln-navy)]">{title}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Score Badge ───────────────────────────────────────────────────────────────
+function ScoreBadge({ score, label }: { score: number; label?: string }) {
+  const color = score >= 80 ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+    : score >= 60 ? 'bg-amber-100 text-amber-800 border-amber-200'
+    : 'bg-red-100 text-red-800 border-red-200';
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${color}`}>
+      {label && <span className="opacity-70">{label}</span>}
+      {score}/10
+    </span>
+  );
+}
+
 // ── Home Screen ───────────────────────────────────────────────────────────────
 function HomeScreen({
   onCoachFirst,
   onSimulateFirst,
+  onBeforeMeeting,
+  onAfterMeeting,
+  onSayItBetter,
+  onScriptBuilder,
+  onGrowthProfile,
   onHistory,
 }: {
   onCoachFirst: (issue: string) => void;
   onSimulateFirst: (issue: string) => void;
+  onBeforeMeeting: () => void;
+  onAfterMeeting: () => void;
+  onSayItBetter: () => void;
+  onScriptBuilder: () => void;
+  onGrowthProfile: () => void;
   onHistory: () => void;
 }) {
   const [issue, setIssue] = useState("");
+  const [showAllChips, setShowAllChips] = useState(false);
+
+  const { data: memory } = trpc.leadershipCoach.getMemory.useQuery();
+  const { data: commitments } = trpc.leadershipCoach.getCommitments.useQuery();
+  const { data: recommendations } = trpc.leadershipCoach.getPersonalisedRecommendations.useQuery();
+
+  const visibleChips = showAllChips ? SUGGESTION_CHIPS : SUGGESTION_CHIPS.slice(0, 6);
+  const pendingCommitments = commitments?.filter(c => c.status === 'pending').slice(0, 3) ?? [];
+
+  const MODE_BUTTONS = [
+    {
+      id: 'coach-first',
+      icon: Brain,
+      label: 'Coach Me First',
+      sub: 'Understand the real issue before practising',
+      color: 'bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90',
+      onClick: () => issue.trim() ? onCoachFirst(issue.trim()) : toast.error('Describe your situation first'),
+    },
+    {
+      id: 'simulate',
+      icon: Play,
+      label: 'Practice Simulation',
+      sub: 'Jump straight into a role-play scenario',
+      color: 'bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-gold)]/90',
+      onClick: () => issue.trim() ? onSimulateFirst(issue.trim()) : toast.error('Describe your situation first'),
+    },
+    {
+      id: 'before-meeting',
+      icon: Calendar,
+      label: 'Before-Meeting Brief',
+      sub: 'Prepare for an important conversation',
+      color: 'bg-white border border-[var(--color-ln-navy)]/20 text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-navy)]/5',
+      onClick: onBeforeMeeting,
+    },
+    {
+      id: 'after-meeting',
+      icon: FileText,
+      label: 'After-Meeting Debrief',
+      sub: 'Reflect and extract lessons from a real conversation',
+      color: 'bg-white border border-[var(--color-ln-navy)]/20 text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-navy)]/5',
+      onClick: onAfterMeeting,
+    },
+    {
+      id: 'say-it-better',
+      icon: Sparkles,
+      label: 'Say It Better',
+      sub: 'Improve a message or reframe what you want to say',
+      color: 'bg-white border border-[var(--color-ln-navy)]/20 text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-navy)]/5',
+      onClick: onSayItBetter,
+    },
+    {
+      id: 'script-builder',
+      icon: BookOpen,
+      label: 'Conversation Script',
+      sub: 'Build a script for a specific conversation type',
+      color: 'bg-white border border-[var(--color-ln-navy)]/20 text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-navy)]/5',
+      onClick: onScriptBuilder,
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#F8F6F0]">
+    <div className="max-w-3xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="bg-[#12345A] text-white px-6 py-5">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Zap className="h-5 w-5 text-[#F2B705]" />
-              <span className="text-[#F2B705] text-sm font-semibold tracking-wide uppercase">AI Practice Coach</span>
-            </div>
-            <h1 className="text-2xl font-bold leading-tight">Practice leadership conversations<br />before they matter.</h1>
-            <p className="text-blue-200 text-sm mt-1">Prepare for difficult feedback, stakeholder influence, executive presence, and more.</p>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-[var(--color-ln-gold)]" />
+            <h1 className="text-xl font-bold text-[var(--color-ln-navy)]">AI Practice Coach</h1>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onHistory}
-            className="text-blue-200 hover:text-white hover:bg-white/10 gap-2 hidden sm:flex"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onGrowthProfile}
+              className="flex items-center gap-1.5 text-xs text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              Growth Profile
+            </button>
+            <button
+              onClick={onHistory}
+              className="flex items-center gap-1.5 text-xs text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+              History
+            </button>
+          </div>
+        </div>
+        <p className="text-sm text-[var(--color-ln-navy)]/60">
+          Your private leadership practice space. Everything here is confidential.
+        </p>
+      </div>
+
+      {/* Memory Banner */}
+      {memory?.aiSummary && (
+        <div className="mb-6 rounded-xl bg-[var(--color-ln-navy)]/5 border border-[var(--color-ln-navy)]/10 p-4">
+          <div className="flex items-start gap-2">
+            <Brain className="w-4 h-4 text-[var(--color-ln-navy)] mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-0.5">Your Leadership Memory</p>
+              <p className="text-xs text-[var(--color-ln-navy)]/70 leading-relaxed">{memory.aiSummary}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Issue Input */}
+      <div className="mb-5">
+        <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-2">
+          What leadership situation do you want to work on?
+        </label>
+        <Textarea
+          value={issue}
+          onChange={e => setIssue(e.target.value)}
+          placeholder="e.g. I need to give difficult feedback to a senior team member who is defensive and dismisses my concerns..."
+          className="min-h-[90px] text-sm resize-none border-gray-200 focus:border-[var(--color-ln-navy)] focus:ring-[var(--color-ln-navy)]/20"
+        />
+      </div>
+
+      {/* Suggestion Chips */}
+      <div className="mb-6">
+        <p className="text-xs text-gray-400 mb-2">Or choose a common scenario:</p>
+        <div className="flex flex-wrap gap-2">
+          {visibleChips.map(chip => (
+            <button
+              key={chip}
+              onClick={() => setIssue(chip)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                issue === chip
+                  ? 'bg-[var(--color-ln-navy)] text-white border-[var(--color-ln-navy)]'
+                  : 'bg-white text-[var(--color-ln-navy)]/70 border-gray-200 hover:border-[var(--color-ln-navy)]/40 hover:text-[var(--color-ln-navy)]'
+              }`}
+            >
+              {chip}
+            </button>
+          ))}
+          <button
+            onClick={() => setShowAllChips(!showAllChips)}
+            className="text-xs px-3 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
           >
-            <History className="h-4 w-4" />
-            History
-          </Button>
+            {showAllChips ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {showAllChips ? 'Show less' : `+${SUGGESTION_CHIPS.length - 6} more`}
+          </button>
         </div>
       </div>
 
-      {/* Main */}
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        {/* Input */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-          <label className="block text-sm font-semibold text-[#12345A] mb-2">
-            Describe your leadership situation
-          </label>
-          <Textarea
-            value={issue}
-            onChange={(e) => setIssue(e.target.value)}
-            placeholder="I need to give feedback to a senior team member who becomes defensive…"
-            className="min-h-[100px] text-base border-gray-200 focus:border-[#12345A] resize-none"
-          />
-          <div className="flex gap-3 mt-4">
-            <Button
-              onClick={() => issue.trim() && onSimulateFirst(issue.trim())}
-              disabled={!issue.trim()}
-              className="flex-1 bg-[#12345A] hover:bg-[#0e2a47] text-white font-semibold h-11"
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Create Practice Simulation
-            </Button>
-            <Button
-              onClick={() => issue.trim() && onCoachFirst(issue.trim())}
-              disabled={!issue.trim()}
-              variant="outline"
-              className="flex-1 border-[#12345A] text-[#12345A] hover:bg-[#12345A]/5 font-semibold h-11"
-            >
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Coach Me First
-            </Button>
+      {/* Mode Buttons — 2 primary + 4 secondary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        {MODE_BUTTONS.slice(0, 2).map(btn => (
+          <button
+            key={btn.id}
+            onClick={btn.onClick}
+            className={`flex items-center gap-3 p-4 rounded-xl text-left transition-all active:scale-[0.98] ${btn.color}`}
+          >
+            <btn.icon className="w-5 h-5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">{btn.label}</p>
+              <p className="text-xs opacity-70 mt-0.5">{btn.sub}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-8">
+        {MODE_BUTTONS.slice(2).map(btn => (
+          <button
+            key={btn.id}
+            onClick={btn.onClick}
+            className={`flex items-center gap-3 p-3.5 rounded-xl text-left transition-all active:scale-[0.98] ${btn.color}`}
+          >
+            <btn.icon className="w-4 h-4 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium">{btn.label}</p>
+              <p className="text-xs opacity-60 mt-0.5">{btn.sub}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Pending Commitments */}
+      {pendingCommitments.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-2 flex items-center gap-1.5">
+            <Target className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
+            Open Commitments
+          </p>
+          <div className="space-y-2">
+            {pendingCommitments.map(c => (
+              <div key={c.id} className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                <Clock className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-amber-800">{c.text}</p>
+              </div>
+            ))}
           </div>
         </div>
+      )}
 
-        {/* Suggestion chips */}
+      {/* Diagnostic Recommendations */}
+      {recommendations && recommendations.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Common leadership situations</p>
-          <div className="flex flex-wrap gap-2">
-            {SUGGESTION_CHIPS.map((chip) => (
+          <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-2 flex items-center gap-1.5">
+            <Award className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
+            Recommended Practice (based on your diagnostics)
+          </p>
+          <div className="space-y-2">
+            {recommendations.map(rec => (
+              <div key={rec.module} className="p-3 rounded-lg border border-gray-200 bg-white">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-semibold text-[var(--color-ln-navy)]">{rec.module}</p>
+                  <span className="text-xs text-gray-400">Edge {rec.score}</span>
+                </div>
+                <p className="text-xs text-gray-500 mb-2">{rec.reason}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {rec.scenarios.slice(0, 2).map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setIssue(s)}
+                      className="text-xs px-2.5 py-1 rounded-full bg-[var(--color-ln-navy)]/5 text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-navy)]/10 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Before-Meeting Form Screen ────────────────────────────────────────────────
+function BeforeMeetingFormScreen({
+  onBack,
+  onBriefGenerated,
+}: {
+  onBack: () => void;
+  onBriefGenerated: (briefId: number, brief: BeforeMeetingBriefData) => void;
+}) {
+  const [form, setForm] = useState({
+    meetingWith: '',
+    purpose: '',
+    desiredOutcome: '',
+    currentIssue: '',
+    stakes: '',
+    possibleResistance: '',
+    readinessBefore: 5,
+  });
+
+  const generateBrief = trpc.leadershipCoach.generateBrief.useMutation({
+    onSuccess: (data) => onBriefGenerated(data.briefId, data.brief),
+    onError: () => toast.error('Failed to generate brief. Please try again.'),
+  });
+
+  const STAKES_OPTIONS = ['Low', 'Medium', 'High', 'Career-defining'];
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="Back to Practice Coach" />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Calendar className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Before-Meeting Brief</h2>
+        </div>
+        <p className="text-sm text-gray-500">Tell me about the conversation you are preparing for.</p>
+      </div>
+
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">Who are you meeting with? *</label>
+          <Input
+            value={form.meetingWith}
+            onChange={e => setForm(f => ({ ...f, meetingWith: e.target.value }))}
+            placeholder="e.g. My VP of Engineering, a difficult client, the CEO"
+            className="border-gray-200"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">What is the purpose of this meeting? *</label>
+          <Textarea
+            value={form.purpose}
+            onChange={e => setForm(f => ({ ...f, purpose: e.target.value }))}
+            placeholder="e.g. I need to address a performance issue with a team member who has been missing deadlines"
+            className="min-h-[80px] text-sm resize-none border-gray-200"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">What is your desired outcome?</label>
+          <Textarea
+            value={form.desiredOutcome}
+            onChange={e => setForm(f => ({ ...f, desiredOutcome: e.target.value }))}
+            placeholder="e.g. I want them to acknowledge the issue and commit to a specific improvement plan"
+            className="min-h-[70px] text-sm resize-none border-gray-200"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">What is the current issue or tension?</label>
+          <Textarea
+            value={form.currentIssue}
+            onChange={e => setForm(f => ({ ...f, currentIssue: e.target.value }))}
+            placeholder="e.g. They have missed 3 deadlines this quarter and are defensive when I raise it"
+            className="min-h-[70px] text-sm resize-none border-gray-200"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-2">What are the stakes?</label>
+          <div className="flex gap-2 flex-wrap">
+            {STAKES_OPTIONS.map(s => (
               <button
-                key={chip}
-                onClick={() => setIssue(chip)}
-                className="text-sm px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-[#12345A] hover:text-[#12345A] transition-colors"
+                key={s}
+                onClick={() => setForm(f => ({ ...f, stakes: s }))}
+                className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
+                  form.stakes === s
+                    ? 'bg-[var(--color-ln-navy)] text-white border-[var(--color-ln-navy)]'
+                    : 'bg-white text-[var(--color-ln-navy)]/70 border-gray-200 hover:border-[var(--color-ln-navy)]/40'
+                }`}
               >
-                {chip}
+                {s}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Value props */}
-        <div className="grid grid-cols-3 gap-4 mt-8">
-          {[
-            { icon: MessageSquare, title: "AI Coaching", desc: "Structured questions to clarify the real issue" },
-            { icon: Shield, title: "Safe Practice", desc: "Realistic avatar that pushes back like a real person" },
-            { icon: Award, title: "Scored Feedback", desc: "Specific feedback with better phrases to use" },
-          ].map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="bg-white rounded-xl p-4 border border-gray-100 text-center">
-              <div className="w-10 h-10 rounded-full bg-[#12345A]/10 flex items-center justify-center mx-auto mb-2">
-                <Icon className="h-5 w-5 text-[#12345A]" />
-              </div>
-              <p className="text-sm font-semibold text-[#12345A]">{title}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
-            </div>
-          ))}
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">What resistance do you expect?</label>
+          <Textarea
+            value={form.possibleResistance}
+            onChange={e => setForm(f => ({ ...f, possibleResistance: e.target.value }))}
+            placeholder="e.g. They will likely say they have been overloaded and that the deadlines were unrealistic"
+            className="min-h-[70px] text-sm resize-none border-gray-200"
+          />
         </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-2">
+            How ready do you feel right now? <span className="text-[var(--color-ln-gold)] font-bold">{form.readinessBefore}/10</span>
+          </label>
+          <input
+            type="range"
+            min={1}
+            max={10}
+            value={form.readinessBefore}
+            onChange={e => setForm(f => ({ ...f, readinessBefore: Number(e.target.value) }))}
+            className="w-full accent-[var(--color-ln-gold)]"
+          />
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span>Not ready at all</span>
+            <span>Fully prepared</span>
+          </div>
+        </div>
+
+        <Button
+          onClick={() => generateBrief.mutate(form)}
+          disabled={!form.meetingWith || !form.purpose || generateBrief.isPending}
+          className="w-full bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90 h-11"
+        >
+          {generateBrief.isPending ? (
+            <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> Generating your brief...</span>
+          ) : (
+            <span className="flex items-center gap-2"><Zap className="w-4 h-4" /> Generate My Brief</span>
+          )}
+        </Button>
       </div>
     </div>
   );
 }
 
-// ── Coaching Screen ───────────────────────────────────────────────────────────
-function CoachingScreen({
-  sessionId,
-  issueText,
-  onScenarioReady,
+// ── Before-Meeting Brief Output Screen ───────────────────────────────────────
+function BeforeMeetingBriefScreen({
+  briefId,
+  brief,
   onBack,
+  onPractice,
 }: {
-  sessionId: number;
-  issueText: string;
-  onScenarioReady: (summary?: string) => void;
+  briefId: number;
+  brief: BeforeMeetingBriefData;
   onBack: () => void;
+  onPractice: (issue: string) => void;
 }) {
-  const [messages, setMessages] = useState<PracticeMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [coachingSummary, setCoachingSummary] = useState<Record<string, string> | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [autoStarted, setAutoStarted] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [readinessAfter, setReadinessAfter] = useState<number | null>(null);
+  const [saved, setSaved] = useState(false);
 
-  const sendMessage = trpc.practice.sendCoachMessage.useMutation();
+  const updateReadiness = trpc.leadershipCoach.updateBriefReadiness.useMutation({
+    onSuccess: () => setSaved(true),
+  });
 
-  // Auto-start with first coaching question
-  useEffect(() => {
-    if (autoStarted) return;
-    setAutoStarted(true);
-    setIsLoading(true);
-    sendMessage.mutate(
-      { sessionId, message: `I need help with: ${issueText}` },
-      {
-        onSuccess: (data) => {
-          setMessages(data.messages);
-          if (data.coachingSummary) setCoachingSummary(data.coachingSummary);
-          setIsLoading(false);
-        },
-        onError: () => { setIsLoading(false); toast.error("Failed to start coaching session"); },
-      }
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="New Brief" />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Calendar className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Your Meeting Brief</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">Readiness before:</span>
+          <ScoreBadge score={brief.readinessScore} />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <SectionCard title="Real Objective" icon={Target} accent>
+          <p className="text-sm text-[var(--color-ln-navy)]/80 leading-relaxed">{brief.realObjective}</p>
+        </SectionCard>
+
+        <SectionCard title="The Conversation Beneath the Conversation" icon={Brain}>
+          <p className="text-sm text-gray-600 leading-relaxed">{brief.conversationBeneathConversation}</p>
+        </SectionCard>
+
+        <SectionCard title="Your First 60 Seconds" icon={Play} accent>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm text-[var(--color-ln-navy)]/80 leading-relaxed italic">"{brief.first60Seconds}"</p>
+            <CopyButton text={brief.first60Seconds} />
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Key Message to Land" icon={Lightbulb}>
+          <p className="text-sm text-gray-600 leading-relaxed">{brief.keyMessage}</p>
+        </SectionCard>
+
+        <SectionCard title="Likely Pushback & Best Responses" icon={MessageSquare}>
+          <div className="space-y-3">
+            {brief.likelyPushback.map((pushback, i) => (
+              <div key={i} className="space-y-1">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-amber-800 font-medium">{pushback}</p>
+                </div>
+                {brief.bestResponses[i] && (
+                  <div className="flex items-start gap-2 ml-5">
+                    <ChevronRight className="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-emerald-800">{brief.bestResponses[i]}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="What NOT to Say" icon={EyeOff}>
+          <ul className="space-y-1.5">
+            {brief.whatNotToSay.map((phrase, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-red-700">
+                <span className="text-red-400 mt-0.5">✗</span>
+                <span>"{phrase}"</span>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+
+        <SectionCard title="Your Strong Ask" icon={Target} accent>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm text-[var(--color-ln-navy)]/80 font-medium leading-relaxed">{brief.strongAsk}</p>
+            <CopyButton text={brief.strongAsk} />
+          </div>
+        </SectionCard>
+
+        <SectionCard title="How to Close" icon={CheckCircle}>
+          <p className="text-sm text-gray-600 leading-relaxed">{brief.howToClose}</p>
+        </SectionCard>
+
+        {/* Readiness After */}
+        <div className="rounded-xl border border-[var(--color-ln-navy)]/20 bg-[var(--color-ln-navy)]/5 p-5">
+          <p className="text-sm font-semibold text-[var(--color-ln-navy)] mb-3">
+            After reading this brief, how ready do you feel now?
+          </p>
+          <input
+            type="range"
+            min={1}
+            max={10}
+            value={readinessAfter ?? brief.readinessScore}
+            onChange={e => setReadinessAfter(Number(e.target.value))}
+            className="w-full accent-[var(--color-ln-gold)] mb-2"
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-400">Not ready</span>
+            <span className="text-sm font-bold text-[var(--color-ln-gold)]">{readinessAfter ?? brief.readinessScore}/10</span>
+            <span className="text-xs text-gray-400">Fully prepared</span>
+          </div>
+          {!saved && (
+            <Button
+              size="sm"
+              onClick={() => readinessAfter && updateReadiness.mutate({ briefId, readinessAfter })}
+              disabled={!readinessAfter || updateReadiness.isPending}
+              className="mt-3 bg-[var(--color-ln-navy)] text-white text-xs"
+            >
+              Save Readiness Score
+            </Button>
+          )}
+          {saved && <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Saved</p>}
+        </div>
+
+        {/* Practice CTA */}
+        <Button
+          onClick={() => onPractice(`Practice for: ${brief.realObjective}`)}
+          className="w-full bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-gold)]/90 h-11 font-semibold"
+        >
+          <Play className="w-4 h-4 mr-2" />
+          Practice This Conversation Now
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ── After-Meeting Debrief Form ────────────────────────────────────────────────
+function AfterMeetingFormScreen({
+  onBack,
+  onDebriefGenerated,
+}: {
+  onBack: () => void;
+  onDebriefGenerated: (debriefId: number, report: AfterMeetingDebriefData) => void;
+}) {
+  const [context, setContext] = useState('');
+  const [answers, setAnswers] = useState<string[]>(DEBRIEF_QUESTIONS.map(() => ''));
+
+  const generateDebrief = trpc.leadershipCoach.generateDebrief.useMutation({
+    onSuccess: (data) => onDebriefGenerated(data.debriefId, data.debriefReport),
+    onError: () => toast.error('Failed to generate debrief. Please try again.'),
+  });
+
+  const handleSubmit = () => {
+    const debriefAnswers = DEBRIEF_QUESTIONS.map((q, i) => ({ question: q, answer: answers[i] }))
+      .filter(a => a.answer.trim());
+    if (!context.trim() || debriefAnswers.length < 2) {
+      toast.error('Please describe the conversation and answer at least 2 questions');
+      return;
+    }
+    generateDebrief.mutate({ conversationContext: context, debriefAnswers });
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="Back to Practice Coach" />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <FileText className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">After-Meeting Debrief</h2>
+        </div>
+        <p className="text-sm text-gray-500">Reflect on a real conversation to extract lessons and improve.</p>
+      </div>
+
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">
+            Briefly describe the conversation *
+          </label>
+          <Textarea
+            value={context}
+            onChange={e => setContext(e.target.value)}
+            placeholder="e.g. I had a difficult conversation with my VP about the project timeline. She pushed back strongly on my proposal..."
+            className="min-h-[80px] text-sm resize-none border-gray-200"
+          />
+        </div>
+
+        <Separator />
+
+        <div className="space-y-4">
+          {DEBRIEF_QUESTIONS.map((q, i) => (
+            <div key={i}>
+              <label className="block text-sm font-medium text-[var(--color-ln-navy)] mb-1.5">
+                {i + 1}. {q}
+              </label>
+              <Textarea
+                value={answers[i]}
+                onChange={e => {
+                  const next = [...answers];
+                  next[i] = e.target.value;
+                  setAnswers(next);
+                }}
+                placeholder="Your answer..."
+                className="min-h-[70px] text-sm resize-none border-gray-200"
+              />
+            </div>
+          ))}
+        </div>
+
+        <Button
+          onClick={handleSubmit}
+          disabled={!context.trim() || generateDebrief.isPending}
+          className="w-full bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90 h-11"
+        >
+          {generateDebrief.isPending ? (
+            <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> Analysing your conversation...</span>
+          ) : (
+            <span className="flex items-center gap-2"><Brain className="w-4 h-4" /> Generate Debrief Report</span>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ── After-Meeting Debrief Report ──────────────────────────────────────────────
+function AfterMeetingDebriefScreen({
+  report,
+  onBack,
+  onPractice,
+}: {
+  report: AfterMeetingDebriefData;
+  onBack: () => void;
+  onPractice: (issue: string) => void;
+}) {
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="New Debrief" />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <FileText className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Debrief Report</h2>
+        </div>
+        <p className="text-sm text-gray-500">Here is what your AI coach observed.</p>
+      </div>
+
+      <div className="space-y-4">
+        <SectionCard title="What Actually Happened" icon={Eye}>
+          <p className="text-sm text-gray-600 leading-relaxed">{report.whatHappened}</p>
+        </SectionCard>
+
+        <SectionCard title="What the Other Person Heard" icon={MessageSquare} accent>
+          <p className="text-sm text-[var(--color-ln-navy)]/80 leading-relaxed">{report.whatOtherPersonHeard}</p>
+        </SectionCard>
+
+        <SectionCard title="Where the Conversation Shifted" icon={TrendingUp}>
+          <p className="text-sm text-gray-600 leading-relaxed">{report.whereConversationShifted}</p>
+        </SectionCard>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <SectionCard title="What You Handled Well" icon={CheckCircle}>
+            <p className="text-sm text-emerald-700 leading-relaxed">{report.whatYouHandledWell}</p>
+          </SectionCard>
+          <SectionCard title="What You Missed" icon={AlertCircle}>
+            <p className="text-sm text-amber-700 leading-relaxed">{report.whatYouMissed}</p>
+          </SectionCard>
+        </div>
+
+        <SectionCard title="Possible Blind Spot" icon={Brain} accent>
+          <p className="text-sm text-[var(--color-ln-navy)]/80 leading-relaxed italic">{report.possibleBlindSpot}</p>
+        </SectionCard>
+
+        <SectionCard title="Recovery Move" icon={RefreshCw}>
+          <p className="text-sm text-gray-600 leading-relaxed">{report.recoveryMove}</p>
+        </SectionCard>
+
+        <SectionCard title="Suggested Follow-Up Message" icon={Send} accent>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm text-[var(--color-ln-navy)]/80 leading-relaxed italic">"{report.suggestedFollowUpMessage}"</p>
+            <CopyButton text={report.suggestedFollowUpMessage} />
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Recommended Practice" icon={Play}>
+          <p className="text-sm text-gray-600 mb-3">{report.recommendedPractice}</p>
+          <Button
+            size="sm"
+            onClick={() => onPractice(report.recommendedPractice)}
+            className="bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-gold)]/90 text-xs"
+          >
+            <Play className="w-3.5 h-3.5 mr-1.5" />
+            Practice This Now
+          </Button>
+        </SectionCard>
+      </div>
+    </div>
+  );
+}
+
+// ── Say It Better Screen ──────────────────────────────────────────────────────
+function SayItBetterScreen({ onBack }: { onBack: () => void }) {
+  const [original, setOriginal] = useState('');
+  const [context, setContext] = useState('');
+  const [result, setResult] = useState<ImprovedMessageData | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
+
+  const VARIATIONS = [
+    { id: 'warmer', label: 'Warmer' },
+    { id: 'firmer', label: 'Firmer' },
+    { id: 'shorter', label: 'Shorter' },
+    { id: 'more-senior', label: 'More Senior' },
+    { id: 'more-strategic', label: 'More Strategic' },
+    { id: 'add-ask', label: 'Add a Clear Ask' },
+    { id: 'add-impact', label: 'Add Business Impact' },
+  ];
+
+  const improve = trpc.leadershipCoach.improveMessage.useMutation({
+    onSuccess: (data) => setResult(data),
+    onError: () => toast.error('Failed to improve message. Please try again.'),
+  });
+
+  const handleImprove = (variation?: string) => {
+    if (!original.trim()) { toast.error('Paste your message first'); return; }
+    setSelectedVariation(variation ?? null);
+    improve.mutate({ originalText: original, context, variation });
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="Back to Practice Coach" />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Say It Better</h2>
+        </div>
+        <p className="text-sm text-gray-500">Paste any message or thing you want to say. Get three improved versions.</p>
+      </div>
+
+      <div className="space-y-4 mb-6">
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">Your message or what you want to say *</label>
+          <Textarea
+            value={original}
+            onChange={e => setOriginal(e.target.value)}
+            placeholder="Paste an email, message, or describe what you want to say..."
+            className="min-h-[100px] text-sm resize-none border-gray-200"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">Context (optional)</label>
+          <Input
+            value={context}
+            onChange={e => setContext(e.target.value)}
+            placeholder="e.g. Email to my manager, Slack message to a peer, Opening line in a meeting"
+            className="border-gray-200"
+          />
+        </div>
+
+        <Button
+          onClick={() => handleImprove()}
+          disabled={!original.trim() || improve.isPending}
+          className="w-full bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90 h-11"
+        >
+          {improve.isPending ? (
+            <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> Improving...</span>
+          ) : (
+            <span className="flex items-center gap-2"><Sparkles className="w-4 h-4" /> Improve My Message</span>
+          )}
+        </Button>
+      </div>
+
+      {result && (
+        <div className="space-y-4">
+          {/* Tone Assessment */}
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
+            <p className="text-xs font-semibold text-amber-800 mb-1">Tone Assessment</p>
+            <p className="text-sm text-amber-700">{result.toneAssessment}</p>
+            <div className="flex gap-4 mt-2">
+              <div className="text-xs text-gray-500">Clarity: <span className={`font-bold ${SCORE_COLOR(result.clarityScore)}`}>{result.clarityScore}/100</span></div>
+              <div className="text-xs text-gray-500">Executive Presence: <span className={`font-bold ${SCORE_COLOR(result.executivePresenceScore)}`}>{result.executivePresenceScore}/100</span></div>
+            </div>
+          </div>
+
+          {/* Three Versions */}
+          {[
+            { key: 'diplomatic', label: 'Diplomatic', sub: 'Softer, relationship-preserving', icon: '🤝' },
+            { key: 'direct', label: 'Direct', sub: 'Clear, firm, respectful', icon: '🎯' },
+            { key: 'executive', label: 'Executive', sub: 'Concise, strategic, business-focused', icon: '⚡' },
+          ].map(v => (
+            <div key={v.key} className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span>{v.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-ln-navy)]">{v.label}</p>
+                    <p className="text-xs text-gray-400">{v.sub}</p>
+                  </div>
+                </div>
+                <CopyButton text={result[v.key as keyof ImprovedMessageData] as string} />
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed italic">"{result[v.key as keyof ImprovedMessageData] as string}"</p>
+            </div>
+          ))}
+
+          {result.shorterVersion && (
+            <div className="rounded-xl border border-[var(--color-ln-gold)]/30 bg-[var(--color-ln-gold)]/5 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-[var(--color-ln-navy)]">⚡ Ultra-Short Version</p>
+                <CopyButton text={result.shorterVersion} />
+              </div>
+              <p className="text-sm text-[var(--color-ln-navy)]/80 italic">"{result.shorterVersion}"</p>
+            </div>
+          )}
+
+          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p className="text-xs font-semibold text-gray-600 mb-1">What Changed</p>
+            <p className="text-sm text-gray-600">{result.whatChanged}</p>
+          </div>
+
+          {/* Variation Buttons */}
+          <div>
+            <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-2">Refine further:</p>
+            <div className="flex flex-wrap gap-2">
+              {VARIATIONS.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => handleImprove(v.id)}
+                  disabled={improve.isPending}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                    selectedVariation === v.id
+                      ? 'bg-[var(--color-ln-navy)] text-white border-[var(--color-ln-navy)]'
+                      : 'bg-white text-[var(--color-ln-navy)]/70 border-gray-200 hover:border-[var(--color-ln-navy)]/40'
+                  }`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Conversation Script Builder ───────────────────────────────────────────────
+function ScriptBuilderScreen({ onBack }: { onBack: () => void }) {
+  const [selectedType, setSelectedType] = useState('');
+  const [situation, setSituation] = useState('');
+  const [result, setResult] = useState<{ scriptId: number; script: ConversationScriptData } | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const buildScript = trpc.leadershipCoach.buildScript.useMutation({
+    onSuccess: (data) => setResult(data),
+    onError: () => toast.error('Failed to build script. Please try again.'),
+  });
+
+  const saveScript = trpc.leadershipCoach.saveScript.useMutation({
+    onSuccess: () => setSaved(true),
+  });
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="Back to Practice Coach" />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <BookOpen className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Conversation Script Builder</h2>
+        </div>
+        <p className="text-sm text-gray-500">Choose a conversation type and describe your situation. Get a complete script.</p>
+      </div>
+
+      {!result ? (
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-2">What type of conversation? *</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {SCRIPT_TYPES.map(type => (
+                <button
+                  key={type}
+                  onClick={() => setSelectedType(type)}
+                  className={`text-left text-sm px-3 py-2.5 rounded-lg border transition-all ${
+                    selectedType === type
+                      ? 'bg-[var(--color-ln-navy)] text-white border-[var(--color-ln-navy)]'
+                      : 'bg-white text-[var(--color-ln-navy)]/70 border-gray-200 hover:border-[var(--color-ln-navy)]/30'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">Describe your specific situation *</label>
+            <Textarea
+              value={situation}
+              onChange={e => setSituation(e.target.value)}
+              placeholder="e.g. I need to give feedback to a senior team member who has been missing deadlines and becoming defensive when I raise it..."
+              className="min-h-[100px] text-sm resize-none border-gray-200"
+            />
+          </div>
+
+          <Button
+            onClick={() => buildScript.mutate({ scriptType: selectedType, situationContext: situation })}
+            disabled={!selectedType || !situation.trim() || buildScript.isPending}
+            className="w-full bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90 h-11"
+          >
+            {buildScript.isPending ? (
+              <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> Building your script...</span>
+            ) : (
+              <span className="flex items-center gap-2"><BookOpen className="w-4 h-4" /> Build My Script</span>
+            )}
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between mb-2">
+            <Badge className="bg-[var(--color-ln-navy)]/10 text-[var(--color-ln-navy)] border-0">{result.script.scriptType}</Badge>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setResult(null)}
+                className="text-xs"
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> New Script
+              </Button>
+              {!saved && (
+                <Button
+                  size="sm"
+                  onClick={() => saveScript.mutate({ scriptId: result.scriptId })}
+                  className="bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] text-xs"
+                >
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Save Script
+                </Button>
+              )}
+              {saved && <span className="text-xs text-emerald-600 flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Saved</span>}
+            </div>
+          </div>
+
+          {[
+            { key: 'openingLine', label: 'Opening Line', icon: Play, accent: true },
+            { key: 'context', label: 'Set the Context', icon: MessageSquare },
+            { key: 'observation', label: 'Your Observation', icon: Eye },
+            { key: 'businessImpact', label: 'Business Impact', icon: TrendingUp },
+            { key: 'yourConcern', label: 'Your Concern', icon: AlertCircle },
+            { key: 'questionInvitation', label: 'Invite Their Perspective', icon: MessageSquare },
+            { key: 'clearAsk', label: 'Your Clear Ask', icon: Target, accent: true },
+            { key: 'likelyResistance', label: 'Likely Resistance', icon: AlertCircle },
+            { key: 'responseToResistance', label: 'Your Response', icon: ChevronRight },
+            { key: 'closeWithCommitment', label: 'Close with Commitment', icon: CheckCircle, accent: true },
+            { key: 'followUpNote', label: 'Follow-Up Note', icon: Send },
+          ].map(field => (
+            <div key={field.key} className={`rounded-xl border p-4 ${field.accent ? 'border-[var(--color-ln-gold)]/30 bg-[var(--color-ln-gold)]/5' : 'border-gray-200 bg-white'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <field.icon className={`w-4 h-4 ${field.accent ? 'text-[var(--color-ln-gold)]' : 'text-[var(--color-ln-navy)]/60'}`} />
+                  <p className="text-xs font-semibold text-[var(--color-ln-navy)]">{field.label}</p>
+                </div>
+                <CopyButton text={result.script[field.key as keyof ConversationScriptData] as string} />
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed italic">
+                "{result.script[field.key as keyof ConversationScriptData] as string}"
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Growth Profile Screen ─────────────────────────────────────────────────────
+function GrowthProfileScreen({
+  onBack,
+  onCoachBrief,
+  onPrivacy,
+}: {
+  onBack: () => void;
+  onCoachBrief: () => void;
+  onPrivacy: () => void;
+}) {
+  const { data: profile, isLoading } = trpc.leadershipCoach.getGrowthProfile.useQuery();
+  const { data: commitments, refetch: refetchCommitments } = trpc.leadershipCoach.getCommitments.useQuery();
+  const [expandedPlan, setExpandedPlan] = useState(false);
+
+  const generatePlan = trpc.leadershipCoach.generateGrowthPlan.useMutation({
+    onSuccess: () => { toast.success('30-Day Growth Plan generated!'); },
+    onError: () => toast.error('Failed to generate plan. Please try again.'),
+  });
+
+  const updateOutcome = trpc.leadershipCoach.updateCommitmentOutcome.useMutation({
+    onSuccess: () => refetchCommitments(),
+  });
+
+  const OUTCOME_OPTIONS = [
+    { value: 'done_well', label: '✓ Done Well', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+    { value: 'done_partial', label: '~ Partial', color: 'text-amber-700 bg-amber-50 border-amber-200' },
+    { value: 'done_poorly', label: '✗ Struggled', color: 'text-red-700 bg-red-50 border-red-200' },
+    { value: 'avoided', label: '⊘ Avoided', color: 'text-gray-700 bg-gray-50 border-gray-200' },
+    { value: 'postponed', label: '→ Postponed', color: 'text-blue-700 bg-blue-50 border-blue-200' },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <BackButton onBack={onBack} />
+        <div className="flex items-center justify-center py-16">
+          <RefreshCw className="w-6 h-6 animate-spin text-[var(--color-ln-navy)]/40" />
+        </div>
+      </div>
     );
+  }
+
+  const plan = profile?.activePlan?.plan as GrowthPlanData | undefined;
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="Back to Practice Coach" />
+
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-[var(--color-ln-gold)]" />
+            <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Leadership Growth Profile</h2>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={onPrivacy}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg px-2.5 py-1.5 transition-colors"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              Privacy
+            </button>
+            <button
+              onClick={onCoachBrief}
+              className="flex items-center gap-1.5 text-xs text-[var(--color-ln-navy)]/70 hover:text-[var(--color-ln-navy)] border border-gray-200 rounded-lg px-2.5 py-1.5 transition-colors"
+            >
+              <User className="w-3.5 h-3.5" />
+              Coach Brief
+            </button>
+          </div>
+        </div>
+        <p className="text-sm text-gray-500">Your private leadership development record.</p>
+      </div>
+
+      {/* Memory Summary */}
+      {profile?.memory?.aiSummary && (
+        <SectionCard title="Leadership Memory" icon={Brain} accent>
+          <p className="text-sm text-[var(--color-ln-navy)]/80 leading-relaxed">{profile.memory.aiSummary}</p>
+        </SectionCard>
+      )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 my-4">
+        {[
+          { label: 'Practice Sessions', value: profile?.recentSessions.length ?? 0, icon: Play },
+          { label: 'Briefs Created', value: profile?.recentBriefs.length ?? 0, icon: Calendar },
+          { label: 'Debriefs Done', value: profile?.recentDebriefs.length ?? 0, icon: FileText },
+        ].map(stat => (
+          <div key={stat.label} className="rounded-xl border border-gray-200 bg-white p-3 text-center">
+            <stat.icon className="w-4 h-4 text-[var(--color-ln-gold)] mx-auto mb-1" />
+            <p className="text-xl font-bold text-[var(--color-ln-navy)]">{stat.value}</p>
+            <p className="text-xs text-gray-400">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Commitments */}
+      {commitments && commitments.length > 0 && (
+        <div className="my-4">
+          <p className="text-sm font-semibold text-[var(--color-ln-navy)] mb-3 flex items-center gap-1.5">
+            <Target className="w-4 h-4 text-[var(--color-ln-gold)]" />
+            Commitments Tracker
+          </p>
+          <div className="space-y-3">
+            {commitments.slice(0, 8).map(c => (
+              <div key={c.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                <p className="text-sm text-[var(--color-ln-navy)] mb-2">{c.text}</p>
+                {c.status === 'pending' ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {OUTCOME_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => updateOutcome.mutate({ commitmentId: c.id, status: opt.value as 'done_well' | 'done_partial' | 'done_poorly' | 'avoided' | 'postponed' })}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-all ${opt.color}`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Badge className="text-xs bg-gray-100 text-gray-600 border-0">
+                      {OUTCOME_OPTIONS.find(o => o.value === c.status)?.label ?? c.status}
+                    </Badge>
+                    {c.aiRecommendation && (
+                      <p className="text-xs text-[var(--color-ln-navy)]/60 italic">{c.aiRecommendation}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 30-Day Growth Plan */}
+      <div className="my-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold text-[var(--color-ln-navy)] flex items-center gap-1.5">
+            <Award className="w-4 h-4 text-[var(--color-ln-gold)]" />
+            30-Day Growth Plan
+          </p>
+          <Button
+            size="sm"
+            onClick={() => generatePlan.mutate()}
+            disabled={generatePlan.isPending}
+            className="bg-[var(--color-ln-navy)] text-white text-xs"
+          >
+            {generatePlan.isPending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+            {plan ? 'Regenerate' : 'Generate Plan'}
+          </Button>
+        </div>
+
+        {plan ? (
+          <div className="rounded-xl border border-[var(--color-ln-navy)]/20 bg-[var(--color-ln-navy)]/5 p-5">
+            <p className="text-base font-bold text-[var(--color-ln-navy)] mb-1">{plan.growthTheme}</p>
+            <p className="text-sm text-[var(--color-ln-navy)]/70 mb-4">{plan.whyItMatters}</p>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {['week1', 'week2', 'week3', 'week4'].map((week, i) => (
+                <div key={week} className="rounded-lg bg-white border border-gray-200 p-3">
+                  <p className="text-xs font-semibold text-[var(--color-ln-gold)] mb-1">Week {i + 1}</p>
+                  <p className="text-xs text-gray-600">{plan[week as keyof GrowthPlanData] as string}</p>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setExpandedPlan(!expandedPlan)}
+              className="text-xs text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] flex items-center gap-1"
+            >
+              {expandedPlan ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {expandedPlan ? 'Show less' : 'Show real-world actions, drills & reflection questions'}
+            </button>
+
+            {expandedPlan && (
+              <div className="mt-4 space-y-3">
+                {[
+                  { key: 'realWorldActions', label: 'Real-World Actions', icon: Target },
+                  { key: 'recommendedRolePlays', label: 'Recommended Role-Plays', icon: Play },
+                  { key: 'recommendedDrills', label: 'Drills', icon: Zap },
+                  { key: 'reflectionQuestions', label: 'Reflection Questions', icon: Brain },
+                  { key: 'successIndicators', label: 'Success Indicators', icon: CheckCircle },
+                ].map(section => (
+                  <div key={section.key}>
+                    <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-1.5 flex items-center gap-1.5">
+                      <section.icon className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
+                      {section.label}
+                    </p>
+                    <ul className="space-y-1">
+                      {(plan[section.key as keyof GrowthPlanData] as string[]).map((item, i) => (
+                        <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                          <span className="text-[var(--color-ln-gold)] mt-0.5">•</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center">
+            <Award className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-400">No growth plan yet. Generate one based on your practice history.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Coach Brief Screen ────────────────────────────────────────────────────────
+function CoachBriefScreen({ onBack }: { onBack: () => void }) {
+  const [shareLevel, setShareLevel] = useState<'summary' | 'transcript' | 'feedback' | 'growth' | 'selected'>('summary');
+  const [brief, setBrief] = useState<{ briefId: number; brief: ReturnType<typeof Object.create> } | null>(null);
+
+  const generateBrief = trpc.leadershipCoach.generateCoachBrief.useMutation({
+    onSuccess: (data) => setBrief(data),
+    onError: () => toast.error('Failed to generate brief. Please try again.'),
+  });
+
+  const SHARE_LEVELS = [
+    { value: 'summary', label: 'Summary Only', desc: 'High-level themes and patterns' },
+    { value: 'feedback', label: 'Include Feedback', desc: 'Scores and improvement areas' },
+    { value: 'growth', label: 'Full Growth Profile', desc: 'Commitments, patterns, blind spots' },
+  ];
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="Back to Growth Profile" />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <User className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Human Coach Brief</h2>
+        </div>
+        <p className="text-sm text-gray-500">Generate a summary to share with your human executive coach before a session.</p>
+      </div>
+
+      {!brief ? (
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-2">What to include in the brief?</label>
+            <div className="space-y-2">
+              {SHARE_LEVELS.map(level => (
+                <button
+                  key={level.value}
+                  onClick={() => setShareLevel(level.value as typeof shareLevel)}
+                  className={`w-full text-left p-3.5 rounded-xl border transition-all ${
+                    shareLevel === level.value
+                      ? 'border-[var(--color-ln-navy)] bg-[var(--color-ln-navy)]/5'
+                      : 'border-gray-200 bg-white hover:border-[var(--color-ln-navy)]/30'
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-[var(--color-ln-navy)]">{level.label}</p>
+                  <p className="text-xs text-gray-400">{level.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            onClick={() => generateBrief.mutate({ shareLevel })}
+            disabled={generateBrief.isPending}
+            className="w-full bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90 h-11"
+          >
+            {generateBrief.isPending ? (
+              <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> Generating...</span>
+            ) : (
+              <span className="flex items-center gap-2"><User className="w-4 h-4" /> Generate Coach Brief</span>
+            )}
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <Badge className="bg-[var(--color-ln-navy)]/10 text-[var(--color-ln-navy)] border-0">
+              {SHARE_LEVELS.find(l => l.value === shareLevel)?.label}
+            </Badge>
+            <div className="flex gap-2">
+              <CopyButton text={JSON.stringify(brief.brief, null, 2)} />
+              <Button size="sm" variant="outline" onClick={() => setBrief(null)} className="text-xs">
+                Regenerate
+              </Button>
+            </div>
+          </div>
+
+          {[
+            { key: 'currentIssue', label: 'Current Issue', icon: Target },
+            { key: 'leaderDesiredOutcome', label: 'Leader\'s Desired Outcome', icon: Award },
+            { key: 'aiObservedPattern', label: 'AI-Observed Pattern', icon: Brain, accent: true },
+            { key: 'possibleBlindSpot', label: 'Possible Blind Spot', icon: Eye, accent: true },
+            { key: 'practiceCompleted', label: 'Practice Completed', icon: Play },
+            { key: 'scoresAndImprovements', label: 'Scores & Improvements', icon: TrendingUp },
+          ].map(field => (
+            <SectionCard key={field.key} title={field.label} icon={field.icon} accent={field.accent}>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {brief.brief[field.key as string]}
+              </p>
+            </SectionCard>
+          ))}
+
+          {brief.brief.commitmentsMade?.length > 0 && (
+            <SectionCard title="Commitments Made" icon={CheckCircle}>
+              <ul className="space-y-1">
+                {(brief.brief.commitmentsMade as string[]).map((c: string, i: number) => (
+                  <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                    <span className="text-[var(--color-ln-gold)] mt-0.5">•</span>{c}
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+          )}
+
+          {brief.brief.suggestedCoachingQuestions?.length > 0 && (
+            <SectionCard title="Suggested Coaching Questions" icon={MessageSquare} accent>
+              <ol className="space-y-2">
+                {(brief.brief.suggestedCoachingQuestions as string[]).map((q: string, i: number) => (
+                  <li key={i} className="text-sm text-[var(--color-ln-navy)]/80 flex items-start gap-2">
+                    <span className="text-[var(--color-ln-gold)] font-bold flex-shrink-0">{i + 1}.</span>{q}
+                  </li>
+                ))}
+              </ol>
+            </SectionCard>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Privacy Settings Screen ───────────────────────────────────────────────────
+function PrivacySettingsScreen({ onBack }: { onBack: () => void }) {
+  const { data: settings } = trpc.leadershipCoach.getPrivacySettings.useQuery();
+  const [form, setForm] = useState({
+    shareWithCoach: 'nothing' as 'nothing' | 'summary' | 'transcript' | 'feedback' | 'growth' | 'selected',
+    shareWithOrg: false,
+    allowAggregateAnalytics: true,
+    coachEmail: '',
+  });
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (settings) {
+      setForm({
+        shareWithCoach: settings.shareWithCoach as typeof form.shareWithCoach,
+        shareWithOrg: settings.shareWithOrg,
+        allowAggregateAnalytics: settings.allowAggregateAnalytics,
+        coachEmail: settings.coachEmail ?? '',
+      });
+    }
+  }, [settings]);
+
+  const update = trpc.leadershipCoach.updatePrivacySettings.useMutation({
+    onSuccess: () => { setSaved(true); setTimeout(() => setSaved(false), 3000); },
+  });
+
+  const SHARE_OPTIONS = [
+    { value: 'nothing', label: 'Nothing', desc: 'Your coach sees nothing' },
+    { value: 'summary', label: 'Summary Only', desc: 'High-level themes only' },
+    { value: 'feedback', label: 'Feedback Scores', desc: 'Practice scores and areas' },
+    { value: 'growth', label: 'Full Growth Profile', desc: 'Everything including commitments' },
+  ];
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="Back to Growth Profile" />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Lock className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Privacy Controls</h2>
+        </div>
+        <p className="text-sm text-gray-500">Your practice data is private by default. You control what is shared.</p>
+      </div>
+
+      <div className="space-y-6">
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+          <div className="flex items-start gap-2">
+            <Shield className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-emerald-800">Your data is private by default</p>
+              <p className="text-xs text-emerald-700 mt-0.5">All practice sessions, coaching conversations, and feedback are stored privately. Your organisation cannot see individual data unless you explicitly choose to share.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-2">Share with my human coach</label>
+          <div className="space-y-2">
+            {SHARE_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setForm(f => ({ ...f, shareWithCoach: opt.value as typeof form.shareWithCoach }))}
+                className={`w-full text-left p-3 rounded-xl border transition-all ${
+                  form.shareWithCoach === opt.value
+                    ? 'border-[var(--color-ln-navy)] bg-[var(--color-ln-navy)]/5'
+                    : 'border-gray-200 bg-white hover:border-[var(--color-ln-navy)]/30'
+                }`}
+              >
+                <p className="text-sm font-medium text-[var(--color-ln-navy)]">{opt.label}</p>
+                <p className="text-xs text-gray-400">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {form.shareWithCoach !== 'nothing' && (
+          <div>
+            <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">Coach email address</label>
+            <Input
+              type="email"
+              value={form.coachEmail}
+              onChange={e => setForm(f => ({ ...f, coachEmail: e.target.value }))}
+              placeholder="coach@example.com"
+              className="border-gray-200"
+            />
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {[
+            { key: 'shareWithOrg', label: 'Share aggregate data with my organisation', desc: 'Only anonymised, aggregated data — never individual sessions' },
+            { key: 'allowAggregateAnalytics', label: 'Allow anonymous analytics to improve the platform', desc: 'Helps improve the AI coaching quality for all users' },
+          ].map(toggle => (
+            <div key={toggle.key} className="flex items-start justify-between gap-4 p-3 rounded-xl border border-gray-200 bg-white">
+              <div>
+                <p className="text-sm font-medium text-[var(--color-ln-navy)]">{toggle.label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{toggle.desc}</p>
+              </div>
+              <button
+                onClick={() => setForm(f => ({ ...f, [toggle.key]: !f[toggle.key as keyof typeof f] }))}
+                className={`flex-shrink-0 w-10 h-6 rounded-full transition-colors ${
+                  form[toggle.key as keyof typeof form] ? 'bg-[var(--color-ln-navy)]' : 'bg-gray-200'
+                }`}
+              >
+                <span className={`block w-4 h-4 rounded-full bg-white shadow transition-transform mx-1 ${
+                  form[toggle.key as keyof typeof form] ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <Button
+          onClick={() => update.mutate(form)}
+          disabled={update.isPending}
+          className="w-full bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90 h-11"
+        >
+          {update.isPending ? (
+            <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> Saving...</span>
+          ) : saved ? (
+            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4" /> Saved</span>
+          ) : (
+            <span className="flex items-center gap-2"><Shield className="w-4 h-4" /> Save Privacy Settings</span>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ── Coaching Screen (Coach Me First) ──────────────────────────────────────────
+function CoachingScreen({
+  issue,
+  onBack,
+  onProceedToSimulation,
+}: {
+  issue: string;
+  onBack: () => void;
+  onProceedToSimulation: (sessionId: number) => void;
+}) {
+    const [messages, setMessages] = useState<Array<{ role: 'user' | 'coach'; content: string; timestamp: string }>>([]);
+  const [input, setInput] = useState('');
+  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [coachingSummary, setCoachingSummary] = useState<{
+    realIssue: string;
+    leadershipGap: string;
+    recommendedApproach: string;
+    commitment: string;
+  } | null>(null);
+  const [blindSpot, setBlindSpot] = useState<{ possibleBlindSpot: string; reframe: string } | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const startSession = trpc.practice.createSession.useMutation({
+    onSuccess: (data) => {
+      setSessionId(data.sessionId);
+      setMessages([{ role: 'coach', content: `I hear you — let's make sure we're working on the right thing. Tell me more: when you think about this situation, what's the part that feels most difficult for you?`, timestamp: new Date().toISOString() }]);
+    },
+  });
+  const sendMessage = trpc.practice.sendCoachMessage.useMutation({
+    onSuccess: (data) => {
+      setMessages(prev => [...prev, { role: 'coach', content: data.message.content, timestamp: data.message.timestamp }]);
+      if (data.coachingSummary) setCoachingSummary(data.coachingSummary as { realIssue: string; leadershipGap: string; recommendedApproach: string; commitment: string });
+    },
+  });
+  const detectBlindSpot = trpc.leadershipCoach.detectBlindSpots.useMutation({
+    onSuccess: (data) => setBlindSpot(data as { possibleBlindSpot: string; reframe: string }),
+  });
+  useEffect(() => {
+    startSession.mutate({ issueText: issue });
+    detectBlindSpot.mutate({ issueDescription: issue });
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSend = () => {
-    if (!input.trim() || isLoading) return;
-    const msg = input.trim();
-    setInput("");
-    setIsLoading(true);
-    sendMessage.mutate(
-      { sessionId, message: msg },
-      {
-        onSuccess: (data) => {
-          setMessages(data.messages);
-          if (data.coachingSummary) setCoachingSummary(data.coachingSummary);
-          setIsLoading(false);
-        },
-        onError: () => { setIsLoading(false); toast.error("Failed to send message"); },
-      }
-    );
+    if (!input.trim() || !sessionId) return;
+    const userMsg = input.trim();
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', content: userMsg, timestamp: new Date().toISOString() }]);
+    sendMessage.mutate({ sessionId, message: userMsg });
   };
 
-  const cleanContent = (content: string) =>
-    content.replace(/<COACHING_SUMMARY>[\s\S]*?<\/COACHING_SUMMARY>/g, "").trim();
-
   return (
-    <div className="min-h-screen bg-[#F8F6F0] flex flex-col">
-      {/* Header */}
-      <div className="bg-[#12345A] text-white px-6 py-4 flex items-center gap-3">
-        <button onClick={onBack} className="text-blue-200 hover:text-white transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-[#F2B705]" />
-            <span className="font-semibold">Coach Me First</span>
-          </div>
-          <p className="text-blue-200 text-xs truncate max-w-sm">{issueText}</p>
+    <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
+      <BackButton onBack={onBack} />
+
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Brain className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-lg font-bold text-[var(--color-ln-navy)]">Coach Me First</h2>
         </div>
-        {/* Step indicator */}
-        <div className="flex items-center gap-1.5 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="w-5 h-5 rounded-full bg-[#F2B705] flex items-center justify-center text-[#12345A] font-bold text-xs">1</div>
-            <span className="text-[#F2B705] font-medium hidden sm:inline">Coach</span>
-          </div>
-          <div className="w-4 h-px bg-white/30" />
-          <div className="flex items-center gap-1">
-            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">2</div>
-            <span className="text-blue-200 hidden sm:inline">Setup</span>
-          </div>
-          <div className="w-4 h-px bg-white/30" />
-          <div className="flex items-center gap-1">
-            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">3</div>
-            <span className="text-blue-200 hidden sm:inline">Practice</span>
-          </div>
-        </div>
+        <p className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+          <Lock className="w-3 h-3 inline mr-1" />
+          This conversation is private and confidential.
+        </p>
       </div>
+
+      {/* Blind Spot Banner */}
+      {blindSpot && (
+        <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-4">
+          <div className="flex items-start gap-2">
+            <Eye className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-amber-800 mb-1">Possible Blind Spot Detected</p>
+              <p className="text-xs text-amber-700 mb-2">{blindSpot.possibleBlindSpot}</p>
+              <p className="text-xs text-amber-600 italic">Reframe: {blindSpot.reframe}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 max-w-3xl mx-auto w-full">
-        {messages.filter(m => m.role !== "user" || messages.indexOf(m) > 0).map((msg, i) => (
-          <div key={i} className={`mb-4 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            {msg.role !== "user" && (
-              <div className="w-8 h-8 rounded-full bg-[#12345A] flex items-center justify-center mr-2 mt-1 shrink-0">
-                <Bot className="h-4 w-4 text-[#F2B705]" />
-              </div>
-            )}
-            <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-              msg.role === "user"
-                ? "bg-[#12345A] text-white rounded-br-sm"
-                : "bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm"
+      <div className="flex-1 space-y-3 mb-4 overflow-y-auto">
+        {messages.length === 0 && (
+          <div className="flex items-center justify-center py-8">
+            <RefreshCw className="w-5 h-5 animate-spin text-[var(--color-ln-navy)]/40" />
+          </div>
+        )}
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+              msg.role === 'coach' ? 'bg-[var(--color-ln-navy)] text-white' : 'bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)]'
             }`}>
-              {msg.role === "user" ? msg.content : cleanContent(msg.content)}
+              {msg.role === 'coach' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
             </div>
-            {msg.role === "user" && (
-              <div className="w-8 h-8 rounded-full bg-[#F2B705] flex items-center justify-center ml-2 mt-1 shrink-0">
-                <User className="h-4 w-4 text-[#12345A]" />
-              </div>
-            )}
+            <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+              msg.role === 'coach'
+                ? 'bg-white border border-gray-200 text-gray-700'
+                : 'bg-[var(--color-ln-navy)] text-white'
+            }`}>
+              {msg.content}
+            </div>
           </div>
         ))}
-        {isLoading && (
-          <div className="flex justify-start mb-4">
-            <div className="w-8 h-8 rounded-full bg-[#12345A] flex items-center justify-center mr-2 shrink-0">
-              <Bot className="h-4 w-4 text-[#F2B705]" />
+        {sendMessage.isPending && (
+          <div className="flex gap-3">
+            <div className="w-7 h-7 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center">
+              <Bot className="w-4 h-4 text-white" />
             </div>
-            <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3">
               <div className="flex gap-1">
-                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                ))}
               </div>
             </div>
           </div>
         )}
-
-        {/* Coaching summary card */}
-        {coachingSummary && (
-          <div className="bg-[#12345A] text-white rounded-2xl p-5 mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="h-4 w-4 text-[#F2B705]" />
-              <span className="font-semibold text-sm">Coaching Summary</span>
-            </div>
-            <div className="space-y-2 text-sm text-blue-100">
-              {coachingSummary.realIssue && <p><span className="text-white font-medium">Real issue:</span> {coachingSummary.realIssue}</p>}
-              {coachingSummary.leadershipGap && <p><span className="text-white font-medium">Leadership gap:</span> {coachingSummary.leadershipGap}</p>}
-              {coachingSummary.recommendedApproach && <p><span className="text-white font-medium">Approach:</span> {coachingSummary.recommendedApproach}</p>}
-            </div>
-            <Button
-              onClick={() => onScenarioReady(JSON.stringify(coachingSummary))}
-              className="mt-4 w-full bg-[#F2B705] hover:bg-[#d4a004] text-[#12345A] font-semibold"
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Start Role Play
-            </Button>
-          </div>
-        )}
-        <div ref={bottomRef} />
+        <div ref={messagesEndRef} />
       </div>
+
+      {/* Coaching Summary */}
+      {coachingSummary && (
+        <div className="mb-4 rounded-xl bg-[var(--color-ln-navy)]/5 border border-[var(--color-ln-navy)]/20 p-4">
+          <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-3 flex items-center gap-1.5">
+            <CheckCircle className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
+            Coaching Summary
+          </p>
+          <div className="space-y-2">
+            {[
+              { label: 'Real Issue', value: coachingSummary.realIssue },
+              { label: 'Leadership Gap', value: coachingSummary.leadershipGap },
+              { label: 'Recommended Approach', value: coachingSummary.recommendedApproach },
+            ].map(item => (
+              <div key={item.label}>
+                <p className="text-xs font-semibold text-[var(--color-ln-navy)]/60">{item.label}</p>
+                <p className="text-sm text-[var(--color-ln-navy)]">{item.value}</p>
+              </div>
+            ))}
+          </div>
+          <Button
+            onClick={() => sessionId && onProceedToSimulation(sessionId)}
+            className="w-full mt-4 bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-gold)]/90"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Proceed to Practice Simulation
+          </Button>
+        </div>
+      )}
 
       {/* Input */}
       {!coachingSummary && (
-        <div className="border-t bg-white px-4 py-3 max-w-3xl mx-auto w-full">
-          <div className="flex gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder="Your response…"
-              className="min-h-[44px] max-h-[120px] resize-none text-sm"
-              disabled={isLoading}
-            />
-            <Button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              className="bg-[#12345A] hover:bg-[#0e2a47] text-white h-11 px-4 shrink-0"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="text-xs text-gray-400 mt-1.5 text-center">Press Enter to send · Shift+Enter for new line</p>
+        <div className="flex gap-2">
+          <Textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="Share your thoughts..."
+            className="min-h-[44px] max-h-[120px] text-sm resize-none border-gray-200"
+          />
+          <Button
+            onClick={handleSend}
+            disabled={!input.trim() || sendMessage.isPending}
+            className="bg-[var(--color-ln-navy)] text-white px-3"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
         </div>
       )}
     </div>
@@ -364,227 +1790,114 @@ function CoachingScreen({
 // ── Scenario Setup Screen ─────────────────────────────────────────────────────
 function ScenarioSetupScreen({
   sessionId,
-  coachingSummary,
-  onStartRolePlay,
   onBack,
+  onStart,
 }: {
   sessionId: number;
-  coachingSummary?: string;
-  onStartRolePlay: (attemptId: number) => void;
   onBack: () => void;
+  onStart: (scenario: PracticeScenario) => void;
 }) {
   const [scenario, setScenario] = useState<PracticeScenario | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedScenario, setEditedScenario] = useState<PracticeScenario | null>(null);
-  const [isGenerating, setIsGenerating] = useState(true);
+  const [editingField, setEditingField] = useState<string | null>(null);
 
-  const generateScenario = trpc.practice.generateScenario.useMutation();
-  const updateScenario = trpc.practice.updateScenario.useMutation();
-  const startAttempt = trpc.practice.startAttempt.useMutation();
+  const generateScenario = trpc.practice.generateScenario.useMutation({
+    onSuccess: (data) => setScenario(data.scenario),
+    onError: () => toast.error('Failed to generate scenario. Please try again.'),
+  });
 
   useEffect(() => {
-    generateScenario.mutate(
-      { sessionId, coachingSummary },
-      {
-        onSuccess: (data) => { setScenario(data.scenario); setEditedScenario(data.scenario); setIsGenerating(false); },
-        onError: () => { setIsGenerating(false); toast.error("Failed to generate scenario"); },
-      }
-    );
+    generateScenario.mutate({ sessionId });
   }, []);
 
-  const handleSaveEdit = () => {
-    if (!editedScenario) return;
-    updateScenario.mutate(
-      { sessionId, scenario: editedScenario },
-      {
-        onSuccess: () => { setScenario(editedScenario); setIsEditing(false); toast.success("Scenario updated"); },
-        onError: () => toast.error("Failed to update scenario"),
-      }
-    );
-  };
-
-  const handleStart = () => {
-    startAttempt.mutate(
-      { sessionId },
-      {
-        onSuccess: (data) => onStartRolePlay(data.attemptId),
-        onError: () => toast.error("Failed to start simulation"),
-      }
-    );
-  };
-
-  const DIFFICULTIES: Array<"Easy" | "Medium" | "Hard" | "Executive"> = ["Easy", "Medium", "Hard", "Executive"];
-
-  if (isGenerating) {
+  if (!scenario) {
     return (
-      <div className="min-h-screen bg-[#F8F6F0] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#12345A] border-t-[#F2B705] rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#12345A] font-semibold">Generating your simulation…</p>
-          <p className="text-gray-500 text-sm mt-1">Creating a realistic scenario based on your situation</p>
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <BackButton onBack={onBack} />
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <RefreshCw className="w-6 h-6 animate-spin text-[var(--color-ln-navy)]/40" />
+          <p className="text-sm text-gray-400">Building your practice scenario...</p>
         </div>
       </div>
     );
   }
 
-  if (!scenario) return null;
-
-  const s = isEditing ? editedScenario! : scenario;
+  const DIFFICULTY_COLORS: Record<string, string> = {
+    Easy: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    Medium: "bg-amber-100 text-amber-800 border-amber-200",
+    Hard: "bg-orange-100 text-orange-800 border-orange-200",
+    Executive: "bg-purple-100 text-purple-800 border-purple-200",
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8F6F0]">
-      {/* Header */}
-      <div className="bg-[#12345A] text-white px-6 py-4 flex items-center gap-3">
-        <button onClick={onBack} className="text-blue-200 hover:text-white transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-[#F2B705]" />
-            <span className="font-semibold">Simulation Setup</span>
-          </div>
-          <p className="text-blue-200 text-xs">Review and edit your scenario before starting</p>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Play className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Your Practice Scenario</h2>
         </div>
-        {/* Step indicator */}
-        <div className="flex items-center gap-1.5 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">1</div>
-            <span className="text-blue-200 hidden sm:inline">Coach</span>
-          </div>
-          <div className="w-4 h-px bg-white/30" />
-          <div className="flex items-center gap-1">
-            <div className="w-5 h-5 rounded-full bg-[#F2B705] flex items-center justify-center text-[#12345A] font-bold text-xs">2</div>
-            <span className="text-[#F2B705] font-medium hidden sm:inline">Setup</span>
-          </div>
-          <div className="w-4 h-px bg-white/30" />
-          <div className="flex items-center gap-1">
-            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">3</div>
-            <span className="text-blue-200 hidden sm:inline">Practice</span>
-          </div>
-        </div>
+        <p className="text-sm text-gray-500">Review and edit the scenario before starting the role-play.</p>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-6">
-        {/* Scenario card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
-          <div className="bg-[#12345A]/5 border-b border-gray-100 px-5 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Badge className={`text-xs border ${DIFFICULTY_COLORS[s.difficultyLevel]}`}>{s.difficultyLevel}</Badge>
-              <span className="text-sm font-semibold text-[#12345A]">{s.conversationType}</span>
-            </div>
-            <button
-              onClick={() => { setIsEditing(!isEditing); setEditedScenario(scenario); }}
-              className="text-gray-400 hover:text-[#12345A] transition-colors"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="p-5 grid grid-cols-2 gap-4 text-sm">
-            {[
-              { label: "Your Role", value: s.userRole, field: "userRole" },
-              { label: "Avatar Role", value: s.avatarRole, field: "avatarRole" },
-              { label: "Relationship", value: s.relationship, field: "relationship" },
-              { label: "Avatar Personality", value: s.avatarPersonality, field: "avatarPersonality" },
-              { label: "Category", value: s.category, field: "category" },
-            ].map(({ label, value, field }) => (
-              <div key={field}>
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">{label}</p>
-                {isEditing ? (
-                  <input
-                    value={(editedScenario as any)?.[field] ?? ""}
-                    onChange={(e) => setEditedScenario(prev => prev ? { ...prev, [field]: e.target.value } : null)}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-[#12345A]"
-                  />
-                ) : (
-                  <p className="text-[#12345A] font-medium">{value}</p>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <Separator />
-
-          <div className="p-5 space-y-3 text-sm">
-            {[
-              { label: "Context", value: s.context, field: "context", multiline: true },
-              { label: "Stakes", value: s.stakes, field: "stakes", multiline: true },
-              { label: "Desired Outcome", value: s.desiredOutcome, field: "desiredOutcome", multiline: true },
-              { label: "Success Criteria", value: s.successCriteria, field: "successCriteria", multiline: true },
-            ].map(({ label, value, field, multiline }) => (
-              <div key={field}>
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">{label}</p>
-                {isEditing ? (
-                  <textarea
-                    value={(editedScenario as any)?.[field] ?? ""}
-                    onChange={(e) => setEditedScenario(prev => prev ? { ...prev, [field]: e.target.value } : null)}
-                    rows={2}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#12345A] resize-none"
-                  />
-                ) : (
-                  <p className="text-gray-700">{value}</p>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Difficulty selector */}
-          {isEditing && (
-            <div className="px-5 pb-5">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Difficulty</p>
-              <div className="flex gap-2">
-                {DIFFICULTIES.map(d => (
-                  <button
-                    key={d}
-                    onClick={() => setEditedScenario(prev => prev ? { ...prev, difficultyLevel: d } : null)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                      editedScenario?.difficultyLevel === d
-                        ? "border-[#12345A] bg-[#12345A] text-white"
-                        : "border-gray-200 text-gray-600 hover:border-[#12345A]"
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Action buttons */}
-        {isEditing ? (
-          <div className="flex gap-3">
-            <Button
-              onClick={() => setIsEditing(false)}
-              variant="outline"
-              className="flex-1 border-gray-200"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveEdit}
-              disabled={updateScenario.isPending}
-              className="flex-1 bg-[#12345A] hover:bg-[#0e2a47] text-white"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
-        ) : (
-          <Button
-            onClick={handleStart}
-            disabled={startAttempt.isPending}
-            className="w-full bg-[#F2B705] hover:bg-[#d4a004] text-[#12345A] font-bold h-12 text-base"
+      <div className="rounded-xl border border-gray-200 bg-white p-5 mb-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <Badge className={`border ${DIFFICULTY_COLORS[scenario.difficultyLevel] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+            {scenario.difficultyLevel}
+          </Badge>
+          <button
+            onClick={() => generateScenario.mutate({ sessionId })}
+            className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
           >
-            {startAttempt.isPending ? (
-              <div className="w-5 h-5 border-2 border-[#12345A] border-t-transparent rounded-full animate-spin mr-2" />
+            <RefreshCw className="w-3.5 h-3.5" /> Regenerate
+          </button>
+        </div>
+
+        {[
+          { key: 'yourRole', label: 'Your Role' },
+          { key: 'avatarRole', label: 'Their Role' },
+          { key: 'relationship', label: 'Relationship' },
+          { key: 'context', label: 'Context' },
+          { key: 'stakes', label: 'Stakes' },
+          { key: 'desiredOutcome', label: 'Your Goal' },
+          { key: 'successCriteria', label: 'Success Looks Like' },
+        ].map(field => (
+          <div key={field.key}>
+            <p className="text-xs font-semibold text-gray-400 mb-1">{field.label}</p>
+            {editingField === field.key ? (
+              <div className="flex gap-2">
+                <Input
+                  value={scenario[field.key as keyof PracticeScenario] as string}
+                  onChange={e => setScenario(s => s ? { ...s, [field.key]: e.target.value } : s)}
+                  className="text-sm border-[var(--color-ln-navy)]/30"
+                  autoFocus
+                />
+                <Button size="sm" onClick={() => setEditingField(null)} className="bg-[var(--color-ln-navy)] text-white px-3">
+                  <Check className="w-4 h-4" />
+                </Button>
+              </div>
             ) : (
-              <Play className="h-5 w-5 mr-2" />
+              <div className="flex items-start justify-between gap-2 group">
+                <p className="text-sm text-[var(--color-ln-navy)]">{scenario[field.key as keyof PracticeScenario] as string}</p>
+                <button
+                  onClick={() => setEditingField(field.key)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+              </div>
             )}
-            Start Role Play
-          </Button>
-        )}
+          </div>
+        ))}
       </div>
+
+      <Button
+        onClick={() => onStart(scenario)}
+        className="w-full bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-gold)]/90 h-12 text-base font-semibold"
+      >
+        <Play className="w-5 h-5 mr-2" />
+        Start Role-Play
+      </Button>
     </div>
   );
 }
@@ -592,712 +1905,577 @@ function ScenarioSetupScreen({
 // ── Role Play Screen ──────────────────────────────────────────────────────────
 function RolePlayScreen({
   sessionId,
-  attemptId,
-  onEndSimulation,
+  scenario,
   onBack,
+  onFeedback,
 }: {
   sessionId: number;
-  attemptId: number;
-  onEndSimulation: (attemptId: number) => void;
+  scenario: PracticeScenario;
   onBack: () => void;
+  onFeedback: (feedback: PracticeFeedback, score: number, attemptId: number) => void;
 }) {
   const [messages, setMessages] = useState<PracticeMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [coachingNote, setCoachingNote] = useState<string | null>(null);
-  const [isEndingSimulation, setIsEndingSimulation] = useState(false);
-  const [turnCount, setTurnCount] = useState(0);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState('');
+  const [attemptId, setAttemptId] = useState<number | null>(null);
+  const [pauseNote, setPauseNote] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const sessionQuery = trpc.practice.getSession.useQuery({ sessionId });
-  const sendMessage = trpc.practice.sendRolePlayMessage.useMutation();
-  const pauseForCoaching = trpc.practice.pauseForCoaching.useMutation();
-  const endSimulation = trpc.practice.endSimulation.useMutation();
-
-  const scenario = sessionQuery.data?.scenario as PracticeScenario | null;
+    const startRolePlay = trpc.practice.startAttempt.useMutation({
+    onSuccess: (data) => {
+      setAttemptId(data.attemptId);
+      setMessages([{ role: 'avatar', content: `Hello. I understand we need to talk. What's on your mind?`, timestamp: new Date().toISOString() }]);
+    },
+  });
+  const sendMessage = trpc.practice.sendRolePlayMessage.useMutation({
+    onSuccess: (data) => {
+      setMessages(prev => [...prev, data.message]);
+    },
+  });
+  const pauseForCoaching = trpc.practice.pauseForCoaching.useMutation({
+    onSuccess: (data) => setPauseNote(data.coaching),
+  });
+  const endSimulation = trpc.practice.endSimulation.useMutation({
+    onSuccess: (data) => onFeedback(data.feedback, data.feedback.overallScore ?? 0, data.attemptId),
+  });
+  useEffect(() => {
+    startRolePlay.mutate({ sessionId });
+  }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading, coachingNote]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSend = () => {
-    if (!input.trim() || isLoading || isPaused) return;
-    const msg = input.trim();
-    setInput("");
-    setIsLoading(true);
-    sendMessage.mutate(
-      { attemptId, message: msg },
-      {
-        onSuccess: (data) => {
-          setMessages(data.transcript);
-          setTurnCount(prev => prev + 1);
-          setIsLoading(false);
-        },
-        onError: () => { setIsLoading(false); toast.error("Failed to send message"); },
-      }
-    );
-  };
-
-  const handlePauseForCoaching = () => {
-    setIsPaused(true);
-    pauseForCoaching.mutate(
-      { attemptId },
-      {
-        onSuccess: (data) => setCoachingNote(data.coaching),
-        onError: () => { setIsPaused(false); toast.error("Failed to get coaching"); },
-      }
-    );
-  };
-
-  const handleResume = () => {
-    setIsPaused(false);
-    setCoachingNote(null);
-  };
-
-  const handleEnd = () => {
-    if (messages.length < 2) {
-      toast.error("Have at least one exchange before ending");
-      return;
-    }
-    setIsEndingSimulation(true);
-    endSimulation.mutate(
-      { attemptId },
-      {
-        onSuccess: () => onEndSimulation(attemptId),
-        onError: () => { setIsEndingSimulation(false); toast.error("Failed to generate feedback"); },
-      }
-    );
+    if (!input.trim() || !attemptId) return;
+    const userMsg = input.trim();
+    setInput('');
+    setPauseNote(null);
+    setMessages(prev => [...prev, { role: 'user', content: userMsg, timestamp: new Date().toISOString() }]);
+    sendMessage.mutate({ attemptId, message: userMsg });
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F6F0] flex flex-col">
+    <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
       {/* Header */}
-      <div className="bg-[#12345A] text-white px-4 py-3 flex items-center gap-3">
-        <button onClick={onBack} className="text-blue-200 hover:text-white transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex-1 min-w-0">
-          {scenario ? (
-            <>
-              <div className="flex items-center gap-2">
-                <Bot className="h-4 w-4 text-[#F2B705] shrink-0" />
-                <span className="font-semibold text-sm truncate">{scenario.avatarRole}</span>
-                <Badge className={`text-xs border shrink-0 ${DIFFICULTY_COLORS[scenario.difficultyLevel]}`}>{scenario.difficultyLevel}</Badge>
-              </div>
-              <p className="text-blue-200 text-xs truncate">{scenario.conversationType} · {scenario.avatarPersonality}</p>
-            </>
-          ) : (
-            <span className="font-semibold">Role Play</span>
-          )}
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-[var(--color-ln-navy)]">{scenario.avatarRole}</p>
+          <p className="text-xs text-gray-400">{scenario.relationship} · {messages.filter(m => m.role === 'user').length} turns</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-blue-200">{turnCount} turns</span>
+        <div className="flex gap-2">
           <Button
-            onClick={handlePauseForCoaching}
-            disabled={isLoading || isPaused || messages.length === 0}
             size="sm"
-            variant="ghost"
-            className="text-[#F2B705] hover:bg-white/10 text-xs gap-1.5 h-8"
+            variant="outline"
+            onClick={() => attemptId && pauseForCoaching.mutate({ attemptId })}
+            disabled={pauseForCoaching.isPending}
+            className="text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
           >
-            <Pause className="h-3.5 w-3.5" />
+            <Pause className="w-3.5 h-3.5 mr-1.5" />
             Pause
           </Button>
           <Button
-            onClick={handleEnd}
-            disabled={isEndingSimulation || messages.length < 2}
             size="sm"
-            className="bg-white/10 hover:bg-white/20 text-white text-xs h-8"
+            onClick={() => attemptId && endSimulation.mutate({ attemptId })}
+            disabled={endSimulation.isPending}
+            className="bg-[var(--color-ln-navy)] text-white text-xs"
           >
-            {isEndingSimulation ? (
-              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              "End & Get Feedback"
-            )}
+            {endSimulation.isPending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'End & Feedback'}
           </Button>
         </div>
       </div>
 
-      {/* Context banner */}
-      {scenario && messages.length === 0 && (
-        <div className="bg-amber-50 border-b border-amber-100 px-4 py-3 text-sm text-amber-800 max-w-3xl mx-auto w-full">
-          <p className="font-medium mb-0.5">Scenario context</p>
-          <p className="text-xs">{scenario.context}</p>
-          <p className="text-xs mt-1 font-medium">Your goal: {scenario.desiredOutcome}</p>
+      {/* Pause Note */}
+      {pauseNote && (
+        <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-4">
+          <div className="flex items-start gap-2">
+            <Lightbulb className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-amber-800 mb-1">Coaching Note</p>
+              <p className="text-sm text-amber-700">{pauseNote}</p>
+            </div>
+          </div>
+          <button onClick={() => setPauseNote(null)} className="mt-2 text-xs text-amber-600 hover:text-amber-800">
+            Continue role-play →
+          </button>
         </div>
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 max-w-3xl mx-auto w-full">
-        {messages.length === 0 && !isLoading && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 rounded-full bg-[#12345A] flex items-center justify-center mx-auto mb-4">
-              <Bot className="h-8 w-8 text-[#F2B705]" />
-            </div>
-            <p className="text-[#12345A] font-semibold">Start the conversation</p>
-            <p className="text-gray-500 text-sm mt-1">Type your opening message to begin the role play</p>
+      <div className="flex-1 space-y-3 mb-4 overflow-y-auto">
+        {messages.length === 0 && (
+          <div className="flex items-center justify-center py-8">
+            <RefreshCw className="w-5 h-5 animate-spin text-[var(--color-ln-navy)]/40" />
           </div>
         )}
-
         {messages.map((msg, i) => (
-          <div key={i} className={`mb-4 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            {msg.role === "avatar" && (
-              <div className="w-8 h-8 rounded-full bg-[#12345A] flex items-center justify-center mr-2 mt-1 shrink-0">
-                <Bot className="h-4 w-4 text-[#F2B705]" />
-              </div>
-            )}
+          <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+              msg.role === 'avatar' ? 'bg-[var(--color-ln-navy)] text-white' : 'bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)]'
+            }`}>
+              {msg.role === 'avatar' ? scenario.avatarRole.charAt(0) : 'You'}
+            </div>
             <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-              msg.role === "user"
-                ? "bg-[#12345A] text-white rounded-br-sm"
-                : "bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm"
+              msg.role === 'avatar'
+                ? 'bg-white border border-gray-200 text-gray-700'
+                : 'bg-[var(--color-ln-navy)] text-white'
             }`}>
               {msg.content}
             </div>
-            {msg.role === "user" && (
-              <div className="w-8 h-8 rounded-full bg-[#F2B705] flex items-center justify-center ml-2 mt-1 shrink-0">
-                <User className="h-4 w-4 text-[#12345A]" />
-              </div>
-            )}
           </div>
         ))}
-
-        {isLoading && (
-          <div className="flex justify-start mb-4">
-            <div className="w-8 h-8 rounded-full bg-[#12345A] flex items-center justify-center mr-2 shrink-0">
-              <Bot className="h-4 w-4 text-[#F2B705]" />
+        {sendMessage.isPending && (
+          <div className="flex gap-3">
+            <div className="w-7 h-7 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center text-xs font-bold text-white">
+              {scenario.avatarRole.charAt(0)}
             </div>
-            <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3">
               <div className="flex gap-1">
-                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                ))}
               </div>
             </div>
           </div>
         )}
-
-        {/* Coaching pause overlay */}
-        {isPaused && (
-          <div className="bg-[#12345A] text-white rounded-2xl p-5 mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="h-4 w-4 text-[#F2B705]" />
-              <span className="font-semibold text-sm">Coach's Note</span>
-            </div>
-            {coachingNote ? (
-              <>
-                <p className="text-blue-100 text-sm leading-relaxed">{coachingNote}</p>
-                <Button
-                  onClick={handleResume}
-                  className="mt-4 w-full bg-[#F2B705] hover:bg-[#d4a004] text-[#12345A] font-semibold"
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  Resume Role Play
-                </Button>
-              </>
-            ) : (
-              <div className="flex gap-1 py-2">
-                <span className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
-            )}
-          </div>
-        )}
-
-        <div ref={bottomRef} />
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      {!isPaused && (
-        <div className="border-t bg-white px-4 py-3 max-w-3xl mx-auto w-full">
-          <div className="flex gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder="Your response in the conversation…"
-              className="min-h-[44px] max-h-[120px] resize-none text-sm"
-              disabled={isLoading || isEndingSimulation}
-            />
-            <Button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading || isEndingSimulation}
-              className="bg-[#12345A] hover:bg-[#0e2a47] text-white h-11 px-4 shrink-0"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <div className="flex gap-2">
+        <Textarea
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+          placeholder="Your response..."
+          className="min-h-[44px] max-h-[120px] text-sm resize-none border-gray-200"
+        />
+        <Button
+          onClick={handleSend}
+          disabled={!input.trim() || sendMessage.isPending}
+          className="bg-[var(--color-ln-navy)] text-white px-3"
+        >
+          <Send className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   );
 }
 
 // ── Feedback Screen ───────────────────────────────────────────────────────────
 function FeedbackScreen({
-  attemptId,
+  feedback,
+  score,
   sessionId,
+  attemptId,
   onRetry,
-  onNewSession,
-  onHistory,
+  onHome,
 }: {
-  attemptId: number;
+    feedback: PracticeFeedback;
+  score: number;
   sessionId: number;
+  attemptId: number;
   onRetry: () => void;
-  onNewSession: () => void;
-  onHistory: () => void;
+  onHome: () => void;
 }) {
-  const [reflection, setReflection] = useState("");
-  const [actionCommitment, setActionCommitment] = useState("");
+  const [reflection, setReflection] = useState('');
+  const [commitment, setCommitment] = useState('');
   const [saved, setSaved] = useState(false);
+  const saveReflection = trpc.practice.saveReflection.useMutation({
+    onSuccess: () => setSaved(true),
+  });
+  const addCommitment = trpc.leadershipCoach.addCommitment.useMutation({
+    onSuccess: () => toast.success('Commitment added to your tracker'),
+  });
 
-  const attemptQuery = trpc.practice.getAttempt.useQuery({ attemptId });
-  const sessionQuery = trpc.practice.getSession.useQuery({ sessionId });
-  const attemptsQuery = trpc.practice.getSessionAttempts.useQuery({ sessionId });
-  const saveReflection = trpc.practice.saveReflection.useMutation();
-
-  const attempt = attemptQuery.data;
-  const scenario = sessionQuery.data?.scenario as PracticeScenario | null;
-  const feedback = attempt?.feedback as PracticeFeedback | null;
-  const allAttempts = attemptsQuery.data ?? [];
-
-  if (!attempt || !feedback) {
-    return (
-      <div className="min-h-screen bg-[#F8F6F0] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-[#12345A] border-t-[#F2B705] rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  const handleSave = () => {
-    saveReflection.mutate(
-      { attemptId, reflection, actionCommitment },
-      { onSuccess: () => setSaved(true) }
-    );
-  };
-
-  const scoreColor = SCORE_COLOR(feedback.overallScore);
+  const scoreColor = score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-red-500';
+  const scoreBg = score >= 80 ? 'bg-emerald-50 border-emerald-200' : score >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
 
   return (
-    <div className="min-h-screen bg-[#F8F6F0]">
-      {/* Header */}
-      <div className="bg-[#12345A] text-white px-6 py-4 flex items-center gap-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <Award className="h-4 w-4 text-[#F2B705]" />
-            <span className="font-semibold">Feedback Report</span>
-          </div>
-          {scenario && <p className="text-blue-200 text-xs">{scenario.conversationType} · Attempt {attempt.attemptNumber}</p>}
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Award className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Feedback Report</h2>
         </div>
-        <Button variant="ghost" size="sm" onClick={onHistory} className="text-blue-200 hover:text-white gap-1.5">
-          <History className="h-4 w-4" />
-          History
-        </Button>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
-        {/* Overall score */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
-          <p className="text-sm text-gray-500 mb-2">Overall Score</p>
-          <div className={`text-6xl font-bold ${scoreColor} mb-1`}>{feedback.overallScore}</div>
-          <p className="text-gray-400 text-sm">out of 100</p>
-          <Progress value={feedback.overallScore} className="mt-3 h-2" />
+      {/* Overall Score */}
+      <div className={`rounded-xl border p-5 text-center mb-6 ${scoreBg}`}>
+        <p className={`text-5xl font-black ${scoreColor} mb-1`}>{score}</p>
+        <p className="text-sm text-gray-500">Overall Score</p>
+        <div className="mt-3">
+          <Progress value={score} className="h-2" />
         </div>
+      </div>
 
-        {/* Dimension scores */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-semibold text-[#12345A] mb-4 text-sm uppercase tracking-wide">Dimension Scores</h3>
-          <div className="space-y-3">
-            {feedback.dimensionScores.map((d) => (
-              <div key={d.dimension}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-700">{d.dimension}</span>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`h-3.5 w-3.5 ${star <= d.score ? "text-[#F2B705] fill-[#F2B705]" : "text-gray-200"}`}
-                      />
-                    ))}
-                    <span className="text-xs text-gray-400 ml-1">{d.score}/5</span>
-                  </div>
+      {/* Dimension Scores */}
+      {feedback.dimensionScores && (
+        <div className="mb-5">
+          <p className="text-sm font-semibold text-[var(--color-ln-navy)] mb-3">Dimension Scores</p>
+          <div className="space-y-2">
+            {feedback.dimensionScores.map((dim, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <p className="text-xs text-gray-600 w-40 flex-shrink-0">{dim.dimension}</p>
+                <div className="flex-1">
+                  <Progress value={dim.score * 10} className="h-1.5" />
                 </div>
-                <p className="text-xs text-gray-500">{d.comment}</p>
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Star key={star} className={`w-3.5 h-3.5 ${star <= dim.score / 2 ? 'text-[var(--color-ln-gold)] fill-[var(--color-ln-gold)]' : 'text-gray-200'}`} />
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         </div>
+      )}
 
-        {/* Feedback sections */}
+      <div className="space-y-4 mb-6">
         {[
-          { icon: CheckCircle, color: "text-emerald-600", label: "What Worked", content: feedback.whatWorked },
-          { icon: Target, color: "text-red-500", label: "What Did Not Work", content: feedback.whatDidNotWork },
-          { icon: Lightbulb, color: "text-amber-500", label: "Missed Opportunities", content: feedback.missedOpportunities },
-          { icon: MessageSquare, color: "text-blue-500", label: "What the Other Person Heard", content: feedback.whatOtherPersonHeard },
-          { icon: TrendingUp, color: "text-purple-500", label: "Where the Conversation Shifted", content: feedback.whereConversationShifted },
-        ].map(({ icon: Icon, color, label, content }) => (
-          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Icon className={`h-4 w-4 ${color}`} />
-              <h3 className="font-semibold text-[#12345A] text-sm">{label}</h3>
+          { key: 'whatWorked', label: 'What Worked', icon: CheckCircle, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+          { key: 'whatDidntWork', label: "What Didn't Work", icon: AlertCircle, color: 'text-amber-700 bg-amber-50 border-amber-200' },
+          { key: 'missedOpportunities', label: 'Missed Opportunities', icon: Lightbulb, color: 'text-blue-700 bg-blue-50 border-blue-200' },
+          { key: 'whatOtherPersonHeard', label: 'What They Heard', icon: MessageSquare, color: 'text-purple-700 bg-purple-50 border-purple-200' },
+          { key: 'whereConversationShifted', label: 'Where It Shifted', icon: TrendingUp, color: 'text-gray-700 bg-gray-50 border-gray-200' },
+        ].map(section => (
+          feedback[section.key as keyof PracticeFeedback] && (
+            <div key={section.key} className={`rounded-xl border p-4 ${section.color}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <section.icon className="w-4 h-4" />
+                <p className="text-xs font-semibold">{section.label}</p>
+              </div>
+              <p className="text-sm leading-relaxed">{feedback[section.key as keyof PracticeFeedback] as string}</p>
             </div>
-            <p className="text-gray-700 text-sm leading-relaxed">{content}</p>
-          </div>
+          )
         ))}
 
-        {/* Stronger phrases */}
-        {feedback.strongerPhrases.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <BookOpen className="h-4 w-4 text-[#12345A]" />
-              <h3 className="font-semibold text-[#12345A] text-sm">Stronger Phrases You Could Have Used</h3>
-            </div>
-            <div className="space-y-2">
+        {feedback.strongerPhrases && feedback.strongerPhrases.length > 0 && (
+          <SectionCard title="Stronger Phrases to Use" icon={Sparkles} accent>
+            <ul className="space-y-1.5">
               {feedback.strongerPhrases.map((phrase, i) => (
-                <div key={i} className="bg-[#12345A]/5 rounded-lg px-3 py-2 text-sm text-[#12345A] italic">
-                  "{phrase}"
-                </div>
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-[var(--color-ln-gold)] mt-0.5">→</span>
+                  <span className="text-sm text-[var(--color-ln-navy)]/80 italic">"{phrase}"</span>
+                </li>
               ))}
-            </div>
-          </div>
+            </ul>
+          </SectionCard>
         )}
 
-        {/* One behaviour to improve */}
-        <div className="bg-[#12345A] text-white rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="h-4 w-4 text-[#F2B705]" />
-            <h3 className="font-semibold text-sm">One Behaviour to Improve Next Time</h3>
-          </div>
-          <p className="text-blue-100 text-sm leading-relaxed">{feedback.oneBehaviourToImprove}</p>
-        </div>
-
-        {/* Real-world action */}
-        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="h-4 w-4 text-amber-600" />
-            <h3 className="font-semibold text-amber-800 text-sm">Suggested Real-World Action</h3>
-          </div>
-          <p className="text-amber-700 text-sm leading-relaxed">{feedback.suggestedRealWorldAction}</p>
-        </div>
-
-        {/* Attempt progress */}
-        {allAttempts.length > 1 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-semibold text-[#12345A] text-sm mb-3">Your Progress</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-gray-400 uppercase tracking-wide">
-                    <th className="text-left pb-2">Attempt</th>
-                    <th className="text-left pb-2">Score</th>
-                    <th className="text-left pb-2">Change</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allAttempts.filter(a => a.overallScore !== null).map((a, i, arr) => {
-                    const prev = arr[i - 1];
-                    const change = prev ? (a.overallScore ?? 0) - (prev.overallScore ?? 0) : null;
-                    return (
-                      <tr key={a.id} className="border-t border-gray-50">
-                        <td className="py-2 text-gray-600">Attempt {a.attemptNumber}</td>
-                        <td className={`py-2 font-semibold ${SCORE_COLOR(a.overallScore ?? 0)}`}>{a.overallScore}</td>
-                        <td className="py-2">
-                          {change !== null && (
-                            <span className={change >= 0 ? "text-emerald-600" : "text-red-500"}>
-                              {change >= 0 ? "+" : ""}{change}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {feedback.oneBehaviourToImprove && (
+          <SectionCard title="One Behaviour to Improve" icon={Target} accent>
+            <p className="text-sm text-[var(--color-ln-navy)]/80 font-medium">{feedback.oneBehaviourToImprove}</p>
+          </SectionCard>
         )}
 
-        {/* Reflection */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-semibold text-[#12345A] text-sm mb-3">Save Your Reflection</h3>
+        {feedback.suggestedRealWorldAction && (
+          <div className="rounded-xl border border-[var(--color-ln-navy)]/20 bg-[var(--color-ln-navy)]/5 p-4">
+            <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-2 flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
+              Suggested Real-World Action
+            </p>
+            <p className="text-sm text-[var(--color-ln-navy)]/80 mb-3">{feedback.suggestedRealWorldAction}</p>
+            <Button
+              size="sm"
+              onClick={() => addCommitment.mutate({ text: feedback.suggestedRealWorldAction!, sourceType: 'roleplay', sourceId: sessionId })}
+              disabled={addCommitment.isPending}
+              className="bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] text-xs"
+            >
+              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+              Add to Commitments
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Reflection */}
+      {!saved && (
+        <div className="mb-6 space-y-3">
           <Textarea
             value={reflection}
-            onChange={(e) => setReflection(e.target.value)}
-            placeholder="What did you learn from this practice?"
-            className="min-h-[80px] text-sm mb-3 resize-none"
+            onChange={e => setReflection(e.target.value)}
+            placeholder="What is your key takeaway from this practice session?"
+            className="min-h-[80px] text-sm resize-none border-gray-200"
           />
-          <Textarea
-            value={actionCommitment}
-            onChange={(e) => setActionCommitment(e.target.value)}
-            placeholder="What will you do differently in the real conversation?"
-            className="min-h-[80px] text-sm mb-3 resize-none"
+          <Input
+            value={commitment}
+            onChange={e => setCommitment(e.target.value)}
+            placeholder="What specific action will you take in the next 7 days?"
+            className="border-gray-200"
           />
           <Button
-            onClick={handleSave}
-            disabled={saved || saveReflection.isPending}
-            variant="outline"
-            className="w-full border-[#12345A] text-[#12345A]"
+            onClick={() => saveReflection.mutate({ attemptId: attemptId, reflection, actionCommitment: commitment })}
+            disabled={!reflection.trim() || saveReflection.isPending}
+            className="w-full bg-[var(--color-ln-navy)] text-white"
           >
-            {saved ? <><CheckCircle className="h-4 w-4 mr-2 text-emerald-500" />Saved</> : "Save Reflection"}
+            Save Reflection & Commitment
           </Button>
         </div>
+      )}
 
-        {/* Action buttons */}
-        <div className="grid grid-cols-2 gap-3 pb-8">
-          <Button
-            onClick={onRetry}
-            className="bg-[#12345A] hover:bg-[#0e2a47] text-white font-semibold"
-          >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Retry Scenario
-          </Button>
-          <Button
-            onClick={onNewSession}
-            className="bg-[#F2B705] hover:bg-[#d4a004] text-[#12345A] font-semibold"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            New Practice
-          </Button>
+      {saved && (
+        <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-center">
+          <CheckCircle className="w-5 h-5 text-emerald-600 mx-auto mb-1" />
+          <p className="text-sm text-emerald-700 font-medium">Reflection saved to your growth profile</p>
         </div>
+      )}
+
+      <div className="flex gap-3">
+        <Button onClick={onRetry} variant="outline" className="flex-1">
+          <RotateCcw className="w-4 h-4 mr-2" />
+          Try Again
+        </Button>
+        <Button onClick={onHome} className="flex-1 bg-[var(--color-ln-navy)] text-white">
+          <ChevronRight className="w-4 h-4 mr-2" />
+          Back to Coach
+        </Button>
       </div>
     </div>
   );
 }
 
-// ── Practice History Screen ───────────────────────────────────────────────────
-function HistoryScreen({ onBack, onResume }: { onBack: () => void; onResume: (sessionId: number) => void }) {
-  const historyQuery = trpc.practice.getHistory.useQuery();
-  const data = historyQuery.data;
+// ── History Screen ────────────────────────────────────────────────────────────
+function HistoryScreen({ onBack }: { onBack: () => void }) {
+  const { data: historyData } = trpc.practice.getHistory.useQuery();
+  const sessions = historyData?.sessions;
+  const allAttempts = historyData?.attempts ?? [];
 
   return (
-    <div className="min-h-screen bg-[#F8F6F0]">
-      <div className="bg-[#12345A] text-white px-6 py-4 flex items-center gap-3">
-        <button onClick={onBack} className="text-blue-200 hover:text-white transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div>
-          <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-[#F2B705]" />
-            <span className="font-semibold">My Leadership Practice History</span>
-          </div>
-          <p className="text-blue-200 text-xs">Track your improvement over time</p>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackButton onBack={onBack} label="Back to Practice Coach" />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <History className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Practice History</h2>
         </div>
+        <p className="text-sm text-gray-500">{sessions?.length ?? 0} sessions completed</p>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-6">
-        {historyQuery.isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-4 border-[#12345A] border-t-[#F2B705] rounded-full animate-spin" />
-          </div>
-        ) : !data || data.sessions.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-full bg-[#12345A]/10 flex items-center justify-center mx-auto mb-4">
-              <History className="h-8 w-8 text-[#12345A]" />
-            </div>
-            <p className="text-[#12345A] font-semibold text-lg">No practice sessions yet</p>
-            <p className="text-gray-500 text-sm mt-1">Complete your first simulation to see your history here</p>
-            <Button onClick={onBack} className="mt-4 bg-[#12345A] text-white">Start Practising</Button>
-          </div>
-        ) : (
-          <>
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              {[
-                { label: "Sessions", value: data.sessions.length, icon: BookOpen },
-                { label: "Attempts", value: data.totalAttempts, icon: RotateCcw },
-                { label: "Avg Score", value: data.averageScore ?? "—", icon: TrendingUp },
-              ].map(({ label, value, icon: Icon }) => (
-                <div key={label} className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-                  <Icon className="h-5 w-5 text-[#12345A] mx-auto mb-1" />
-                  <p className="text-2xl font-bold text-[#12345A]">{value}</p>
-                  <p className="text-xs text-gray-500">{label}</p>
+      {!sessions || sessions.length === 0 ? (
+        <div className="text-center py-16">
+          <History className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+          <p className="text-sm text-gray-400">No practice sessions yet.</p>
+          <p className="text-xs text-gray-300 mt-1">Complete your first session to see it here.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {sessions.map((session) => {
+            const sessionAttempts = allAttempts.filter((a: { sessionId: number; overallScore: number | null }) => a.sessionId === session.id);
+            const bestScore = sessionAttempts.length > 0 ? Math.max(...sessionAttempts.map((a: { overallScore: number | null }) => a.overallScore ?? 0)) : null;
+            const latestScore = sessionAttempts.length > 0 ? sessionAttempts[sessionAttempts.length - 1].overallScore : null;
+            const improvement = sessionAttempts.length >= 2
+              ? sessionAttempts[sessionAttempts.length - 1].overallScore! - sessionAttempts[0].overallScore!
+              : null;
+
+            return (
+              <div key={session.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <p className="text-sm font-medium text-[var(--color-ln-navy)] flex-1">{session.issueText}</p>
+                  {latestScore !== null && (
+                    <span className={`text-lg font-black flex-shrink-0 ${SCORE_COLOR(latestScore)}`}>{latestScore}</span>
+                  )}
                 </div>
-              ))}
-            </div>
-
-            {/* Session list */}
-            <div className="space-y-3">
-              {data.sessions.map((session) => {
-                const scenario = session.scenario as PracticeScenario | null;
-                const sessionAttempts = (data.attempts ?? []).filter(a => a.sessionId === session.id);
-                const bestScore = sessionAttempts.reduce((max, a) => Math.max(max, a.overallScore ?? 0), 0);
-                return (
-                  <div key={session.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[#12345A] truncate">
-                          {scenario?.conversationType ?? "Practice Session"}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate mt-0.5">{session.issueText}</p>
-                        <div className="flex items-center gap-3 mt-2">
-                          {scenario && (
-                            <Badge className={`text-xs border ${DIFFICULTY_COLORS[scenario.difficultyLevel]}`}>
-                              {scenario.difficultyLevel}
-                            </Badge>
-                          )}
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
-                            <RotateCcw className="h-3 w-3" />
-                            {sessionAttempts.length} attempt{sessionAttempts.length !== 1 ? "s" : ""}
-                          </span>
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(session.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        {bestScore > 0 && (
-                          <div className={`text-2xl font-bold ${SCORE_COLOR(bestScore)}`}>{bestScore}</div>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onResume(session.id)}
-                          className="mt-1 text-xs border-[#12345A] text-[#12345A] h-7"
-                        >
-                          View
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(session.createdAt).toLocaleDateString()}</span>
+                  <span>{sessionAttempts.length} attempt{sessionAttempts.length !== 1 ? 's' : ''}</span>
+                  {bestScore !== null && <span>Best: {bestScore}</span>}
+                  {improvement !== null && improvement > 0 && (
+                    <span className="text-emerald-600 flex items-center gap-0.5">
+                      <TrendingUp className="w-3 h-3" />+{improvement}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Main PracticeCoach Component ──────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function PracticeCoach() {
   const [screen, setScreen] = useState<Screen>("home");
+  const [issue, setIssue] = useState('');
   const [sessionId, setSessionId] = useState<number | null>(null);
-  const [attemptId, setAttemptId] = useState<number | null>(null);
-  const [issueText, setIssueText] = useState("");
-  const [coachingSummary, setCoachingSummary] = useState<string | undefined>(undefined);
+  const [scenario, setScenario] = useState<PracticeScenario | null>(null);
+  const [feedback, setFeedback] = useState<{ feedback: PracticeFeedback; score: number; attemptId: number } | null>(null);
+  const [briefData, setBriefData] = useState<{ briefId: number; brief: BeforeMeetingBriefData } | null>(null);
+  const [debriefData, setDebriefData] = useState<{ debriefId: number; report: AfterMeetingDebriefData } | null>(null);
 
-  const createSession = trpc.practice.createSession.useMutation();
-
-  const handleCoachFirst = async (issue: string) => {
-    setIssueText(issue);
-    createSession.mutate(
-      { issueText: issue },
-      {
-        onSuccess: (data) => { setSessionId(data.sessionId); setScreen("coaching"); },
-        onError: () => toast.error("Failed to start session"),
-      }
-    );
-  };
-
-  const handleSimulateFirst = async (issue: string) => {
-    setIssueText(issue);
-    createSession.mutate(
-      { issueText: issue },
-      {
-        onSuccess: (data) => { setSessionId(data.sessionId); setCoachingSummary(undefined); setScreen("scenario-setup"); },
-        onError: () => toast.error("Failed to start session"),
-      }
-    );
-  };
-
-  const handleCoachingComplete = (summary?: string) => {
-    setCoachingSummary(summary);
-    setScreen("scenario-setup");
-  };
-
-  const handleStartRolePlay = (newAttemptId: number) => {
-    setAttemptId(newAttemptId);
-    setScreen("roleplay");
-  };
-
-  const handleEndSimulation = (endedAttemptId: number) => {
-    setAttemptId(endedAttemptId);
-    setScreen("feedback");
-  };
-
-  const handleRetry = () => {
-    if (!sessionId) return;
-    setScreen("scenario-setup");
-  };
-
-  const handleNewSession = () => {
+  const goHome = () => {
+    setScreen('home');
+    setIssue('');
     setSessionId(null);
-    setAttemptId(null);
-    setIssueText("");
-    setCoachingSummary(undefined);
-    setScreen("home");
+    setScenario(null);
+    setFeedback(null);
   };
 
-  const handleResumeSession = (resumeSessionId: number) => {
-    setSessionId(resumeSessionId);
-    setScreen("scenario-setup");
-  };
-
-  if (screen === "home") {
+  if (screen === 'home') {
     return (
       <HomeScreen
-        onCoachFirst={handleCoachFirst}
-        onSimulateFirst={handleSimulateFirst}
-        onHistory={() => setScreen("history")}
+        onCoachFirst={(iss) => { setIssue(iss); setScreen('coaching'); }}
+        onSimulateFirst={(iss) => { setIssue(iss); setScreen('scenario-setup'); }}
+        onBeforeMeeting={() => setScreen('before-meeting-form')}
+        onAfterMeeting={() => setScreen('after-meeting-form')}
+        onSayItBetter={() => setScreen('say-it-better')}
+        onScriptBuilder={() => setScreen('script-builder')}
+        onGrowthProfile={() => setScreen('growth-profile')}
+        onHistory={() => setScreen('history')}
       />
     );
   }
 
-  if (screen === "coaching" && sessionId) {
+  if (screen === 'coaching') {
     return (
       <CoachingScreen
-        sessionId={sessionId}
-        issueText={issueText}
-        onScenarioReady={handleCoachingComplete}
-        onBack={() => setScreen("home")}
+        issue={issue}
+        onBack={goHome}
+        onProceedToSimulation={(sid) => { setSessionId(sid); setScreen('scenario-setup'); }}
       />
     );
   }
 
-  if (screen === "scenario-setup" && sessionId) {
+  if (screen === 'scenario-setup') {
+    // If coming from simulate-first, create a session first
+    if (!sessionId) {
+      return (
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <BackButton onBack={goHome} />
+          <SimulateFirstSetup
+            issue={issue}
+            onSessionCreated={(sid) => setSessionId(sid)}
+          />
+        </div>
+      );
+    }
     return (
       <ScenarioSetupScreen
         sessionId={sessionId}
-        coachingSummary={coachingSummary}
-        onStartRolePlay={handleStartRolePlay}
-        onBack={() => setScreen("home")}
+        onBack={goHome}
+        onStart={(sc) => { setScenario(sc); setScreen('roleplay'); }}
       />
     );
   }
 
-  if (screen === "roleplay" && sessionId && attemptId) {
+  if (screen === 'roleplay' && sessionId && scenario) {
     return (
       <RolePlayScreen
         sessionId={sessionId}
-        attemptId={attemptId}
-        onEndSimulation={handleEndSimulation}
-        onBack={() => setScreen("scenario-setup")}
+        scenario={scenario}
+        onBack={() => setScreen('scenario-setup')}
+        onFeedback={(fb, score, aid) => { setFeedback({ feedback: fb, score, attemptId: aid }); setScreen('feedback'); }}
       />
     );
   }
 
-  if (screen === "feedback" && sessionId && attemptId) {
+  if (screen === 'feedback' && feedback && sessionId) {
     return (
       <FeedbackScreen
-        attemptId={attemptId}
+        feedback={feedback.feedback}
+        score={feedback.score}
         sessionId={sessionId}
-        onRetry={handleRetry}
-        onNewSession={handleNewSession}
-        onHistory={() => setScreen("history")}
+        attemptId={feedback.attemptId}
+        onRetry={() => setScreen('scenario-setup')}
+        onHome={goHome}
       />
     );
   }
 
-  if (screen === "history") {
+  if (screen === 'before-meeting-form') {
     return (
-      <HistoryScreen
-        onBack={() => setScreen("home")}
-        onResume={handleResumeSession}
+      <BeforeMeetingFormScreen
+        onBack={goHome}
+        onBriefGenerated={(briefId, brief) => { setBriefData({ briefId, brief }); setScreen('before-meeting-brief'); }}
       />
     );
+  }
+
+  if (screen === 'before-meeting-brief' && briefData) {
+    return (
+      <BeforeMeetingBriefScreen
+        briefId={briefData.briefId}
+        brief={briefData.brief}
+        onBack={() => setScreen('before-meeting-form')}
+        onPractice={(iss) => { setIssue(iss); setScreen('scenario-setup'); }}
+      />
+    );
+  }
+
+  if (screen === 'after-meeting-form') {
+    return (
+      <AfterMeetingFormScreen
+        onBack={goHome
+}
+        onDebriefGenerated={(debriefId, report) => { setDebriefData({ debriefId, report }); setScreen('after-meeting-debrief'); }}
+      />
+    );
+  }
+
+  if (screen === 'after-meeting-debrief' && debriefData) {
+    return (
+      <AfterMeetingDebriefScreen
+        report={debriefData.report}
+        onBack={() => setScreen('after-meeting-form')}
+        onPractice={(iss) => { setIssue(iss); setScreen('scenario-setup'); }}
+      />
+    );
+  }
+
+  if (screen === 'say-it-better') {
+    return <SayItBetterScreen onBack={goHome} />;
+  }
+
+  if (screen === 'script-builder') {
+    return <ScriptBuilderScreen onBack={goHome} />;
+  }
+
+  if (screen === 'growth-profile') {
+    return (
+      <GrowthProfileScreen
+        onBack={goHome}
+        onCoachBrief={() => setScreen('coach-brief')}
+        onPrivacy={() => setScreen('privacy-settings')}
+      />
+    );
+  }
+
+  if (screen === 'coach-brief') {
+    return <CoachBriefScreen onBack={() => setScreen('growth-profile')} />;
+  }
+
+  if (screen === 'privacy-settings') {
+    return <PrivacySettingsScreen onBack={() => setScreen('growth-profile')} />;
+  }
+
+  if (screen === 'history') {
+    return <HistoryScreen onBack={goHome} />;
   }
 
   return null;
+}
+
+// ── Simulate First Setup ──────────────────────────────────────────────────────
+function SimulateFirstSetup({
+  issue,
+  onSessionCreated,
+}: {
+  issue: string;
+  onSessionCreated: (sessionId: number) => void;
+}) {
+    const createSession = trpc.practice.createSession.useMutation({
+    onSuccess: (data) => onSessionCreated(data.sessionId),
+  });
+  useEffect(() => {
+    createSession.mutate({ issueText: issue });
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-3">
+      <RefreshCw className="w-6 h-6 animate-spin text-[var(--color-ln-navy)]/40" />
+      <p className="text-sm text-gray-400">Setting up your practice session...</p>
+    </div>
+  );
 }

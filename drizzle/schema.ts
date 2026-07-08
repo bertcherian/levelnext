@@ -277,3 +277,218 @@ export const practiceAttempts = mysqlTable("practice_attempts", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
+
+// ─── Leadership Memory ────────────────────────────────────────────────────────
+export type LeadershipMemoryEntry = {
+  recurringIssues: string[];
+  commonStakeholders: string[];
+  avoidedConversations: string[];
+  communicationStrengths: string[];
+  communicationGaps: string[];
+  blindSpots: string[];
+  growthTheme: string;
+  practiceCount: number;
+  lastUpdated: string;
+};
+
+export const leadershipMemory = mysqlTable("leadership_memory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  memory: json("memory").$type<LeadershipMemoryEntry>(),
+  aiSummary: text("aiSummary"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── Before-Meeting Briefs ────────────────────────────────────────────────────
+export type BeforeMeetingBriefData = {
+  realObjective: string;
+  conversationBeneathConversation: string;
+  first60Seconds: string;
+  keyMessage: string;
+  likelyPushback: string[];
+  bestResponses: string[];
+  whatNotToSay: string[];
+  strongAsk: string;
+  howToClose: string;
+  readinessScore: number;
+  readinessAfter?: number;
+};
+
+export const beforeMeetingBriefs = mysqlTable("before_meeting_briefs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  meetingWith: varchar("meetingWith", { length: 255 }).notNull(),
+  purpose: text("purpose").notNull(),
+  desiredOutcome: text("desiredOutcome"),
+  currentIssue: text("currentIssue"),
+  stakes: varchar("stakes", { length: 100 }),
+  possibleResistance: text("possibleResistance"),
+  brief: json("brief").$type<BeforeMeetingBriefData>(),
+  readinessBefore: int("readinessBefore"),
+  readinessAfter: int("readinessAfter"),
+  practiceSessionId: int("practiceSessionId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── After-Meeting Debriefs ───────────────────────────────────────────────────
+export type AfterMeetingDebriefData = {
+  whatHappened: string;
+  whatOtherPersonHeard: string;
+  whereConversationShifted: string;
+  whatYouHandledWell: string;
+  whatYouMissed: string;
+  possibleBlindSpot: string;
+  recoveryMove: string;
+  suggestedFollowUpMessage: string;
+  recommendedPractice: string;
+  growthProfileUpdate: string;
+};
+
+export const afterMeetingDebriefs = mysqlTable("after_meeting_debriefs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  conversationContext: text("conversationContext").notNull(),
+  debriefTranscript: json("debriefTranscript").$type<Array<{role: string; content: string}>>(),
+  debriefReport: json("debriefReport").$type<AfterMeetingDebriefData>(),
+  followUpMessage: text("followUpMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Improved Messages (Say It Better) ───────────────────────────────────────
+export type ImprovedMessageData = {
+  original: string;
+  diplomatic: string;
+  direct: string;
+  executive: string;
+  toneAssessment: string;
+  clarityScore: number;
+  executivePresenceScore: number;
+  whatChanged: string;
+  shorterVersion?: string;
+};
+
+export const improvedMessages = mysqlTable("improved_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  originalText: text("originalText").notNull(),
+  context: varchar("context", { length: 255 }),
+  result: json("result").$type<ImprovedMessageData>(),
+  savedVersion: varchar("savedVersion", { length: 50 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── Conversation Scripts ─────────────────────────────────────────────────────
+export type ConversationScriptData = {
+  scriptType: string;
+  openingLine: string;
+  context: string;
+  observation: string;
+  businessImpact: string;
+  yourConcern: string;
+  questionInvitation: string;
+  clearAsk: string;
+  likelyResistance: string;
+  responseToResistance: string;
+  closeWithCommitment: string;
+  followUpNote: string;
+};
+
+export const conversationScripts = mysqlTable("conversation_scripts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  scriptType: varchar("scriptType", { length: 100 }).notNull(),
+  situationContext: text("situationContext").notNull(),
+  script: json("script").$type<ConversationScriptData>(),
+  savedAt: timestamp("savedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── Commitments ─────────────────────────────────────────────────────────────
+export const commitments = mysqlTable("commitments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  text: text("text").notNull(),
+  dueDate: timestamp("dueDate"),
+  sourceType: varchar("sourceType", { length: 50 }), // coaching | roleplay | debrief | brief | manual
+  sourceId: int("sourceId"),
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // pending | done_well | done_partial | done_poorly | avoided | postponed
+  outcome: text("outcome"),
+  aiRecommendation: text("aiRecommendation"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Readiness Scores ─────────────────────────────────────────────────────────
+export const readinessScores = mysqlTable("readiness_scores", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  context: varchar("context", { length: 255 }).notNull(),
+  scoreBefore: int("scoreBefore").notNull(),
+  scoreAfter: int("scoreAfter"),
+  sourceType: varchar("sourceType", { length: 50 }), // brief | coaching | roleplay
+  sourceId: int("sourceId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── Coach Briefs (Human Coach Sharing) ──────────────────────────────────────
+export type CoachBriefData = {
+  currentIssue: string;
+  leaderDesiredOutcome: string;
+  aiObservedPattern: string;
+  possibleBlindSpot: string;
+  practiceCompleted: string;
+  scoresAndImprovements: string;
+  commitmentsMade: string[];
+  suggestedCoachingQuestions: string[];
+  followUpItems: string[];
+};
+
+export const coachBriefs = mysqlTable("coach_briefs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  shareLevel: varchar("shareLevel", { length: 50 }).default("summary").notNull(), // summary | transcript | feedback | growth | selected
+  brief: json("brief").$type<CoachBriefData>(),
+  sharedAt: timestamp("sharedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── Privacy Settings ─────────────────────────────────────────────────────────
+export const privacySettings = mysqlTable("privacy_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  shareWithCoach: varchar("shareWithCoach", { length: 50 }).default("nothing").notNull(), // nothing | summary | transcript | feedback | growth | selected
+  shareWithOrg: boolean("shareWithOrg").default(false).notNull(),
+  allowAggregateAnalytics: boolean("allowAggregateAnalytics").default(true).notNull(),
+  coachEmail: varchar("coachEmail", { length: 255 }),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── 30-Day Growth Plans ──────────────────────────────────────────────────────
+export type GrowthPlanData = {
+  growthTheme: string;
+  whyItMatters: string;
+  currentPattern: string;
+  targetBehaviour: string;
+  week1: string;
+  week2: string;
+  week3: string;
+  week4: string;
+  realWorldActions: string[];
+  recommendedRolePlays: string[];
+  recommendedDrills: string[];
+  reflectionQuestions: string[];
+  successIndicators: string[];
+};
+
+export const growthPlans = mysqlTable("growth_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  plan: json("plan").$type<GrowthPlanData>(),
+  isActive: boolean("isActive").default(true).notNull(),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
