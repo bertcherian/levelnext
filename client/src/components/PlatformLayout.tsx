@@ -27,6 +27,7 @@ const NAV_ITEMS = [
   { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
   { label: "Guide", icon: MessageSquare, href: "/guide" },
   { label: "AI Practice Coach", icon: Zap, href: "/practice" },
+  { label: "Growth Profile", icon: TrendingUp, href: "/practice?screen=growth-profile" },
   { label: "Insights", icon: Lightbulb, href: "/insights" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
   { label: "Progress", icon: BarChart3, href: "/progress" },

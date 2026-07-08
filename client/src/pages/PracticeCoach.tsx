@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
@@ -352,34 +353,29 @@ function HomeScreen({
         />
       </div>
 
-      {/* Suggestion Chips */}
-      <div className="mb-6">
-        <p className="text-xs text-gray-400 mb-2">Or choose a common scenario:</p>
-        <div className="flex flex-wrap gap-2">
-          {visibleChips.map(chip => (
-            <button
-              key={chip}
-              onClick={() => setIssue(chip)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                issue === chip
-                  ? 'bg-[var(--color-ln-navy)] text-white border-[var(--color-ln-navy)]'
-                  : 'bg-white text-[var(--color-ln-navy)]/70 border-gray-200 hover:border-[var(--color-ln-navy)]/40 hover:text-[var(--color-ln-navy)]'
-              }`}
-            >
-              {chip}
-            </button>
-          ))}
-          <button
-            onClick={() => setShowAllChips(!showAllChips)}
-            className="text-xs px-3 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
-          >
-            {showAllChips ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {showAllChips ? 'Show less' : `+${SUGGESTION_CHIPS.length - 6} more`}
-          </button>
+      {/* Suggestion Chips — Collapsed by default */}
+      {showAllChips && (
+        <div className="mb-4">
+          <p className="text-xs text-gray-400 mb-2">Or choose a common scenario:</p>
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTION_CHIPS.map(chip => (
+              <button
+                key={chip}
+                onClick={() => { setIssue(chip); setShowAllChips(false); }}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                  issue === chip
+                    ? 'bg-[var(--color-ln-navy)] text-white border-[var(--color-ln-navy)]'
+                    : 'bg-white text-[var(--color-ln-navy)]/70 border-gray-200 hover:border-[var(--color-ln-navy)]/40 hover:text-[var(--color-ln-navy)]'
+                }`}
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Mode Buttons — 2 primary + 4 secondary */}
+      {/* Mode Buttons — 2 primary only, others in dropdown */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         {MODE_BUTTONS.slice(0, 2).map(btn => (
           <button
@@ -395,8 +391,8 @@ function HomeScreen({
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-8">
-        {MODE_BUTTONS.slice(2).map(btn => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
+        {MODE_BUTTONS.slice(2, 4).map(btn => (
           <button
             key={btn.id}
             onClick={btn.onClick}
@@ -2383,7 +2379,12 @@ function HistoryScreen({ onBack }: { onBack: () => void }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function PracticeCoach() {
-  const [screen, setScreen] = useState<Screen>("home");
+  const [location] = useLocation();
+  const [screen, setScreen] = useState<Screen>(() => {
+    const params = new URLSearchParams(location.split('?')[1]);
+    const screenParam = params.get('screen');
+    return (screenParam as Screen) || "home";
+  });
   const [issue, setIssue] = useState('');
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [scenario, setScenario] = useState<PracticeScenario | null>(null);
