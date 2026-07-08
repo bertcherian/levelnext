@@ -205,6 +205,12 @@ function HomeScreen({
   const { data: memory } = trpc.leadershipCoach.getMemory.useQuery();
   const { data: commitments } = trpc.leadershipCoach.getCommitments.useQuery();
   const { data: recommendations } = trpc.leadershipCoach.getPersonalisedRecommendations.useQuery();
+  const [refreshedRecs, setRefreshedRecs] = useState<Array<{ module: string; score: number; reason: string; scenarios: string[] }> | null>(null);
+  const refreshRecs = trpc.leadershipCoach.refreshRecommendations.useMutation({
+    onSuccess: (data) => { if (data && data.length > 0) { setRefreshedRecs(data); toast.success('Fresh suggestions generated!'); } else { toast.error('No suggestions returned. Try again.'); } },
+    onError: () => toast.error('Could not refresh suggestions. Try again.'),
+  });
+  const activeRecs = refreshedRecs ?? recommendations;
 
   const visibleChips = showAllChips ? SUGGESTION_CHIPS : SUGGESTION_CHIPS.slice(0, 6);
   const pendingCommitments = commitments?.filter(c => c.status === 'pending').slice(0, 3) ?? [];
@@ -395,14 +401,24 @@ function HomeScreen({
       )}
 
       {/* Diagnostic Recommendations */}
-      {recommendations && recommendations.length > 0 && (
+      {activeRecs && activeRecs.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-2 flex items-center gap-1.5">
-            <Award className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
-            Recommended Practice (based on your diagnostics)
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-[var(--color-ln-navy)] flex items-center gap-1.5">
+              <Award className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
+              Recommended Practice (based on your diagnostics)
+            </p>
+            <button
+              onClick={() => refreshRecs.mutate()}
+              disabled={refreshRecs.isPending}
+              className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:text-[var(--color-ln-navy)] hover:border-[var(--color-ln-navy)]/30 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3 h-3 ${refreshRecs.isPending ? 'animate-spin' : ''}`} />
+              {refreshRecs.isPending ? 'Refreshing…' : 'Refresh'}
+            </button>
+          </div>
           <div className="space-y-2">
-            {recommendations.map(rec => (
+            {activeRecs.map(rec => (
               <div key={rec.module} className="p-3 rounded-lg border border-gray-200 bg-white">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-semibold text-[var(--color-ln-navy)]">{rec.module}</p>

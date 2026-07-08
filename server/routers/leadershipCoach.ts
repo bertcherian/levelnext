@@ -764,6 +764,42 @@ Identify the most important blind spot. Return ONLY valid JSON:
     }),
 
   // ── Diagnostic-Based Recommendations ─────────────────────────────────────
+  refreshRecommendations: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    const leaderCtx = await getLeaderContext(ctx.user.id);
+    const contextPrompt = buildLeaderContextPrompt(leaderCtx);
+    const graph = leaderCtx.graph as Record<string, unknown> | null;
+    const moduleEdges = (graph?.moduleEdges as Record<string, number> | undefined) ?? {};
+    const focusModules = Object.entries(moduleEdges)
+      .filter(([, score]) => score < 85)
+      .sort(([, a], [, b]) => a - b)
+      .map(([k, v]) => `${MODULE_FULL_NAMES[k] ?? k} (${v}/100)`)
+      .join(', ');
+    const prompt = `You are an expert executive leadership coach. Generate fresh, varied practice scenario suggestions for a leader.${contextPrompt}
+
+Focus modules (lowest scores first): ${focusModules || 'All modules'}
+
+Generate 3 recommendation groups, one per focus module. Each group should have 3 fresh, specific, real-world practice scenarios that are different from generic examples. Return ONLY valid JSON:
+[
+  {
+    "module": "Module name",
+    "score": 78,
+    "reason": "One sentence on why this matters for this leader right now",
+    "scenarios": ["Specific scenario 1", "Specific scenario 2", "Specific scenario 3"]
+  }
+]`;
+    const response = await invokeLLM({ messages: [{ role: 'user', content: prompt }] });
+    try {
+      const text = response.choices[0].message.content as string;
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      return JSON.parse(jsonMatch ? jsonMatch[0] : text) as Array<{ module: string; score: number; reason: string; scenarios: string[] }>;
+    } catch {
+      // Fallback to static recommendations
+      return [];
+    }
+  }),
+
   getPersonalisedRecommendations: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
