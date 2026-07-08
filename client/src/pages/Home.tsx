@@ -68,11 +68,11 @@ export default function Home() {
 
   return (
     <PlatformLayout title="Home">
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-8 animate-fade-in">
 
         {/* Greeting */}
         <div>
-          <h1 className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
             {greeting}, {firstName}.
           </h1>
           <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
@@ -84,9 +84,9 @@ export default function Home() {
 
         {/* Edge Summary */}
         {graph?.compositeEdge !== undefined && (
-          <div className="rounded-2xl p-6 flex items-center gap-6" style={{ background: "var(--color-ln-navy)" }}>
+          <div className="rounded-2xl p-4 sm:p-6 flex items-center gap-4 sm:gap-6" style={{ background: "var(--color-ln-navy)" }}>
             <div className="flex-shrink-0">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center border-4"
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center border-4"
                 style={{ borderColor: "var(--color-ln-yellow)", background: "oklch(from var(--color-ln-yellow) l c h / 0.1)" }}>
                 <span className="text-2xl font-bold" style={{ color: "var(--color-ln-yellow)" }}>
                   {graph.compositeEdge}
@@ -117,10 +117,10 @@ export default function Home() {
         )}
 
         {/* Two-column: Today's Focus + Today's Mission */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
           {/* Today's Focus */}
-          <div className="rounded-2xl p-6 card-lift" style={{ background: "white", boxShadow: "var(--shadow-card)", border: "1px solid var(--color-ln-border)" }}>
+          <div className="rounded-2xl p-4 sm:p-6 card-lift" style={{ background: "white", boxShadow: "var(--shadow-card)", border: "1px solid var(--color-ln-border)" }}>
             <div className="flex items-center gap-2 mb-4">
               <Sparkles size={18} style={{ color: "var(--color-ln-yellow)" }} />
               <span className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--color-ln-muted)" }}>Today's Focus</span>
@@ -151,7 +151,7 @@ export default function Home() {
           </div>
 
           {/* Today's Mission */}
-          <div className="rounded-2xl p-6 card-lift" style={{ background: "white", boxShadow: "var(--shadow-card)", border: "1px solid var(--color-ln-border)" }}>
+          <div className="rounded-2xl p-4 sm:p-6 card-lift" style={{ background: "white", boxShadow: "var(--shadow-card)", border: "1px solid var(--color-ln-border)" }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Target size={18} style={{ color: "var(--color-ln-navy)" }} />
@@ -204,7 +204,7 @@ export default function Home() {
         </div>
 
         {/* Guide Recommendation */}
-        <div className="rounded-2xl p-6" style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.06)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.2)" }}>
+        <div className="rounded-2xl p-4 sm:p-6" style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.06)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.2)" }}>
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
               style={{ background: "var(--color-ln-yellow)" }}>

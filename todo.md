@@ -140,3 +140,19 @@
 - [x] Add Practice Activity section to My Edge (last 3 sessions, current commitment, practice score trend)
 - [x] Update Growth Profile 30-day plan to reference lowest diagnostic dimension and frame goals around closing that gap
 - [x] Verify Coach home diagnostic recommendations are wired to leadershipGraph data
+
+### Phase 21: Mobile-Responsive Redesign & PWA
+
+- [x] PWA manifest.json with LevelNext icon, theme colour, standalone display
+- [x] Service worker with offline caching for shell and static assets
+- [x] Mobile install banner component (iOS/Android smart prompt)
+- [x] PlatformLayout: bottom tab bar on mobile (Home, My Edge, Coach, Insights, More)
+- [x] PlatformLayout: hamburger slide-in drawer for full nav on mobile
+- [x] Home page: mobile-first layout (stacked cards, full-width Edge ring)
+- [x] My Edge page: mobile-optimised archetype cards and insight history
+- [x] Diagnostics page: full-screen step flow on mobile
+- [x] AI Practice Coach: mobile chat UI, full-screen role play
+- [x] Growth Profile: mobile-optimised stats and 30-day plan
+- [x] Insights, Progress, Guide, Organisation, Settings: mobile layout audit and fixes
+- [x] Touch-friendly tap targets (min 44px) across all interactive elements
+- [x] Viewport meta tag and no horizontal scroll on 375px screens

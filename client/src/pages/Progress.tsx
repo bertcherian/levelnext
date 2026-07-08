@@ -33,9 +33,9 @@ export default function Progress() {
 
   return (
     <PlatformLayout title="Progress">
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-8 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Progress</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Progress</h1>
           <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>Your Leadership Edge evolution across all intelligence modules.</p>
         </div>
 
@@ -55,7 +55,7 @@ export default function Progress() {
         ) : (
           <>
             {graph?.compositeEdge !== undefined && (
-              <div className="rounded-2xl p-6 flex items-center gap-6" style={{ background: "var(--color-ln-navy)" }}>
+              <div className="rounded-2xl p-4 sm:p-6 flex items-center gap-4 sm:gap-6" style={{ background: "var(--color-ln-navy)" }}>
                 <div className="w-24 h-24 rounded-full flex items-center justify-center border-4 flex-shrink-0" style={{ borderColor: "var(--color-ln-yellow)" }}>
                   <div className="text-center">
                     <p className="text-3xl font-bold" style={{ color: "var(--color-ln-yellow)" }}>{graph.compositeEdge}</p>
@@ -71,7 +71,7 @@ export default function Progress() {
                 </div>
               </div>
             )}
-            <div className="rounded-2xl p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+            <div className="rounded-2xl p-4 sm:p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
               <h2 className="text-base font-semibold mb-6" style={{ color: "var(--color-ln-navy)" }}>Edge by Module</h2>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={barData} barCategoryGap="30%">
@@ -86,7 +86,7 @@ export default function Progress() {
               </ResponsiveContainer>
             </div>
             {radarData.length > 0 && (
-              <div className="rounded-2xl p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
                 <h2 className="text-base font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>
                   Dimension Profile — {MODULE_LABELS[latestReport?.moduleType ?? "ECI"] ?? "Latest Module"}
                 </h2>
@@ -101,7 +101,7 @@ export default function Progress() {
               </div>
             )}
             {graph?.archetypes && Object.keys(graph.archetypes).length > 0 && (
-              <div className="rounded-2xl p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
                 <h2 className="text-base font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Your Leadership Archetypes</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {Object.entries(graph.archetypes).map(([mod, archetype]) => (

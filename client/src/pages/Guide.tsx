@@ -550,7 +550,7 @@ export default function Guide() {
   // ── Chat View ────────────────────────────────────────────────────────────────
   return (
     <PlatformLayout title="Guide">
-      <div className="flex flex-col h-[calc(100vh-4rem)] lg:h-screen max-w-3xl mx-auto">
+      <div className="flex flex-col h-[calc(100vh-8rem)] lg:h-[calc(100vh-4rem)] max-w-3xl mx-auto">
 
         {/* Chat Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0"
@@ -586,7 +586,7 @@ export default function Guide() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6"
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6"
           style={{ background: "var(--color-ln-ivory)" }}>
           {messages.length === 0 && sendMessage.isPending ? null : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-16 animate-fade-in">
@@ -681,7 +681,7 @@ export default function Guide() {
         </div>
 
         {/* Input */}
-        <div className="px-6 py-4 border-t flex-shrink-0"
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t flex-shrink-0"
           style={{ borderColor: "var(--color-ln-border)", background: "white" }}>
           <div className="flex gap-3 items-end">
             <Textarea

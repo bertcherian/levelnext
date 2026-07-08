@@ -19,6 +19,7 @@ import Organisation from "./pages/Organisation";
 import Settings from "./pages/Settings";
 import Assessment from "./pages/Assessment";
 import Report from "./pages/Report";
+import PWAInstallBanner from "./components/PWAInstallBanner";
 
 function Router() {
   return (
@@ -53,6 +54,7 @@ function App() {
         <TooltipProvider>
           <Toaster richColors position="top-right" />
           <Router />
+          <PWAInstallBanner />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

@@ -219,7 +219,7 @@ export default function Assessment() {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "var(--color-ln-navy)" }}>
         {/* Top bar */}
-        <header className="px-6 py-4 flex items-center justify-between">
+        <header className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <button
             onClick={() => navigate("/diagnostics")}
             className="flex items-center gap-2 text-sm transition-colors hover:opacity-70"
@@ -231,7 +231,7 @@ export default function Assessment() {
           <div className="w-16" />
         </header>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
           <div className="w-full max-w-lg text-center">
             {/* Module badge */}
             <span className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-6"
@@ -245,7 +245,7 @@ export default function Assessment() {
             </p>
 
             {/* What to expect */}
-            <div className="rounded-2xl p-6 mb-8 text-left space-y-4"
+            <div className="rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 text-left space-y-4"
               style={{ background: "oklch(20% 0.072 248.6)" }}>
               <p className="text-sm font-semibold text-white mb-3">What to expect</p>
               {moduleType === "eci" && pillarGroups.length > 0 ? (
@@ -316,13 +316,13 @@ export default function Assessment() {
     return (
       <div className="min-h-screen flex flex-col animate-fade-in" style={{ background: "var(--color-ln-navy)" }}>
         {/* Top bar */}
-        <header className="px-6 py-4 flex items-center justify-between">
+        <header className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div />
           <span className="text-base font-bold tracking-tight text-white">LevelNext</span>
           <div />
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-8">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 sm:py-8">
           <div className="w-full max-w-2xl mx-auto space-y-6">
 
             {/* Edge Score Hero */}
@@ -344,7 +344,7 @@ export default function Assessment() {
             </div>
 
             {/* Archetype Card */}
-            <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
+            <div className="rounded-2xl p-4 sm:p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
               <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--color-ln-yellow)" }}>
                 {moduleType === "lii" ? "Your Influence Archetype" : moduleType === "gcc" ? "Your GCC Archetype" : "Your Communication Archetype"}
               </p>
@@ -413,7 +413,7 @@ export default function Assessment() {
 
             {/* GCC Module Scores */}
             {moduleType === "gcc" && gccDimScores.length > 0 && (
-              <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
                 <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--color-ln-yellow)" }}>
                   Readiness Dimension Breakdown
                 </p>
@@ -444,7 +444,7 @@ export default function Assessment() {
 
             {/* LII Dimension Scores */}
             {moduleType === "lii" && liiDimScores.length > 0 && (
-              <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
                 <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--color-ln-yellow)" }}>
                   Influence Dimension Breakdown
                 </p>
@@ -476,7 +476,7 @@ export default function Assessment() {
 
             {/* Pillar Scores (ECI only) */}
             {moduleType === "eci" && pillarScores.length > 0 && (
-              <div className="rounded-2xl p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
                 <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--color-ln-yellow)" }}>
                   Pillar Breakdown
                 </p>
@@ -543,7 +543,7 @@ export default function Assessment() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--color-ln-ivory)" }}>
       {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between border-b"
+      <header className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b"
         style={{ background: "white", borderColor: "var(--color-ln-border)" }}>
         <button
           onClick={() => setPhase("intro")}
@@ -571,7 +571,7 @@ export default function Assessment() {
 
       {/* Pillar indicator (ECI only) */}
       {moduleType === "eci" && currentPillarMeta && (
-        <div className="px-6 py-3 flex items-center gap-2 border-b"
+        <div className="px-4 sm:px-6 py-2 sm:py-3 flex items-center gap-2 border-b"
           style={{ background: "white", borderColor: "var(--color-ln-border)" }}>
           <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
             style={{ background: currentPillarMeta.color }} />
@@ -585,7 +585,7 @@ export default function Assessment() {
       )}
 
       {/* Question */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-10">
         <div className="w-full max-w-2xl animate-fade-in" key={currentQ}>
           {currentQuestion ? (
             <>

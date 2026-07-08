@@ -47,9 +47,9 @@ export default function Diagnostics() {
 
   return (
     <PlatformLayout title="Diagnostics">
-      <div className="max-w-4xl mx-auto px-6 py-8 animate-fade-in">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 animate-fade-in">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Diagnostics</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Diagnostics</h1>
           <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
             Three intelligence modules. Each one builds your Leadership Edge.
           </p>
@@ -65,7 +65,7 @@ export default function Diagnostics() {
                 <div className="flex">
                   {/* Left accent */}
                   <div className="w-1.5 flex-shrink-0" style={{ background: done ? "var(--color-ln-yellow)" : mod.color }} />
-                  <div className="flex-1 p-6">
+                  <div className="flex-1 p-4 sm:p-6">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">

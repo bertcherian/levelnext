@@ -26,9 +26,9 @@ export default function Insights() {
 
   return (
     <PlatformLayout title="Insights">
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-8 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Insights</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Insights</h1>
           <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
             Your completed diagnostics and the intelligence they've revealed.
           </p>
@@ -45,7 +45,7 @@ export default function Insights() {
                 const dims = r.dimensionScores as Record<string, number> | null;
                 const topDim = dims ? Object.entries(dims).sort(([, a], [, b]) => b - a)[0] : null;
                 return (
-                  <div key={r.id} className="rounded-2xl p-6 card-lift"
+                  <div key={r.id} className="rounded-2xl p-4 sm:p-6 card-lift"
                     style={{ background: "white", border: "1px solid var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">

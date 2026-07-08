@@ -21,12 +21,12 @@ export default function Settings() {
 
   return (
     <PlatformLayout title="Settings">
-      <div className="max-w-2xl mx-auto px-6 py-8 animate-fade-in">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8 animate-fade-in">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Settings</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Settings</h1>
         </div>
         <div className="space-y-6">
-          <div className="rounded-2xl p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
             <h2 className="font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Your Profile</h2>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
@@ -40,7 +40,7 @@ export default function Settings() {
             </div>
           </div>
           {tenant && (
-            <div className="rounded-2xl p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+            <div className="rounded-2xl p-4 sm:p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
               <h2 className="font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Organisation</h2>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
@@ -68,7 +68,7 @@ export default function Settings() {
               </div>
             </div>
           )}
-          <div className="rounded-2xl p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
             <h2 className="font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Account</h2>
             <Button variant="outline" onClick={() => logoutMutation.mutate()} className="text-sm">Sign Out</Button>
           </div>

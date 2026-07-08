@@ -93,11 +93,11 @@ export default function MyEdge() {
 
   return (
     <PlatformLayout title="My Edge">
-      <div className="max-w-5xl mx-auto px-6 py-8 animate-fade-in">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8 animate-fade-in">
 
         {/* Page header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>My Edge</h1>
+        <div className="mb-5 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>My Edge</h1>
           <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
             {firstName}'s unified leadership intelligence profile.
           </p>
@@ -125,11 +125,11 @@ export default function MyEdge() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-5 sm:space-y-8">
 
             {/* ── Composite Edge Hero ── */}
             {graph?.compositeEdge !== undefined && (
-              <div className="rounded-2xl p-8 flex flex-col sm:flex-row items-center gap-8"
+              <div className="rounded-2xl p-5 sm:p-8 flex flex-col sm:flex-row items-center gap-5 sm:gap-8"
                 style={{ background: "var(--color-ln-navy)" }}>
                 <div className="relative flex-shrink-0">
                   <ProgressRing score={graph.compositeEdge} size={120} stroke={9} color="var(--color-ln-yellow)" />
@@ -179,7 +179,7 @@ export default function MyEdge() {
             {/* ── Archetype Cards ── */}
             <div>
               <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Your Leadership Archetypes</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
                 {MODULES.map((mod) => {
                   const done = completedModules.includes(mod);
                   const score = graph?.moduleEdges?.[mod] as number | undefined;
@@ -442,7 +442,7 @@ export default function MyEdge() {
             )}
 
             {/* ── Guide CTA ── */}
-            <div className="rounded-2xl p-6 flex items-center gap-4"
+            <div className="rounded-2xl p-4 sm:p-6 flex items-center gap-3 sm:gap-4"
               style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.08)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.25)" }}>
               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{ background: "var(--color-ln-yellow)" }}>

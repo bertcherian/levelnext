@@ -297,9 +297,9 @@ function HomeScreen({
   ];
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-5 sm:mb-8">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-[var(--color-ln-gold)]" />
@@ -528,7 +528,7 @@ function BeforeMeetingFormScreen({
   const STAKES_OPTIONS = ['Low', 'Medium', 'High', 'Career-defining'];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="Back to Practice Coach" />
 
       <div className="mb-6">
@@ -663,7 +663,7 @@ function BeforeMeetingBriefScreen({
   });
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="New Brief" />
 
       <div className="mb-6">
@@ -809,7 +809,7 @@ function AfterMeetingFormScreen({
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="Back to Practice Coach" />
 
       <div className="mb-6">
@@ -882,7 +882,7 @@ function AfterMeetingDebriefScreen({
   onPractice: (issue: string) => void;
 }) {
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="New Debrief" />
 
       <div className="mb-6">
@@ -975,7 +975,7 @@ function SayItBetterScreen({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="Back to Practice Coach" />
 
       <div className="mb-6">
@@ -1110,7 +1110,7 @@ function ScriptBuilderScreen({ onBack }: { onBack: () => void }) {
   });
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="Back to Practice Coach" />
 
       <div className="mb-6">
@@ -1255,7 +1255,7 @@ function GrowthProfileScreen({
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         <BackButton onBack={onBack} />
         <div className="flex items-center justify-center py-16">
           <RefreshCw className="w-6 h-6 animate-spin text-[var(--color-ln-navy)]/40" />
@@ -1267,7 +1267,7 @@ function GrowthProfileScreen({
   const plan = profile?.activePlan?.plan as GrowthPlanData | undefined;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="Back to Practice Coach" />
 
       <div className="mb-6">
@@ -1452,7 +1452,7 @@ function CoachBriefScreen({ onBack }: { onBack: () => void }) {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="Back to Growth Profile" />
 
       <div className="mb-6">
@@ -1589,7 +1589,7 @@ function PrivacySettingsScreen({ onBack }: { onBack: () => void }) {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="Back to Growth Profile" />
 
       <div className="mb-6">
@@ -1740,7 +1740,7 @@ function CoachingScreen({
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8 flex flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
       <BackButton onBack={onBack} />
 
       <div className="mb-4">
@@ -1884,7 +1884,7 @@ function ScenarioSetupScreen({
 
   if (!scenario) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         <BackButton onBack={onBack} />
         <div className="flex flex-col items-center justify-center py-16 gap-3">
           <RefreshCw className="w-6 h-6 animate-spin text-[var(--color-ln-navy)]/40" />
@@ -1902,7 +1902,7 @@ function ScenarioSetupScreen({
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} />
 
       <div className="mb-6">
@@ -2028,7 +2028,7 @@ function RolePlayScreen({
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8 flex flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
@@ -2164,7 +2164,7 @@ function FeedbackScreen({
   const scoreBg = score >= 80 ? 'bg-emerald-50 border-emerald-200' : score >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Award className="w-5 h-5 text-[var(--color-ln-gold)]" />
@@ -2314,7 +2314,7 @@ function HistoryScreen({ onBack }: { onBack: () => void }) {
   const allAttempts = historyData?.attempts ?? [];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       <BackButton onBack={onBack} label="Back to Practice Coach" />
 
       <div className="mb-6">
@@ -2429,7 +2429,7 @@ export default function PracticeCoach() {
     if (screen === 'scenario-setup') {
       if (!sessionId) {
         return (
-          <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
             <BackButton onBack={goHome} />
             <SimulateFirstSetup
               issue={issue}

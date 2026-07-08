@@ -35,9 +35,9 @@ export default function Organisation() {
 
   return (
     <PlatformLayout title="Organisation">
-      <div className="max-w-4xl mx-auto px-6 py-8 animate-fade-in">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 animate-fade-in">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Organisation</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Organisation</h1>
           {tenant && (
             <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
               {tenant.tenant.name}
@@ -55,13 +55,13 @@ export default function Organisation() {
         ) : (
           <>
             {/* Summary cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="rounded-2xl p-6" style={{ background: "var(--color-ln-navy)", boxShadow: "var(--shadow-card)" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: "var(--color-ln-navy)", boxShadow: "var(--shadow-card)" }}>
                 <Users size={20} style={{ color: "var(--color-ln-yellow)" }} className="mb-3" />
                 <p className="text-3xl font-bold text-white">{tenantReports?.length ?? 0}</p>
                 <p className="text-sm mt-1" style={{ color: "oklch(65% 0.02 248.6)" }}>Total Diagnostics Completed</p>
               </div>
-              <div className="rounded-2xl p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
                 <TrendingUp size={20} style={{ color: "var(--color-ln-navy)" }} className="mb-3" />
                 <p className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
                   {tenantReports && tenantReports.length > 0
@@ -70,7 +70,7 @@ export default function Organisation() {
                 </p>
                 <p className="text-sm mt-1" style={{ color: "var(--color-ln-muted)" }}>Average Team Edge</p>
               </div>
-              <div className="rounded-2xl p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
                 <BarChart3 size={20} style={{ color: "var(--color-ln-navy)" }} className="mb-3" />
                 <p className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
                   {moduleStats.filter((m) => m.count > 0).length}/3
@@ -80,7 +80,7 @@ export default function Organisation() {
             </div>
 
             {/* Module Heatmap */}
-            <div className="rounded-2xl p-6 mb-8" style={{ background: "white", border: "1px solid var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
+            <div className="rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8" style={{ background: "white", border: "1px solid var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
               <h2 className="font-semibold mb-5" style={{ color: "var(--color-ln-navy)" }}>Team Edge Heatmap</h2>
               <div className="space-y-4">
                 {moduleStats.map(({ mod, count, avg }) => (
