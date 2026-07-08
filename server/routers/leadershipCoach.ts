@@ -33,16 +33,35 @@ async function getLeaderContext(userId: number) {
   return { user, memory, graph: graph?.leadershipGraph, recentCommitments };
 }
 
+const MODULE_FULL_NAMES: Record<string, string> = {
+  ECI: 'Executive Communication Intelligence',
+  LII: 'Leadership Influence Intelligence',
+  GCC: 'GCC Readiness',
+};
+
 function buildLeaderContextPrompt(ctx: Awaited<ReturnType<typeof getLeaderContext>>) {
   const parts: string[] = [];
   if (ctx.user?.name) parts.push(`Leader: ${ctx.user.name}`);
   if (ctx.graph) {
     const g = ctx.graph as Record<string, unknown>;
-    if (g.compositeEdge) parts.push(`Leadership Edge Score: ${g.compositeEdge}/100`);
+    if (g.compositeEdge) parts.push(`Overall Leadership Edge Score: ${g.compositeEdge}/100`);
+    // Module-level scores with lowest-scoring dimension flagged as primary growth focus
+    if (g.moduleEdges && typeof g.moduleEdges === 'object') {
+      const moduleEdges = g.moduleEdges as Record<string, number>;
+      const moduleLines = Object.entries(moduleEdges)
+        .map(([k, v]) => `  ${MODULE_FULL_NAMES[k] ?? k}: ${v}/100`)
+        .join('\n');
+      parts.push(`Diagnostic Module Scores:\n${moduleLines}`);
+      const entries = Object.entries(moduleEdges);
+      if (entries.length > 0) {
+        const [lowestKey, lowestScore] = entries.reduce((a, b) => b[1] < a[1] ? b : a);
+        parts.push(`Primary Growth Focus: ${MODULE_FULL_NAMES[lowestKey] ?? lowestKey} (${lowestScore}/100) — this is the lowest-scoring diagnostic dimension and should anchor the 30-day growth plan and practice recommendations`);
+      }
+    }
     if (g.archetypes && typeof g.archetypes === 'object') {
       const archetypes = g.archetypes as Record<string, string>;
-      const archList = Object.entries(archetypes).map(([k, v]) => `${k}: ${v}`).join(', ');
-      parts.push(`Archetypes: ${archList}`);
+      const archList = Object.entries(archetypes).map(([k, v]) => `${MODULE_FULL_NAMES[k] ?? k}: ${v}`).join(', ');
+      parts.push(`Leadership Archetypes: ${archList}`);
     }
   }
   if (ctx.memory?.aiSummary) parts.push(`Leadership Memory: ${ctx.memory.aiSummary}`);

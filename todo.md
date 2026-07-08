@@ -135,3 +135,8 @@
 - [x] Right panel Join mode: invite code input, "What happens next" info box, CTA button
 - [x] Back navigation on Create and Join forms
 - [x] Mobile-responsive (left panel hidden on small screens, mobile logo shown)
+
+### Phase 20: My Edge ↔ Growth Profile Integration
+- [x] Add Practice Activity section to My Edge (last 3 sessions, current commitment, practice score trend)
+- [x] Update Growth Profile 30-day plan to reference lowest diagnostic dimension and frame goals around closing that gap
+- [x] Verify Coach home diagnostic recommendations are wired to leadershipGraph data

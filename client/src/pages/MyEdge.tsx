@@ -4,7 +4,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2, CheckCircle, Lock, TrendingUp, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, CheckCircle, Lock, TrendingUp, Sparkles, Zap, Target, BarChart2 } from "lucide-react";
 
 const MODULES = ["ECI", "LII", "GCC"] as const;
 type ModuleType = (typeof MODULES)[number];
@@ -80,6 +80,8 @@ export default function MyEdge() {
   const [, navigate] = useLocation();
   const { data: graph, isLoading } = trpc.leadershipGraph.get.useQuery(undefined, { enabled: isAuthenticated });
   const { data: reports } = trpc.report.myReports.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: practiceHistory } = trpc.practice.getHistory.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: coachCommitments } = trpc.leadershipCoach.getCommitments.useQuery(undefined, { enabled: isAuthenticated });
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate("/");
@@ -311,6 +313,131 @@ export default function MyEdge() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* ── Practice Activity ── */}
+            {practiceHistory && (practiceHistory.totalAttempts > 0 || (practiceHistory.sessions?.length ?? 0) > 0) && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: "var(--color-ln-navy)" }}>
+                    <Zap size={18} style={{ color: "var(--color-ln-gold)" }} />
+                    Practice Activity
+                  </h2>
+                  <Link href="/practice">
+                    <button className="text-xs font-medium flex items-center gap-1" style={{ color: "var(--color-ln-navy)" }}>
+                      Open Practice Coach <ArrowRight size={12} />
+                    </button>
+                  </Link>
+                </div>
+                {/* Stats row */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="rounded-xl p-3 text-center" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+                    <p className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>{practiceHistory.totalAttempts}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--color-ln-muted)" }}>Sessions</p>
+                  </div>
+                  <div className="rounded-xl p-3 text-center" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+                    <p className="text-2xl font-bold" style={{ color: practiceHistory.averageScore && practiceHistory.averageScore >= 70 ? "#16a34a" : practiceHistory.averageScore && practiceHistory.averageScore >= 50 ? "#d97706" : "var(--color-ln-navy)" }}>
+                      {practiceHistory.averageScore ?? "—"}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--color-ln-muted)" }}>Avg Score</p>
+                  </div>
+                  <div className="rounded-xl p-3 text-center" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+                    <p className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>{practiceHistory.sessions?.length ?? 0}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--color-ln-muted)" }}>Scenarios</p>
+                  </div>
+                </div>
+                {/* Last 3 sessions */}
+                {practiceHistory.sessions && practiceHistory.sessions.length > 0 && (
+                  <div className="space-y-2">
+                    {practiceHistory.sessions.slice(0, 3).map((session) => {
+                      const sessionAttempts = (practiceHistory.attempts ?? []).filter(
+                        (a: { sessionId: number; overallScore: number | null }) => a.sessionId === session.id
+                      );
+                      const bestScore = sessionAttempts.length > 0
+                        ? Math.max(...sessionAttempts.map((a: { overallScore: number | null }) => a.overallScore ?? 0))
+                        : null;
+                      return (
+                        <div key={session.id} className="rounded-xl p-3 flex items-center gap-3" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)" }}>
+                            <Target size={14} style={{ color: "var(--color-ln-navy)" }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate" style={{ color: "var(--color-ln-navy)" }}>{session.issueText}</p>
+                            <p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>
+                              {sessionAttempts.length} attempt{sessionAttempts.length !== 1 ? 's' : ''} · {new Date(session.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                            </p>
+                          </div>
+                          {bestScore !== null && (
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-base font-bold" style={{ color: bestScore >= 70 ? "#16a34a" : bestScore >= 50 ? "#d97706" : "#dc2626" }}>{bestScore}</p>
+                              <p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>best</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Current active commitment */}
+                {(() => {
+                  const activeCommitment = coachCommitments?.find(c => !c.status || c.status === 'pending');
+                  if (!activeCommitment) return null;
+                  return (
+                    <div className="mt-3 rounded-xl p-3 flex items-start gap-3" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+                      <CheckCircle size={16} className="mt-0.5 flex-shrink-0" style={{ color: "var(--color-ln-gold)" }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--color-ln-navy)" }}>Current Commitment</p>
+                        <p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>{activeCommitment.text}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {/* Practice score trend — last 5 completed attempts */}
+                {(() => {
+                  const completedAttempts = (practiceHistory?.attempts ?? [])
+                    .filter((a: { overallScore: number | null }) => a.overallScore !== null)
+                    .slice(0, 5)
+                    .reverse();
+                  if (completedAttempts.length < 2) return null;
+                  const scores = completedAttempts.map((a: { overallScore: number | null }) => a.overallScore as number);
+                  const min = Math.min(...scores);
+                  const max = Math.max(...scores);
+                  const range = max - min || 1;
+                  const W = 120, H = 32;
+                  const pts = scores.map((s, i) => {
+                    const x = (i / (scores.length - 1)) * W;
+                    const y = H - ((s - min) / range) * H;
+                    return `${x},${y}`;
+                  }).join(' ');
+                  const trend = scores[scores.length - 1] - scores[0];
+                  return (
+                    <div className="mt-3 rounded-xl p-3 flex items-center gap-4" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
+                      <div>
+                        <p className="text-xs font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>Score Trend</p>
+                        <p className="text-xs" style={{ color: trend >= 0 ? "#16a34a" : "#dc2626" }}>
+                          {trend >= 0 ? "▲" : "▼"} {Math.abs(trend)} pts over {scores.length} attempts
+                        </p>
+                      </div>
+                      <svg width={W} height={H} className="ml-auto">
+                        <polyline points={pts} fill="none" stroke={trend >= 0 ? "#16a34a" : "#dc2626"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        {scores.map((s, i) => (
+                          <circle key={i} cx={(i / (scores.length - 1)) * W} cy={H - ((s - min) / range) * H} r="3"
+                            fill={trend >= 0 ? "#16a34a" : "#dc2626"} />
+                        ))}
+                      </svg>
+                    </div>
+                  );
+                })()}
+                {/* Growth Profile link */}
+                <Link href="/practice">
+                  <div className="mt-3 rounded-xl p-3 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                    style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.08)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.25)" }}>
+                    <BarChart2 size={16} style={{ color: "var(--color-ln-gold)" }} />
+                    <p className="text-sm font-medium" style={{ color: "var(--color-ln-navy)" }}>View Growth Profile & 30-Day Plan</p>
+                    <ArrowRight size={14} className="ml-auto" style={{ color: "var(--color-ln-navy)" }} />
+                  </div>
+                </Link>
               </div>
             )}
 
