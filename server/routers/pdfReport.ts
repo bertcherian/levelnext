@@ -9,6 +9,7 @@ import { invokeLLM } from "../_core/llm";
 // Module metadata
 const MODULE_META: Record<string, { label: string; dimensionLabel: string }> = {
   ECI: { label: "Executive Communication", dimensionLabel: "Pillar Breakdown" },
+  TII: { label: "Leadership Time Intelligence", dimensionLabel: "Time Dimension Breakdown" },
   LII: { label: "Leadership Influence", dimensionLabel: "Influence Dimension Breakdown" },
   GCC: { label: "GCC Readiness", dimensionLabel: "Readiness Dimension Breakdown" },
 };
@@ -49,6 +50,13 @@ const DIMENSION_LABELS: Record<string, Record<string, string>> = {
     leadership_talent: "Leadership & Talent",
     innovation_ai: "Innovation & AI",
     enterprise_alignment: "Enterprise Alignment",
+  },
+  TII: {
+    priority_clarity: "Priority Clarity",
+    focus_deep_work: "Focus & Deep Work",
+    execution_discipline: "Execution Discipline",
+    delegation_letting_go: "Delegation & Letting Go",
+    boundary_management: "Boundary Management",
   },
 };
 

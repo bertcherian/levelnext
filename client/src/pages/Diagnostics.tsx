@@ -31,6 +31,16 @@ const MODULES = [
     color: "#1e3a5f",
   },
   {
+    id: "TII",
+    route: "tii",
+    label: "Leadership Time Intelligence",
+    shortLabel: "TII",
+    tagline: "Your calendar reveals your leadership system.",
+    description: "Measure your Priority Clarity, Focus & Deep Work, Execution Discipline, Delegation & Letting Go, and Boundary Management — the five dimensions that determine whether you lead time or time leads you.",
+    questions: "30 questions · ~10 minutes",
+    color: "#1a3d5c",
+  },
+  {
     id: "LII",
     route: "lii",
     label: "Leadership Influence Intelligence",
@@ -114,7 +124,7 @@ function NarrativeBanner({ toModule, onDismiss }: { toModule: string; onDismiss:
 
   useEffect(() => {
     getNarrative.mutate(
-      { toModule: toModule as "ECI" | "LII" | "GCC" },
+      { toModule: toModule as "ECI" | "TII" | "LII" | "GCC" },
       { onSuccess: (data) => setNarrative(data.narrative) }
     );
   }, [toModule]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -263,7 +273,8 @@ function ModuleCard({
 // GCC is not_started (LII not yet completed). This gives the richest preview of all three lock states.
 const NEW_USER_STATUSES: ModuleStatus[] = [
   { moduleId: "ECI", state: "unlocked", daysRemaining: 0, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
-  { moduleId: "LII", state: "locked", daysRemaining: 18, missionsCompleted: 1, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: "Narrative Authority", narrativeReady: false, narrativeShown: false },
+  { moduleId: "TII", state: "locked", daysRemaining: 18, missionsCompleted: 1, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: "Priority Clarity", narrativeReady: false, narrativeShown: false },
+  { moduleId: "LII", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
   { moduleId: "GCC", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
 ];
 

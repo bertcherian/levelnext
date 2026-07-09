@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
+  TII: "Leadership Time Intelligence",
   LII: "Leadership Influence",
   GCC: "GCC Readiness",
 };
@@ -47,6 +48,13 @@ const DIMENSION_LABELS: Record<string, Record<string, string>> = {
     leadership_talent: "Leadership & Talent",
     innovation_ai: "Innovation & AI",
     enterprise_alignment: "Enterprise Alignment",
+  },
+  TII: {
+    priority_clarity: "Priority Clarity",
+    focus_deep_work: "Focus & Deep Work",
+    execution_discipline: "Execution Discipline",
+    delegation_letting_go: "Delegation & Letting Go",
+    boundary_management: "Boundary Management",
   },
 };
 

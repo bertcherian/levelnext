@@ -21,6 +21,10 @@ import {
   GCC_MODULES, computeModuleScore, computeGccReadinessScore,
   getReadinessZone, assignArchetype as assignGccArchetype,
 } from "../../shared/modules/gccData";
+import {
+  TII_QUESTIONS, TII_DIMENSIONS,
+  scoreTii,
+} from "../../shared/modules/tiiData";
 
 // ─── Scoring helpers ──────────────────────────────────────────────────────────
 function scoreLii(responses: Record<string, number>) {
@@ -133,8 +137,15 @@ function scoreEci(responses: Record<string, number>) {
 export const assessmentRouter = router({
   // Get questions for a module
   getQuestions: publicProcedure
-    .input(z.object({ moduleType: z.enum(["ECI", "LII", "GCC"]) }))
+    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC"]) }))
     .query(({ input }) => {
+      if (input.moduleType === "TII") {
+        return {
+          questions: TII_QUESTIONS.map((q) => ({ id: String(q.id), text: q.text, dimensionId: q.dimensionId })),
+          pillars: TII_DIMENSIONS.map((d) => ({ id: d.id, label: d.name, description: d.definition, color: "#12345A" })),
+          totalQuestions: TII_QUESTIONS.length,
+        };
+      }
       if (input.moduleType === "ECI") {
         return {
           questions: ECI_QUESTIONS.map((q) => ({ id: String(q.id), text: q.text, dimensionId: q.dimensionId, pillarId: q.pillarId })),
@@ -162,7 +173,7 @@ export const assessmentRouter = router({
 
   // Start or resume an assessment session
   startSession: protectedProcedure
-    .input(z.object({ moduleType: z.enum(["ECI", "LII", "GCC"]) }))
+    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC"]) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -216,7 +227,7 @@ export const assessmentRouter = router({
     .input(
       z.object({
         sessionId: z.number(),
-        moduleType: z.enum(["ECI", "LII", "GCC"]),
+        moduleType: z.enum(["ECI", "TII", "LII", "GCC"]),
         responses: z.record(z.string(), z.number()),
         participantName: z.string(),
         participantEmail: z.string().email(),
@@ -231,6 +242,7 @@ export const assessmentRouter = router({
       // Score the responses
       let scored: { edgeScore: number; dimensionScores: Record<string, number>; zone: string; archetype: string };
       if (input.moduleType === "ECI") scored = scoreEci(input.responses);
+      else if (input.moduleType === "TII") scored = scoreTii(input.responses);
       else if (input.moduleType === "LII") scored = scoreLii(input.responses);
       else scored = scoreGcc(input.responses);
 

@@ -8,7 +8,7 @@
  *                          1 Growth Profile commitment set
  *   Layer 3 — Narrative:   Guide surfaces a personalised "you are ready" message
  *
- * Module sequence: ECI → LII → GCC → (future modules)
+ * Module sequence: ECI → TII → LII → GCC → (future modules)
  * ECI is always unlocked (it is the entry point).
  */
 
@@ -36,12 +36,13 @@ const MISSION_TARGET = 5;
 const GUIDE_SESSION_TARGET = 3;
 
 // Ordered sequence of modules — each module unlocks the next
-const MODULE_SEQUENCE = ["ECI", "LII", "GCC"] as const;
+const MODULE_SEQUENCE = ["ECI", "TII", "LII", "GCC"] as const;
 type ModuleType = (typeof MODULE_SEQUENCE)[number];
 
 // Which module unlocks which
 const UNLOCK_MAP: Record<ModuleType, ModuleType | null> = {
-  ECI: "LII",
+  ECI: "TII",
+  TII: "LII",
   LII: "GCC",
   GCC: null,
 };
@@ -350,7 +351,7 @@ export const unlockRouter = router({
    * Marks narrativeShown = true after first call.
    */
   getNarrativeUnlock: protectedProcedure
-    .input(z.object({ toModule: z.enum(["ECI", "LII", "GCC"]) }))
+    .input(z.object({ toModule: z.enum(["ECI", "TII", "LII", "GCC"]) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -378,19 +379,14 @@ export const unlockRouter = router({
       const userName = userRow?.name ?? "Leader";
       const graph = (userRow?.leadershipGraph as LeadershipGraph) ?? null;
 
-      const fromLabel =
-        progress.fromModule === "ECI"
-          ? "Executive Communication Intelligence"
-          : progress.fromModule === "LII"
-          ? "Leadership Influence Intelligence"
-          : "GCC Readiness";
+      const moduleLabel = (m: string) =>
+        m === "ECI" ? "Executive Communication Intelligence"
+        : m === "TII" ? "Leadership Time Intelligence"
+        : m === "LII" ? "Leadership Influence Intelligence"
+        : "GCC Readiness";
 
-      const toLabel =
-        input.toModule === "ECI"
-          ? "Executive Communication Intelligence"
-          : input.toModule === "LII"
-          ? "Leadership Influence Intelligence"
-          : "GCC Readiness";
+      const fromLabel = moduleLabel(progress.fromModule);
+      const toLabel = moduleLabel(input.toModule);
 
       const archetype =
         graph?.archetypes?.[progress.fromModule as ModuleType] ?? null;
@@ -439,7 +435,7 @@ Tone: coaching, direct, encouraging. No bullet points. No markdown. Plain prose 
   recordGuideSession: protectedProcedure
     .input(
       z.object({
-        moduleType: z.enum(["ECI", "LII", "GCC", "GENERAL"]),
+        moduleType: z.enum(["ECI", "TII", "LII", "GCC", "GENERAL"]),
         conversationId: z.number().optional(),
       })
     )

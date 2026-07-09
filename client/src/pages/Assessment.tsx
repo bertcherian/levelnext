@@ -13,6 +13,12 @@ const MODULE_META: Record<string, { label: string; tagline: string; color: strin
     color: "#12345A",
     questionCount: 30,
   },
+  tii: {
+    label: "Leadership Time Intelligence",
+    tagline: "Your calendar reveals your leadership system. Discover how you invest, protect, and reclaim your most strategic resource.",
+    color: "#1a3d5c",
+    questionCount: 30,
+  },
   lii: {
     label: "Leadership Influence",
     tagline: "Measure your ability to lead through trust, influence, and authentic authority.",
@@ -138,7 +144,7 @@ export default function Assessment() {
   const [result, setResult] = useState<SubmitResult | null>(null);
 
   const { data: questionsData, isLoading: questionsLoading } = trpc.assessment.getQuestions.useQuery(
-    { moduleType: moduleType.toUpperCase() as "ECI" | "LII" | "GCC" },
+    { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" },
     { enabled: isAuthenticated }
   );
 
@@ -198,7 +204,7 @@ export default function Assessment() {
   const handleSubmit = () => {
     submitAssessment.mutate({
       sessionId: 0,
-      moduleType: moduleType.toUpperCase() as "ECI" | "LII" | "GCC",
+      moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC",
       responses,
       participantName: user?.name ?? "Leader",
       participantEmail: user?.email ?? "leader@levelnext.com",

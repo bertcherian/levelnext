@@ -199,3 +199,15 @@
 - [x] Diagnostics hub: "View as new user" toggle that simulates a fresh account (ECI unlocked, LII/GCC locked with gate progress at zero)
 - [x] PlatformLayout nav: notification badge on Guide nav item (shows count of unread Guide messages or pending unlock notifications)
 - [x] Diagnostics hub NarrativeBanner: "Discuss with Guide" button that navigates to /guide with the unlock context pre-loaded
+
+### Phase 26: Leadership Time Intelligence (TII) Diagnostic
+- [ ] shared/modules/tiiData.ts — 5 dimensions, 30 questions (6 per dimension), scoring engine, 5 zones, 6 archetypes
+- [ ] drizzle/schema.ts — add TII to assessmentSessions.moduleType, reports.moduleType, daily_missions.moduleType, guide_sessions.moduleType, diagnostic_unlock_progress.fromModule/toModule enums
+- [ ] Run pnpm drizzle-kit generate and apply migration SQL
+- [ ] server/routers/assessment.ts — import TII scorer, add TII to moduleType z.enum, add scoreTii branch
+- [ ] server/routers/pdfReport.ts — add TII to MODULE_META and DIMENSION_LABELS, add TII LLM prompt context
+- [ ] server/routers/leadershipGraph.ts — add TII to moduleType union
+- [ ] server/routers/unlock.ts — update UNLOCK_SEQUENCE to ECI → TII → LII → GCC
+- [ ] client/src/pages/Diagnostics.tsx — add TII module card to MODULES array, update NEW_USER_STATUSES preview
+- [ ] client/src/pages/Report.tsx — add TII to DIMENSION_LABELS and MODULE_LABELS
+- [ ] TypeScript check + vitest + screenshot + checkpoint
