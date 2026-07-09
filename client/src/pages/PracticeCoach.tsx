@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
@@ -2368,20 +2368,23 @@ function HistoryScreen({ onBack }: { onBack: () => void }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function PracticeCoach() {
   const [location] = useLocation();
+  const search = useSearch();
   const [screen, setScreen] = useState<Screen>(() => {
     const params = new URLSearchParams(window.location.search);
     const screenParam = params.get('screen');
     return (screenParam as Screen) || "home";
   });
 
-  // Re-sync screen state when URL changes
+  // Re-sync screen state when URL or search params change
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(search);
     const screenParam = params.get('screen') as Screen | null;
     if (screenParam && screenParam !== screen) {
       setScreen(screenParam);
+    } else if (!screenParam && screen !== 'home' && !['coaching', 'scenario-setup', 'roleplay', 'feedback', 'before-meeting-form', 'before-meeting-brief', 'after-meeting-form', 'after-meeting-debrief', 'say-it-better', 'script-builder', 'growth-profile', 'coach-brief', 'privacy-settings', 'history'].includes(screen)) {
+      setScreen('home');
     }
-  }, [location]);
+  }, [location, search]);
   const [issue, setIssue] = useState('');
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [scenario, setScenario] = useState<PracticeScenario | null>(null);
