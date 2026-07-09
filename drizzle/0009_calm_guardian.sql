@@ -1,0 +1,1 @@
+ALTER TABLE `conversation_intelligence` MODIFY COLUMN `sourceApp` enum('chatgpt','claude','text_paste','other') NOT NULL DEFAULT 'chatgpt';

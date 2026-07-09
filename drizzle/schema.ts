@@ -570,13 +570,13 @@ export type ConversationIntelligenceSummary = {
   overallSynthesis: string;         // 3-4 sentence executive summary
   themes: ConversationIntelligenceTheme[];
   importedAt: string;
-  sourceApp: "chatgpt" | "claude" | "other";
+  sourceApp: "chatgpt" | "claude" | "text_paste" | "other";
 };
 
 export const conversationIntelligence = mysqlTable("conversation_intelligence", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id),
-  sourceApp: mysqlEnum("sourceApp", ["chatgpt", "claude", "other"]).notNull().default("chatgpt"),
+  sourceApp: mysqlEnum("sourceApp", ["chatgpt", "claude", "text_paste", "other"]).notNull().default("chatgpt"),
   summary: json("summary").$type<ConversationIntelligenceSummary>(),
   // Individual approved themes stored as JSON array
   themes: json("themes").$type<ConversationIntelligenceTheme[]>(),

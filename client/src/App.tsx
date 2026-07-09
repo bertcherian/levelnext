@@ -41,6 +41,7 @@ function Router() {
       <Route path="/diagnostics/:moduleType" component={Assessment} />
       <Route path="/import-eci" component={ImportEci} />
       <Route path="/import-chatgpt" component={ImportChatgpt} />
+      <Route path="/import-ai" component={ImportChatgpt} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />
