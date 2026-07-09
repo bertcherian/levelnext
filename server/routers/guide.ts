@@ -1,9 +1,9 @@
 import { TRPCError } from "@trpc/server";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, gte, and } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { guideConversations, users, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
+import { guideConversations, guideSessions, users, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
 const GUIDE_SYSTEM_PROMPT = (graph: LeadershipGraph | null, userName: string): string => {
@@ -160,6 +160,33 @@ export const guideRouter = router({
         .update(guideConversations)
         .set({ messages })
         .where(eq(guideConversations.id, convId));
+
+      // Record a guide session for unlock gate tracking.
+      // Deduplicated per user + moduleType + calendar day so module-specific gate counts are accurate.
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const completedModules = (graph?.completedModules ?? []) as string[];
+      const lastModule: "ECI" | "LII" | "GCC" | "GENERAL" = completedModules.length > 0
+        ? (completedModules[completedModules.length - 1] as "ECI" | "LII" | "GCC")
+        : "GENERAL";
+      const existingSession = await db
+        .select({ id: guideSessions.id })
+        .from(guideSessions)
+        .where(
+          and(
+            eq(guideSessions.userId, ctx.user.id),
+            eq(guideSessions.moduleType, lastModule),
+            gte(guideSessions.createdAt, todayStart)
+          )
+        )
+        .limit(1);
+      if (existingSession.length === 0) {
+        await db.insert(guideSessions).values({
+          userId: ctx.user.id,
+          moduleType: lastModule,
+          conversationId: convId,
+        });
+      }
 
       return { message: assistantMessage, conversationId: convId };
     }),

@@ -182,3 +182,15 @@
 - [x] Show typing indicator immediately on user message send, hide on avatar response received
 - [x] Verify/improve PDF export button visibility and placement on Report page
 - [x] Package code review process as a reusable Manus skill (skills/levelnext-code-review/SKILL.md)
+
+### Phase 24: Progressive Diagnostic Unlock System
+- [x] Schema: diagnostic_unlock_progress table and guide_sessions table added and migrated
+- [x] Server: unlock eligibility engine — time gate (21 days), mission gate (5 module-specific), guide session gate (3), commitment gate (growth plan set)
+- [x] Server: tRPC unlock.getStatus — returns per-module lock state, countdown days, all gate progress
+- [x] Server: tRPC unlock.getNarrativeUnlock — LLM-generated Guide narrative when all gates pass
+- [x] Server: Guide router records guide_sessions row (once per calendar day) on sendMessage
+- [x] Client: Diagnostics hub — locked/not_started/unlocked/completed card states with visual distinction
+- [x] Client: Diagnostics hub — 21-day countdown on locked cards
+- [x] Client: Diagnostics hub — expandable gate progress panel (4 GateBars) on locked cards
+- [x] Client: Diagnostics hub — NarrativeBanner (Guide says you are ready) shown once when all gates pass
+- [x] Client: Diagnostics hub — "Why progressive unlocking?" philosophy note at bottom

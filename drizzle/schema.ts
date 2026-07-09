@@ -467,6 +467,51 @@ export const privacySettings = mysqlTable("privacy_settings", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// ─── Guide Sessions (for unlock gate tracking) ───────────────────────────────
+// A guide session is counted each time the user sends a message in a new
+// conversation day. We track the module context so gates are module-specific.
+export const guideSessions = mysqlTable("guide_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // Which diagnostic module this session is attributed to (most recently completed)
+  moduleType: mysqlEnum("moduleType", ["ECI", "LII", "GCC", "GENERAL"]).notNull().default("GENERAL"),
+  // The guide conversation this session belongs to
+  conversationId: int("conversationId").references(() => guideConversations.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GuideSession = typeof guideSessions.$inferSelect;
+
+// ─── Diagnostic Unlock Progress ───────────────────────────────────────────────
+// Tracks the three-layer unlock gate for each user/module pair.
+// One row per (userId, toModule) — the module they are trying to unlock.
+export const diagnosticUnlockProgress = mysqlTable("diagnostic_unlock_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  // The module that was just completed (the prerequisite)
+  fromModule: mysqlEnum("fromModule", ["ECI", "LII", "GCC"]).notNull(),
+  // The module being unlocked
+  toModule: mysqlEnum("toModule", ["ECI", "LII", "GCC"]).notNull(),
+  // When the fromModule diagnostic was completed (starts the 21-day clock)
+  fromCompletedAt: timestamp("fromCompletedAt").notNull(),
+  // Layer 1: time gate — 21 days from fromCompletedAt
+  timegatePassedAt: timestamp("timegatePassedAt"),
+  // Layer 2: action gate progress
+  missionsCompleted: int("missionsCompleted").default(0).notNull(),   // target: 5
+  guideSessionsCompleted: int("guideSessionsCompleted").default(0).notNull(), // target: 3
+  commitmentSet: boolean("commitmentSet").default(false).notNull(),   // target: 1
+  // The lowest-scoring dimension from the fromModule report (focus area)
+  focusDimension: varchar("focusDimension", { length: 255 }),
+  // Layer 3: when all gates passed and narrative was surfaced
+  allGatesPassedAt: timestamp("allGatesPassedAt"),
+  narrativeShown: boolean("narrativeShown").default(false).notNull(),
+  // When the toModule was actually unlocked (all gates satisfied)
+  unlockedAt: timestamp("unlockedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DiagnosticUnlockProgress = typeof diagnosticUnlockProgress.$inferSelect;
+
 // ─── 30-Day Growth Plans ──────────────────────────────────────────────────────
 export type GrowthPlanData = {
   growthTheme: string;
