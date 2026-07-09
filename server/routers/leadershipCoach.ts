@@ -14,7 +14,6 @@ import {
   privacySettings,
   growthPlans,
   practiceSessions,
-  practiceAttempts,
   users,
 } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
@@ -723,7 +722,7 @@ Generate a professional Coach Brief. Return ONLY valid JSON:
   // ── Blind Spot Detection ──────────────────────────────────────────────────
   detectBlindSpots: protectedProcedure
     .input(z.object({ issueDescription: z.string() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const prompt = `You are an expert executive leadership coach specialising in blind spot detection. Analyse this leader's description and identify possible blind spots.
 
 Issue description: "${input.issueDescription}"

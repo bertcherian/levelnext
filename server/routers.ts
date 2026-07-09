@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, router } from "./_core/trpc";
 import { tenantRouter } from "./routers/tenant";
 import { assessmentRouter } from "./routers/assessment";
 import { pdfReportRouter } from "./routers/pdfReport";

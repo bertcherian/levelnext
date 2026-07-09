@@ -14,12 +14,6 @@ const MODULE_LABELS: Record<string, string> = {
   GENERAL: "Leadership",
 };
 
-const MODULE_COLORS: Record<string, string> = {
-  ECI: "#12345A",
-  LII: "#F2B705",
-  GCC: "#1a5276",
-  GENERAL: "#12345A",
-};
 
 export default function Home() {
   const { user, isAuthenticated, loading } = useAuth();

@@ -69,7 +69,6 @@ const ZONE_COLORS: Record<string, string> = {
 
 const NAVY = "#12345A";
 const YELLOW = "#F2B705";
-const IVORY = "#FAFAF7";
 const CHARCOAL = "#2D3748";
 
 // PDF generation steps

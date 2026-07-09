@@ -15,7 +15,7 @@ export default function Organisation() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
   const { data: tenant, isLoading: tenantLoading } = trpc.tenant.myTenant.useQuery(undefined, { enabled: isAuthenticated });
-  const { data: tenantReports, isLoading: reportsLoading } = trpc.report.tenantReports.useQuery(undefined, {
+  const { data: tenantReports } = trpc.report.tenantReports.useQuery(undefined, {
     enabled: isAuthenticated && (tenant?.role === "owner" || tenant?.role === "admin"),
     retry: false,
   });

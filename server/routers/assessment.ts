@@ -3,7 +3,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { assessmentSessions, reports, users } from "../../drizzle/schema";
+import { assessmentSessions, reports } from "../../drizzle/schema";
 import { nanoid } from "nanoid";
 import { updateLeadershipGraph } from "./leadershipGraph";
 
@@ -18,7 +18,7 @@ import {
   getScoreBand,
 } from "../../shared/modules/liiData";
 import {
-  GCC_MODULES, GCC_MODULE_MAP, computeModuleScore, computeGccReadinessScore,
+  GCC_MODULES, computeModuleScore, computeGccReadinessScore,
   getReadinessZone, assignArchetype as assignGccArchetype,
 } from "../../shared/modules/gccData";
 

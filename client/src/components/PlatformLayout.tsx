@@ -52,7 +52,7 @@ interface PlatformLayoutProps {
   title?: string;
 }
 
-export default function PlatformLayout({ children, title }: PlatformLayoutProps) {
+export default function PlatformLayout({ children }: PlatformLayoutProps) {
   const [location] = useLocation();
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);

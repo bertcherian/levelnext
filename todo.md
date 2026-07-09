@@ -156,3 +156,23 @@
 - [x] Insights, Progress, Guide, Organisation, Settings: mobile layout audit and fixes
 - [x] Touch-friendly tap targets (min 44px) across all interactive elements
 - [x] Viewport meta tag and no horizontal scroll on 375px screens
+
+### Phase 22: Code Review & Dead Code Cleanup
+- [x] Remove unused Users icon import from DashboardLayout.tsx
+- [x] Remove unused title destructure from PlatformLayout function signature
+- [x] Remove unused MODULE_COLORS constant from Home.tsx
+- [x] Remove unused reportsLoading from Organisation.tsx
+- [x] Remove unused onGrowthProfile prop from PracticeCoach HomeScreen
+- [x] Remove unused visibleChips variable from PracticeCoach HomeScreen
+- [x] Prefix unused onBack with _onBack in RolePlayScreen
+- [x] Remove unused IVORY constant from Report.tsx
+- [x] Delete unreferenced ComponentShowcase.tsx dev scaffold page
+- [x] Remove LOCAL_HOSTS, isIpAddress, and commented-out dead block from cookies.ts
+- [x] Remove unused protectedProcedure import from routers.ts
+- [x] Remove unused users and GCC_MODULE_MAP imports from assessment.ts
+- [x] Remove unused practiceAttempts import from leadershipCoach.ts
+- [x] Remove unused ctx from detectBlindSpots mutation in leadershipCoach.ts
+- [x] Remove unused and import from report.ts
+- [x] Remove unused and import from tenant.ts
+- [x] TypeScript check passes with zero errors
+- [x] All vitest tests pass

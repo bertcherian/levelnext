@@ -189,7 +189,6 @@ function HomeScreen({
   onAfterMeeting,
   onSayItBetter,
   onScriptBuilder,
-  onGrowthProfile,
   onHistory,
 }: {
   onCoachFirst: (issue: string) => void;
@@ -198,7 +197,6 @@ function HomeScreen({
   onAfterMeeting: () => void;
   onSayItBetter: () => void;
   onScriptBuilder: () => void;
-  onGrowthProfile: () => void;
   onHistory: () => void;
 }) {
   const [issue, setIssue] = useState("");
@@ -242,7 +240,6 @@ function HomeScreen({
     return () => document.removeEventListener('click', handler);
   }, [topicDropdownOpen]);
 
-  const visibleChips = showAllChips ? SUGGESTION_CHIPS : SUGGESTION_CHIPS.slice(0, 6);
   const pendingCommitments = commitments?.filter(c => c.status === 'pending').slice(0, 3) ?? [];
 
   const MODE_BUTTONS = [
@@ -1979,7 +1976,7 @@ function ScenarioSetupScreen({
 function RolePlayScreen({
   sessionId,
   scenario,
-  onBack,
+  onBack: _onBack,
   onFeedback,
 }: {
   sessionId: number;
@@ -2412,7 +2409,6 @@ export default function PracticeCoach() {
           onAfterMeeting={() => setScreen('after-meeting-form')}
           onSayItBetter={() => setScreen('say-it-better')}
           onScriptBuilder={() => setScreen('script-builder')}
-          onGrowthProfile={() => setScreen('growth-profile')}
           onHistory={() => setScreen('history')}
         />
       );
