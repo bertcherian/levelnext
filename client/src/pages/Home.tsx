@@ -151,11 +151,11 @@ export default function Home() {
           </div>
 
           {/* Today's Mission */}
-          <div className="rounded-2xl p-4 sm:p-6 card-lift" style={{ background: "white", boxShadow: "var(--shadow-card)", border: "1px solid var(--color-ln-border)" }}>
+          <div className="rounded-2xl p-4 sm:p-6 card-lift" style={{ background: "oklch(from var(--color-ln-yellow) 98% 0.02 82)", boxShadow: "0 0 0 2px var(--color-ln-yellow), var(--shadow-card)", border: "1.5px solid var(--color-ln-yellow)" }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Target size={18} style={{ color: "var(--color-ln-navy)" }} />
-                <span className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--color-ln-muted)" }}>Today's Mission</span>
+                <Target size={18} style={{ color: "var(--color-ln-yellow)" }} />
+                <span className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--color-ln-navy)" }}>Today's Mission</span>
               </div>
               <button
                 onClick={() => generateMission.mutate()}
