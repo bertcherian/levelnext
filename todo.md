@@ -242,3 +242,15 @@
 - [ ] Diagnostics.tsx — add Import Existing ECI Report card (only shown when ECI not yet completed)
 - [ ] App.tsx — add /import-eci route
 - [ ] TypeScript check + vitest + screenshot + checkpoint
+
+### Phase 29 — ChatGPT Conversation Import (Option A: process-and-delete)
+- [ ] conversation_intelligence table added to drizzle/schema.ts
+- [ ] Migration generated and applied
+- [ ] server/routers/chatgptImport.ts — parseChatgptZip procedure (upload ZIP → parse JSON → filter leadership convos → LLM synthesis → delete raw file → return structured themes)
+- [ ] server/routers/chatgptImport.ts — confirmChatgptImport procedure (persist approved themes to conversation_intelligence table)
+- [ ] chatgptImportRouter registered in server/routers.ts
+- [ ] client/src/pages/ImportChatgpt.tsx — 4-step flow: privacy modal → upload → processing → review/confirm → success
+- [ ] Route /import-chatgpt added to App.tsx
+- [ ] Entry point added to Diagnostics page (Import AI Conversations card/button)
+- [ ] Guide context builder updated to include conversation_intelligence themes
+- [ ] TypeScript check + vitest + screenshot + checkpoint

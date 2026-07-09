@@ -57,6 +57,13 @@
       "when": 1783589644094,
       "tag": "0007_misty_fantastic_four",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1783602500453,
+      "tag": "0008_sticky_mojo",
+      "breakpoints": true
     }
   ]
 }

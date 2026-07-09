@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import Assessment from "./pages/Assessment";
 import Report from "./pages/Report";
 import ImportEci from "./pages/ImportEci";
+import ImportChatgpt from "./pages/ImportChatgpt";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 
 function Router() {
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/diagnostics" component={Diagnostics} />
       <Route path="/diagnostics/:moduleType" component={Assessment} />
       <Route path="/import-eci" component={ImportEci} />
+      <Route path="/import-chatgpt" component={ImportChatgpt} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />

@@ -551,6 +551,49 @@ export const diagnosticUnlockProgress = mysqlTable("diagnostic_unlock_progress",
 });
 export type DiagnosticUnlockProgress = typeof diagnosticUnlockProgress.$inferSelect;
 
+// ─── Conversation Intelligence (ChatGPT / AI Import) ────────────────────────
+// Stores LLM-synthesised leadership themes extracted from a leader's AI
+// conversation export. Raw files are NEVER stored — only the approved synthesis.
+export type ConversationIntelligenceTheme = {
+  id: string;           // slug e.g. "avoidance_of_conflict"
+  title: string;        // e.g. "Avoidance of Direct Conflict"
+  description: string;  // 2-3 sentence synthesis
+  frequency: "high" | "medium" | "low"; // how often it appeared
+  evidenceCount: number; // number of conversations that surfaced this theme
+  category: "challenge" | "strength" | "pattern" | "goal";
+};
+
+export type ConversationIntelligenceSummary = {
+  totalConversations: number;       // total conversations in the export
+  leadershipConversations: number;  // filtered to leadership-relevant ones
+  dateRange: { from: string; to: string };
+  overallSynthesis: string;         // 3-4 sentence executive summary
+  themes: ConversationIntelligenceTheme[];
+  importedAt: string;
+  sourceApp: "chatgpt" | "claude" | "other";
+};
+
+export const conversationIntelligence = mysqlTable("conversation_intelligence", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  sourceApp: mysqlEnum("sourceApp", ["chatgpt", "claude", "other"]).notNull().default("chatgpt"),
+  summary: json("summary").$type<ConversationIntelligenceSummary>(),
+  // Individual approved themes stored as JSON array
+  themes: json("themes").$type<ConversationIntelligenceTheme[]>(),
+  // Metadata
+  totalConversations: int("totalConversations"),
+  leadershipConversations: int("leadershipConversations"),
+  dateRangeFrom: varchar("dateRangeFrom", { length: 50 }),
+  dateRangeTo: varchar("dateRangeTo", { length: 50 }),
+  // Raw file is NEVER stored — deleted immediately after processing
+  // This flag confirms deletion occurred
+  rawFileDeleted: boolean("rawFileDeleted").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ConversationIntelligence = typeof conversationIntelligence.$inferSelect;
+export type InsertConversationIntelligence = typeof conversationIntelligence.$inferInsert;
+
 // ─── 30-Day Growth Plans ──────────────────────────────────────────────────────
 export type GrowthPlanData = {
   growthTheme: string;
