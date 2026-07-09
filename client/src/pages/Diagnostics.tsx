@@ -17,6 +17,7 @@ import {
   ChevronUp,
   Eye,
   EyeOff,
+  Upload,
 } from "lucide-react";
 
 const MODULES = [
@@ -251,6 +252,14 @@ function ModuleCard({
                   <Button className="font-semibold" style={{ background: done ? "var(--color-ln-ivory-dark)" : "var(--color-ln-navy)", color: done ? "var(--color-ln-navy)" : "white" }}>
                     {done ? "Retake Diagnostic" : "Begin Diagnostic"}
                     <ArrowRight size={14} className="ml-1.5" />
+                  </Button>
+                </Link>
+              )}
+              {mod.id === "ECI" && !done && isUnlocked && (
+                <Link href="/import-eci">
+                  <Button variant="outline" className="font-medium text-sm" style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-navy)" }}>
+                    <Upload size={13} className="mr-1.5" />
+                    Import Existing ECI Report
                   </Button>
                 </Link>
               )}

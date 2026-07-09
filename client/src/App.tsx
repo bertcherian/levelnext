@@ -19,6 +19,7 @@ import Organisation from "./pages/Organisation";
 import Settings from "./pages/Settings";
 import Assessment from "./pages/Assessment";
 import Report from "./pages/Report";
+import ImportEci from "./pages/ImportEci";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 
 function Router() {
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/insights" component={Insights} />
       <Route path="/diagnostics" component={Diagnostics} />
       <Route path="/diagnostics/:moduleType" component={Assessment} />
+      <Route path="/import-eci" component={ImportEci} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />

@@ -232,3 +232,13 @@
 - [x] client/src/pages/Progress.tsx — add LDI to MODULE_LABELS, MODULE_COLORS, bar data
 - [x] client/src/pages/Insights.tsx — add LDI to MODULE_LABELS and MODULE_DESCRIPTIONS
 - [x] TypeScript check + vitest + screenshot + checkpoint
+
+### Phase 28 — ECI PDF Import (Self-Serve)
+- [ ] DB schema: add source_type, source_file_url, source_uploaded_at, extraction_confidence, original_report_date columns to assessments table
+- [ ] Schema migration applied via webdev_execute_sql
+- [ ] server/routers/eciImport.ts — uploadEciPdf procedure: accept PDF upload, extract text via pdf-parse, parse scores deterministically, LLM normalise ambiguous fields, return structured preview
+- [ ] server/routers/eciImport.ts — confirmEciImport procedure: persist extracted data as completed ECI assessment with pdf_import provenance
+- [ ] client/src/pages/ImportEci.tsx — full import flow UI: upload → processing → review/confirm → success
+- [ ] Diagnostics.tsx — add Import Existing ECI Report card (only shown when ECI not yet completed)
+- [ ] App.tsx — add /import-eci route
+- [ ] TypeScript check + vitest + screenshot + checkpoint

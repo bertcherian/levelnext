@@ -101,6 +101,12 @@ export const reports = mysqlTable("reports", {
   pdfKey: text("pdfKey"),
   emailSent: boolean("emailSent").default(false).notNull(),
   isDemo: boolean("isDemo").default(false).notNull(),
+  // PDF import provenance
+  sourceType: mysqlEnum("sourceType", ["in_app", "pdf_import"]).default("in_app").notNull(),
+  sourceFileUrl: text("sourceFileUrl"),
+  sourceFileKey: text("sourceFileKey"),
+  extractionConfidence: float("extractionConfidence"),
+  originalReportDate: varchar("originalReportDate", { length: 50 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
