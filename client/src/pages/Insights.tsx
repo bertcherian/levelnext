@@ -8,11 +8,13 @@ import { ArrowRight, Loader2, FileText, TrendingUp } from "lucide-react";
 
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
+  TII: "Time Intelligence",
   LII: "Leadership Influence",
   GCC: "GCC Readiness",
 };
 const MODULE_DESCRIPTIONS: Record<string, string> = {
   ECI: "How clearly and powerfully you communicate as a leader",
+  TII: "How you invest, protect, and reclaim your most strategic resource — time",
   LII: "How effectively you lead through influence rather than authority",
   GCC: "Your organisation's readiness to operate as a strategic global capability centre",
 };

@@ -9,10 +9,11 @@ import { ArrowRight, TrendingUp, Loader2 } from "lucide-react";
 
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
+  TII: "Time Intelligence",
   LII: "Leadership Influence",
   GCC: "GCC Readiness",
 };
-const MODULE_COLORS: Record<string, string> = { ECI: "#12345A", LII: "#F2B705", GCC: "#1a5276" };
+const MODULE_COLORS: Record<string, string> = { ECI: "#12345A", TII: "#1a3d5c", LII: "#F2B705", GCC: "#1a5276" };
 
 export default function Progress() {
   const { isAuthenticated, loading } = useAuth();
@@ -24,7 +25,7 @@ export default function Progress() {
 
   const completedModules = graph?.completedModules ?? [];
   const moduleEdges = graph?.moduleEdges ?? {};
-  const barData = (["ECI", "LII", "GCC"] as const).map((mod) => ({
+  const barData = (["ECI", "TII", "LII", "GCC"] as const).map((mod) => ({
     name: mod, label: MODULE_LABELS[mod], edge: moduleEdges[mod] ?? 0, completed: completedModules.includes(mod),
   }));
   const latestReport = reports?.[0];
@@ -108,7 +109,7 @@ export default function Progress() {
                     <div key={mod} className="rounded-xl p-4" style={{ background: "var(--color-ln-navy)" }}>
                       <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "var(--color-ln-yellow)" }}>{mod}</p>
                       <p className="text-sm font-semibold text-white">
-                        {(graph?.modules?.[mod as "ECI" | "LII" | "GCC"])?.archetypeLabel ?? (archetype as string).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                        {(graph?.modules?.[mod as "ECI" | "TII" | "LII" | "GCC"])?.archetypeLabel ?? (archetype as string).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                       </p>
                       <p className="text-xs mt-1" style={{ color: "oklch(70% 0.02 248.6)" }}>{MODULE_LABELS[mod]}</p>
                     </div>

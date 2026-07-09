@@ -6,23 +6,26 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, CheckCircle, Lock, TrendingUp, Sparkles, Zap, Target, BarChart2 } from "lucide-react";
 
-const MODULES = ["ECI", "LII", "GCC"] as const;
+const MODULES = ["ECI", "TII", "LII", "GCC"] as const;
 type ModuleType = (typeof MODULES)[number];
 
 const MODULE_LABELS: Record<ModuleType, string> = {
   ECI: "Executive Communication",
+  TII: "Time Intelligence",
   LII: "Leadership Influence",
   GCC: "GCC Readiness",
 };
 
 const MODULE_DESCRIPTIONS: Record<ModuleType, string> = {
   ECI: "How you communicate, influence, and command presence in executive contexts.",
+  TII: "How you invest, protect, and reclaim your most strategic resource — time.",
   LII: "Your ability to build trust, align stakeholders, and lead through influence.",
   GCC: "Your organisation's readiness to operate as a strategic global capability centre.",
 };
 
 const MODULE_ICON: Record<ModuleType, string> = {
   ECI: "💬",
+  TII: "⏱",
   LII: "🤝",
   GCC: "🌐",
 };
