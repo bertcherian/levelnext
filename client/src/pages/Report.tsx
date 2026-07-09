@@ -385,20 +385,22 @@ export default function Report() {
     ?.replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
-  const PdfButton = ({ style }: { style?: React.CSSProperties }) => (
+  const PdfButton = ({ style, large }: { style?: React.CSSProperties; large?: boolean }) => (
     <Button
       onClick={handleDownload}
       disabled={pdfGenerating}
-      size="sm"
-      className="flex items-center gap-2 font-semibold"
-      style={{ minWidth: 150, ...style }}
+      size={large ? "default" : "sm"}
+      className={`flex items-center gap-2 font-semibold transition-all duration-200 ${
+        !pdfGenerating && !pdfDone ? 'shadow-[0_0_0_0_rgba(242,183,5,0.4)] hover:shadow-[0_0_0_6px_rgba(242,183,5,0.15)] active:scale-[0.97]' : ''
+      }`}
+      style={{ minWidth: large ? 180 : 150, ...style }}
     >
       {pdfGenerating ? (
-        <><Loader2 size={14} className="animate-spin" /> {PDF_STEPS[pdfStep]?.label ?? "Working…"}</>
+        <><Loader2 size={large ? 16 : 14} className="animate-spin" /> {PDF_STEPS[pdfStep]?.label ?? "Working…"}</>
       ) : pdfDone ? (
-        <><CheckCircle size={14} /> Download Again</>
+        <><CheckCircle size={large ? 16 : 14} /> Download Again</>
       ) : (
-        <><Download size={14} /> Export PDF</>
+        <><Download size={large ? 16 : 14} /> Export PDF</>
       )}
     </Button>
   );
@@ -606,7 +608,7 @@ export default function Report() {
                 Includes Guide's coaching narrative. Branded by LevelNext · Meta Results.
               </p>
             </div>
-            <PdfButton style={{ background: pdfDone ? "#16a34a" : "var(--color-ln-yellow)", color: NAVY }} />
+            <PdfButton large style={{ background: pdfDone ? "#16a34a" : "var(--color-ln-yellow)", color: NAVY }} />
           </div>
         </div>
 

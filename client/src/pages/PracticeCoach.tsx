@@ -2094,15 +2094,15 @@ function RolePlayScreen({
           </div>
         ))}
         {sendMessage.isPending && (
-          <div className="flex gap-3">
-            <div className="w-7 h-7 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center text-xs font-bold text-white">
+          <div className="flex gap-3 items-end">
+            <div className="w-7 h-7 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
               {scenario.avatarRole.charAt(0)}
             </div>
-            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3">
-              <div className="flex gap-1">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                ))}
+            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3.5 shadow-sm">
+              <div className="flex items-center gap-1.5">
+                <span className="typing-dot w-2 h-2 rounded-full bg-[var(--color-ln-navy)]/40 inline-block" />
+                <span className="typing-dot w-2 h-2 rounded-full bg-[var(--color-ln-navy)]/40 inline-block" />
+                <span className="typing-dot w-2 h-2 rounded-full bg-[var(--color-ln-navy)]/40 inline-block" />
               </div>
             </div>
           </div>

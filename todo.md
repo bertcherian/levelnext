@@ -176,3 +176,9 @@
 - [x] Remove unused and import from tenant.ts
 - [x] TypeScript check passes with zero errors
 - [x] All vitest tests pass
+
+### Phase 23: Typing Indicator, PDF Export Button, Skill Packaging
+- [x] Add animated typing indicator (three bouncing dots) to RolePlayScreen while avatar is responding
+- [x] Show typing indicator immediately on user message send, hide on avatar response received
+- [x] Verify/improve PDF export button visibility and placement on Report page
+- [x] Package code review process as a reusable Manus skill (skills/levelnext-code-review/SKILL.md)
