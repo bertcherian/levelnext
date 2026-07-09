@@ -645,7 +645,7 @@ export default function Guide() {
                           <Streamdown>{msg.content}</Streamdown>
                         </div>
                       ) : (
-                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                        <p className="text-sm leading-relaxed text-white">{msg.content}</p>
                       )}
                     </div>
                     {msg.role === "assistant" && (
