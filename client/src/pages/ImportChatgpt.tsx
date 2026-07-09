@@ -114,11 +114,24 @@ export default function ImportChatgpt() {
 
   // Processing state
   const [processingStep, setProcessingStep] = useState(0);
-  const PROCESSING_STEPS = [
-    "Reading your data…",
-    "Filtering leadership conversations…",
-    "Synthesising patterns with AI…",
-    "Building your intelligence profile…",
+  const [progressPct, setProgressPct] = useState(0);
+  const [rotatingMsg, setRotatingMsg] = useState(0);
+
+  const PROCESSING_STEPS: { label: string; detail: string; icon: string }[] = [
+    { label: "Reading your data", detail: "Decoding the file and extracting raw conversation text…", icon: "📂" },
+    { label: "Filtering leadership signals", detail: "Identifying conversations about decisions, teams, strategy, and growth…", icon: "🔍" },
+    { label: "Synthesising with AI", detail: "Guide is reading your thinking patterns and extracting themes…", icon: "🧠" },
+    { label: "Building your intelligence profile", detail: "Organising insights into challenges, strengths, patterns, and goals…", icon: "✨" },
+  ];
+
+  const ROTATING_MESSAGES = [
+    "Guide is reading how you think about leadership…",
+    "Identifying recurring challenges you’ve worked through…",
+    "Spotting the strengths you keep returning to…",
+    "Mapping the decisions that shaped your thinking…",
+    "Extracting the patterns beneath the conversations…",
+    "Turning your thinking into actionable intelligence…",
+    "Almost there — building your coaching context…",
   ];
 
   // Results state
@@ -160,6 +173,14 @@ export default function ImportChatgpt() {
     const interval = setInterval(() => {
       setProcessingStep((p) => Math.min(p + 1, PROCESSING_STEPS.length - 1));
     }, 1800);
+    let pct = 0;
+    const progressInterval = setInterval(() => {
+      pct = Math.min(pct + Math.random() * 4 + 1, 90);
+      setProgressPct(Math.round(pct));
+    }, 400);
+    const msgInterval = setInterval(() => {
+      setRotatingMsg((m) => (m + 1) % ROTATING_MESSAGES.length);
+    }, 2500);
 
     try {
       const arrayBuffer = await selectedFile.arrayBuffer();
@@ -177,11 +198,14 @@ export default function ImportChatgpt() {
       });
 
       clearInterval(interval);
-      setResult(data);
-      setRemovedThemes(new Set());
-      setStep("review");
+      clearInterval(progressInterval);
+      clearInterval(msgInterval);
+      setProgressPct(100);
+      setTimeout(() => { setResult(data); setRemovedThemes(new Set()); setStep("review"); }, 400);
     } catch (err: unknown) {
       clearInterval(interval);
+      clearInterval(progressInterval);
+      clearInterval(msgInterval);
       const msg = err instanceof Error ? err.message : "Processing failed. Please try again.";
       toast.error(msg);
       setStep("input");
@@ -200,6 +224,14 @@ export default function ImportChatgpt() {
     const interval = setInterval(() => {
       setProcessingStep((p) => Math.min(p + 1, PROCESSING_STEPS.length - 1));
     }, 1500);
+    let pct2 = 0;
+    const progressInterval2 = setInterval(() => {
+      pct2 = Math.min(pct2 + Math.random() * 5 + 2, 90);
+      setProgressPct(Math.round(pct2));
+    }, 400);
+    const msgInterval2 = setInterval(() => {
+      setRotatingMsg((m) => (m + 1) % ROTATING_MESSAGES.length);
+    }, 2500);
 
     try {
       const data = await parsePaste.mutateAsync({
@@ -208,11 +240,14 @@ export default function ImportChatgpt() {
       });
 
       clearInterval(interval);
-      setResult(data);
-      setRemovedThemes(new Set());
-      setStep("review");
+      clearInterval(progressInterval2);
+      clearInterval(msgInterval2);
+      setProgressPct(100);
+      setTimeout(() => { setResult(data); setRemovedThemes(new Set()); setStep("review"); }, 400);
     } catch (err: unknown) {
       clearInterval(interval);
+      clearInterval(progressInterval2);
+      clearInterval(msgInterval2);
       const msg = err instanceof Error ? err.message : "Processing failed. Please try again.";
       toast.error(msg);
       setStep("input");
@@ -480,31 +515,76 @@ export default function ImportChatgpt() {
 
         {/* ── STEP: PROCESSING ──────────────────────────────────────────────── */}
         {step === "processing" && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ background: "var(--color-ln-navy)" }}>
-              <Loader2 size={28} className="animate-spin" style={{ color: "var(--color-ln-yellow)" }} />
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            {/* Pulsing brain icon */}
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--color-ln-navy)", boxShadow: "0 0 0 6px oklch(from #0A1A2F l c h / 0.08)" }}>
+              <Brain size={28} style={{ color: "var(--color-ln-yellow)" }} />
             </div>
-            <h2 className="text-lg font-bold mb-2" style={{ color: "var(--color-ln-navy)" }}>Analysing Your Leadership Thinking</h2>
-            <p className="text-sm mb-8" style={{ color: "var(--color-ln-muted)" }}>This takes about 15–30 seconds. Raw data is discarded as we go.</p>
-            <div className="w-full max-w-sm space-y-3">
-              {PROCESSING_STEPS.map((label, i) => (
-                <div key={i} className="flex items-center gap-3">
+
+            <h2 className="text-lg font-bold mb-1" style={{ color: "var(--color-ln-navy)" }}>Analysing Your Leadership Thinking</h2>
+
+            {/* Rotating contextual message */}
+            <p className="text-sm mb-5" style={{ color: "var(--color-ln-muted)", minHeight: "1.4rem" }}>
+              {ROTATING_MESSAGES[rotatingMsg]}
+            </p>
+
+            {/* Progress bar */}
+            <div className="w-full max-w-sm mb-1">
+              <div className="flex justify-between text-xs mb-1.5" style={{ color: "var(--color-ln-muted)" }}>
+                <span style={{ fontWeight: 500 }}>{PROCESSING_STEPS[Math.min(processingStep, PROCESSING_STEPS.length - 1)].label}</span>
+                <span>{progressPct}%</span>
+              </div>
+              <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: "var(--color-ln-border)" }}>
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${progressPct}%`,
+                    background: "linear-gradient(90deg, var(--color-ln-navy) 0%, var(--color-ln-yellow) 100%)",
+                    borderRadius: "9999px",
+                    transition: "width 0.4s cubic-bezier(0.23, 1, 0.32, 1)",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Phase detail line */}
+            <p className="text-xs mb-7" style={{ color: "var(--color-ln-muted)" }}>
+              {PROCESSING_STEPS[Math.min(processingStep, PROCESSING_STEPS.length - 1)].detail}
+            </p>
+
+            {/* Phase checklist */}
+            <div className="w-full max-w-sm space-y-2">
+              {PROCESSING_STEPS.map((phase, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-lg px-3 py-2" style={{
+                  background: i === processingStep ? "oklch(from #0A1A2F l c h / 0.05)" : "transparent",
+                  transition: "background 0.3s ease",
+                }}>
                   <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{
                     background: i < processingStep ? "#16a34a" : i === processingStep ? "var(--color-ln-navy)" : "var(--color-ln-border)",
+                    transition: "background 0.3s ease",
                   }}>
                     {i < processingStep
-                      ? <CheckCircle size={14} style={{ color: "white" }} />
+                      ? <CheckCircle size={13} style={{ color: "white" }} />
                       : i === processingStep
-                        ? <Loader2 size={12} className="animate-spin" style={{ color: "white" }} />
-                        : <span className="text-xs font-bold" style={{ color: "var(--color-ln-muted)" }}>{i + 1}</span>
+                        ? <Loader2 size={11} className="animate-spin" style={{ color: "white" }} />
+                        : <span className="text-xs" style={{ color: "var(--color-ln-muted)" }}>{i + 1}</span>
                     }
                   </div>
-                  <p className="text-sm" style={{ color: i <= processingStep ? "var(--color-ln-navy)" : "var(--color-ln-muted)", fontWeight: i === processingStep ? 600 : 400 }}>
-                    {label}
-                  </p>
+                  <div className="text-left flex-1">
+                    <p className="text-xs font-semibold" style={{
+                      color: i <= processingStep ? "var(--color-ln-navy)" : "var(--color-ln-muted)",
+                      transition: "color 0.3s ease",
+                    }}>
+                      <span className="mr-1">{phase.icon}</span>{phase.label}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
+
+            <p className="text-xs mt-7" style={{ color: "var(--color-ln-muted)" }}>
+              🔒 Raw data is discarded as each phase completes
+            </p>
           </div>
         )}
 
