@@ -15,6 +15,8 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 const MODULES = [
@@ -108,6 +110,7 @@ function GateBar({
 function NarrativeBanner({ toModule, onDismiss }: { toModule: string; onDismiss: () => void }) {
   const getNarrative = trpc.unlock.getNarrativeUnlock.useMutation();
   const [narrative, setNarrative] = useState<string | null>(null);
+  const [, navigate] = useLocation();
 
   useEffect(() => {
     getNarrative.mutate(
@@ -140,7 +143,17 @@ function NarrativeBanner({ toModule, onDismiss }: { toModule: string; onDismiss:
               ))}
             </div>
           ) : (
-            <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.9)" }}>{narrative}</p>
+            <>
+              <p className="text-sm leading-relaxed mb-3" style={{ color: "rgba(255,255,255,0.9)" }}>{narrative}</p>
+              <button
+                onClick={() => navigate(`/guide?unlock=${toModule}`)}
+                className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 active:scale-[0.97]"
+                style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+              >
+                <MessageSquare size={13} />
+                Discuss with Guide
+              </button>
+            </>
           )}
         </div>
         <button onClick={onDismiss} className="flex-shrink-0 text-white/50 hover:text-white/80 transition-colors text-lg leading-none" aria-label="Dismiss">×</button>
@@ -245,9 +258,19 @@ function ModuleCard({
   );
 }
 
+// Simulated new-user status for the preview toggle
+// Preview mode: ECI is unlocked (first module), LII is locked (prior module completed, gates not yet met),
+// GCC is not_started (LII not yet completed). This gives the richest preview of all three lock states.
+const NEW_USER_STATUSES: ModuleStatus[] = [
+  { moduleId: "ECI", state: "unlocked", daysRemaining: 0, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
+  { moduleId: "LII", state: "locked", daysRemaining: 18, missionsCompleted: 1, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: "Narrative Authority", narrativeReady: false, narrativeShown: false },
+  { moduleId: "GCC", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
+];
+
 export default function Diagnostics() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
+  const [viewAsNewUser, setViewAsNewUser] = useState(false);
 
   const { data: graph } = trpc.leadershipGraph.get.useQuery(undefined, { enabled: isAuthenticated });
   const { data: unlockStatuses } = trpc.unlock.getStatus.useQuery(undefined, {
@@ -257,21 +280,50 @@ export default function Diagnostics() {
 
   useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [loading, isAuthenticated, navigate]);
 
-  const completedModules = (graph?.completedModules ?? []) as string[];
+  // When preview mode is on, simulate a fresh user who has only ECI unlocked
+  const completedModules = viewAsNewUser ? [] : ((graph?.completedModules ?? []) as string[]);
+  const activeStatuses = viewAsNewUser ? NEW_USER_STATUSES : (unlockStatuses ?? []);
   const statusMap = new Map<string, ModuleStatus>();
-  if (unlockStatuses) {
-    for (const s of unlockStatuses) statusMap.set(s.moduleId, s as ModuleStatus);
-  }
+  for (const s of activeStatuses) statusMap.set(s.moduleId, s as ModuleStatus);
 
   return (
     <PlatformLayout title="Diagnostics">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 animate-fade-in">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Diagnostics</h1>
-          <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
-            Three intelligence modules. Each one builds your Leadership Edge — unlocked through application, not just completion.
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Diagnostics</h1>
+            <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
+              Three intelligence modules. Each one builds your Leadership Edge — unlocked through application, not just completion.
+            </p>
+          </div>
+          {/* View as new user toggle */}
+          <button
+            onClick={() => setViewAsNewUser((v) => !v)}
+            className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all duration-150 flex-shrink-0 active:scale-[0.97]"
+            style={viewAsNewUser ? {
+              background: "var(--color-ln-navy)",
+              color: "white",
+              borderColor: "var(--color-ln-navy)",
+            } : {
+              background: "transparent",
+              color: "var(--color-ln-muted)",
+              borderColor: "var(--color-ln-border)",
+            }}
+            title="Preview how this page looks to a brand-new user"
+          >
+            {viewAsNewUser ? <EyeOff size={13} /> : <Eye size={13} />}
+            {viewAsNewUser ? "Exit preview" : "View as new user"}
+          </button>
         </div>
+        {viewAsNewUser && (
+          <div
+            className="mb-5 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium"
+            style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", color: "var(--color-ln-navy)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.3)" }}
+          >
+            <Eye size={13} className="flex-shrink-0" />
+            Preview mode — showing lock states as a new user would see them. Your actual progress is unchanged.
+          </div>
+        )}
         <div className="space-y-6">
           {MODULES.map((mod) => (
             <ModuleCard key={mod.id} mod={mod} status={statusMap.get(mod.id)} completedModules={completedModules} />

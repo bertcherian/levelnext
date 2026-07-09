@@ -60,11 +60,23 @@ function saveFavorites(favs: FavoriteInsight[]) {
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
 }
 
+// Module label map for unlock context messages
+const UNLOCK_MODULE_LABELS: Record<string, string> = {
+  ECI: "Executive Communication Intelligence",
+  LII: "Leadership Influence Intelligence",
+  GCC: "GCC Readiness",
+};
+
 export default function Guide() {
   const { isAuthenticated, loading, user } = useAuth();
   const [, navigate] = useLocation();
+  // Read ?unlock=MODULE query param from NarrativeBanner navigation
+  const unlockModule = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("unlock")
+    : null;
   const [input, setInput] = useState("");
   const [view, setView] = useState<"home" | "chat">("home");
+  const [unlockContextSent, setUnlockContextSent] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const utils = trpc.useUtils();
@@ -110,6 +122,16 @@ export default function Guide() {
       setView("chat");
     }
   }, [convLoading, conversation]);
+
+  // If arriving from NarrativeBanner with ?unlock=MODULE, auto-send an unlock context message once loaded
+  useEffect(() => {
+    if (!unlockModule || unlockContextSent || convLoading || sendMessage.isPending) return;
+    const moduleLabel = UNLOCK_MODULE_LABELS[unlockModule] ?? unlockModule;
+    const contextMsg = `I just saw that I'm ready to unlock the ${moduleLabel} diagnostic. Can you help me reflect on what I've applied from my last diagnostic and what I should focus on as I prepare to begin this next one?`;
+    setUnlockContextSent(true);
+    setView("chat");
+    sendMessage.mutate({ message: contextMsg });
+  }, [unlockModule, unlockContextSent, convLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSend = (msg?: string) => {
     const text = (msg ?? input).trim();

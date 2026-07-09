@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { label: "Home", icon: Home, href: "/home" },
   { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
-  { label: "Guide", icon: MessageSquare, href: "/guide" },
+  { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
   { label: "AI Practice Coach", icon: Zap, href: "/practice" },
   { label: "Growth Profile", icon: Activity, href: "/practice?screen=growth-profile" },
   { label: "Insights", icon: Lightbulb, href: "/insights" },
@@ -52,13 +52,32 @@ interface PlatformLayoutProps {
   title?: string;
 }
 
+// ── Small notification dot/badge ─────────────────────────────────────────────
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className="ml-auto flex-shrink-0 flex items-center justify-center rounded-full text-[10px] font-bold leading-none"
+      style={{
+        minWidth: "18px",
+        height: "18px",
+        padding: "0 4px",
+        background: "var(--color-ln-yellow)",
+        color: "var(--color-ln-navy)",
+      }}
+    >
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
+
 export default function PlatformLayout({ children }: PlatformLayoutProps) {
   const [location] = useLocation();
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Full URL including query params for active state matching
-  const fullLocation = location + (typeof window !== 'undefined' ? window.location.search : '');
+  const fullLocation = location + (typeof window !== "undefined" ? window.location.search : "");
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
@@ -66,6 +85,22 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
       window.location.href = "/";
     },
   });
+
+  // Notification badge: count of modules where all gates have passed but the
+  // narrative has not yet been shown (i.e. user is ready for next diagnostic
+  // but hasn't seen the Guide message yet).
+  const { data: unlockStatuses } = trpc.unlock.getStatus.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchInterval: 60_000, // refresh every minute
+  });
+  const pendingUnlockCount = unlockStatuses
+    ? unlockStatuses.filter((s) => s.narrativeReady && !s.narrativeShown).length
+    : 0;
+
+  // Badge map keyed by badgeKey
+  const badgeCounts: Record<string, number> = {
+    guide: pendingUnlockCount,
+  };
 
   if (loading) {
     return (
@@ -114,15 +149,17 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
 
   const isNavActive = (href: string) => {
     if (!href) return false;
-    const itemHasQuery = href.includes('?');
+    const itemHasQuery = href.includes("?");
     if (itemHasQuery) return fullLocation === href;
-    return (location === href || location.startsWith(href + '/')) &&
-      !(href === '/practice' && fullLocation.includes('screen=growth-profile'));
+    return (
+      (location === href || location.startsWith(href + "/")) &&
+      !(href === "/practice" && fullLocation.includes("screen=growth-profile"))
+    );
   };
 
   // "More" tab is active when current page is not in the bottom tabs
-  const bottomTabPaths = BOTTOM_TABS.filter(t => t.href).map(t => t.href as string);
-  const isMoreActive = !bottomTabPaths.some(p => location === p || location.startsWith(p + '/'));
+  const bottomTabPaths = BOTTOM_TABS.filter((t) => t.href).map((t) => t.href as string);
+  const isMoreActive = !bottomTabPaths.some((p) => location === p || location.startsWith(p + "/"));
 
   return (
     <div className="min-h-screen flex" style={{ background: "var(--color-ln-ivory)" }}>
@@ -163,6 +200,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             {NAV_ITEMS.map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
+              const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
               return (
                 <li key={item.href}>
                   <Link href={item.href} onClick={() => setSidebarOpen(false)}>
@@ -181,7 +219,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                     >
                       <Icon size={18} className="flex-shrink-0" />
                       <span>{item.label}</span>
-                      {isActive && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      {isActive && !badge && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      {badge > 0 && <NavBadge count={badge} />}
                     </div>
                   </Link>
                 </li>
@@ -232,6 +271,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             {NAV_ITEMS.map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
+              const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
               return (
                 <li key={item.href}>
                   <Link href={item.href}>
@@ -250,7 +290,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                     >
                       <Icon size={18} className={cn("flex-shrink-0", isActive ? "" : "group-hover:scale-105 transition-transform")} />
                       <span>{item.label}</span>
-                      {isActive && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      {isActive && !badge && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      {badge > 0 && <NavBadge count={badge} />}
                     </div>
                   </Link>
                 </li>
@@ -295,12 +336,19 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
           }}
         >
           <button
-            className="p-1 -ml-1 rounded-lg transition-colors active:bg-gray-100"
+            className="p-1 -ml-1 rounded-lg transition-colors active:bg-gray-100 relative"
             style={{ color: "var(--color-ln-navy)" }}
             onClick={() => setSidebarOpen(true)}
             aria-label="Open menu"
           >
             <Menu size={22} />
+            {/* Red dot on hamburger when there are pending notifications */}
+            {pendingUnlockCount > 0 && (
+              <span
+                className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white"
+                style={{ background: "#ef4444" }}
+              />
+            )}
           </button>
           <span className="text-base font-bold tracking-tight" style={{ color: "var(--color-ln-navy)" }}>LevelNext</span>
           <Avatar className="h-8 w-8">
@@ -336,19 +384,25 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             return (
               <button
                 key="more"
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[3.5rem] transition-colors active:bg-gray-50"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[3.5rem] transition-colors active:bg-gray-50 relative"
                 onClick={() => setSidebarOpen(true)}
                 style={{ color: isMoreActive ? "var(--color-ln-navy)" : "oklch(55% 0.02 248.6)" }}
               >
                 <Icon size={22} strokeWidth={isMoreActive ? 2.5 : 1.8} />
                 <span className="text-[10px] font-medium leading-none">{tab.label}</span>
+                {/* Red dot on More tab when notifications are pending */}
+                {pendingUnlockCount > 0 && (
+                  <span
+                    className="absolute top-1.5 right-[calc(50%-14px)] w-2 h-2 rounded-full"
+                    style={{ background: "#ef4444" }}
+                  />
+                )}
                 {isMoreActive && (
                   <span className="absolute bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px)-2px)] w-5 h-0.5 rounded-full" style={{ background: "var(--color-ln-yellow)" }} />
                 )}
               </button>
             );
           }
-
           return (
             <Link key={tab.href} href={tab.href} className="flex-1">
               <div

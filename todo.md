@@ -194,3 +194,8 @@
 - [x] Client: Diagnostics hub — expandable gate progress panel (4 GateBars) on locked cards
 - [x] Client: Diagnostics hub — NarrativeBanner (Guide says you are ready) shown once when all gates pass
 - [x] Client: Diagnostics hub — "Why progressive unlocking?" philosophy note at bottom
+
+### Phase 25: Diagnostics UX Improvements
+- [x] Diagnostics hub: "View as new user" toggle that simulates a fresh account (ECI unlocked, LII/GCC locked with gate progress at zero)
+- [x] PlatformLayout nav: notification badge on Guide nav item (shows count of unread Guide messages or pending unlock notifications)
+- [x] Diagnostics hub NarrativeBanner: "Discuss with Guide" button that navigates to /guide with the unlock context pre-loaded
