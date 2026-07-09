@@ -156,6 +156,103 @@ Dimension profile: ${dimSummary}`,
     }),
 
   /**
+   * Generate LDI mitigation strategies — LLM-generated, personalised per top-3 derailment risk dimensions.
+   * Returns an array of { dimension, label, strategy } objects.
+   */
+  getMitigationStrategies: protectedProcedure
+    .input(z.object({ reportId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const result = await db
+        .select()
+        .from(reports)
+        .where(eq(reports.id, input.reportId))
+        .limit(1);
+      const report = result[0];
+      if (!report) throw new TRPCError({ code: "NOT_FOUND", message: "Report not found" });
+      if (report.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (report.moduleType !== "LDI") throw new TRPCError({ code: "BAD_REQUEST", message: "Mitigation strategies are only available for LDI reports" });
+
+      const dimScores = (report.dimensionScores ?? {}) as Record<string, number>;
+      const ldiLabels = DIMENSION_LABELS["LDI"] ?? {};
+
+      // Top 3 highest-risk dimensions (lowest scores)
+      const top3Risk = Object.entries(dimScores)
+        .filter(([k]) => ldiLabels[k])
+        .sort(([, a], [, b]) => a - b)
+        .slice(0, 3)
+        .map(([k, v]) => ({ dimension: k, label: ldiLabels[k], score: Math.round(v) }));
+
+      const dimList = top3Risk
+        .map((d, i) => `${i + 1}. ${d.label} (score: ${d.score}/100)`)
+        .join("\n");
+
+      type MitigationItem = { dimension: string; label: string; strategy: string };
+      let strategies: MitigationItem[] = [];
+
+      try {
+        const llmResult = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are Guide, an executive leadership coach on the LevelNext platform.
+You specialise in leadership derailment prevention and senior leader development.
+Your tone is direct, practical, and boardroom-grade — never generic or motivational-poster-style.
+Never use the words "score", "assessment", "test", or "chatbot".
+Always refer to the platform as LevelNext and the coach as Guide.`,
+            },
+            {
+              role: "user",
+              content: `Generate personalised mitigation strategies for ${report.participantName ?? "this leader"} based on their top 3 Leadership Derailment Intelligence risk dimensions.
+
+Leader profile:
+- Name: ${report.participantName ?? "Leader"}
+- Role: ${report.participantRole ?? "Senior Leader"}
+- Derailment Archetype: ${report.archetype?.replace(/_/g, " ") ?? "Unknown"}
+- Risk Band: ${report.zone?.replace(/_/g, " ") ?? "Unknown"}
+
+Top 3 highest-risk dimensions:
+${dimList}
+
+For each dimension, provide a concise, specific, and actionable mitigation strategy (2-3 sentences max).
+The strategy must be personalised to this leader's archetype and risk band — not generic advice.
+Focus on what the leader can start doing differently in the next 30-60 days.
+
+Respond ONLY with a valid JSON array in this exact format (no markdown, no explanation):
+[
+  { "dimension": "<dimension_id>", "label": "<human label>", "strategy": "<2-3 sentence strategy>" },
+  ...
+]`,
+            },
+          ],
+        });
+
+        const raw = (llmResult as any)?.content ?? (llmResult as any)?.choices?.[0]?.message?.content ?? "[]";
+        // Strip markdown code fences if present
+        const cleaned = raw.replace(/^```[\w]*\n?/m, "").replace(/```$/m, "").trim();
+        const parsed = JSON.parse(cleaned);
+        if (Array.isArray(parsed)) {
+          strategies = parsed.slice(0, 3).map((item: any, i: number) => ({
+            dimension: item.dimension ?? top3Risk[i]?.dimension ?? "",
+            label: item.label ?? top3Risk[i]?.label ?? "",
+            strategy: item.strategy ?? "",
+          }));
+        }
+      } catch {
+        // Fallback: return dimension labels with a generic placeholder
+        strategies = top3Risk.map((d) => ({
+          dimension: d.dimension,
+          label: d.label,
+          strategy: `Focus on building intentional awareness around ${d.label.toLowerCase()} through weekly reflection and feedback from a trusted peer or coach. Identify one specific situation in the next 30 days where this dimension is most likely to derail you, and prepare a deliberate response in advance.`,
+        }));
+      }
+
+      return { strategies };
+    }),
+
+  /**
    * Legacy generate endpoint — kept for backward compatibility.
    * Now just calls generateNarrative and returns a placeholder URL.
    */
