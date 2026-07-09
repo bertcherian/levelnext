@@ -56,7 +56,7 @@
 - [x] Build unified Report page (renders by moduleType)
 - [x] Build shareable report by slug (/report/:slug)
 - [x] Wire PDF generation (server-side)
-- [ ] Wire email delivery (Brevo SMTP)
+- [x] Wire email delivery (Brevo SMTP)
 
 ### Phase 9: My Edge Dashboard
 - [x] Build My Edge page at /my-edge
@@ -234,40 +234,40 @@
 - [x] TypeScript check + vitest + screenshot + checkpoint
 
 ### Phase 28 — ECI PDF Import (Self-Serve)
-- [ ] DB schema: add source_type, source_file_url, source_uploaded_at, extraction_confidence, original_report_date columns to assessments table
-- [ ] Schema migration applied via webdev_execute_sql
-- [ ] server/routers/eciImport.ts — uploadEciPdf procedure: accept PDF upload, extract text via pdf-parse, parse scores deterministically, LLM normalise ambiguous fields, return structured preview
-- [ ] server/routers/eciImport.ts — confirmEciImport procedure: persist extracted data as completed ECI assessment with pdf_import provenance
-- [ ] client/src/pages/ImportEci.tsx — full import flow UI: upload → processing → review/confirm → success
-- [ ] Diagnostics.tsx — add Import Existing ECI Report card (only shown when ECI not yet completed)
-- [ ] App.tsx — add /import-eci route
-- [ ] TypeScript check + vitest + screenshot + checkpoint
+- [x] DB schema: add source_type, source_file_url, source_uploaded_at, extraction_confidence, original_report_date columns to assessments table
+- [x] Schema migration applied via webdev_execute_sql
+- [x] server/routers/eciImport.ts — uploadEciPdf procedure: accept PDF upload, extract text via pdf-parse, parse scores deterministically, LLM normalise ambiguous fields, return structured preview
+- [x] server/routers/eciImport.ts — confirmEciImport procedure: persist extracted data as completed ECI assessment with pdf_import provenance
+- [x] client/src/pages/ImportEci.tsx — full import flow UI: upload → processing → review/confirm → success
+- [x] Diagnostics.tsx — add Import Existing ECI Report card (only shown when ECI not yet completed)
+- [x] App.tsx — add /import-eci route
+- [x] TypeScript check + vitest + screenshot + checkpoint
 
 ### Phase 29 — ChatGPT Conversation Import (Option A: process-and-delete)
-- [ ] conversation_intelligence table added to drizzle/schema.ts
-- [ ] Migration generated and applied
-- [ ] server/routers/chatgptImport.ts — parseChatgptZip procedure (upload ZIP → parse JSON → filter leadership convos → LLM synthesis → delete raw file → return structured themes)
-- [ ] server/routers/chatgptImport.ts — confirmChatgptImport procedure (persist approved themes to conversation_intelligence table)
-- [ ] chatgptImportRouter registered in server/routers.ts
-- [ ] client/src/pages/ImportChatgpt.tsx — 4-step flow: privacy modal → upload → processing → review/confirm → success
-- [ ] Route /import-chatgpt added to App.tsx
-- [ ] Entry point added to Diagnostics page (Import AI Conversations card/button)
-- [ ] Guide context builder updated to include conversation_intelligence themes
-- [ ] TypeScript check + vitest + screenshot + checkpoint
+- [x] conversation_intelligence table added to drizzle/schema.ts
+- [x] Migration generated and applied
+- [x] server/routers/chatgptImport.ts — parseChatgptZip procedure (upload ZIP → parse JSON → filter leadership convos → LLM synthesis → delete raw file → return structured themes)
+- [x] server/routers/chatgptImport.ts — confirmChatgptImport procedure (persist approved themes to conversation_intelligence table)
+- [x] chatgptImportRouter registered in server/routers.ts
+- [x] client/src/pages/ImportChatgpt.tsx — 4-step flow: privacy modal → upload → processing → review/confirm → success
+- [x] Route /import-chatgpt added to App.tsx
+- [x] Entry point added to Diagnostics page (Import AI Conversations card/button)
+- [x] Guide context builder updated to include conversation_intelligence themes
+- [x] TypeScript check + vitest + screenshot + checkpoint
 
 ### Phase 30 — STI (Strategic Thinking Intelligence) Module + Option C Progression
-- [ ] shared/modules/stiData.ts — 10 dimensions, 30 questions, 4 bands, scoreSti()
-- [ ] drizzle/schema.ts — add STI to all 6 enum columns
-- [ ] Schema migration applied via webdev_execute_sql
-- [ ] server/routers/assessment.ts — add STI to getQuestions/submit/scoring branches
-- [ ] server/routers/pdfReport.ts — add STI to MODULE_META and DIMENSION_LABELS
-- [ ] server/routers/leadershipGraph.ts — add STI to moduleType union
-- [ ] server/routers/unlock.ts — add STI to MODULE_SEQUENCE, UNLOCK_MAP, narrative labels
-- [ ] client/src/pages/Diagnostics.tsx — Option C progression model (guided path + informed override)
-- [ ] client/src/pages/Assessment.tsx — add STI to MODULE_META type casts and completion screen
-- [ ] client/src/pages/Report.tsx — add STI DIMENSION_LABELS and Strategic Leadership Risks section
-- [ ] client/src/pages/Home.tsx — add STI to module arrays
-- [ ] client/src/pages/MyEdge.tsx — add STI module card
-- [ ] client/src/pages/Progress.tsx — add STI to MODULE_LABELS, MODULE_COLORS, barData
-- [ ] client/src/pages/Insights.tsx — add STI to MODULE_LABELS, MODULE_DESCRIPTIONS, tooltips
-- [ ] TypeScript check + vitest + screenshot + checkpoint
+- [x] shared/modules/stiData.ts — 10 dimensions, 30 questions, 4 bands, scoreSti()
+- [x] drizzle/schema.ts — add STI to all 6 enum columns
+- [x] Schema migration applied via webdev_execute_sql
+- [x] server/routers/assessment.ts — add STI to getQuestions/submit/scoring branches
+- [x] server/routers/pdfReport.ts — add STI to MODULE_META and DIMENSION_LABELS
+- [x] server/routers/leadershipGraph.ts — add STI to moduleType union
+- [x] server/routers/unlock.ts — add STI to MODULE_SEQUENCE, UNLOCK_MAP, narrative labels
+- [x] client/src/pages/Diagnostics.tsx — Option C progression model (guided path + informed override)
+- [x] client/src/pages/Assessment.tsx — add STI to MODULE_META type casts and completion screen
+- [x] client/src/pages/Report.tsx — add STI DIMENSION_LABELS and Strategic Leadership Risks section
+- [x] client/src/pages/Home.tsx — add STI to module arrays
+- [x] client/src/pages/MyEdge.tsx — add STI module card
+- [x] client/src/pages/Progress.tsx — add STI to MODULE_LABELS, MODULE_COLORS, barData
+- [x] client/src/pages/Insights.tsx — add STI to MODULE_LABELS, MODULE_DESCRIPTIONS, tooltips
+- [x] TypeScript check + vitest + screenshot + checkpoint

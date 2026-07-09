@@ -381,12 +381,12 @@ export default function Diagnostics() {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>Import Your AI Conversation Intelligence</p>
               <p className="text-xs mt-1" style={{ color: "var(--color-ln-muted)" }}>
-                Already using ChatGPT to think through leadership challenges? Import your conversation history and Guide will synthesise your patterns — without storing a single word of your raw conversations.
+                Already using ChatGPT or Claude to think through leadership challenges? Import your conversation history and Guide will synthesise your patterns — without storing a single word of your raw conversations.
               </p>
               <Link href="/import-chatgpt">
                 <Button variant="outline" size="sm" className="mt-3 font-medium text-xs" style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-navy)" }}>
                   <Upload size={12} className="mr-1.5" />
-                  Import ChatGPT Conversations
+                  Import ChatGPT or Claude Conversations
                 </Button>
               </Link>
             </div>
