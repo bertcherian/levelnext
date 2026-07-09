@@ -13,6 +13,7 @@ const MODULE_META: Record<string, { label: string; dimensionLabel: string }> = {
   LII: { label: "Leadership Influence", dimensionLabel: "Influence Dimension Breakdown" },
   GCC: { label: "GCC Readiness", dimensionLabel: "Readiness Dimension Breakdown" },
   LDI: { label: "Leadership Derailment Intelligence", dimensionLabel: "Derailment Risk Dimension Breakdown" },
+  STI: { label: "Strategic Thinking Intelligence", dimensionLabel: "Strategic Dimension Breakdown" },
 };
 
 const DIMENSION_LABELS: Record<string, Record<string, string>> = {
@@ -70,6 +71,18 @@ const DIMENSION_LABELS: Record<string, Record<string, string>> = {
     accountability_courage: "Accountability & Courage",
     delegation_team_development: "Delegation & Growth",
     executive_communication: "Executive Communication",
+  },
+  STI: {
+    strategic_clarity: "Strategic Clarity",
+    business_acumen: "Business Acumen",
+    systems_thinking: "Systems Thinking",
+    long_term_orientation: "Long-Term Orientation",
+    market_external_awareness: "Market & External Awareness",
+    insight_generation: "Insight Generation",
+    strategic_prioritisation: "Strategic Prioritisation",
+    scenario_thinking: "Scenario Thinking",
+    innovation_opportunity: "Innovation & Opportunity",
+    strategic_communication: "Strategic Communication",
   },
 };
 

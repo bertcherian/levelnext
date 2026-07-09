@@ -29,6 +29,10 @@ import {
   LDI_QUESTIONS, LDI_DIMENSIONS,
   scoreLdi,
 } from "../../shared/modules/ldiData";
+import {
+  STI_QUESTIONS, STI_DIMENSIONS,
+  scoreSti,
+} from "../../shared/modules/stiData";
 
 // ─── Scoring helpers ──────────────────────────────────────────────────────────
 function scoreLii(responses: Record<string, number>) {
@@ -141,7 +145,7 @@ function scoreEci(responses: Record<string, number>) {
 export const assessmentRouter = router({
   // Get questions for a module
   getQuestions: publicProcedure
-    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI"]) }))
+    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "STI"]) }))
     .query(({ input }) => {
       if (input.moduleType === "TII") {
         return {
@@ -155,6 +159,13 @@ export const assessmentRouter = router({
           questions: LDI_QUESTIONS.map((q) => ({ id: String(q.id), text: q.text, dimensionId: q.dimensionId, reversed: q.reverseScored })),
           pillars: LDI_DIMENSIONS.map((d) => ({ id: d.id, label: d.name, description: d.definition, color: "#8B0000" })),
           totalQuestions: LDI_QUESTIONS.length,
+        };
+      }
+      if (input.moduleType === "STI") {
+        return {
+          questions: STI_QUESTIONS.map((q) => ({ id: q.id, text: q.text, dimensionId: q.dimensionId, reversed: q.reverseScore })),
+          pillars: STI_DIMENSIONS.map((d) => ({ id: d.id, label: d.label, description: d.definition, color: "#1e3a5f" })),
+          totalQuestions: STI_QUESTIONS.length,
         };
       }
       if (input.moduleType === "ECI") {
@@ -184,7 +195,7 @@ export const assessmentRouter = router({
 
   // Start or resume an assessment session
   startSession: protectedProcedure
-    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI"]) }))
+    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "STI"]) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -238,7 +249,7 @@ export const assessmentRouter = router({
     .input(
       z.object({
         sessionId: z.number(),
-        moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI"]),
+        moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "STI"]),
         responses: z.record(z.string(), z.number()),
         participantName: z.string(),
         participantEmail: z.string().email(),
@@ -263,6 +274,28 @@ export const assessmentRouter = router({
           dimensionScores: ldiResult.dimensionScores,
           zone: ldiResult.riskBand,
           archetype: ldiResult.archetypeId,
+        };
+      }
+      else if (input.moduleType === "STI") {
+        const stiResult = scoreSti(input.responses);
+        const dimScores: Record<string, number> = {};
+        for (const d of stiResult.dimensions) dimScores[d.dimensionId] = d.pct;
+        scored = {
+          edgeScore: stiResult.overallPct,
+          dimensionScores: dimScores,
+          zone: stiResult.band.id,
+          archetype: stiResult.band.id,
+          zoneLabel: stiResult.band.label,
+          zoneDescription: stiResult.band.description,
+          archetypeLabel: stiResult.band.label,
+          archetypeDescription: stiResult.band.description,
+          archetypeStrengths: stiResult.topStrengths.map((d) => d.label),
+          archetypeRisks: stiResult.topDevelopmentAreas.map((d) => d.label),
+          topDevelopmentAreas: stiResult.topDevelopmentAreas.map((d) => ({
+            dimensionId: d.dimensionId,
+            dimensionName: d.label,
+            pct: d.pct,
+          })),
         };
       }
       else scored = scoreGcc(input.responses);
@@ -296,7 +329,7 @@ export const assessmentRouter = router({
         .where(eq(assessmentSessions.id, input.sessionId));
 
       // Update the Leadership Graph
-      await updateLeadershipGraph(ctx.user.id, input.moduleType as "ECI" | "TII" | "LII" | "GCC", scored);
+      await updateLeadershipGraph(ctx.user.id, input.moduleType as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI", scored);
 
       return {
         reportId: report.id,

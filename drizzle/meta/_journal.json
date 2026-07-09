@@ -71,6 +71,13 @@
       "when": 1783605824610,
       "tag": "0009_calm_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1783607236242,
+      "tag": "0010_fresh_major_mapleleaf",
+      "breakpoints": true
     }
   ]
 }

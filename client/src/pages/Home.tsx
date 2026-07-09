@@ -13,7 +13,7 @@ const MODULE_LABELS: Record<string, string> = {
   LII: "Leadership Influence",
   GCC: "GCC Readiness",
   LDI: "Derailment Intelligence",
-  GENERAL: "Leadership",
+  STI: "Strategic Thinking",
 };
 
 
@@ -60,7 +60,7 @@ export default function Home() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const completedModules = graph?.completedModules ?? [];
-  const pendingModules = (["ECI", "TII", "LII", "GCC", "LDI"] as const).filter((m) => !completedModules.includes(m));
+  const pendingModules = (["ECI", "TII", "LII", "GCC", "LDI", "STI"] as const).filter((m) => !completedModules.includes(m));
 
   return (
     <PlatformLayout title="Home">
@@ -92,7 +92,7 @@ export default function Home() {
             <div className="flex-1">
               <p className="text-sm font-medium mb-1" style={{ color: "oklch(70% 0.02 248.6)" }}>Your Leadership Edge</p>
               <div className="flex flex-wrap gap-3">
-                {(["ECI", "TII", "LII", "GCC", "LDI"] as const).map((mod) => {
+                {(["ECI", "TII", "LII", "GCC", "LDI", "STI"] as const).map((mod) => {
                   const score = graph.moduleEdges?.[mod];
                   const done = completedModules.includes(mod);
                   return (
@@ -226,7 +226,7 @@ export default function Home() {
           <div>
             <h2 className="text-base font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Your Diagnostics</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {(["ECI", "TII", "LII", "GCC", "LDI"] as const).map((mod) => {
+              {(["ECI", "TII", "LII", "GCC", "LDI", "STI"] as const).map((mod) => {
                 const done = completedModules.includes(mod);
                 const score = graph?.moduleEdges?.[mod];
                 return (
@@ -248,7 +248,7 @@ export default function Home() {
                         {MODULE_LABELS[mod]}
                       </p>
                       <p className="text-xs mt-1" style={{ color: done ? "oklch(70% 0.02 248.6)" : "var(--color-ln-muted)" }}>
-                        {done ? (graph?.modules?.[mod as "ECI" | "TII" | "LII" | "GCC" | "LDI"])?.archetypeLabel ?? (graph?.archetypes?.[mod] ?? "Complete") : "Tap to begin →"}
+                        {done ? (graph?.modules?.[mod as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI"])?.archetypeLabel ?? (graph?.archetypes?.[mod] ?? "Complete") : "Tap to begin →"}
                       </p>
                     </div>
                   </Link>

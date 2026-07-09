@@ -14,6 +14,7 @@ const MODULE_LABELS: Record<string, string> = {
   LII: "Leadership Influence",
   GCC: "GCC Readiness",
   LDI: "Derailment Intelligence",
+  STI: "Strategic Thinking",
 };
 const MODULE_DESCRIPTIONS: Record<string, string> = {
   ECI: "How clearly and powerfully you communicate as a leader",
@@ -21,6 +22,7 @@ const MODULE_DESCRIPTIONS: Record<string, string> = {
   LII: "How effectively you lead through influence rather than authority",
   GCC: "Your organisation's readiness to operate as a strategic global capability centre",
   LDI: "Identify your top derailment risks and leadership stabilizers across 10 behavioural dimensions",
+  STI: "Your strategic thinking capability across 10 dimensions — from clarity and systems thinking to scenario planning and decision quality",
 };
 
 const LDI_DIM_TOOLTIPS: Record<string, { label: string; description: string }> = {

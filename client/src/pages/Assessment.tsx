@@ -37,6 +37,12 @@ const MODULE_META: Record<string, { label: string; tagline: string; color: strin
     color: "#5c1a1a",
     questionCount: 30,
   },
+  sti: {
+    label: "Strategic Thinking Intelligence",
+    tagline: "Measure your strategic thinking capability across 10 dimensions — from clarity to scenario planning.",
+    color: "#1e3a5f",
+    questionCount: 30,
+  },
 };
 
 const SCALE_LABELS: Record<number, string> = {
@@ -150,7 +156,7 @@ export default function Assessment() {
   const [result, setResult] = useState<SubmitResult | null>(null);
 
   const { data: questionsData, isLoading: questionsLoading } = trpc.assessment.getQuestions.useQuery(
-    { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" },
+    { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" },
     { enabled: isAuthenticated }
   );
 
@@ -210,7 +216,7 @@ export default function Assessment() {
   const handleSubmit = () => {
     submitAssessment.mutate({
       sessionId: 0,
-      moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI",
+      moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI",
       responses,
       participantName: user?.name ?? "Leader",
       participantEmail: user?.email ?? "leader@levelnext.com",

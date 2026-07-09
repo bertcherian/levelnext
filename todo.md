@@ -254,3 +254,20 @@
 - [ ] Entry point added to Diagnostics page (Import AI Conversations card/button)
 - [ ] Guide context builder updated to include conversation_intelligence themes
 - [ ] TypeScript check + vitest + screenshot + checkpoint
+
+### Phase 30 — STI (Strategic Thinking Intelligence) Module + Option C Progression
+- [ ] shared/modules/stiData.ts — 10 dimensions, 30 questions, 4 bands, scoreSti()
+- [ ] drizzle/schema.ts — add STI to all 6 enum columns
+- [ ] Schema migration applied via webdev_execute_sql
+- [ ] server/routers/assessment.ts — add STI to getQuestions/submit/scoring branches
+- [ ] server/routers/pdfReport.ts — add STI to MODULE_META and DIMENSION_LABELS
+- [ ] server/routers/leadershipGraph.ts — add STI to moduleType union
+- [ ] server/routers/unlock.ts — add STI to MODULE_SEQUENCE, UNLOCK_MAP, narrative labels
+- [ ] client/src/pages/Diagnostics.tsx — Option C progression model (guided path + informed override)
+- [ ] client/src/pages/Assessment.tsx — add STI to MODULE_META type casts and completion screen
+- [ ] client/src/pages/Report.tsx — add STI DIMENSION_LABELS and Strategic Leadership Risks section
+- [ ] client/src/pages/Home.tsx — add STI to module arrays
+- [ ] client/src/pages/MyEdge.tsx — add STI module card
+- [ ] client/src/pages/Progress.tsx — add STI to MODULE_LABELS, MODULE_COLORS, barData
+- [ ] client/src/pages/Insights.tsx — add STI to MODULE_LABELS, MODULE_DESCRIPTIONS, tooltips
+- [ ] TypeScript check + vitest + screenshot + checkpoint

@@ -36,7 +36,7 @@ const MISSION_TARGET = 5;
 const GUIDE_SESSION_TARGET = 3;
 
 // Ordered sequence of modules — each module unlocks the next
-const MODULE_SEQUENCE = ["ECI", "TII", "LII", "GCC", "LDI"] as const;
+const MODULE_SEQUENCE = ["ECI", "TII", "LII", "GCC", "LDI", "STI"] as const;
 type ModuleType = (typeof MODULE_SEQUENCE)[number];
 
 // Which module unlocks which
@@ -45,7 +45,8 @@ const UNLOCK_MAP: Record<ModuleType, ModuleType | null> = {
   TII: "LII",
   LII: "GCC",
   GCC: "LDI",
-  LDI: null,
+  LDI: "STI",
+  STI: null,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -352,7 +353,7 @@ export const unlockRouter = router({
    * Marks narrativeShown = true after first call.
    */
   getNarrativeUnlock: protectedProcedure
-    .input(z.object({ toModule: z.enum(["ECI", "TII", "LII", "GCC", "LDI"]) }))
+    .input(z.object({ toModule: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "STI"]) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -385,7 +386,8 @@ export const unlockRouter = router({
         : m === "TII" ? "Leadership Time Intelligence"
         : m === "LII" ? "Leadership Influence Intelligence"
         : m === "GCC" ? "GCC Readiness"
-        : "Leadership Derailment Intelligence";
+        : m === "LDI" ? "Leadership Derailment Intelligence"
+        : "Strategic Thinking Intelligence";
 
       const fromLabel = moduleLabel(progress.fromModule);
       const toLabel = moduleLabel(input.toModule);
@@ -437,7 +439,7 @@ Tone: coaching, direct, encouraging. No bullet points. No markdown. Plain prose 
   recordGuideSession: protectedProcedure
     .input(
       z.object({
-        moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "GENERAL"]),
+        moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "STI", "GENERAL"]),
         conversationId: z.number().optional(),
       })
     )
