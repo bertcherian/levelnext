@@ -6,7 +6,7 @@ import { users, type LeadershipGraph } from "../../drizzle/schema";
 // ─── Helper: update Leadership Graph after a module completes ─────────────────
 export async function updateLeadershipGraph(
   userId: number,
-  moduleType: "ECI" | "TII" | "LII" | "GCC",
+  moduleType: "ECI" | "TII" | "LII" | "GCC" | "LDI",
   scored: {
     edgeScore: number;
     zone: string;
@@ -31,7 +31,7 @@ export async function updateLeadershipGraph(
 
   const completedModules = Array.from(
     new Set([...(existing.completedModules ?? []), moduleType])
-  ) as ("ECI" | "TII" | "LII" | "GCC")[];
+  ) as ("ECI" | "TII" | "LII" | "GCC" | "LDI")[];
 
   const moduleEdges = { ...(existing.moduleEdges ?? {}), [moduleType]: scored.edgeScore };
   const archetypes = { ...(existing.archetypes ?? {}), [moduleType]: scored.archetype };

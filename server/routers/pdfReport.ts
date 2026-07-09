@@ -12,6 +12,7 @@ const MODULE_META: Record<string, { label: string; dimensionLabel: string }> = {
   TII: { label: "Leadership Time Intelligence", dimensionLabel: "Time Dimension Breakdown" },
   LII: { label: "Leadership Influence", dimensionLabel: "Influence Dimension Breakdown" },
   GCC: { label: "GCC Readiness", dimensionLabel: "Readiness Dimension Breakdown" },
+  LDI: { label: "Leadership Derailment Intelligence", dimensionLabel: "Derailment Risk Dimension Breakdown" },
 };
 
 const DIMENSION_LABELS: Record<string, Record<string, string>> = {
@@ -57,6 +58,18 @@ const DIMENSION_LABELS: Record<string, Record<string, string>> = {
     execution_discipline: "Execution Discipline",
     delegation_letting_go: "Delegation & Letting Go",
     boundary_management: "Boundary Management",
+  },
+  LDI: {
+    self_awareness: "Self-Awareness",
+    emotional_regulation: "Emotional Regulation",
+    humility_vs_defensiveness: "Humility vs Defensiveness",
+    trust_relationship_building: "Trust & Relationship Building",
+    stakeholder_management: "Stakeholder Navigation",
+    strategic_thinking: "Strategic Thinking",
+    decision_making_ambiguity: "Decision-Making",
+    accountability_courage: "Accountability & Courage",
+    delegation_team_development: "Delegation & Growth",
+    executive_communication: "Executive Communication",
   },
 };
 

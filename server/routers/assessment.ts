@@ -25,6 +25,10 @@ import {
   TII_QUESTIONS, TII_DIMENSIONS,
   scoreTii,
 } from "../../shared/modules/tiiData";
+import {
+  LDI_QUESTIONS, LDI_DIMENSIONS,
+  scoreLdi,
+} from "../../shared/modules/ldiData";
 
 // ─── Scoring helpers ──────────────────────────────────────────────────────────
 function scoreLii(responses: Record<string, number>) {
@@ -137,13 +141,20 @@ function scoreEci(responses: Record<string, number>) {
 export const assessmentRouter = router({
   // Get questions for a module
   getQuestions: publicProcedure
-    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC"]) }))
+    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI"]) }))
     .query(({ input }) => {
       if (input.moduleType === "TII") {
         return {
           questions: TII_QUESTIONS.map((q) => ({ id: String(q.id), text: q.text, dimensionId: q.dimensionId })),
           pillars: TII_DIMENSIONS.map((d) => ({ id: d.id, label: d.name, description: d.definition, color: "#12345A" })),
           totalQuestions: TII_QUESTIONS.length,
+        };
+      }
+      if (input.moduleType === "LDI") {
+        return {
+          questions: LDI_QUESTIONS.map((q) => ({ id: String(q.id), text: q.text, dimensionId: q.dimensionId, reversed: q.reverseScored })),
+          pillars: LDI_DIMENSIONS.map((d) => ({ id: d.id, label: d.name, description: d.definition, color: "#8B0000" })),
+          totalQuestions: LDI_QUESTIONS.length,
         };
       }
       if (input.moduleType === "ECI") {
@@ -173,7 +184,7 @@ export const assessmentRouter = router({
 
   // Start or resume an assessment session
   startSession: protectedProcedure
-    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC"]) }))
+    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI"]) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -227,7 +238,7 @@ export const assessmentRouter = router({
     .input(
       z.object({
         sessionId: z.number(),
-        moduleType: z.enum(["ECI", "TII", "LII", "GCC"]),
+        moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI"]),
         responses: z.record(z.string(), z.number()),
         participantName: z.string(),
         participantEmail: z.string().email(),
@@ -240,10 +251,20 @@ export const assessmentRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       // Score the responses
-      let scored: { edgeScore: number; dimensionScores: Record<string, number>; zone: string; archetype: string };
+      let scored: { edgeScore: number; dimensionScores: Record<string, number>; zone: string; archetype: string; [key: string]: unknown };
       if (input.moduleType === "ECI") scored = scoreEci(input.responses);
       else if (input.moduleType === "TII") scored = scoreTii(input.responses);
       else if (input.moduleType === "LII") scored = scoreLii(input.responses);
+      else if (input.moduleType === "LDI") {
+        const ldiResult = scoreLdi(input.responses);
+        scored = {
+          ...ldiResult,
+          edgeScore: ldiResult.edgeScore,
+          dimensionScores: ldiResult.dimensionScores,
+          zone: ldiResult.riskBand,
+          archetype: ldiResult.archetypeId,
+        };
+      }
       else scored = scoreGcc(input.responses);
 
       const slug = nanoid(16);
@@ -275,7 +296,7 @@ export const assessmentRouter = router({
         .where(eq(assessmentSessions.id, input.sessionId));
 
       // Update the Leadership Graph
-      await updateLeadershipGraph(ctx.user.id, input.moduleType, scored);
+      await updateLeadershipGraph(ctx.user.id, input.moduleType as "ECI" | "TII" | "LII" | "GCC", scored);
 
       return {
         reportId: report.id,

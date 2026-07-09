@@ -59,7 +59,7 @@ export const assessmentSessions = mysqlTable("assessment_sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").references(() => users.id),
   tenantId: int("tenantId").references(() => tenants.id),
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC"]).notNull(),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI"]).notNull(),
   status: mysqlEnum("status", ["in_progress", "completed", "abandoned"]).default("in_progress").notNull(),
   // Partial responses saved for resume
   responses: json("responses").$type<Record<string, number>>(),
@@ -79,7 +79,7 @@ export const reports = mysqlTable("reports", {
   tenantId: int("tenantId").references(() => tenants.id),
   slug: varchar("slug", { length: 100 }).unique(),
   // Which diagnostic module generated this report
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC"]).notNull(),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI"]).notNull(),
   participantName: varchar("participantName", { length: 255 }).notNull(),
   participantEmail: varchar("participantEmail", { length: 320 }).notNull(),
   participantRole: varchar("participantRole", { length: 255 }),
@@ -121,7 +121,7 @@ export type GuideConversation = typeof guideConversations.$inferSelect;
 export const dailyMissions = mysqlTable("daily_missions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id),
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "GENERAL"]).notNull().default("GENERAL"),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "GENERAL"]).notNull().default("GENERAL"),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
   status: mysqlEnum("status", ["pending", "in_progress", "complete"]).default("pending").notNull(),
@@ -141,6 +141,7 @@ export type LeadershipGraph = {
     TII?: number;
     LII?: number;
     GCC?: number;
+    LDI?: number;
   };
   // Per-module archetypes
   archetypes?: {
@@ -148,6 +149,7 @@ export type LeadershipGraph = {
     TII?: string;
     LII?: string;
     GCC?: string;
+    LDI?: string;
   };
   // Per-module zones
   zones?: {
@@ -155,17 +157,32 @@ export type LeadershipGraph = {
     TII?: string;
     LII?: string;
     GCC?: string;
+    LDI?: string;
   };
   // Key strengths aggregated across modules
   strengths?: string[];
   // Key growth opportunities aggregated across modules
   growthOpportunities?: string[];
   // Completed module types
-  completedModules?: ("ECI" | "TII" | "LII" | "GCC")[];
+  completedModules?: ("ECI" | "TII" | "LII" | "GCC" | "LDI")[];
   // Last updated timestamp
   lastUpdated?: string;
   // Full per-module data (stored after each diagnostic completion)
   modules?: {
+    LDI?: {
+      edgeScore?: number;
+      zone?: string;
+      zoneLabel?: string;
+      archetype?: string;
+      archetypeLabel?: string;
+      archetypeTagline?: string;
+      archetypeStrengths?: string[];
+      archetypeRisks?: string[];
+      dimensionScores?: Record<string, number>;
+      topDerailmentRisks?: Array<{ dimensionId: string; dimensionName: string; score: number; riskBand: string }>;
+      topStabilizers?: Array<{ dimensionId: string; dimensionName: string; score: number; riskBand: string }>;
+      completedAt?: string;
+    };
     ECI?: {
       edgeScore?: number;
       zone?: string;
@@ -490,7 +507,7 @@ export const guideSessions = mysqlTable("guide_sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id),
   // Which diagnostic module this session is attributed to (most recently completed)
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "GENERAL"]).notNull().default("GENERAL"),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "GENERAL"]).notNull().default("GENERAL"),
   // The guide conversation this session belongs to
   conversationId: int("conversationId").references(() => guideConversations.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -505,9 +522,9 @@ export const diagnosticUnlockProgress = mysqlTable("diagnostic_unlock_progress",
   userId: int("userId").notNull().references(() => users.id),
   tenantId: int("tenantId").references(() => tenants.id),
   // The module that was just completed (the prerequisite)
-  fromModule: mysqlEnum("fromModule", ["ECI", "TII", "LII", "GCC"]).notNull(),
+  fromModule: mysqlEnum("fromModule", ["ECI", "TII", "LII", "GCC", "LDI"]).notNull(),
   // The module being unlocked
-  toModule: mysqlEnum("toModule", ["ECI", "TII", "LII", "GCC"]).notNull(),
+  toModule: mysqlEnum("toModule", ["ECI", "TII", "LII", "GCC", "LDI"]).notNull(),
   // When the fromModule diagnostic was completed (starts the 21-day clock)
   fromCompletedAt: timestamp("fromCompletedAt").notNull(),
   // Layer 1: time gate — 21 days from fromCompletedAt

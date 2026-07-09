@@ -201,13 +201,34 @@
 - [x] Diagnostics hub NarrativeBanner: "Discuss with Guide" button that navigates to /guide with the unlock context pre-loaded
 
 ### Phase 26: Leadership Time Intelligence (TII) Diagnostic
-- [ ] shared/modules/tiiData.ts — 5 dimensions, 30 questions (6 per dimension), scoring engine, 5 zones, 6 archetypes
-- [ ] drizzle/schema.ts — add TII to assessmentSessions.moduleType, reports.moduleType, daily_missions.moduleType, guide_sessions.moduleType, diagnostic_unlock_progress.fromModule/toModule enums
-- [ ] Run pnpm drizzle-kit generate and apply migration SQL
-- [ ] server/routers/assessment.ts — import TII scorer, add TII to moduleType z.enum, add scoreTii branch
-- [ ] server/routers/pdfReport.ts — add TII to MODULE_META and DIMENSION_LABELS, add TII LLM prompt context
-- [ ] server/routers/leadershipGraph.ts — add TII to moduleType union
-- [ ] server/routers/unlock.ts — update UNLOCK_SEQUENCE to ECI → TII → LII → GCC
-- [ ] client/src/pages/Diagnostics.tsx — add TII module card to MODULES array, update NEW_USER_STATUSES preview
-- [ ] client/src/pages/Report.tsx — add TII to DIMENSION_LABELS and MODULE_LABELS
-- [ ] TypeScript check + vitest + screenshot + checkpoint
+- [x] shared/modules/tiiData.ts — 5 dimensions, 30 questions (6 per dimension), scoring engine, 5 zones, 6 archetypes
+- [x] drizzle/schema.ts — add TII to all enum columns and LeadershipGraph type
+- [x] Run pnpm drizzle-kit generate and apply migration SQL
+- [x] server/routers/assessment.ts — import TII scorer, add TII to moduleType z.enum, add scoreTii branch
+- [x] server/routers/pdfReport.ts — add TII to MODULE_META and DIMENSION_LABELS
+- [x] server/routers/leadershipGraph.ts — add TII to moduleType union
+- [x] server/routers/unlock.ts — update UNLOCK_SEQUENCE to ECI → TII → LII → GCC
+- [x] client/src/pages/Diagnostics.tsx — add TII module card, preview mode, z.enum casts
+- [x] client/src/pages/Report.tsx — add TII to DIMENSION_LABELS and MODULE_LABELS
+- [x] client/src/pages/Home.tsx — add TII to MODULE_LABELS and module arrays
+- [x] client/src/pages/MyEdge.tsx — add TII module card
+- [x] client/src/pages/Progress.tsx — add TII to MODULE_LABELS, MODULE_COLORS, bar data
+- [x] client/src/pages/Insights.tsx — add TII to MODULE_LABELS and MODULE_DESCRIPTIONS
+- [x] TypeScript check + vitest + screenshot + checkpoint
+
+### Phase 27: Leadership Derailment Intelligence (LDI) Diagnostic
+- [x] shared/modules/ldiData.ts — 10 dimensions, 30 questions with reverse-score flags, 8 archetypes, 5 risk bands, scoreLdi() function
+- [x] drizzle/schema.ts — add LDI to all 6 enum columns and LeadershipGraph type
+- [x] Schema migration applied via webdev_execute_sql
+- [x] server/routers/assessment.ts — import scoreLdi, LDI_QUESTIONS, LDI_DIMENSIONS; add LDI to z.enum calls and getQuestions/submit branches
+- [x] server/routers/pdfReport.ts — add LDI to MODULE_META and DIMENSION_LABELS (10 dimensions)
+- [x] server/routers/leadershipGraph.ts — add LDI to moduleType union
+- [x] server/routers/unlock.ts — add LDI to MODULE_SEQUENCE, UNLOCK_MAP (GCC→LDI, LDI→null), z.enum calls, narrative labels
+- [x] client/src/pages/Diagnostics.tsx — add LDI module card, preview mode entry, z.enum casts
+- [x] client/src/pages/Report.tsx — add LDI MODULE_LABELS, DIMENSION_LABELS (10 dims), topDerailmentRisks and topStabilizers sections
+- [x] client/src/pages/Assessment.tsx — add LDI to MODULE_META type casts
+- [x] client/src/pages/Home.tsx — add LDI to MODULE_LABELS and module arrays
+- [x] client/src/pages/MyEdge.tsx — add LDI module card with ⚠️ icon
+- [x] client/src/pages/Progress.tsx — add LDI to MODULE_LABELS, MODULE_COLORS, bar data
+- [x] client/src/pages/Insights.tsx — add LDI to MODULE_LABELS and MODULE_DESCRIPTIONS
+- [x] TypeScript check + vitest + screenshot + checkpoint

@@ -10,6 +10,7 @@ const MODULE_LABELS: Record<string, string> = {
   TII: "Leadership Time Intelligence",
   LII: "Leadership Influence",
   GCC: "GCC Readiness",
+  LDI: "Leadership Derailment Intelligence",
 };
 
 const DIMENSION_LABELS: Record<string, Record<string, string>> = {
@@ -55,6 +56,18 @@ const DIMENSION_LABELS: Record<string, Record<string, string>> = {
     execution_discipline: "Execution Discipline",
     delegation_letting_go: "Delegation & Letting Go",
     boundary_management: "Boundary Management",
+  },
+  LDI: {
+    self_awareness: "Self-Awareness",
+    emotional_regulation: "Emotional Regulation",
+    humility_vs_defensiveness: "Humility vs Defensiveness",
+    trust_relationship_building: "Trust & Relationship Building",
+    stakeholder_management: "Stakeholder Navigation",
+    strategic_thinking: "Strategic Thinking",
+    decision_making_ambiguity: "Decision-Making",
+    accountability_courage: "Accountability & Courage",
+    delegation_team_development: "Delegation & Growth",
+    executive_communication: "Executive Communication",
   },
 };
 
@@ -393,6 +406,16 @@ export default function Report() {
     ?.replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
+  // LDI-specific: derive top 3 derailment risks and top 3 stabilizers from dimension scores
+  const ldiDimsSorted = moduleType === "LDI" && dimensionScores
+    ? Object.entries(dimensionScores)
+        .filter(([k]) => dimLabels[k])
+        .map(([k, v]) => ({ key: k, label: dimLabels[k] ?? k.replace(/_/g, " "), score: Math.round(v) }))
+        .sort((a, b) => a.score - b.score)
+    : null;
+  const ldiTopDerailmentRisks = ldiDimsSorted ? ldiDimsSorted.slice(0, 3) : [];
+  const ldiTopStabilizers = ldiDimsSorted ? [...ldiDimsSorted].reverse().slice(0, 3) : [];
+
   const PdfButton = ({ style, large }: { style?: React.CSSProperties; large?: boolean }) => (
     <Button
       onClick={handleDownload}
@@ -544,6 +567,55 @@ export default function Report() {
                 </ul>
               </div>
             )}
+          </div>
+        )}
+
+        {/* LDI: Top 3 Derailment Risks & Top 3 Stabilizers */}
+        {moduleType === "LDI" && ldiTopDerailmentRisks.length > 0 && (
+          <div
+            className="rounded-2xl p-6 grid grid-cols-1 sm:grid-cols-2 gap-6"
+            style={{ background: "white", border: "1px solid var(--color-ln-border)" }}
+          >
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#dc2626" }}>
+                Top 3 Derailment Risks
+              </p>
+              <div className="space-y-3">
+                {ldiTopDerailmentRisks.map(({ label, score }, i) => (
+                  <div key={label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium" style={{ color: "var(--color-ln-navy)" }}>
+                        {i + 1}. {label}
+                      </span>
+                      <span className="text-xs font-bold" style={{ color: "#dc2626" }}>{score}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--color-ln-border)" }}>
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: "#dc2626" }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#16a34a" }}>
+                Top 3 Leadership Stabilizers
+              </p>
+              <div className="space-y-3">
+                {ldiTopStabilizers.map(({ label, score }, i) => (
+                  <div key={label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium" style={{ color: "var(--color-ln-navy)" }}>
+                        {i + 1}. {label}
+                      </span>
+                      <span className="text-xs font-bold" style={{ color: "#16a34a" }}>{score}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--color-ln-border)" }}>
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: "#16a34a" }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

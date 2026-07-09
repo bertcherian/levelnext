@@ -31,6 +31,12 @@ const MODULE_META: Record<string, { label: string; tagline: string; color: strin
     color: "#0f2d4a",
     questionCount: 50,
   },
+  ldi: {
+    label: "Leadership Derailment Intelligence",
+    tagline: "The hidden patterns that stall strong leaders — finally measured.",
+    color: "#5c1a1a",
+    questionCount: 30,
+  },
 };
 
 const SCALE_LABELS: Record<number, string> = {
@@ -144,7 +150,7 @@ export default function Assessment() {
   const [result, setResult] = useState<SubmitResult | null>(null);
 
   const { data: questionsData, isLoading: questionsLoading } = trpc.assessment.getQuestions.useQuery(
-    { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" },
+    { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" },
     { enabled: isAuthenticated }
   );
 
@@ -204,7 +210,7 @@ export default function Assessment() {
   const handleSubmit = () => {
     submitAssessment.mutate({
       sessionId: 0,
-      moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC",
+      moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI",
       responses,
       participantName: user?.name ?? "Leader",
       participantEmail: user?.email ?? "leader@levelnext.com",
@@ -352,7 +358,7 @@ export default function Assessment() {
             {/* Archetype Card */}
             <div className="rounded-2xl p-4 sm:p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
               <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--color-ln-yellow)" }}>
-                {moduleType === "lii" ? "Your Influence Archetype" : moduleType === "gcc" ? "Your GCC Archetype" : "Your Communication Archetype"}
+                {moduleType === "lii" ? "Your Influence Archetype" : moduleType === "gcc" ? "Your GCC Archetype" : moduleType === "ldi" ? "Your Derailment Profile" : "Your Communication Archetype"}
               </p>
               <div className="flex items-start gap-4 mb-4">
                 <span className="text-3xl flex-shrink-0">{archetypeIcon}</span>
@@ -508,6 +514,66 @@ export default function Assessment() {
                 </div>
               </div>
             )}
+
+            {/* LDI: Top 3 Derailment Risks & Top 3 Stabilizers */}
+            {moduleType === "ldi" && result.dimensionScores && (() => {
+              const LDI_DIM_LABELS: Record<string, string> = {
+                self_awareness: "Self-Awareness",
+                emotional_regulation: "Emotional Regulation",
+                humility_vs_defensiveness: "Humility vs Defensiveness",
+                trust_relationship_building: "Trust & Relationships",
+                stakeholder_management: "Stakeholder Navigation",
+                strategic_thinking: "Strategic Thinking",
+                decision_making_ambiguity: "Decision-Making",
+                accountability_courage: "Accountability & Courage",
+                delegation_team_development: "Delegation & Growth",
+                executive_communication: "Executive Communication",
+              };
+              const sorted = Object.entries(result.dimensionScores)
+                .filter(([k]) => LDI_DIM_LABELS[k])
+                .map(([k, v]) => ({ key: k, label: LDI_DIM_LABELS[k], score: Math.round(v) }))
+                .sort((a, b) => a.score - b.score);
+              const risks = sorted.slice(0, 3);
+              const stabilizers = [...sorted].reverse().slice(0, 3);
+              return (
+                <div className="rounded-2xl p-4 sm:p-6" style={{ background: "oklch(20% 0.072 248.6)" }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#f87171" }}>Top 3 Derailment Risks</p>
+                      <div className="space-y-3">
+                        {risks.map(({ label, score }, i) => (
+                          <div key={label}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium text-white">{i + 1}. {label}</span>
+                              <span className="text-xs font-bold" style={{ color: "#f87171" }}>{score}</span>
+                            </div>
+                            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "oklch(30% 0.072 248.6)" }}>
+                              <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: "#dc2626" }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#4ade80" }}>Top 3 Stabilizers</p>
+                      <div className="space-y-3">
+                        {stabilizers.map(({ label, score }, i) => (
+                          <div key={label}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium text-white">{i + 1}. {label}</span>
+                              <span className="text-xs font-bold" style={{ color: "#4ade80" }}>{score}</span>
+                            </div>
+                            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "oklch(30% 0.072 248.6)" }}>
+                              <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: "#16a34a" }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pb-8">

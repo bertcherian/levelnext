@@ -11,12 +11,14 @@ const MODULE_LABELS: Record<string, string> = {
   TII: "Time Intelligence",
   LII: "Leadership Influence",
   GCC: "GCC Readiness",
+  LDI: "Derailment Intelligence",
 };
 const MODULE_DESCRIPTIONS: Record<string, string> = {
   ECI: "How clearly and powerfully you communicate as a leader",
   TII: "How you invest, protect, and reclaim your most strategic resource — time",
   LII: "How effectively you lead through influence rather than authority",
   GCC: "Your organisation's readiness to operate as a strategic global capability centre",
+  LDI: "Identify your top derailment risks and leadership stabilizers across 10 behavioural dimensions",
 };
 
 export default function Insights() {

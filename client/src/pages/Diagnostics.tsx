@@ -60,6 +60,16 @@ const MODULES = [
     questions: "50 questions · ~15 minutes",
     color: "#0f2d4a",
   },
+  {
+    id: "LDI",
+    route: "ldi",
+    label: "Leadership Derailment Intelligence",
+    shortLabel: "LDI",
+    tagline: "The hidden patterns that stall strong leaders — finally measured.",
+    description: "Identify your top derailment risks across 10 dimensions: Emotional Regulation, Arrogance & Entitlement, Micromanagement, Conflict Avoidance, Poor Communication, Strategic Myopia, Low Accountability, Trust Deficit, Change Resistance, and Political Blindness.",
+    questions: "30 questions · ~10 minutes",
+    color: "#5c1a1a",
+  },
 ];
 
 type UnlockState = "unlocked" | "locked" | "completed" | "not_started";
@@ -124,7 +134,7 @@ function NarrativeBanner({ toModule, onDismiss }: { toModule: string; onDismiss:
 
   useEffect(() => {
     getNarrative.mutate(
-      { toModule: toModule as "ECI" | "TII" | "LII" | "GCC" },
+      { toModule: toModule as "ECI" | "TII" | "LII" | "GCC" | "LDI" },
       { onSuccess: (data) => setNarrative(data.narrative) }
     );
   }, [toModule]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -276,6 +286,7 @@ const NEW_USER_STATUSES: ModuleStatus[] = [
   { moduleId: "TII", state: "locked", daysRemaining: 18, missionsCompleted: 1, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: "Priority Clarity", narrativeReady: false, narrativeShown: false },
   { moduleId: "LII", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
   { moduleId: "GCC", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
+  { moduleId: "LDI", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
 ];
 
 export default function Diagnostics() {
@@ -304,7 +315,7 @@ export default function Diagnostics() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Diagnostics</h1>
             <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
-              Three intelligence modules. Each one builds your Leadership Edge — unlocked through application, not just completion.
+              Five intelligence modules. Each one builds your Leadership Edge — unlocked through application, not just completion.
             </p>
           </div>
           {/* View as new user toggle */}
