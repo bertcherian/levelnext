@@ -19,6 +19,7 @@ import {
   EyeOff,
   Upload,
   Brain,
+  FileText,
 } from "lucide-react";
 
 const MODULES = [
@@ -372,6 +373,32 @@ export default function Diagnostics() {
             <ModuleCard key={mod.id} mod={mod} status={statusMap.get(mod.id)} completedModules={completedModules} />
           ))}
         </div>
+        {/* Prior Assessments Import Card */}
+        <div className="mt-6 rounded-2xl p-5" style={{ background: "var(--color-ln-ivory-dark)", border: "1px solid var(--color-ln-border)" }}>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.12)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.3)" }}>
+              <FileText size={18} style={{ color: "var(--color-ln-gold)" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>Upload Prior Assessments</p>
+              <p className="text-xs mt-1" style={{ color: "var(--color-ln-muted)" }}>
+                Already have an MBTI, DISC, Hogan, Gallup StrengthsFinder, 360° feedback, or any other assessment report? Upload it and Guide will extract the leadership-relevant insights to enrich your coaching context.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {["MBTI", "DISC", "Hogan", "Gallup", "360°", "EQ", "Enneagram"].map((tag) => (
+                  <span key={tag} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)", color: "var(--color-ln-navy)" }}>{tag}</span>
+                ))}
+              </div>
+              <Link href="/import-prior-assessments">
+                <Button variant="outline" size="sm" className="mt-3 font-medium text-xs" style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-navy)" }}>
+                  <Upload size={12} className="mr-1.5" />
+                  Upload Prior Assessment Report
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* ChatGPT Conversation Import Card */}
         <div className="mt-6 rounded-2xl p-5" style={{ background: "var(--color-ln-ivory-dark)", border: "1px solid var(--color-ln-border)" }}>
           <div className="flex items-start gap-4">

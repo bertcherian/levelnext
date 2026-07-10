@@ -635,3 +635,41 @@ export const growthPlans = mysqlTable("growth_plans", {
   generatedAt: timestamp("generatedAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
+
+// ─── Prior Assessments (MBTI, DISC, Hogan, Gallup, 360, etc.) ────────────────
+// Stores LLM-synthesised leadership themes extracted from third-party assessment
+// reports. Raw PDF files are NEVER stored — only the approved synthesis.
+export type PriorAssessmentTheme = {
+  id: string;           // slug e.g. "high_conscientiousness"
+  title: string;        // e.g. "High Conscientiousness"
+  description: string;  // 2-3 sentence synthesis
+  category: "strength" | "challenge" | "pattern" | "blind_spot" | "growth_area";
+  relevance: "high" | "medium" | "low";
+};
+
+export type PriorAssessmentData = {
+  assessmentType: string;       // e.g. "MBTI", "DISC", "Hogan", "Gallup", "360"
+  assessmentLabel: string;      // human-readable e.g. "Myers-Briggs Type Indicator"
+  participantName: string;
+  reportDate: string;
+  overallSummary: string;       // 3-4 sentence executive synthesis
+  keyResult: string;            // e.g. "INTJ", "High D / Low S", "Achiever"
+  themes: PriorAssessmentTheme[];
+  coachingContext: string;      // How this relates to leadership development
+  importedAt: string;
+};
+
+export const priorAssessments = mysqlTable("prior_assessments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  assessmentType: varchar("assessmentType", { length: 100 }).notNull(), // MBTI | DISC | Hogan | Gallup | 360 | Other
+  assessmentLabel: varchar("assessmentLabel", { length: 255 }).notNull(),
+  data: json("data").$type<PriorAssessmentData>(),
+  themes: json("themes").$type<PriorAssessmentTheme[]>(),
+  // Raw file is NEVER stored — deleted immediately after processing
+  rawFileDeleted: boolean("rawFileDeleted").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PriorAssessment = typeof priorAssessments.$inferSelect;
+export type InsertPriorAssessment = typeof priorAssessments.$inferInsert;
