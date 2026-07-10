@@ -673,3 +673,161 @@ export const priorAssessments = mysqlTable("prior_assessments", {
 });
 export type PriorAssessment = typeof priorAssessments.$inferSelect;
 export type InsertPriorAssessment = typeof priorAssessments.$inferInsert;
+
+// ─── Enterprise Onboarding: Company Context Layer ─────────────────────────────
+
+export type OrgSetupRoute = "upload" | "build" | "standard";
+export type WizardStatus = "in_progress" | "completed" | "activated";
+export type ApprovalStatus = "pending" | "approved" | "rejected" | "needs_review";
+export type ConfidentialityLevel = "general" | "internal" | "confidential" | "restricted" | "executive";
+export type CompetencyCategory = "leading_self" | "leading_others" | "leading_teams" | "leading_business" | "leading_transformation" | "custom";
+export type PriorityRank = "critical" | "high" | "medium" | "emerging";
+
+export type OrgValue = {
+  id: string;
+  name: string;
+  shortDefinition: string;
+  fullDescription: string;
+  positiveBehaviours: string[];
+  negativeBehaviours: string[];
+  approvalStatus: ApprovalStatus;
+  sourceType: "manual" | "ai_extracted" | "url_extracted";
+};
+
+export type OrgCompetency = {
+  id: string;
+  name: string;
+  category: CompetencyCategory;
+  shortDefinition: string;
+  fullDefinition: string;
+  positiveBehaviours: string[];
+  riskBehaviours: string[];
+  approvalStatus: ApprovalStatus;
+  sourceType: "manual" | "ai_extracted" | "url_extracted";
+  levelnextMapping?: string; // mapped LevelNext universal capability
+  mappingType?: "direct" | "partial" | "composite" | "custom" | "unmapped";
+};
+
+export type OrgStrategicPriority = {
+  id: string;
+  title: string;
+  description: string;
+  rank: PriorityRank;
+  sponsor?: string;
+  targetDate?: string;
+  requiredCapabilities: string[];
+  approvalStatus: ApprovalStatus;
+  sourceType: "manual" | "ai_extracted";
+};
+
+export type OrgTerminology = {
+  id: string;
+  preferredTerm: string;
+  definition: string;
+  alternativeTerms: string[];
+  prohibitedTerms: string[];
+};
+
+export type OrgBranding = {
+  primaryColor: string;
+  logoUrl?: string;
+  preferredLanguage: string; // e.g. "British English"
+  terminology: OrgTerminology[];
+};
+
+export type OrgApplicationSettings = {
+  useInDiagnostics: boolean;
+  useInAICoaching: boolean;
+  useInSimulations: boolean;
+  useInReports: boolean;
+  useInDashboards: boolean;
+  managerCanSeeGoals: boolean;
+  managerCanSeeProgress: boolean;
+  hrCanSeeAggregates: boolean;
+};
+
+// Main organisation record (extended from tenants)
+export const organisations = mysqlTable("organisations", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id).unique(),
+  // Company profile
+  legalName: varchar("legalName", { length: 255 }).notNull(),
+  displayName: varchar("displayName", { length: 255 }),
+  website: varchar("website", { length: 500 }),
+  logoUrl: varchar("logoUrl", { length: 1000 }),
+  industry: varchar("industry", { length: 100 }),
+  subIndustry: varchar("subIndustry", { length: 100 }),
+  companySize: varchar("companySize", { length: 50 }),
+  employeeCount: varchar("employeeCount", { length: 50 }),
+  hq: varchar("hq", { length: 100 }),
+  countries: json("countries").$type<string[]>(),
+  primaryLanguage: varchar("primaryLanguage", { length: 50 }),
+  description: text("description"),
+  isGcc: boolean("isGcc").default(false),
+  // Mission / Vision / Purpose
+  missionStatement: text("missionStatement"),
+  visionStatement: text("visionStatement"),
+  purposeStatement: text("purposeStatement"),
+  missionSourceType: varchar("missionSourceType", { length: 30 }), // manual | url_extracted | doc_extracted
+  // Values, competencies, priorities stored as JSON arrays
+  values: json("values").$type<OrgValue[]>(),
+  competencies: json("competencies").$type<OrgCompetency[]>(),
+  strategicPriorities: json("strategicPriorities").$type<OrgStrategicPriority[]>(),
+  // Branding & terminology
+  branding: json("branding").$type<OrgBranding>(),
+  // Platform application settings
+  applicationSettings: json("applicationSettings").$type<OrgApplicationSettings>(),
+  // Wizard state
+  setupRoute: mysqlEnum("setupRoute", ["upload", "build", "standard"]),
+  wizardStep: int("wizardStep").default(1),
+  wizardStatus: mysqlEnum("wizardStatus", ["in_progress", "completed", "activated"]).default("in_progress"),
+  contextActivated: boolean("contextActivated").default(false),
+  activatedAt: timestamp("activatedAt"),
+  createdBy: int("createdBy").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Organisation = typeof organisations.$inferSelect;
+export type InsertOrganisation = typeof organisations.$inferInsert;
+
+// Uploaded documents for AI extraction
+export type DocProcessingStatus = "uploaded" | "processing" | "extracted" | "needs_review" | "approved" | "rejected";
+
+export const orgDocuments = mysqlTable("org_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  organisationId: int("organisationId").notNull().references(() => organisations.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  fileUrl: varchar("fileUrl", { length: 1000 }),
+  fileKey: varchar("fileKey", { length: 500 }),
+  fileName: varchar("fileName", { length: 255 }),
+  fileSize: int("fileSize"),
+  mimeType: varchar("mimeType", { length: 100 }),
+  confidentiality: mysqlEnum("confidentiality", ["general", "internal", "confidential", "restricted", "executive"]).default("internal"),
+  processingStatus: mysqlEnum("processingStatus", ["uploaded", "processing", "extracted", "needs_review", "approved", "rejected"]).default("uploaded"),
+  // Permissions
+  useInAICoaching: boolean("useInAICoaching").default(true),
+  useInDiagnostics: boolean("useInDiagnostics").default(true),
+  useInReports: boolean("useInReports").default(true),
+  useInSimulations: boolean("useInSimulations").default(false),
+  // Extracted content (raw JSON from AI)
+  extractedContent: json("extractedContent"),
+  uploadedBy: int("uploadedBy").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type OrgDocument = typeof orgDocuments.$inferSelect;
+export type InsertOrgDocument = typeof orgDocuments.$inferInsert;
+
+// Pending invitations for team setup
+export const orgInvitations = mysqlTable("org_invitations", {
+  id: int("id").autoincrement().primaryKey(),
+  organisationId: int("organisationId").notNull().references(() => organisations.id),
+  email: varchar("email", { length: 320 }).notNull(),
+  role: mysqlEnum("role", ["owner", "admin", "member"]).default("member").notNull(),
+  invitedBy: int("invitedBy").references(() => users.id),
+  status: mysqlEnum("status", ["pending", "accepted", "expired"]).default("pending"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type OrgInvitation = typeof orgInvitations.$inferSelect;
+export type InsertOrgInvitation = typeof orgInvitations.$inferInsert;

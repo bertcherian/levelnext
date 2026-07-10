@@ -22,7 +22,8 @@ import Report from "./pages/Report";
 import ImportEci from "./pages/ImportEci";
 import ImportChatgpt from "./pages/ImportChatgpt";
 import ImportPriorAssessments from "./pages/ImportPriorAssessments";
-import GrowthProfile from "./pages/GrowthProfile";
+import GrowthProfile from "@/pages/GrowthProfile";
+import EnterpriseOnboardingWizard from "@/pages/EnterpriseOnboardingWizard";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 
 function Router() {
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/import-ai" component={ImportChatgpt} />
       <Route path="/import-prior-assessments" component={ImportPriorAssessments} />
       <Route path="/growth-profile" component={GrowthProfile} />
+      <Route path="/enterprise-onboarding" component={EnterpriseOnboardingWizard} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />

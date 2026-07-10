@@ -167,7 +167,8 @@ export default function Onboarding() {
   const createTenant = trpc.tenant.create.useMutation({
     onSuccess: (_, vars) => {
       setSuccessOrgName(vars.name);
-      setMode("success");
+      // Redirect to the Enterprise Onboarding Wizard for full setup
+      navigate("/enterprise-onboarding");
     },
     onError: (e) => toast.error(e.message),
   });

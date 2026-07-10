@@ -15,6 +15,7 @@ import { unlockRouter } from "./routers/unlock";
 import { eciImportRouter } from "./routers/eciImport";
 import { chatgptImportRouter } from "./routers/chatgptImport";
 import { priorAssessmentImportRouter } from "./routers/priorAssessmentImport";
+import { enterpriseOnboardingRouter } from "./routers/enterpriseOnboarding";
 
 export const appRouter = router({
   system: systemRouter,
@@ -39,6 +40,7 @@ export const appRouter = router({
   eciImport: eciImportRouter,
   chatgptImport: chatgptImportRouter,
   priorAssessmentImport: priorAssessmentImportRouter,
+  enterpriseOnboarding: enterpriseOnboardingRouter,
 });
 
 export type AppRouter = typeof appRouter;
