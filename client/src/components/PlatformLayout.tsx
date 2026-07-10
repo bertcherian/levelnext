@@ -30,7 +30,7 @@ const NAV_ITEMS = [
   { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
   { label: "AI Practice Coach", icon: Zap, href: "/practice" },
-  { label: "Growth Profile", icon: Activity, href: "/practice?screen=growth-profile" },
+  { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
   { label: "Insights", icon: Lightbulb, href: "/insights" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
   { label: "Progress", icon: BarChart3, href: "/progress" },
@@ -42,7 +42,7 @@ const NAV_ITEMS = [
 const BOTTOM_TABS = [
   { label: "Home", icon: Home, href: "/home" },
   { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
-  { label: "Coach", icon: Zap, href: "/practice" },
+  { label: "Growth", icon: Activity, href: "/growth-profile" },
   { label: "Insights", icon: Lightbulb, href: "/insights" },
   { label: "More", icon: MoreHorizontal, href: null }, // opens drawer
 ];
@@ -153,7 +153,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
     if (itemHasQuery) return fullLocation === href;
     return (
       (location === href || location.startsWith(href + "/")) &&
-      !(href === "/practice" && fullLocation.includes("screen=growth-profile"))
+      true
     );
   };
 

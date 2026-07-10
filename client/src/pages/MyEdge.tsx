@@ -439,7 +439,7 @@ export default function MyEdge() {
                   );
                 })()}
                 {/* Growth Profile link */}
-                <Link href="/practice">
+                <Link href="/growth-profile">
                   <div className="mt-3 rounded-xl p-3 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                     style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.08)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.25)" }}>
                     <BarChart2 size={16} style={{ color: "var(--color-ln-gold)" }} />
