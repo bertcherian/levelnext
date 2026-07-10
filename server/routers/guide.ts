@@ -3,10 +3,23 @@ import { eq, desc, gte, and } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { guideConversations, guideSessions, users, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
+import { guideConversations, guideSessions, users, tenantUsers, organisations, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
-const GUIDE_SYSTEM_PROMPT = (graph: LeadershipGraph | null, userName: string): string => {
+type OrgContext = {
+  legalName: string;
+  displayName?: string | null;
+  missionStatement?: string | null;
+  visionStatement?: string | null;
+  purposeStatement?: string | null;
+  values?: any[];
+  competencies?: any[];
+  strategicPriorities?: any[];
+  branding?: any;
+  industry?: string | null;
+} | null;
+
+const GUIDE_SYSTEM_PROMPT = (graph: LeadershipGraph | null, userName: string, orgCtx?: OrgContext): string => {
   const g = graph as any;
   const modules = g?.modules ?? {};
 
@@ -34,9 +47,41 @@ const GUIDE_SYSTEM_PROMPT = (graph: LeadershipGraph | null, userName: string): s
       }).join('\n\n')
     : 'No diagnostic data yet — encourage the leader to complete their first diagnostic to unlock personalised coaching.';
 
+  // Build company context section if available
+  let companySection = '';
+  if (orgCtx) {
+    const orgName = orgCtx.displayName ?? orgCtx.legalName;
+    const lines = [`COMPANY CONTEXT FOR ${orgName.toUpperCase()}:`];
+    if (orgCtx.missionStatement) lines.push(`- Mission: ${orgCtx.missionStatement}`);
+    if (orgCtx.visionStatement) lines.push(`- Vision: ${orgCtx.visionStatement}`);
+    if (orgCtx.purposeStatement) lines.push(`- Purpose: ${orgCtx.purposeStatement}`);
+    if (orgCtx.industry) lines.push(`- Industry: ${orgCtx.industry}`);
+    const values = (orgCtx.values ?? []) as any[];
+    if (values.length > 0) {
+      lines.push(`- Core Values: ${values.map((v: any) => v.name).join(', ')}`);
+    }
+    const competencies = (orgCtx.competencies ?? []) as any[];
+    if (competencies.length > 0) {
+      lines.push(`- Leadership Competencies: ${competencies.map((c: any) => c.name + (c.level ? ` (${c.level})` : '')).join(', ')}`);
+    }
+    const priorities = (orgCtx.strategicPriorities ?? []) as any[];
+    if (priorities.length > 0) {
+      lines.push(`- Strategic Priorities: ${priorities.map((p: any, i: number) => `${i + 1}. ${p.title ?? p.name}`).join('; ')}`);
+    }
+    const branding = orgCtx.branding as any;
+    if (branding?.customTerminology) {
+      const terms = Object.entries(branding.customTerminology)
+        .filter(([, v]) => v)
+        .map(([k, v]) => `${k} → "${v}"`)
+        .join(', ');
+      if (terms) lines.push(`- Company Terminology: ${terms}`);
+    }
+    companySection = `\n\n${lines.join('\n')}\n\nIMPORTANT: When coaching ${userName}, always align your advice to ${orgName}'s values, competencies, and strategic priorities listed above. Reference them naturally in your responses — e.g. "Given ${orgName}'s focus on [value/priority]…" Use the company's own terminology where specified.`;
+  }
+
   return `You are Guide — the personal AI leadership coach inside LevelNext, The Leadership Intelligence Platform.
 
-Your role is to help ${userName} grow their leadership Edge through practical, personalised coaching conversations.
+Your role is to help ${userName} grow their leadership Edge through practical, personalised coaching conversations.${companySection}
 
 LEADERSHIP PROFILE FOR ${userName.toUpperCase()}:
 - Composite Edge: ${g?.compositeEdge ?? 'Not yet assessed'}/100
@@ -54,6 +99,7 @@ COACHING PRINCIPLES:
 7. End with a question or a suggested Mission to maintain momentum
 8. You are a trusted advisor, not a cheerleader — be honest when growth is needed
 9. When referencing archetypes, use their full label (e.g. "Strategic Influencer", "Invisible Expert")
+${orgCtx ? '10. Weave in the company context naturally — reference values, competencies, and priorities when they are directly relevant to the coaching conversation' : ''}
 
 Respond in a warm, executive, and confident tone.`.trim();
 };
@@ -101,6 +147,40 @@ export const guideRouter = router({
       const graph = (userResult[0]?.leadershipGraph as LeadershipGraph) ?? null;
       const userName = userResult[0]?.name ?? "Leader";
 
+      // Fetch company context if the user belongs to an org with activated context
+      let orgContext: OrgContext = null;
+      try {
+        const membership = await db
+          .select({ tenantId: tenantUsers.tenantId })
+          .from(tenantUsers)
+          .where(eq(tenantUsers.userId, ctx.user.id))
+          .limit(1);
+        if (membership.length) {
+          const orgResult = await db
+            .select()
+            .from(organisations)
+            .where(eq(organisations.tenantId, membership[0].tenantId))
+            .limit(1);
+          if (orgResult.length && orgResult[0].contextActivated) {
+            const o = orgResult[0];
+            orgContext = {
+              legalName: o.legalName,
+              displayName: o.displayName,
+              missionStatement: o.missionStatement,
+              visionStatement: o.visionStatement,
+              purposeStatement: o.purposeStatement,
+              values: (o.values ?? []) as any[],
+              competencies: (o.competencies ?? []) as any[],
+              strategicPriorities: (o.strategicPriorities ?? []) as any[],
+              branding: o.branding,
+              industry: o.industry,
+            };
+          }
+        }
+      } catch {
+        // Non-fatal — proceed without company context
+      }
+
       // Get or create conversation
       let conversation = await db
         .select()
@@ -139,7 +219,7 @@ export const guideRouter = router({
       }));
 
       // Call the LLM — prepend system prompt as a system message
-      const systemMsg = { role: "system" as const, content: GUIDE_SYSTEM_PROMPT(graph, userName) };
+      const systemMsg = { role: "system" as const, content: GUIDE_SYSTEM_PROMPT(graph, userName, orgContext) };
       const llmResult = await invokeLLM({
         model: "gpt-4o-mini",
         messages: [systemMsg, ...llmMessages],
