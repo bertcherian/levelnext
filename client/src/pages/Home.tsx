@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Sparkles, Target, TrendingUp, ArrowRight, CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { Sparkles, Target, TrendingUp, ArrowRight, CheckCircle2, Circle, Loader2, Zap } from "lucide-react";
 
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
@@ -219,6 +219,26 @@ export default function Home() {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* AI Practice Coach quick-access */}
+        <div className="rounded-2xl p-4 sm:p-5 flex items-center gap-4" style={{ background: "var(--color-ln-navy)", boxShadow: "var(--shadow-card)" }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)", border: "1.5px solid oklch(from var(--color-ln-yellow) l c h / 0.4)" }}>
+            <Zap size={18} style={{ color: "var(--color-ln-yellow)" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white">AI Practice Coach</p>
+            <p className="text-xs mt-0.5" style={{ color: "oklch(70% 0.02 248.6)" }}>Rehearse real conversations, get instant feedback, and build your leadership muscle.</p>
+          </div>
+          <Button
+            size="sm"
+            className="flex-shrink-0 font-semibold text-xs"
+            style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+            onClick={() => navigate("/practice")}
+          >
+            Practice <ArrowRight size={13} className="ml-1" />
+          </Button>
         </div>
 
         {/* Quick access to diagnostics */}
