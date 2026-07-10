@@ -124,21 +124,21 @@ export default function Landing() {
         }} />
 
         {/* MECLABS: Motivation — visceral pain hook */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-8"
-          style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", color: "var(--color-ln-yellow)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.25)" }}>
-          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-base font-semibold mb-8"
+          style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", color: "var(--color-ln-yellow)", border: "1.5px solid oklch(from var(--color-ln-yellow) l c h / 0.35)" }}>
+          <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
           For senior leaders who know they have more to give
         </div>
 
         {/* MECLABS: Motivation — the pain moment */}
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] mb-6 max-w-4xl mx-auto">
-          <span className="text-white">You're already good.</span><br />
-          <span style={{ color: "var(--color-ln-yellow)" }}>Are you growing?</span>
+          <span className="text-white">The Gap Between Where You Are</span><br />
+          <span className="text-white">And What's Next</span> <span style={{ color: "var(--color-ln-yellow)" }}>Is Leadership.</span>
         </h1>
 
         {/* MECLABS: Value Proposition — exact transformation + Named Mechanism */}
         <p className="text-xl md:text-2xl max-w-2xl mx-auto mb-4 leading-relaxed text-white">
-          Most leaders plateau — not from lack of effort, but from lack of precision.
+          Most leaders plateau — from gaps you're ignoring or don't even know.
           The <strong style={{ color: "var(--color-ln-yellow)" }}>LevelNext Leadership Intelligence System</strong> gives you
           the exact diagnostics, daily coaching, and AI-powered practice to close the gap
           between the leader you are and the leader you're capable of becoming.
@@ -161,7 +161,7 @@ export default function Landing() {
         </div>
 
         {/* MECLABS: Anxiety (−2×) — pre-empt the #1 fear */}
-        <p className="text-sm mt-5 text-white/50">
+        <p className="text-base mt-5 text-white font-medium">
           Not another personality test. Not a generic course. Real intelligence, built on your actual leadership data.
         </p>
 
@@ -172,9 +172,9 @@ export default function Landing() {
       </section>
 
       {/* ── SOCIAL PROOF: Real quotes from real leaders ───────────────────────── */}
-      <section className="px-6 py-16 md:py-20" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)" }}>
+      <section className="px-6 py-12 md:py-16" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)" }}>
         <div className="max-w-5xl mx-auto">
-          <p className="text-center text-sm font-semibold uppercase tracking-widest mb-12" style={{ color: "var(--color-ln-yellow)" }}>
+          <p className="text-center text-lg font-bold uppercase tracking-widest mb-10" style={{ color: "var(--color-ln-yellow)" }}>
             What leaders are saying
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -182,12 +182,12 @@ export default function Landing() {
               <div key={sp.name} className="rounded-2xl p-6 flex flex-col gap-4"
                 style={{ background: "oklch(from white 12% 0 0 / 0.06)", border: "1px solid oklch(from white 30% 0 0 / 0.08)" }}>
                 <Quote size={20} style={{ color: "var(--color-ln-yellow)", opacity: 0.6 }} />
-                <p className="text-sm leading-relaxed flex-1" style={{ color: "oklch(78% 0.02 248.6)" }}>
+                <p className="text-base leading-relaxed flex-1 text-white">
                   "{sp.quote}"
                 </p>
                 <div>
-                  <p className="text-sm font-semibold text-white">{sp.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "oklch(55% 0.02 248.6)" }}>{sp.title}</p>
+                  <p className="text-base font-bold text-white">{sp.name}</p>
+                  <p className="text-sm mt-0.5" style={{ color: "oklch(65% 0.02 248.6)" }}>{sp.title}</p>
                 </div>
               </div>
             ))}
@@ -196,7 +196,7 @@ export default function Landing() {
       </section>
 
       {/* ── THE PROBLEM: Motivation deepened (4×) ────────────────────────────── */}
-      <section className="px-6 py-16 md:py-24 text-center">
+      <section className="px-6 py-12 md:py-20 text-center">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight text-white">
             Leadership development is broken.<br />
@@ -223,8 +223,8 @@ export default function Landing() {
               <div key={item.problem} className="rounded-2xl p-6"
                 style={{ background: "oklch(from white 12% 0 0 / 0.04)", border: "1px solid oklch(from white 30% 0 0 / 0.07)" }}>
                 <item.icon size={22} className="mb-4" style={{ color: "var(--color-ln-yellow)" }} />
-                <h3 className="font-semibold text-white mb-2">{item.problem}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: "oklch(65% 0.02 248.6)" }}>{item.detail}</p>
+                <h3 className="text-lg font-bold text-white mb-2">{item.problem}</h3>
+                <p className="text-base leading-relaxed" style={{ color: "oklch(72% 0.02 248.6)" }}>{item.detail}</p>
               </div>
             ))}
           </div>
@@ -255,8 +255,8 @@ export default function Landing() {
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "oklch(50% 0.02 248.6)" }}>Step {step.step}</p>
-                  <h3 className="font-semibold text-white mb-2">{step.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "oklch(65% 0.02 248.6)" }}>{step.desc}</p>
+                  <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
+                  <p className="text-base leading-relaxed" style={{ color: "oklch(72% 0.02 248.6)" }}>{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -285,8 +285,8 @@ export default function Landing() {
                   {d.code}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{d.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "oklch(55% 0.02 248.6)" }}>{d.desc}</p>
+                  <p className="text-base font-bold text-white">{d.name}</p>
+                  <p className="text-sm mt-0.5" style={{ color: "oklch(65% 0.02 248.6)" }}>{d.desc}</p>
                 </div>
               </div>
             ))}
@@ -319,9 +319,9 @@ export default function Landing() {
                 style={{ background: "oklch(from white 12% 0 0 / 0.05)", border: "1px solid oklch(from white 30% 0 0 / 0.08)" }}>
                 <div className="flex items-center gap-2 mb-3">
                   <Shield size={16} style={{ color: "var(--color-ln-yellow)" }} />
-                  <p className="text-sm font-semibold" style={{ color: "oklch(65% 0.02 248.6)" }}>{item.fear}</p>
+                  <p className="text-base font-semibold text-white">{item.fear}</p>
                 </div>
-                <p className="text-sm leading-relaxed" style={{ color: "oklch(75% 0.02 248.6)" }}>{item.counter}</p>
+                <p className="text-base leading-relaxed" style={{ color: "oklch(78% 0.02 248.6)" }}>{item.counter}</p>
               </div>
             ))}
           </div>
