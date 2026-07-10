@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Sparkles, Target, TrendingUp, ArrowRight, CheckCircle2, Circle, Loader2, Zap } from "lucide-react";
+import { Sparkles, Target, TrendingUp, ArrowRight, CheckCircle2, Circle, Loader2, Zap, Flame } from "lucide-react";
 
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
@@ -16,6 +16,61 @@ const MODULE_LABELS: Record<string, string> = {
   STI: "Strategic Thinking",
 };
 
+
+// ── Practice Coach Card with weekly stats ────────────────────────────────────
+function PracticeCoachCard() {
+  const [, navigate] = useLocation();
+  const { data: stats } = trpc.leadershipCoach.weeklyStats.useQuery();
+
+  const sessionsThisWeek = stats?.sessionsThisWeek ?? 0;
+  const streakDays = stats?.streakDays ?? 0;
+
+  return (
+    <div className="rounded-2xl p-4 sm:p-5" style={{ background: "var(--color-ln-navy)", boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)", border: "1.5px solid oklch(from var(--color-ln-yellow) l c h / 0.4)" }}>
+          <Zap size={18} style={{ color: "var(--color-ln-yellow)" }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-white">AI Practice Coach</p>
+          <p className="text-xs mt-0.5" style={{ color: "oklch(70% 0.02 248.6)" }}>Rehearse real conversations, get instant feedback, and build your leadership muscle.</p>
+        </div>
+        <Button
+          size="sm"
+          className="flex-shrink-0 font-semibold text-xs"
+          style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+          onClick={() => navigate("/practice")}
+        >
+          Practice <ArrowRight size={13} className="ml-1" />
+        </Button>
+      </div>
+
+      {/* Activity badges */}
+      <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid oklch(from white 30% 0 0 / 0.12)" }}>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+          style={{ background: sessionsThisWeek > 0 ? "oklch(from var(--color-ln-yellow) l c h / 0.18)" : "oklch(30% 0.01 248.6)" }}>
+          <Zap size={11} style={{ color: sessionsThisWeek > 0 ? "var(--color-ln-yellow)" : "oklch(50% 0.02 248.6)" }} />
+          <span className="text-[11px] font-semibold" style={{ color: sessionsThisWeek > 0 ? "var(--color-ln-yellow)" : "oklch(50% 0.02 248.6)" }}>
+            {sessionsThisWeek} session{sessionsThisWeek !== 1 ? "s" : ""} this week
+          </span>
+        </div>
+        {streakDays > 0 && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{ background: "oklch(from #f97316 l c h / 0.18)" }}>
+            <Flame size={11} style={{ color: "#f97316" }} />
+            <span className="text-[11px] font-semibold" style={{ color: "#f97316" }}>
+              {streakDays} day streak
+            </span>
+          </div>
+        )}
+        {streakDays === 0 && sessionsThisWeek === 0 && (
+          <span className="text-[11px]" style={{ color: "oklch(45% 0.02 248.6)" }}>Start your first session to build a streak</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -222,24 +277,7 @@ export default function Home() {
         </div>
 
         {/* AI Practice Coach quick-access */}
-        <div className="rounded-2xl p-4 sm:p-5 flex items-center gap-4" style={{ background: "var(--color-ln-navy)", boxShadow: "var(--shadow-card)" }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)", border: "1.5px solid oklch(from var(--color-ln-yellow) l c h / 0.4)" }}>
-            <Zap size={18} style={{ color: "var(--color-ln-yellow)" }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white">AI Practice Coach</p>
-            <p className="text-xs mt-0.5" style={{ color: "oklch(70% 0.02 248.6)" }}>Rehearse real conversations, get instant feedback, and build your leadership muscle.</p>
-          </div>
-          <Button
-            size="sm"
-            className="flex-shrink-0 font-semibold text-xs"
-            style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
-            onClick={() => navigate("/practice")}
-          >
-            Practice <ArrowRight size={13} className="ml-1" />
-          </Button>
-        </div>
+        <PracticeCoachCard />
 
         {/* Quick access to diagnostics */}
         {pendingModules.length > 0 && (

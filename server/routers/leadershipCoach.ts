@@ -16,7 +16,7 @@ import {
   practiceSessions,
   users,
 } from "../../drizzle/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, gte } from "drizzle-orm";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 async function getLeaderContext(userId: number) {
@@ -862,9 +862,54 @@ Generate 3 recommendation groups, one per focus module. Each group should have 3
 
     return recommendations;
   }),
+  weeklyStats: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { sessionsThisWeek: 0, totalSessions: 0, streakDays: 0 };
+
+    // Start of current week (Monday)
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - daysFromMonday);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const allSessions = await db
+      .select({ createdAt: practiceSessions.createdAt })
+      .from(practiceSessions)
+      .where(eq(practiceSessions.userId, ctx.user.id))
+      .orderBy(desc(practiceSessions.createdAt));
+
+    const sessionsThisWeek = allSessions.filter(
+      (s) => new Date(s.createdAt) >= weekStart
+    ).length;
+
+    // Calculate streak: consecutive days with at least one session (going back from today)
+    const sessionDates = new Set(
+      allSessions.map((s) => {
+        const d = new Date(s.createdAt);
+        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      })
+    );
+    let streakDays = 0;
+    const cursor = new Date();
+    cursor.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 365; i++) {
+      const key = `${cursor.getFullYear()}-${cursor.getMonth()}-${cursor.getDate()}`;
+      if (sessionDates.has(key)) {
+        streakDays++;
+        cursor.setDate(cursor.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    return { sessionsThisWeek, totalSessions: allSessions.length, streakDays };
+  }),
+
 });
 
-// ─── Background helper: update leadership memory ──────────────────────────────
+// ─── Internal helper: update leadership memory ──────────────────────────────
 async function updateLeadershipMemory(userId: number, sourceType: string, update: string) {
   try {
     const db = await getDb();
