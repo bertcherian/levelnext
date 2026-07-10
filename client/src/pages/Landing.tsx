@@ -131,21 +131,21 @@ export default function Landing() {
         </div>
 
         {/* MECLABS: Motivation — the pain moment */}
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.08] mb-6 max-w-4xl mx-auto">
-          You're already good.<br />
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] mb-6 max-w-4xl mx-auto">
+          <span className="text-white">You're already good.</span><br />
           <span style={{ color: "var(--color-ln-yellow)" }}>Are you growing?</span>
         </h1>
 
         {/* MECLABS: Value Proposition — exact transformation + Named Mechanism */}
-        <p className="text-lg md:text-xl max-w-2xl mx-auto mb-4 leading-relaxed" style={{ color: "oklch(75% 0.02 248.6)" }}>
+        <p className="text-xl md:text-2xl max-w-2xl mx-auto mb-4 leading-relaxed text-white">
           Most leaders plateau — not from lack of effort, but from lack of precision.
-          LevelNext's <strong className="text-white">Leadership Edge System</strong> gives you
+          The <strong style={{ color: "var(--color-ln-yellow)" }}>LevelNext Leadership Intelligence System</strong> gives you
           the exact diagnostics, daily coaching, and AI-powered practice to close the gap
           between the leader you are and the leader you're capable of becoming.
         </p>
 
         {/* MECLABS: Friction (−2×) — remove every barrier */}
-        <p className="text-sm mb-10" style={{ color: "oklch(55% 0.02 248.6)" }}>
+        <p className="text-base mb-10 text-white/60">
           Free to start · First diagnostic in 10 minutes · Personalised result immediately · No credit card
         </p>
 
@@ -161,7 +161,7 @@ export default function Landing() {
         </div>
 
         {/* MECLABS: Anxiety (−2×) — pre-empt the #1 fear */}
-        <p className="text-xs mt-5" style={{ color: "oklch(45% 0.02 248.6)" }}>
+        <p className="text-sm mt-5 text-white/50">
           Not another personality test. Not a generic course. Real intelligence, built on your actual leadership data.
         </p>
 
@@ -198,7 +198,7 @@ export default function Landing() {
       {/* ── THE PROBLEM: Motivation deepened (4×) ────────────────────────────── */}
       <section className="px-6 py-16 md:py-24 text-center">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight text-white">
             Leadership development is broken.<br />
             <span style={{ color: "var(--color-ln-yellow)" }}>Here's why yours hasn't stuck.</span>
           </h2>
@@ -236,9 +236,9 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--color-ln-yellow)" }}>
-              The Leadership Edge System
+              The LevelNext Leadership Intelligence System
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+            <h2 className="text-3xl md:text-5xl font-bold leading-tight text-white">
               Four steps from insight to<br />
               <span style={{ color: "var(--color-ln-yellow)" }}>measurable leadership growth.</span>
             </h2>
@@ -271,10 +271,10 @@ export default function Landing() {
             <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--color-ln-yellow)" }}>
               Six precision diagnostics
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-              Know exactly where you stand.<br />
-              <span style={{ color: "var(--color-ln-yellow)" }}>In every dimension that matters.</span>
-            </h2>
+          <h2 className="text-3xl md:text-5xl font-bold leading-tight text-white">
+            Know exactly where you stand.<br />
+            <span style={{ color: "var(--color-ln-yellow)" }}>In every dimension that matters.</span>
+          </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {DIAGNOSTICS.map((d) => (
@@ -297,7 +297,7 @@ export default function Landing() {
       {/* ── ANXIETY COUNTER: Pre-empt the #1 fear (−2×) ─────────────────────── */}
       <section className="px-6 py-16 md:py-20" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)" }}>
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold mb-10 text-white">
             Not what you're thinking.
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -337,11 +337,11 @@ export default function Landing() {
           <p className="text-sm font-semibold uppercase tracking-widest mb-5" style={{ color: "var(--color-ln-yellow)" }}>
             Start building your edge today
           </p>
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight text-white">
             Your next level of leadership<br />
             <span style={{ color: "var(--color-ln-yellow)" }}>starts with one diagnostic.</span>
           </h2>
-          <p className="text-base mb-10 leading-relaxed" style={{ color: "oklch(65% 0.02 248.6)" }}>
+          <p className="text-lg mb-10 leading-relaxed text-white/70">
             In 10 minutes, you'll have a personalised Leadership Edge score,
             a clear picture of your strengths and growth edges, and your first
             coaching mission from Guide — completely free.
