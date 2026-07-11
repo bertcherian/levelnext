@@ -155,7 +155,7 @@ export default function Assessment() {
   const [responses, setResponses] = useState<Record<string, number>>({});
   const [result, setResult] = useState<SubmitResult | null>(null);
 
-  const { data: questionsData, isLoading: questionsLoading } = trpc.assessment.getQuestions.useQuery(
+  const { data: questionsData, isLoading: questionsLoading, isError: questionsError } = trpc.assessment.getQuestions.useQuery(
     { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" },
     { enabled: isAuthenticated }
   );
@@ -228,6 +228,24 @@ export default function Assessment() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-ivory)" }}>
         <Loader2 className="animate-spin" size={28} style={{ color: "var(--color-ln-navy)" }} />
+      </div>
+    );
+  }
+
+  // ── Error / empty questions guard ──────────────────────────────────────────
+  if (!questionsLoading && !loading && (questionsError || (allQuestions.length === 0 && phase !== "complete")) && phase === "intro") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: "var(--color-ln-ivory)" }}>
+        <div className="text-center max-w-sm">
+          <p className="text-4xl mb-4">⚠️</p>
+          <h2 className="text-xl font-bold mb-2" style={{ color: "var(--color-ln-navy)" }}>Could not load questions</h2>
+          <p className="text-sm mb-6" style={{ color: "var(--color-ln-muted)" }}>There was a problem loading the diagnostic questions. Please try again or contact support.</p>
+          <button
+            onClick={() => navigate("/diagnostics")}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold"
+            style={{ background: "var(--color-ln-navy)", color: "white" }}
+          >← Back to Diagnostics</button>
+        </div>
       </div>
     );
   }

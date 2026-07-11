@@ -129,7 +129,7 @@ export default function Home() {
           <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
             {completedModules.length === 0
               ? "Start with your first diagnostic to build your Leadership Edge."
-              : `Your Edge continues to strengthen. ${completedModules.length} of 5 modules complete.`}
+              : `Your Edge continues to strengthen. ${completedModules.length} of 6 modules complete.`}
           </p>
         </div>
 

@@ -86,7 +86,7 @@ export default function Guide() {
     { enabled: isAuthenticated }
   );
 
-  const { data: graphData } = trpc.leadershipGraph.get.useQuery(
+  const { data: graphData, isLoading: graphLoading } = trpc.leadershipGraph.get.useQuery(
     undefined,
     { enabled: isAuthenticated, staleTime: 0, refetchOnMount: true }
   );
@@ -262,6 +262,23 @@ export default function Guide() {
               </p>
             </div>
           </div>
+
+          {/* New-user nudge — shown when no diagnostics completed */}
+          {!convLoading && !graphLoading && !hasEci && !hasLii && !hasGcc && (
+            <div className="rounded-2xl p-5 flex items-start gap-4"
+              style={{ background: "oklch(97% 0.01 248.6)", border: "1.5px solid var(--color-ln-yellow)" }}>
+              <span className="text-2xl flex-shrink-0">🎯</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold mb-1" style={{ color: "var(--color-ln-navy)" }}>Complete a diagnostic to unlock personalised coaching</p>
+                <p className="text-sm mb-3" style={{ color: "var(--color-ln-muted)" }}>Guide becomes significantly more powerful once it knows your leadership profile. Start with the ECI diagnostic — it takes 10 minutes and gives Guide the context to coach you specifically.</p>
+                <button
+                  onClick={() => navigate("/diagnostics")}
+                  className="text-sm font-semibold px-4 py-2 rounded-xl"
+                  style={{ background: "var(--color-ln-navy)", color: "white" }}
+                >Start ECI Diagnostic →</button>
+              </div>
+            </div>
+          )}
 
           {/* Edge Context Card — shows all completed modules */}
           {(hasEci || hasLii || hasGcc) && (
