@@ -352,6 +352,8 @@ export const leadershipMemory = mysqlTable("leadership_memory", {
   userId: int("userId").notNull().references(() => users.id),
   memory: json("memory").$type<LeadershipMemoryEntry>(),
   aiSummary: text("aiSummary"),
+  momentumMode: boolean("momentumMode").default(false).notNull(),
+  weeklyEmailEnabled: boolean("weeklyEmailEnabled").default(true).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

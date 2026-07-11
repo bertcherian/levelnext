@@ -907,6 +907,42 @@ Generate 3 recommendation groups, one per focus module. Each group should have 3
     return { sessionsThisWeek, totalSessions: allSessions.length, streakDays };
   }),
 
+  // ── Momentum Mode & Weekly Email Settings ─────────────────────────────────
+  getMomentumSettings: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { momentumMode: false, weeklyEmailEnabled: true };
+    const [mem] = await db.select({
+      momentumMode: leadershipMemory.momentumMode,
+      weeklyEmailEnabled: leadershipMemory.weeklyEmailEnabled,
+    }).from(leadershipMemory).where(eq(leadershipMemory.userId, ctx.user.id));
+    return mem ?? { momentumMode: false, weeklyEmailEnabled: true };
+  }),
+
+  updateMomentumSettings: protectedProcedure
+    .input(z.object({
+      momentumMode: z.boolean().optional(),
+      weeklyEmailEnabled: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return;
+      const [existing] = await db.select().from(leadershipMemory)
+        .where(eq(leadershipMemory.userId, ctx.user.id));
+      const patch: Record<string, boolean> = {};
+      if (input.momentumMode !== undefined) patch.momentumMode = input.momentumMode;
+      if (input.weeklyEmailEnabled !== undefined) patch.weeklyEmailEnabled = input.weeklyEmailEnabled;
+      if (existing) {
+        await db.update(leadershipMemory).set(patch).where(eq(leadershipMemory.userId, ctx.user.id));
+      } else {
+        await db.insert(leadershipMemory).values({
+          userId: ctx.user.id,
+          momentumMode: input.momentumMode ?? false,
+          weeklyEmailEnabled: input.weeklyEmailEnabled ?? true,
+        });
+      }
+      return { ok: true };
+    }),
+
 });
 
 // ─── Internal helper: update leadership memory ──────────────────────────────

@@ -46,6 +46,7 @@ import {
   Pause,
   LayoutDashboard,
   ListChecks,
+  Settings,
 } from "lucide-react";
 import type {
   PracticeScenario,
@@ -2316,7 +2317,7 @@ function FeedbackScreen({
         </div>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 mb-4">
         <Button onClick={onRetry} variant="outline" className="flex-1">
           <RotateCcw className="w-4 h-4 mr-2" />
           Try Again
@@ -2326,6 +2327,25 @@ function FeedbackScreen({
           Back to Coach
         </Button>
       </div>
+
+      {/* Guide AI deep-dive prompt */}
+      <a
+        href="/guide"
+        className="block rounded-xl border border-[var(--color-ln-navy)]/20 bg-[var(--color-ln-navy)]/5 p-4 hover:bg-[var(--color-ln-navy)]/10 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center flex-shrink-0">
+            <Brain className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-[var(--color-ln-navy)]">Want to go deeper?</p>
+            <p className="text-xs text-[var(--color-ln-navy)]/60 mt-0.5">
+              Open this in Guide → your AI leadership advisor can help you build a strategy around what came up in this session.
+            </p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[var(--color-ln-navy)]/40 group-hover:text-[var(--color-ln-navy)] transition-colors flex-shrink-0" />
+        </div>
+      </a>
     </div>
   );
 }
@@ -2698,6 +2718,13 @@ function PracticePlanScreen({
   const { data: memory, isLoading: loadingMemory } = trpc.leadershipCoach.getMemory.useQuery();
   const { data: recommendations } = trpc.leadershipCoach.getPersonalisedRecommendations.useQuery();
   const { data: historyData, isLoading: loadingHistory } = trpc.practice.getHistory.useQuery();
+  const { data: momentumSettings } = trpc.leadershipCoach.getMomentumSettings.useQuery();
+  const utils = trpc.useUtils();
+
+  const updateMomentum = trpc.leadershipCoach.updateMomentumSettings.useMutation({
+    onSuccess: () => { utils.leadershipCoach.getMomentumSettings.invalidate(); toast.success("Settings saved"); },
+    onError: () => toast.error("Could not save settings"),
+  });
 
   const updateCommitment = trpc.leadershipCoach.updateCommitmentOutcome.useMutation({
     onSuccess: () => toast.success("Commitment updated"),
@@ -2825,7 +2852,7 @@ function PracticePlanScreen({
 
       {/* Completed Commitments */}
       {completed.length > 0 && (
-        <div>
+        <div className="mb-6">
           <p className="text-sm font-semibold text-[var(--color-ln-navy)] mb-3 flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4 text-emerald-500" />
             Completed Commitments
@@ -2840,6 +2867,56 @@ function PracticePlanScreen({
           </div>
         </div>
       )}
+
+      {/* Practice Settings */}
+      <div className="mt-2 rounded-xl border border-gray-200 bg-white p-5">
+        <p className="text-sm font-semibold text-[var(--color-ln-navy)] mb-4 flex items-center gap-1.5">
+          <Settings className="w-4 h-4 text-[var(--color-ln-gold)]" />
+          Practice Settings
+        </p>
+        <div className="space-y-4">
+          {/* Momentum Mode */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-[var(--color-ln-navy)]">Momentum Mode</p>
+              <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
+                Receive a daily check-in notification reminding you to act on your open practice commitment.
+              </p>
+            </div>
+            <button
+              onClick={() => updateMomentum.mutate({ momentumMode: !(momentumSettings?.momentumMode ?? false) })}
+              disabled={updateMomentum.isPending}
+              className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 ${
+                momentumSettings?.momentumMode ? 'bg-[var(--color-ln-navy)]' : 'bg-gray-200'
+              }`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                momentumSettings?.momentumMode ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
+          {/* Weekly Summary Email */}
+          <div className="flex items-start justify-between gap-4 pt-4 border-t border-gray-100">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-[var(--color-ln-navy)]">Weekly Practice Summary Email</p>
+              <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
+                Receive a Monday morning digest of your practice sessions, scores, and open commitments from the past week.
+              </p>
+            </div>
+            <button
+              onClick={() => updateMomentum.mutate({ weeklyEmailEnabled: !(momentumSettings?.weeklyEmailEnabled ?? true) })}
+              disabled={updateMomentum.isPending}
+              className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 ${
+                (momentumSettings?.weeklyEmailEnabled ?? true) ? 'bg-[var(--color-ln-navy)]' : 'bg-gray-200'
+              }`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                (momentumSettings?.weeklyEmailEnabled ?? true) ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
