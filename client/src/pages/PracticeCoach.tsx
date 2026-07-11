@@ -44,6 +44,8 @@ import {
   Lock,
   Send,
   Pause,
+  LayoutDashboard,
+  ListChecks,
 } from "lucide-react";
 import type {
   PracticeScenario,
@@ -72,7 +74,9 @@ type Screen =
   | "script-builder"
   | "growth-profile"
   | "coach-brief"
-  | "privacy-settings";
+  | "privacy-settings"
+  | "create-commitment"
+  | "practice-plan";
 
 const SUGGESTION_CHIPS = [
   "Give feedback to a defensive team member",
@@ -190,6 +194,8 @@ function HomeScreen({
   onSayItBetter,
   onScriptBuilder,
   onHistory,
+  onCreateCommitment,
+  onPracticePlan,
 }: {
   onCoachFirst: (issue: string) => void;
   onSimulateFirst: (issue: string) => void;
@@ -198,6 +204,8 @@ function HomeScreen({
   onSayItBetter: () => void;
   onScriptBuilder: () => void;
   onHistory: () => void;
+  onCreateCommitment: () => void;
+  onPracticePlan: () => void;
 }) {
   const [issue, setIssue] = useState("");
   const [showAllChips, setShowAllChips] = useState(false);
@@ -291,6 +299,22 @@ function HomeScreen({
       color: 'bg-white border border-[var(--color-ln-navy)]/20 text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-navy)]/5',
       onClick: onScriptBuilder,
     },
+    {
+      id: 'create-commitment',
+      icon: ListChecks,
+      label: 'Create a Practice Commitment',
+      sub: 'Turn a real situation into a specific behavioural commitment',
+      color: 'bg-white border border-[var(--color-ln-navy)]/20 text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-navy)]/5',
+      onClick: onCreateCommitment,
+    },
+    {
+      id: 'practice-plan',
+      icon: LayoutDashboard,
+      label: 'My Practice Plan',
+      sub: 'Your development priorities, commitments, and progress',
+      color: 'bg-white border border-[var(--color-ln-navy)]/20 text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-navy)]/5',
+      onClick: onPracticePlan,
+    },
   ];
 
   return (
@@ -364,32 +388,34 @@ function HomeScreen({
       )}
 
       {/* Mode Buttons — 2 primary only, others in dropdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      {/* Primary action buttons — Coach Me First + Practice Simulation */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         {MODE_BUTTONS.slice(0, 2).map(btn => (
           <button
             key={btn.id}
             onClick={btn.onClick}
             className={`flex items-center gap-3 p-4 rounded-xl text-left transition-all active:scale-[0.98] ${btn.color}`}
           >
-            <btn.icon className="w-5 h-5 flex-shrink-0" />
+            <btn.icon className="w-5 h-5 flex-shrink-0" style={{color: 'inherit'}} />
             <div>
-              <p className="text-sm font-semibold">{btn.label}</p>
-              <p className="text-xs opacity-70 mt-0.5">{btn.sub}</p>
+              <p className="text-sm font-semibold" style={{color: 'inherit'}}>{btn.label}</p>
+              <p className="text-xs mt-0.5" style={{color: 'inherit', opacity: 0.75}}>{btn.sub}</p>
             </div>
           </button>
         ))}
       </div>
+      {/* Secondary action buttons — all others */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
-        {MODE_BUTTONS.slice(2, 4).map(btn => (
+        {MODE_BUTTONS.slice(2).map(btn => (
           <button
             key={btn.id}
             onClick={btn.onClick}
             className={`flex items-center gap-3 p-3.5 rounded-xl text-left transition-all active:scale-[0.98] ${btn.color}`}
           >
-            <btn.icon className="w-4 h-4 flex-shrink-0" />
+            <btn.icon className="w-4 h-4 flex-shrink-0" style={{color: 'inherit'}} />
             <div>
-              <p className="text-sm font-medium">{btn.label}</p>
-              <p className="text-xs opacity-60 mt-0.5">{btn.sub}</p>
+              <p className="text-sm font-medium" style={{color: 'inherit'}}>{btn.label}</p>
+              <p className="text-xs mt-0.5" style={{color: 'inherit', opacity: 0.65}}>{btn.sub}</p>
             </div>
           </button>
         ))}
@@ -2381,7 +2407,7 @@ export default function PracticeCoach() {
     const screenParam = params.get('screen') as Screen | null;
     if (screenParam && screenParam !== screen) {
       setScreen(screenParam);
-    } else if (!screenParam && screen !== 'home' && !['coaching', 'scenario-setup', 'roleplay', 'feedback', 'before-meeting-form', 'before-meeting-brief', 'after-meeting-form', 'after-meeting-debrief', 'say-it-better', 'script-builder', 'growth-profile', 'coach-brief', 'privacy-settings', 'history'].includes(screen)) {
+    } else if (!screenParam && screen !== 'home' && !['coaching', 'scenario-setup', 'roleplay', 'feedback', 'before-meeting-form', 'before-meeting-brief', 'after-meeting-form', 'after-meeting-debrief', 'say-it-better', 'script-builder', 'growth-profile', 'coach-brief', 'privacy-settings', 'history', 'create-commitment', 'practice-plan'].includes(screen)) {
       setScreen('home');
     }
   }, [location, search]);
@@ -2413,6 +2439,8 @@ export default function PracticeCoach() {
           onSayItBetter={() => setScreen('say-it-better')}
           onScriptBuilder={() => setScreen('script-builder')}
           onHistory={() => setScreen('history')}
+          onCreateCommitment={() => setScreen('create-commitment')}
+          onPracticePlan={() => setScreen('practice-plan')}
         />
       );
     }
@@ -2503,6 +2531,8 @@ export default function PracticeCoach() {
       );
     }
     if (screen === 'say-it-better') return <SayItBetterScreen onBack={goHome} />;
+    if (screen === 'create-commitment') return <CreateCommitmentScreen onBack={goHome} />;
+    if (screen === 'practice-plan') return <PracticePlanScreen onBack={goHome} onPractice={(iss) => { setIssue(iss); setScreen('scenario-setup'); }} />;
     if (screen === 'script-builder') return <ScriptBuilderScreen onBack={goHome} />;
     if (screen === 'growth-profile') {
       return (
@@ -2545,6 +2575,271 @@ function SimulateFirstSetup({
     <div className="flex flex-col items-center justify-center py-16 gap-3">
       <RefreshCw className="w-6 h-6 animate-spin text-[var(--color-ln-navy)]/40" />
       <p className="text-sm text-gray-400">Setting up your practice session...</p>
+    </div>
+  );
+}
+
+// ── Create Commitment Screen ──────────────────────────────────────────────────
+function CreateCommitmentScreen({ onBack }: { onBack: () => void }) {
+  const [situation, setSituation] = useState("");
+  const [behaviour, setBehaviour] = useState("");
+  const [trigger, setTrigger] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const createCommitment = trpc.leadershipCoach.addCommitment.useMutation({
+    onSuccess: () => {
+      setSubmitted(true);
+      toast.success("Practice commitment created!");
+    },
+    onError: () => toast.error("Could not save commitment. Try again."),
+  });
+
+  const handleSubmit = () => {
+    if (!situation.trim() || !behaviour.trim()) {
+      toast.error("Please fill in the situation and the specific behaviour you will practise.");
+      return;
+    }
+    const text = `Situation: ${situation.trim()}. Behaviour: ${behaviour.trim()}${trigger.trim() ? `. Trigger: ${trigger.trim()}` : ""}.`;
+    createCommitment.mutate({ text });
+  };
+
+  if (submitted) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <BackButton onBack={onBack} />
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
+          <CheckCircle className="w-12 h-12 text-emerald-500" />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Commitment Saved</h2>
+          <p className="text-sm text-gray-500 max-w-sm">
+            Your practice commitment has been added to your open commitments. You'll see it on the home screen as a reminder.
+          </p>
+          <Button onClick={onBack} className="mt-2 bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90">
+            Back to Practice Coach
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+      <BackButton onBack={onBack} />
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <ListChecks className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h1 className="text-xl font-bold text-[var(--color-ln-navy)]">Create a Practice Commitment</h1>
+        </div>
+        <p className="text-sm text-[var(--color-ln-navy)]/60">
+          Turn a real leadership situation into a specific behavioural commitment you will practise.
+        </p>
+      </div>
+
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">
+            What is the real situation you are dealing with?
+          </label>
+          <Textarea
+            value={situation}
+            onChange={e => setSituation(e.target.value)}
+            placeholder="e.g. My stakeholder in the US dismisses my ideas in group calls and I tend to go quiet rather than push back."
+            className="min-h-[90px] text-sm resize-none border-gray-200 focus:border-[var(--color-ln-navy)]"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">
+            What specific behaviour will you practise? <span className="text-[var(--color-ln-gold)]">*</span>
+          </label>
+          <Textarea
+            value={behaviour}
+            onChange={e => setBehaviour(e.target.value)}
+            placeholder="e.g. When my idea is dismissed, I will pause, name the dynamic calmly, and restate my point once with evidence before moving on."
+            className="min-h-[90px] text-sm resize-none border-gray-200 focus:border-[var(--color-ln-navy)]"
+          />
+          <p className="text-xs text-gray-400 mt-1">Be specific — describe the exact words or action, not just the intention.</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[var(--color-ln-navy)] mb-1.5">
+            When will you next have the opportunity to use this? <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <Input
+            value={trigger}
+            onChange={e => setTrigger(e.target.value)}
+            placeholder="e.g. Thursday's cross-functional call with the US team"
+            className="text-sm border-gray-200 focus:border-[var(--color-ln-navy)]"
+          />
+        </div>
+
+        <div className="pt-2">
+          <Button
+            onClick={handleSubmit}
+            disabled={createCommitment.isPending || !situation.trim() || !behaviour.trim()}
+            className="w-full bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90 font-semibold"
+          >
+            {createCommitment.isPending ? "Saving…" : "Save Practice Commitment"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Practice Plan Screen ──────────────────────────────────────────────────────
+function PracticePlanScreen({
+  onBack,
+  onPractice,
+}: {
+  onBack: () => void;
+  onPractice: (issue: string) => void;
+}) {
+  const { data: commitments, isLoading: loadingCommitments } = trpc.leadershipCoach.getCommitments.useQuery();
+  const { data: memory, isLoading: loadingMemory } = trpc.leadershipCoach.getMemory.useQuery();
+  const { data: recommendations } = trpc.leadershipCoach.getPersonalisedRecommendations.useQuery();
+  const { data: historyData, isLoading: loadingHistory } = trpc.practice.getHistory.useQuery();
+
+  const updateCommitment = trpc.leadershipCoach.updateCommitmentOutcome.useMutation({
+    onSuccess: () => toast.success("Commitment updated"),
+    onError: () => toast.error("Could not update commitment"),
+  });
+
+  const pending = commitments?.filter(c => c.status === "pending") ?? [];
+  const completed = commitments?.filter(c => c.status === "completed") ?? [];
+  const totalAttempts = historyData?.totalAttempts ?? 0;
+  const avgScore = historyData?.averageScore ?? 0;
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <BackButton onBack={onBack} />
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <LayoutDashboard className="w-5 h-5 text-[var(--color-ln-gold)]" />
+          <h1 className="text-xl font-bold text-[var(--color-ln-navy)]">My Practice Plan</h1>
+        </div>
+        <p className="text-sm text-[var(--color-ln-navy)]/60">
+          Your development priorities, active commitments, and practice progress.
+        </p>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {[
+          { label: "Practice Sessions", value: totalAttempts },
+          { label: "Avg Score", value: avgScore ? `${avgScore}/10` : "—" },
+          { label: "Open Commitments", value: pending.length },
+        ].map(stat => (
+          <div key={stat.label} className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+            <p className="text-2xl font-bold text-[var(--color-ln-navy)]">{stat.value}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Growth Theme */}
+      {memory?.aiSummary && (
+        <div className="mb-6 rounded-xl bg-[var(--color-ln-navy)]/5 border border-[var(--color-ln-navy)]/10 p-4">
+          <div className="flex items-start gap-2">
+            <Brain className="w-4 h-4 text-[var(--color-ln-navy)] mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-0.5">Your Leadership Growth Theme</p>
+              <p className="text-xs text-[var(--color-ln-navy)]/70 leading-relaxed">{memory.aiSummary}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Open Commitments */}
+      <div className="mb-6">
+        <p className="text-sm font-semibold text-[var(--color-ln-navy)] mb-3 flex items-center gap-1.5">
+          <Target className="w-4 h-4 text-[var(--color-ln-gold)]" />
+          Open Commitments
+        </p>
+        {loadingCommitments ? (
+          <div className="text-xs text-gray-400 py-4 text-center">Loading…</div>
+        ) : pending.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center">
+            <p className="text-sm text-gray-400">No open commitments yet.</p>
+            <p className="text-xs text-gray-300 mt-1">Create one from the home screen to track your practice focus.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {pending.map(c => (
+              <div key={c.id} className="flex items-start gap-3 p-3.5 rounded-xl border border-amber-100 bg-amber-50">
+                <Clock className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-amber-800 leading-relaxed">{c.text}</p>
+                </div>
+                <div className="flex gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => onPractice(c.text)}
+                    className="text-xs px-2.5 py-1 rounded-full bg-[var(--color-ln-navy)] text-white hover:bg-[var(--color-ln-navy)]/90 transition-colors"
+                  >
+                    Practise
+                  </button>
+                  <button
+                    onClick={() => updateCommitment.mutate({ commitmentId: c.id, status: "done_well" })}
+                    className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Recommended Practice */}
+      {recommendations && recommendations.length > 0 && (
+        <div className="mb-6">
+          <p className="text-sm font-semibold text-[var(--color-ln-navy)] mb-3 flex items-center gap-1.5">
+            <Award className="w-4 h-4 text-[var(--color-ln-gold)]" />
+            Recommended Practice Areas
+          </p>
+          <div className="space-y-2">
+            {recommendations.map(rec => (
+              <div key={rec.module} className="p-3.5 rounded-xl border border-gray-200 bg-white">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-semibold text-[var(--color-ln-navy)]">{rec.module}</p>
+                  <span className="text-xs text-gray-400">Edge {rec.score}</span>
+                </div>
+                <p className="text-xs text-gray-500 mb-2">{rec.reason}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {rec.scenarios.slice(0, 2).map(s => (
+                    <button
+                      key={s}
+                      onClick={() => onPractice(s)}
+                      className="text-xs px-2.5 py-1 rounded-full bg-[var(--color-ln-navy)]/5 text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-navy)]/10 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Completed Commitments */}
+      {completed.length > 0 && (
+        <div>
+          <p className="text-sm font-semibold text-[var(--color-ln-navy)] mb-3 flex items-center gap-1.5">
+            <CheckCircle className="w-4 h-4 text-emerald-500" />
+            Completed Commitments
+          </p>
+          <div className="space-y-2">
+            {completed.slice(0, 5).map(c => (
+              <div key={c.id} className="flex items-start gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-gray-500 line-through">{c.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

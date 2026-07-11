@@ -323,6 +323,7 @@ export const practiceAttempts = mysqlTable("practice_attempts", {
   sessionId: int("sessionId").notNull().references(() => practiceSessions.id),
   userId: int("userId").notNull().references(() => users.id),
   attemptNumber: int("attemptNumber").default(1).notNull(),
+  difficulty: varchar("difficulty", { length: 20 }).default("Medium"),
   transcript: json("transcript").$type<PracticeMessage[]>().notNull(),
   feedback: json("feedback").$type<PracticeFeedback>(),
   overallScore: int("overallScore"),

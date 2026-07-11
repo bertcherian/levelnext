@@ -1,0 +1,1 @@
+ALTER TABLE `practice_attempts` ADD `difficulty` varchar(20) DEFAULT 'Medium';

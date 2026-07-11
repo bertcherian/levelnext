@@ -14,49 +14,78 @@ import {
 
 // ── System prompts ─────────────────────────────────────────────────────────────
 
-function COACH_SYSTEM_PROMPT(issueText: string, userName: string): string {
-  return `You are the LevelNext AI Practice Coach — a structured leadership coach, not a generic chatbot.
+function COACH_SYSTEM_PROMPT(issueText: string, userName: string, diagnosticContext?: string): string {
+  const diagContext = diagnosticContext
+    ? `\nDiagnostic context for ${userName}:\n${diagnosticContext}\n`
+    : "";
 
-Your role is to help ${userName} prepare for a difficult leadership conversation through structured coaching.
+  return `You are the LevelNext AI Practice Coach — a sophisticated, context-aware leadership practice system.
 
+Your role is to help ${userName} move through this cycle: Identify → Commit → Prepare → Practise → Apply → Reflect → Repeat.
+${diagContext}
 The leader has described this situation:
 "${issueText}"
 
-Your coaching approach:
-1. Ask ONE focused coaching question at a time (never multiple questions in one message).
-2. Use Socratic questioning — help the leader discover insights themselves.
-3. Diagnose the real leadership gap, not just the surface issue.
-4. Challenge assumptions respectfully.
-5. After 4-6 exchanges, provide a structured coaching summary.
+Your primary responsibilities in this conversation:
+1. Understand the situation and clarify the desired outcome.
+2. Identify the interpersonal or leadership challenge beneath the surface.
+3. Surface assumptions the leader may be making.
+4. Clarify the specific observable behaviour the leader needs to demonstrate.
+5. Decide whether the leader should prepare, practise, act, or explore the issue more deeply with Guide.
+
+Coaching approach:
+- Ask ONE focused question at a time. Never multiple questions in one message.
+- Use Socratic questioning — help the leader discover insights themselves.
+- Diagnose the real leadership gap, not just the surface issue.
+- Challenge assumptions respectfully.
+- After 4–6 exchanges, provide a structured coaching summary.
+
+When to escalate to Guide:
+- The issue is primarily emotional or identity-related.
+- The same behaviour is repeatedly avoided.
+- The leader expresses strong anxiety, shame, anger, or helplessness.
+- The issue involves complex organisational politics.
+- The leader is uncertain what outcome they want.
+- A practical rehearsal will not address the real issue.
+
+When escalating, say: "This appears to be less about how to phrase the message and more about [underlying issue]. Would you like to explore that with Guide first, or continue by preparing the conversation?"
 
 Coaching questions to explore (choose the most relevant, in natural order):
 - What outcome do you want from this conversation?
-- What is happening now vs what should be happening?
+- What is happening now versus what should be happening?
 - What is the cost of not having this conversation?
 - What are you avoiding or finding difficult?
 - What assumptions are you making about the other person?
 - What would a more senior version of you do here?
-- What commitment do you need from the other person?
+- What specific commitment do you need from the other person?
 
-When you sense the leader is ready (after 4-6 exchanges), provide a structured summary in this EXACT JSON format wrapped in <COACHING_SUMMARY>:
+When you sense the leader is ready (after 4–6 exchanges), provide a structured summary in this EXACT format wrapped in <COACHING_SUMMARY>:
 <COACHING_SUMMARY>
 {
   "realIssue": "...",
   "leadershipGap": "...",
+  "behaviourToStrengthen": "...",
   "conversationNeeded": "...",
   "recommendedApproach": "...",
   "suggestedOpeningLines": ["...", "...", "..."],
   "likelyResistance": "...",
   "howToHandleResistance": "...",
-  "recommendedSimulation": "..."
+  "recommendedSimulation": "...",
+  "commitmentSuggestion": "...",
+  "diagnosticLink": "..."
 }
 </COACHING_SUMMARY>
 
-Rules:
+Tone rules:
+- Intelligent, calm, concise, respectful, senior, practical.
+- Encouraging WITHOUT being enthusiastic.
+- Direct WITHOUT being harsh.
+- Human WITHOUT pretending to be human.
+- NEVER use: "crush your goals", "you've got this", "amazing job", "fantastic", "you nailed it".
+- Better encouragement: "You stayed with the difficult part rather than softening the message. That is meaningful progress."
 - Never give generic motivation or HR-policy language.
 - Never avoid hard truths.
 - Ask before advising.
-- Be direct, warm, and specific.
 - Keep responses under 120 words unless giving the final summary.`;
 }
 
@@ -73,13 +102,14 @@ ${context}
 
 Generate a scenario in this EXACT JSON format:
 {
-  "conversationType": "one of: Difficult Feedback | Accountability | Stakeholder Influence | Managing Up | Conflict Resolution | Executive Pitch | Performance Conversation | Career Conversation | Delegation | Expectation Reset",
+  "conversationType": "one of: Difficult Feedback | Accountability | Stakeholder Influence | Managing Up | Conflict Resolution | Executive Pitch | Performance Conversation | Career Conversation | Delegation | Expectation Reset | Setting Boundaries | Saying No | Delivering Bad News | Coaching a Team Member | Responding Under Pressure | Challenging Groupthink | Asking for Resources | Negotiation",
   "userRole": "the leader's role (e.g., Senior Engineering Manager)",
   "avatarRole": "the other person's role (e.g., Senior Engineer)",
   "relationship": "one of: Direct Report | Peer | Boss | Client | Stakeholder | Executive | Team Member | Cross-functional Partner",
   "context": "2-3 sentence description of the situation",
   "stakes": "why this conversation matters — business and human impact",
   "desiredOutcome": "what the leader wants to achieve",
+  "behaviourToStrengthen": "the specific observable leadership behaviour this simulation develops",
   "avatarPersonality": "one of: Defensive | Skeptical | Busy Executive | Passive | Political | Overloaded | High Performer with Ego | Emotional | Analytical | Avoidant | Dominant | Underconfident",
   "difficultyLevel": "Medium",
   "successCriteria": "2-3 specific behaviours that indicate the leader handled this well",
@@ -140,6 +170,7 @@ CRITICAL RULES:
 8. Do NOT reveal that you are an AI.
 9. The conversation is about: ${scenario.conversationType}
 10. The stakes: ${scenario.stakes}
+11. The behaviour the leader is developing: ${(scenario as any).behaviourToStrengthen ?? "effective leadership communication"}
 
 Start the conversation by responding to whatever the leader says first. Do not introduce yourself or explain the scenario.`;
 }
@@ -153,6 +184,7 @@ function PAUSE_COACHING_PROMPT(transcript: PracticeMessage[], scenario: Practice
 
 SCENARIO: ${scenario.conversationType} with a ${scenario.avatarPersonality} ${scenario.avatarRole}
 DESIRED OUTCOME: ${scenario.desiredOutcome}
+BEHAVIOUR BEING DEVELOPED: ${(scenario as any).behaviourToStrengthen ?? "effective leadership communication"}
 
 RECENT CONVERSATION:
 ${lastFew}
@@ -161,7 +193,8 @@ Provide ONE specific, tactical coaching observation in 2-3 sentences. Be direct 
 Focus on ONE of these if relevant: clarity of message, naming the behaviour, asking for commitment, handling resistance, empathy before redirecting, business impact framing, or closing the conversation.
 
 Do NOT give generic advice. Reference what the leader actually said. Give a better alternative phrase if relevant.
-Keep it under 80 words. Start with the observation, not with "I notice" or "You should".`;
+Keep it under 80 words. Start with the observation, not with "I notice" or "You should".
+Tone: intelligent, calm, direct, practical. No excessive praise.`;
 }
 
 function FEEDBACK_PROMPT(transcript: PracticeMessage[], scenario: PracticeScenario, attemptNumber: number): string {
@@ -175,6 +208,7 @@ SCENARIO: ${scenario.conversationType}
 AVATAR: ${scenario.avatarPersonality} ${scenario.avatarRole}
 DIFFICULTY: ${scenario.difficultyLevel}
 DESIRED OUTCOME: ${scenario.desiredOutcome}
+BEHAVIOUR BEING DEVELOPED: ${(scenario as any).behaviourToStrengthen ?? "effective leadership communication"}
 SUCCESS CRITERIA: ${scenario.successCriteria}
 ATTEMPT NUMBER: ${attemptNumber}
 
@@ -184,14 +218,15 @@ ${fullTranscript}
 Generate feedback in this EXACT JSON format:
 {
   "overallScore": <number 0-100>,
+  "evidenceLevel": "one of: Prepared | Practised | Applied | Reflected | Repeated | Demonstrated consistently",
   "dimensionScores": [
-    {"dimension": "Clarity of Message", "score": <1-5>, "comment": "<specific observation>"},
-    {"dimension": "Specificity", "score": <1-5>, "comment": "<specific observation>"},
-    {"dimension": "Handling Resistance", "score": <1-5>, "comment": "<specific observation>"},
-    {"dimension": "Empathy", "score": <1-5>, "comment": "<specific observation>"},
-    {"dimension": "Confidence", "score": <1-5>, "comment": "<specific observation>"},
-    {"dimension": "Asking for Commitment", "score": <1-5>, "comment": "<specific observation>"},
-    {"dimension": "Conversation Closure", "score": <1-5>, "comment": "<specific observation>"}
+    {"dimension": "Clarity of Message", "score": <1-5>, "comment": "<specific observation from transcript>"},
+    {"dimension": "Specificity", "score": <1-5>, "comment": "<specific observation from transcript>"},
+    {"dimension": "Handling Resistance", "score": <1-5>, "comment": "<specific observation from transcript>"},
+    {"dimension": "Empathy", "score": <1-5>, "comment": "<specific observation from transcript>"},
+    {"dimension": "Confidence", "score": <1-5>, "comment": "<specific observation from transcript>"},
+    {"dimension": "Asking for Commitment", "score": <1-5>, "comment": "<specific observation from transcript>"},
+    {"dimension": "Conversation Closure", "score": <1-5>, "comment": "<specific observation from transcript>"}
   ],
   "whatWorked": "<specific observation with example from transcript>",
   "whatDidNotWork": "<specific observation with example from transcript>",
@@ -201,10 +236,84 @@ Generate feedback in this EXACT JSON format:
   "whatOtherPersonHeard": "<what the avatar likely experienced emotionally and cognitively>",
   "oneBehaviourToImprove": "<single most impactful improvement for next attempt>",
   "recommendedNextAttempt": "<specific suggestion for retry>",
-  "suggestedRealWorldAction": "<one concrete action to take in the real world>"
+  "suggestedRealWorldAction": "<one concrete action to take in the real world>",
+  "commitmentSuggestion": "<a specific, observable commitment the leader could make for a real workplace situation>",
+  "momentumPrompt": "<a brief, practical question to ask before the next real-world application>"
 }
 
-Be specific. Reference actual words from the transcript. Do not give vague praise. Return ONLY the JSON object.`;
+Tone: intelligent, calm, specific, direct. No excessive praise. Reference actual words from the transcript.
+Do not give vague praise. Return ONLY the JSON object.`;
+}
+
+function DEBRIEF_PROMPT(
+  whatHappened: string,
+  whatDifferent: string,
+  whatWorked: string,
+  whereReverted: string,
+  whatNext: string,
+  userName: string,
+  developmentPriority?: string
+): string {
+  return `You are the LevelNext AI Practice Coach. A leader has completed an After-Meeting Debrief.
+
+Leader: ${userName}
+Development priority: ${developmentPriority ?? "not specified"}
+
+Debrief responses:
+1. What happened: ${whatHappened}
+2. What they did differently: ${whatDifferent}
+3. What worked: ${whatWorked}
+4. Where they reverted to old patterns: ${whereReverted}
+5. What to repeat or change next time: ${whatNext}
+
+Provide a concise debrief response in this JSON format:
+{
+  "evidenceCapture": "<specific observation about what was applied — reference their actual words>",
+  "progressReinforcement": "<acknowledge specific progress without exaggerated praise>",
+  "patternObservation": "<observation about any reversion or repeated pattern>",
+  "nextPracticeOpportunity": "<specific suggestion for the next real workplace application>",
+  "commitmentSuggestion": "<a specific, observable commitment for the next situation>",
+  "evidenceLevel": "one of: Prepared | Practised | Applied | Reflected | Repeated | Demonstrated consistently"
+}
+
+Tone: intelligent, calm, concise, respectful. Avoid generic praise. Reference what they actually said.
+Return ONLY the JSON object.`;
+}
+
+function COMMITMENT_CREATION_PROMPT(
+  situation: string,
+  behaviour: string,
+  userName: string,
+  diagnosticContext?: string
+): string {
+  return `You are the LevelNext AI Practice Coach helping ${userName} create a specific practice commitment.
+
+Situation: ${situation}
+Behaviour to develop: ${behaviour}
+${diagnosticContext ? `Diagnostic context: ${diagnosticContext}` : ""}
+
+Help create a specific, observable commitment. A commitment must be behavioural and observable.
+
+Poor: "Improve executive presence."
+Better: "In Monday's leadership review, open with the recommendation, explain the rationale in under two minutes, and pause for questions."
+
+Poor: "Delegate more."
+Better: "Ask Anita to lead Thursday's client review and resist taking over unless she explicitly asks for support."
+
+Generate a commitment in this JSON format:
+{
+  "developmentPriority": "<the leadership dimension being developed>",
+  "specificBehaviour": "<the exact observable behaviour>",
+  "situation": "<the real workplace situation>",
+  "personOrGroup": "<who is involved>",
+  "timing": "<when this will happen>",
+  "desiredOutcome": "<what success looks like>",
+  "commitmentStatement": "<a single clear sentence the leader can commit to>",
+  "challengeQuestion": "<a question to test if the commitment is specific enough: 'What would someone in the room actually see or hear you do differently?'>",
+  "suggestedReflectionTime": "<when to reflect after the event>"
+}
+
+Return ONLY the JSON object.`;
 }
 
 // ── Router ─────────────────────────────────────────────────────────────────────
@@ -311,7 +420,7 @@ export const practiceRouter = router({
 
       const prompt = SCENARIO_GENERATOR_PROMPT(session.issueText, ctx.user.name ?? "Leader", input.coachingSummary);
       const llmResult = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 600,
       });
@@ -328,42 +437,18 @@ export const practiceRouter = router({
       }
 
       await db.update(practiceSessions)
-        .set({ scenario, status: "setup" })
+        .set({ scenario, status: "scenario_ready" })
         .where(eq(practiceSessions.id, input.sessionId));
 
       return { scenario };
     }),
 
-  // Update scenario (user edits)
-  updateScenario: protectedProcedure
+  // Start a new attempt
+  startAttempt: protectedProcedure
     .input(z.object({
       sessionId: z.number(),
-      scenario: z.object({
-        conversationType: z.string(),
-        userRole: z.string(),
-        avatarRole: z.string(),
-        relationship: z.string(),
-        context: z.string(),
-        stakes: z.string(),
-        desiredOutcome: z.string(),
-        avatarPersonality: z.string(),
-        difficultyLevel: z.enum(["Easy", "Medium", "Hard", "Executive"]),
-        successCriteria: z.string(),
-        category: z.string(),
-      }),
+      difficulty: z.enum(["Easy", "Medium", "Hard", "Executive"]).default("Medium"),
     }))
-    .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.update(practiceSessions)
-        .set({ scenario: input.scenario as PracticeScenario, status: "setup" })
-        .where(and(eq(practiceSessions.id, input.sessionId), eq(practiceSessions.userId, ctx.user.id)));
-      return { success: true };
-    }),
-
-  // Start a new attempt (role play)
-  startAttempt: protectedProcedure
-    .input(z.object({ sessionId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -373,43 +458,46 @@ export const practiceRouter = router({
         .where(and(eq(practiceSessions.id, input.sessionId), eq(practiceSessions.userId, ctx.user.id)))
         .limit(1);
       const session = rows[0];
-      if (!session) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!session?.scenario) throw new TRPCError({ code: "BAD_REQUEST", message: "No scenario generated yet" });
 
-      // Count existing attempts
-      const existing = await db
+      const prevAttempts = await db
         .select()
         .from(practiceAttempts)
         .where(eq(practiceAttempts.sessionId, input.sessionId));
-      const attemptNumber = existing.length + 1;
 
-      const result = await db.insert(practiceAttempts)
+      const result = await db
+        .insert(practiceAttempts)
         .values({
           sessionId: input.sessionId,
           userId: ctx.user.id,
-          attemptNumber,
+          attemptNumber: prevAttempts.length + 1,
+          difficulty: input.difficulty,
           transcript: [],
         })
         .$returningId();
 
       await db.update(practiceSessions)
-        .set({ status: "roleplay" })
+        .set({ status: "practicing" })
         .where(eq(practiceSessions.id, input.sessionId));
 
-      return { attemptId: result[0].id, attemptNumber };
+      return { attemptId: result[0].id, attemptNumber: prevAttempts.length + 1 };
     }),
 
-  // Send a role play message (avatar responds)
-  sendRolePlayMessage: protectedProcedure
-    .input(z.object({ attemptId: z.number(), message: z.string().min(1) }))
+  // Send a message in the simulation
+  sendSimulationMessage: protectedProcedure
+    .input(z.object({
+      attemptId: z.number(),
+      message: z.string().min(1),
+    }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const attemptRows = await db
+      const rows = await db
         .select()
         .from(practiceAttempts)
         .where(and(eq(practiceAttempts.id, input.attemptId), eq(practiceAttempts.userId, ctx.user.id)))
         .limit(1);
-      const attempt = attemptRows[0];
+      const attempt = rows[0];
       if (!attempt) throw new TRPCError({ code: "NOT_FOUND" });
 
       const sessionRows = await db
@@ -418,26 +506,26 @@ export const practiceRouter = router({
         .where(eq(practiceSessions.id, attempt.sessionId))
         .limit(1);
       const session = sessionRows[0];
-      if (!session?.scenario) throw new TRPCError({ code: "BAD_REQUEST", message: "No scenario set" });
+      if (!session?.scenario) throw new TRPCError({ code: "BAD_REQUEST" });
 
       const scenario = session.scenario as PracticeScenario;
-      const transcript: PracticeMessage[] = (attempt.transcript as PracticeMessage[]) ?? [];
+      const transcript = (attempt.transcript as PracticeMessage[]) ?? [];
       const userMsg: PracticeMessage = { role: "user", content: input.message, timestamp: new Date().toISOString() };
       const updatedTranscript = [...transcript, userMsg];
 
-      const llmMessages = updatedTranscript.slice(-14).map(m => ({
+      const llmMessages = updatedTranscript.slice(-16).map(m => ({
         role: m.role === "user" ? "user" as const : "assistant" as const,
         content: m.content,
       }));
 
-      const systemMsg = { role: "system" as const, content: AVATAR_SYSTEM_PROMPT(scenario, scenario.difficultyLevel) };
+      const systemMsg = { role: "system" as const, content: AVATAR_SYSTEM_PROMPT(scenario, attempt.difficulty ?? "Medium") };
       const llmResult = await invokeLLM({
         model: "gpt-4o-mini",
         messages: [systemMsg, ...llmMessages],
         maxTokens: 300,
       });
-      const raw = llmResult.choices[0]?.message?.content ?? "";
-      const content = typeof raw === "string" ? raw : raw.map((c: any) => c.text ?? "").join("");
+      const rawContent = llmResult.choices[0]?.message?.content ?? "";
+      const content = typeof rawContent === "string" ? rawContent : rawContent.map((c: any) => c.text ?? "").join("");
 
       const avatarMsg: PracticeMessage = { role: "avatar", content, timestamp: new Date().toISOString() };
       const finalTranscript = [...updatedTranscript, avatarMsg];
@@ -449,18 +537,18 @@ export const practiceRouter = router({
       return { message: avatarMsg, transcript: finalTranscript };
     }),
 
-  // Pause for coaching
-  pauseForCoaching: protectedProcedure
+  // Pause coaching — get tactical tip mid-simulation
+  pauseCoach: protectedProcedure
     .input(z.object({ attemptId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const attemptRows = await db
+      const rows = await db
         .select()
         .from(practiceAttempts)
         .where(and(eq(practiceAttempts.id, input.attemptId), eq(practiceAttempts.userId, ctx.user.id)))
         .limit(1);
-      const attempt = attemptRows[0];
+      const attempt = rows[0];
       if (!attempt) throw new TRPCError({ code: "NOT_FOUND" });
 
       const sessionRows = await db
@@ -471,8 +559,8 @@ export const practiceRouter = router({
       const session = sessionRows[0];
       if (!session?.scenario) throw new TRPCError({ code: "BAD_REQUEST" });
 
-      const transcript = (attempt.transcript as PracticeMessage[]) ?? [];
       const scenario = session.scenario as PracticeScenario;
+      const transcript = (attempt.transcript as PracticeMessage[]) ?? [];
 
       const prompt = PAUSE_COACHING_PROMPT(transcript, scenario);
       const llmResult = await invokeLLM({
@@ -480,24 +568,24 @@ export const practiceRouter = router({
         messages: [{ role: "user", content: prompt }],
         maxTokens: 200,
       });
-      const raw = llmResult.choices[0]?.message?.content ?? "";
-      const coaching = typeof raw === "string" ? raw : raw.map((c: any) => c.text ?? "").join("");
+      const rawContent = llmResult.choices[0]?.message?.content ?? "";
+      const content = typeof rawContent === "string" ? rawContent : rawContent.map((c: any) => c.text ?? "").join("");
 
-      return { coaching };
+      return { coaching: content };
     }),
 
-  // End simulation and generate feedback
-  endSimulation: protectedProcedure
+  // Generate feedback for a completed attempt
+  generateFeedback: protectedProcedure
     .input(z.object({ attemptId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const attemptRows = await db
+      const rows = await db
         .select()
         .from(practiceAttempts)
         .where(and(eq(practiceAttempts.id, input.attemptId), eq(practiceAttempts.userId, ctx.user.id)))
         .limit(1);
-      const attempt = attemptRows[0];
+      const attempt = rows[0];
       if (!attempt) throw new TRPCError({ code: "NOT_FOUND" });
 
       const sessionRows = await db
@@ -519,7 +607,7 @@ export const practiceRouter = router({
       const llmResult = await invokeLLM({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
-        maxTokens: 1200,
+        maxTokens: 1400,
       });
       const raw = llmResult.choices[0]?.message?.content ?? "{}";
       const content = typeof raw === "string" ? raw : raw.map((c: any) => c.text ?? "").join("");
@@ -542,6 +630,74 @@ export const practiceRouter = router({
         .where(eq(practiceSessions.id, attempt.sessionId));
 
       return { feedback, attemptId: input.attemptId };
+    }),
+
+  // Generate commitment from a situation
+  generateCommitment: protectedProcedure
+    .input(z.object({
+      situation: z.string().min(5).max(2000),
+      behaviour: z.string().min(5).max(500),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const prompt = COMMITMENT_CREATION_PROMPT(input.situation, input.behaviour, ctx.user.name ?? "Leader");
+      const llmResult = await invokeLLM({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        maxTokens: 600,
+      });
+      const raw = llmResult.choices[0]?.message?.content ?? "{}";
+      const content = typeof raw === "string" ? raw : raw.map((c: any) => c.text ?? "").join("");
+
+      let commitment: Record<string, string>;
+      try {
+        const start = content.indexOf("{");
+        const end = content.lastIndexOf("}");
+        commitment = JSON.parse(content.slice(start, end + 1));
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to generate commitment" });
+      }
+
+      return { commitment };
+    }),
+
+  // Process after-meeting debrief
+  processDebrief: protectedProcedure
+    .input(z.object({
+      whatHappened: z.string().min(5),
+      whatDifferent: z.string().min(1),
+      whatWorked: z.string().min(1),
+      whereReverted: z.string().min(1),
+      whatNext: z.string().min(1),
+      developmentPriority: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const prompt = DEBRIEF_PROMPT(
+        input.whatHappened,
+        input.whatDifferent,
+        input.whatWorked,
+        input.whereReverted,
+        input.whatNext,
+        ctx.user.name ?? "Leader",
+        input.developmentPriority
+      );
+      const llmResult = await invokeLLM({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        maxTokens: 600,
+      });
+      const raw = llmResult.choices[0]?.message?.content ?? "{}";
+      const content = typeof raw === "string" ? raw : raw.map((c: any) => c.text ?? "").join("");
+
+      let debrief: Record<string, string>;
+      try {
+        const start = content.indexOf("{");
+        const end = content.lastIndexOf("}");
+        debrief = JSON.parse(content.slice(start, end + 1));
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to process debrief" });
+      }
+
+      return { debrief };
     }),
 
   // Get attempt with feedback
@@ -602,6 +758,155 @@ export const practiceRouter = router({
 
     return { sessions, attempts, totalAttempts: attempts.length, averageScore };
   }),
+
+  // Alias: sendRolePlayMessage → sendSimulationMessage (UI compatibility)
+  sendRolePlayMessage: protectedProcedure
+    .input(z.object({
+      attemptId: z.number(),
+      message: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db
+        .select()
+        .from(practiceAttempts)
+        .where(and(eq(practiceAttempts.id, input.attemptId), eq(practiceAttempts.userId, ctx.user.id)))
+        .limit(1);
+      const attempt = rows[0];
+      if (!attempt) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const sessionRows = await db
+        .select()
+        .from(practiceSessions)
+        .where(eq(practiceSessions.id, attempt.sessionId))
+        .limit(1);
+      const session = sessionRows[0];
+      if (!session?.scenario) throw new TRPCError({ code: "BAD_REQUEST" });
+
+      const scenario = session.scenario as PracticeScenario;
+      const transcript = (attempt.transcript as PracticeMessage[]) ?? [];
+      const userMsg: PracticeMessage = { role: "user", content: input.message, timestamp: new Date().toISOString() };
+      const updatedTranscript = [...transcript, userMsg];
+
+      const llmMessages = updatedTranscript.slice(-16).map(m => ({
+        role: m.role === "user" ? "user" as const : "assistant" as const,
+        content: m.content,
+      }));
+
+      const systemMsg = { role: "system" as const, content: AVATAR_SYSTEM_PROMPT(scenario, attempt.difficulty ?? "Medium") };
+      const llmResult = await invokeLLM({
+        model: "gpt-4o-mini",
+        messages: [systemMsg, ...llmMessages],
+        maxTokens: 300,
+      });
+      const rawContent = llmResult.choices[0]?.message?.content ?? "";
+      const content = typeof rawContent === "string" ? rawContent : rawContent.map((c: any) => c.text ?? "").join("");
+
+      const avatarMsg: PracticeMessage = { role: "avatar", content, timestamp: new Date().toISOString() };
+      const finalTranscript = [...updatedTranscript, avatarMsg];
+
+      await db.update(practiceAttempts)
+        .set({ transcript: finalTranscript })
+        .where(eq(practiceAttempts.id, input.attemptId));
+
+      return { message: avatarMsg, transcript: finalTranscript };
+    }),
+
+  // Alias: pauseForCoaching → pauseCoach (UI compatibility)
+  pauseForCoaching: protectedProcedure
+    .input(z.object({ attemptId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db
+        .select()
+        .from(practiceAttempts)
+        .where(and(eq(practiceAttempts.id, input.attemptId), eq(practiceAttempts.userId, ctx.user.id)))
+        .limit(1);
+      const attempt = rows[0];
+      if (!attempt) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const sessionRows = await db
+        .select()
+        .from(practiceSessions)
+        .where(eq(practiceSessions.id, attempt.sessionId))
+        .limit(1);
+      const session = sessionRows[0];
+      if (!session?.scenario) throw new TRPCError({ code: "BAD_REQUEST" });
+
+      const scenario = session.scenario as PracticeScenario;
+      const transcript = (attempt.transcript as PracticeMessage[]) ?? [];
+
+      const prompt = PAUSE_COACHING_PROMPT(transcript, scenario);
+      const llmResult = await invokeLLM({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        maxTokens: 200,
+      });
+      const rawContent = llmResult.choices[0]?.message?.content ?? "";
+      const content = typeof rawContent === "string" ? rawContent : rawContent.map((c: any) => c.text ?? "").join("");
+
+      return { coaching: content };
+    }),
+
+  // Alias: endSimulation → generateFeedback (UI compatibility)
+  endSimulation: protectedProcedure
+    .input(z.object({ attemptId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db
+        .select()
+        .from(practiceAttempts)
+        .where(and(eq(practiceAttempts.id, input.attemptId), eq(practiceAttempts.userId, ctx.user.id)))
+        .limit(1);
+      const attempt = rows[0];
+      if (!attempt) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const sessionRows = await db
+        .select()
+        .from(practiceSessions)
+        .where(eq(practiceSessions.id, attempt.sessionId))
+        .limit(1);
+      const session = sessionRows[0];
+      if (!session?.scenario) throw new TRPCError({ code: "BAD_REQUEST" });
+
+      const transcript = (attempt.transcript as PracticeMessage[]) ?? [];
+      const scenario = session.scenario as PracticeScenario;
+
+      if (transcript.length < 2) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Not enough conversation to generate feedback" });
+      }
+
+      const prompt = FEEDBACK_PROMPT(transcript, scenario, attempt.attemptNumber);
+      const llmResult = await invokeLLM({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        maxTokens: 1400,
+      });
+      const raw = llmResult.choices[0]?.message?.content ?? "{}";
+      const content = typeof raw === "string" ? raw : raw.map((c: any) => c.text ?? "").join("");
+
+      let feedback: PracticeFeedback;
+      try {
+        const start = content.indexOf("{");
+        const end = content.lastIndexOf("}");
+        feedback = JSON.parse(content.slice(start, end + 1));
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to generate feedback" });
+      }
+
+      await db.update(practiceAttempts)
+        .set({ feedback, overallScore: feedback.overallScore, completedAt: new Date() })
+        .where(eq(practiceAttempts.id, input.attemptId));
+
+      await db.update(practiceSessions)
+        .set({ status: "feedback" })
+        .where(eq(practiceSessions.id, attempt.sessionId));
+
+      return { feedback, attemptId: input.attemptId };
+    }),
 
   // Get attempts for a session
   getSessionAttempts: protectedProcedure
