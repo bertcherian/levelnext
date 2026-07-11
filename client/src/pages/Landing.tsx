@@ -1,26 +1,12 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { ArrowRight, CheckCircle2, ChevronDown, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield } from "lucide-react";
+import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield } from "lucide-react";
 
 const LOGO_URL = "/manus-storage/levelnext-logo_525d7189.png";
-
-// ── MECLABS Element: Motivation (4×) ─────────────────────────────────────────
-// Open with the visceral pain moment the persona lives every day
-
-// ── MECLABS Element: Value Proposition (3×) ──────────────────────────────────
-// Exact transformation + Named Mechanism (Leadership Edge System)
-
-// ── MECLABS Element: Incentive (2×) ──────────────────────────────────────────
-// Free diagnostic, 10 minutes, personalised result immediately
-
-// ── MECLABS Element: Friction (−2×) ──────────────────────────────────────────
-// No credit card, 10 minutes, instant result
-
-// ── MECLABS Element: Anxiety (−2×) ───────────────────────────────────────────
-// Not another generic leadership course. Not a personality test. Real data, real coaching.
+const VIDEO_URL = "/manus-storage/levelnext_explainer_v5_a20a9a42.mp4";
 
 const SOCIAL_PROOF = [
   {
@@ -79,12 +65,22 @@ const DIAGNOSTICS = [
 export default function Landing() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
       navigate("/home");
     }
   }, [isAuthenticated, loading, navigate]);
+
+  // Autoplay video on mount
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {
+        // Autoplay blocked — silently ignore, user can click play
+      });
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -99,7 +95,11 @@ export default function Landing() {
 
       {/* ── Sticky Header ─────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 px-6 md:px-10 py-4 flex items-center justify-between"
-        style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid oklch(from white 30% 0 0 / 0.08)" }}>
+        style={{
+          background: "oklch(from var(--color-ln-navy) l c h / 0.95)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid oklch(from white 30% 0 0 / 0.08)"
+        }}>
         <img src={LOGO_URL} alt="LevelNext" className="h-9 w-auto" />
         <div className="flex items-center gap-3">
           <a href={getLoginUrl()}>
@@ -110,71 +110,110 @@ export default function Landing() {
           <a href={getLoginUrl()}>
             <Button size="sm" className="font-semibold text-sm px-5"
               style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-              Start Free →
+              Apply for a Pilot →
             </Button>
           </a>
         </div>
       </header>
 
-      {/* ── HERO: Motivation (4×) + Value Proposition (3×) ───────────────────── */}
-      <section className="relative flex flex-col items-center justify-center px-6 pt-20 pb-16 md:pt-28 md:pb-24 text-center overflow-hidden">
-        {/* Background glow */}
+      {/* ── HERO: Split layout — text left, video right ───────────────────────── */}
+      <section className="relative overflow-hidden">
+        {/* Subtle background glow */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 80% 50% at 50% 0%, oklch(from var(--color-ln-yellow) l c h / 0.08) 0%, transparent 70%)"
+          background: "radial-gradient(ellipse 60% 80% at 0% 50%, oklch(from var(--color-ln-yellow) l c h / 0.06) 0%, transparent 60%)"
         }} />
 
-        {/* MECLABS: Motivation — visceral pain hook */}
-        <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-base font-semibold mb-8"
-          style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", color: "var(--color-ln-yellow)", border: "1.5px solid oklch(from var(--color-ln-yellow) l c h / 0.35)" }}>
-          <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
-          For senior leaders who know they have more to give
-        </div>
+        {/* Mobile: video on top, text below */}
+        {/* Desktop: text left, video right — both above the fold */}
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 py-10 md:py-0 md:min-h-[calc(100vh-65px)] flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
 
-        {/* MECLABS: Motivation — the pain moment */}
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] mb-6 max-w-4xl mx-auto">
-          <span className="text-white">The Gap Between Where You Are</span><br />
-          <span className="text-white">And What's Next</span> <span style={{ color: "var(--color-ln-yellow)" }}>Is Leadership.</span>
-        </h1>
+          {/* ── Left: Text + CTA ──────────────────────────────────────────────── */}
+          <div className="flex flex-col items-start text-left md:w-[52%] md:py-12 order-2 md:order-1">
 
-        {/* MECLABS: Value Proposition — exact transformation + Named Mechanism */}
-        <p className="text-xl md:text-2xl max-w-2xl mx-auto mb-4 leading-relaxed text-white">
-          Most leaders plateau — from gaps you're ignoring or don't even know.
-          The <strong style={{ color: "var(--color-ln-yellow)" }}>LevelNext Leadership Intelligence System</strong> gives you
-          the exact diagnostics, daily coaching, and AI-powered practice to close the gap
-          between the leader you are and the leader you're capable of becoming.
-        </p>
+            {/* Pill badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-6"
+              style={{
+                background: "oklch(from var(--color-ln-yellow) l c h / 0.12)",
+                color: "var(--color-ln-yellow)",
+                border: "1.5px solid oklch(from var(--color-ln-yellow) l c h / 0.35)"
+              }}>
+              <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+              For senior leaders who know they have more to give
+            </div>
 
-        {/* MECLABS: Friction (−2×) — remove every barrier */}
-        <p className="text-base mb-10 text-white/60">
-          Free to start · First diagnostic in 10 minutes · Personalised result immediately · No credit card
-        </p>
+            {/* Headline — reduced size */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.1] mb-5">
+              <span className="text-white">The Gap Between Where You Are</span><br />
+              <span className="text-white">And What's Next</span>{" "}
+              <span style={{ color: "var(--color-ln-yellow)" }}>Is Leadership.</span>
+            </h1>
 
-        {/* MECLABS: Incentive (2×) — immediate, free, personalised */}
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <a href={getLoginUrl()}>
-            <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg"
-              style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-              Start Your Free Leadership Diagnostic
-              <ArrowRight size={18} className="ml-2" />
-            </Button>
-          </a>
-        </div>
+            {/* Sub-headline */}
+            <p className="text-base md:text-lg leading-relaxed mb-4 text-white/80 max-w-lg">
+              Most leaders plateau — from gaps they're ignoring or don't even know.
+              The <strong style={{ color: "var(--color-ln-yellow)" }}>LevelNext Leadership Intelligence System</strong> gives you
+              precision diagnostics, daily AI coaching, and practice to close the gap.
+            </p>
 
-        {/* MECLABS: Anxiety (−2×) — pre-empt the #1 fear */}
-        <p className="text-base mt-5 text-white font-medium">
-          Not another personality test. Not a generic course. Real intelligence, built on your actual leadership data.
-        </p>
+            {/* Friction reducer */}
+            <p className="text-sm mb-7 text-white/50">
+              Free to start · First diagnostic in 10 minutes · No credit card
+            </p>
 
-        {/* Scroll hint */}
-        <div className="mt-16 flex flex-col items-center gap-2 animate-bounce" style={{ color: "oklch(40% 0.02 248.6)" }}>
-          <ChevronDown size={20} />
+            {/* CTA — above the fold */}
+            <a href={getLoginUrl()}>
+              <Button size="lg" className="h-13 px-8 text-base font-bold rounded-xl shadow-lg"
+                style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
+                Apply for a Pilot
+                <ArrowRight size={18} className="ml-2" />
+              </Button>
+            </a>
+
+            {/* Anxiety counter */}
+            <p className="text-sm mt-4 text-white/50">
+              Not another personality test. Real intelligence, built on your actual leadership data.
+            </p>
+
+            {/* Trust badges */}
+            <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6">
+              {["IBM", "Volvo", "Broadridge", "Texas Instruments", "Syngenta"].map((co) => (
+                <span key={co} className="text-xs font-semibold tracking-wide"
+                  style={{ color: "oklch(55% 0.02 248.6)" }}>
+                  {co}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Right: Video ──────────────────────────────────────────────────── */}
+          <div className="md:w-[48%] order-1 md:order-2 md:py-8">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl"
+              style={{ border: "2px solid oklch(from var(--color-ln-yellow) l c h / 0.3)" }}>
+              <video
+                ref={videoRef}
+                src={VIDEO_URL}
+                className="w-full block"
+                style={{ aspectRatio: "16/9", objectFit: "cover" }}
+                autoPlay
+                muted
+                playsInline
+                loop
+                controls
+              />
+            </div>
+            {/* Caption below video */}
+            <p className="text-xs text-center mt-3" style={{ color: "oklch(50% 0.02 248.6)" }}>
+              See LevelNext in action — 85 seconds
+            </p>
+          </div>
+
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF: Real quotes from real leaders ───────────────────────── */}
+      {/* ── SOCIAL PROOF ─────────────────────────────────────────────────────── */}
       <section className="px-6 py-12 md:py-16" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)" }}>
         <div className="max-w-5xl mx-auto">
-          <p className="text-center text-lg font-bold uppercase tracking-widest mb-10" style={{ color: "var(--color-ln-yellow)" }}>
+          <p className="text-center text-sm font-bold uppercase tracking-widest mb-10" style={{ color: "var(--color-ln-yellow)" }}>
             What leaders are saying
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -182,9 +221,7 @@ export default function Landing() {
               <div key={sp.name} className="rounded-2xl p-6 flex flex-col gap-4"
                 style={{ background: "oklch(from white 12% 0 0 / 0.06)", border: "1px solid oklch(from white 30% 0 0 / 0.08)" }}>
                 <Quote size={20} style={{ color: "var(--color-ln-yellow)", opacity: 0.6 }} />
-                <p className="text-base leading-relaxed flex-1 text-white">
-                  "{sp.quote}"
-                </p>
+                <p className="text-base leading-relaxed flex-1 text-white">"{sp.quote}"</p>
                 <div>
                   <p className="text-base font-bold text-white">{sp.name}</p>
                   <p className="text-sm mt-0.5" style={{ color: "oklch(65% 0.02 248.6)" }}>{sp.title}</p>
@@ -195,10 +232,10 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── THE PROBLEM: Motivation deepened (4×) ────────────────────────────── */}
+      {/* ── THE PROBLEM ──────────────────────────────────────────────────────── */}
       <section className="px-6 py-12 md:py-20 text-center">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight text-white">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-white">
             Leadership development is broken.<br />
             <span style={{ color: "var(--color-ln-yellow)" }}>Here's why yours hasn't stuck.</span>
           </h2>
@@ -231,15 +268,15 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── THE SOLUTION: Value Proposition (3×) + Named Mechanism ──────────── */}
+      {/* ── THE SOLUTION ─────────────────────────────────────────────────────── */}
       <section className="px-6 py-16 md:py-24" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)" }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--color-ln-yellow)" }}>
               The LevelNext Leadership Intelligence System
             </p>
-            <h2 className="text-3xl md:text-5xl font-bold leading-tight text-white">
-              Four steps from insight to<br />
+            <h2 className="text-3xl md:text-4xl font-bold leading-tight text-white">
+              Four steps from insight to{" "}
               <span style={{ color: "var(--color-ln-yellow)" }}>measurable leadership growth.</span>
             </h2>
           </div>
@@ -264,17 +301,17 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── DIAGNOSTICS: What's inside ────────────────────────────────────────── */}
+      {/* ── DIAGNOSTICS ──────────────────────────────────────────────────────── */}
       <section className="px-6 py-16 md:py-24">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--color-ln-yellow)" }}>
               Six precision diagnostics
             </p>
-          <h2 className="text-3xl md:text-5xl font-bold leading-tight text-white">
-            Know exactly where you stand.<br />
-            <span style={{ color: "var(--color-ln-yellow)" }}>In every dimension that matters.</span>
-          </h2>
+            <h2 className="text-3xl md:text-4xl font-bold leading-tight text-white">
+              Know exactly where you stand.{" "}
+              <span style={{ color: "var(--color-ln-yellow)" }}>In every dimension that matters.</span>
+            </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {DIAGNOSTICS.map((d) => (
@@ -294,7 +331,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── ANXIETY COUNTER: Pre-empt the #1 fear (−2×) ─────────────────────── */}
+      {/* ── ANXIETY COUNTER ──────────────────────────────────────────────────── */}
       <section className="px-6 py-16 md:py-20" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)" }}>
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-10 text-white">
@@ -328,7 +365,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── FINAL CTA: Incentive (2×) + Friction removal (−2×) ──────────────── */}
+      {/* ── FINAL CTA ────────────────────────────────────────────────────────── */}
       <section className="px-6 py-20 md:py-28 text-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 60% 60% at 50% 100%, oklch(from var(--color-ln-yellow) l c h / 0.07) 0%, transparent 70%)"
@@ -337,8 +374,8 @@ export default function Landing() {
           <p className="text-sm font-semibold uppercase tracking-widest mb-5" style={{ color: "var(--color-ln-yellow)" }}>
             Start building your edge today
           </p>
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight text-white">
-            Your next level of leadership<br />
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-white">
+            Your next level of leadership{" "}
             <span style={{ color: "var(--color-ln-yellow)" }}>starts with one diagnostic.</span>
           </h2>
           <p className="text-lg mb-10 leading-relaxed text-white/70">
@@ -347,9 +384,8 @@ export default function Landing() {
             coaching mission from Guide — completely free.
           </p>
 
-          {/* Friction-reducing checklist */}
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-10">
-            {["Free to start", "10-minute first diagnostic", "Instant personalised result", "No credit card required", "Cancel anytime"].map((item) => (
+            {["Free to start", "10-minute first diagnostic", "Instant personalised result", "No credit card required"].map((item) => (
               <div key={item} className="flex items-center gap-2">
                 <CheckCircle2 size={14} style={{ color: "var(--color-ln-yellow)" }} />
                 <span className="text-sm" style={{ color: "oklch(65% 0.02 248.6)" }}>{item}</span>
@@ -360,7 +396,7 @@ export default function Landing() {
           <a href={getLoginUrl()}>
             <Button size="lg" className="h-14 px-12 text-base font-bold rounded-xl shadow-xl"
               style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-              Start Your Free Diagnostic
+              Apply for a Pilot
               <ArrowRight size={18} className="ml-2" />
             </Button>
           </a>
@@ -371,7 +407,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Footer ────────────────────────────────────────────────────────────── */}
+      {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer className="px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4"
         style={{ borderTop: "1px solid oklch(from white 20% 0 0 / 0.08)" }}>
         <img src={LOGO_URL} alt="LevelNext" className="h-8 w-auto opacity-60" />
