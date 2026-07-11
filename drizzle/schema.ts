@@ -831,3 +831,19 @@ export const orgInvitations = mysqlTable("org_invitations", {
 });
 export type OrgInvitation = typeof orgInvitations.$inferSelect;
 export type InsertOrgInvitation = typeof orgInvitations.$inferInsert;
+
+// ─── Pilot Applications ───────────────────────────────────────────────────────
+export const pilotApplications = mysqlTable("pilot_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  company: varchar("company", { length: 255 }).notNull(),
+  companyUrl: varchar("companyUrl", { length: 500 }),
+  teamSize: varchar("teamSize", { length: 50 }),
+  message: text("message"),
+  status: mysqlEnum("status", ["new", "contacted", "booked", "declined"]).default("new").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PilotApplication = typeof pilotApplications.$inferSelect;
+export type InsertPilotApplication = typeof pilotApplications.$inferInsert;

@@ -106,7 +106,7 @@ export default function Landing() {
                 Sign In
               </Button>
             </a>
-            <a href={getLoginUrl()}>
+            <a href="/apply">
               <Button size="sm" className="font-semibold text-sm px-5"
                 style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
                 Apply for a Pilot →
@@ -160,7 +160,7 @@ export default function Landing() {
             </p>
 
             {/* CTA — above the fold */}
-            <a href={getLoginUrl()}>
+            <a href="/apply">
               <Button size="lg" className="h-13 px-8 text-base font-bold rounded-xl shadow-lg"
                 style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
                 Apply for a Pilot
@@ -416,7 +416,7 @@ export default function Landing() {
             ))}
           </div>
 
-          <a href={getLoginUrl()}>
+          <a href="/apply">
             <Button size="lg" className="h-14 px-12 text-base font-bold rounded-xl shadow-xl"
               style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
               Apply for a Pilot
