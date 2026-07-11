@@ -160,7 +160,7 @@ export default function Landing() {
             </p>
 
             {/* CTA — above the fold */}
-            <a href="/apply">
+            <a href="/apply?utm_source=landing&utm_medium=hero&utm_campaign=pilot">
               <Button size="lg" className="h-13 px-8 text-base font-bold rounded-xl shadow-lg"
                 style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
                 Apply for a Pilot
@@ -168,8 +168,21 @@ export default function Landing() {
               </Button>
             </a>
 
+            {/* Direct booking link */}
+            <a
+              href="https://tidycal.com/metaresults/pilot?utm_source=landing&utm_medium=hero_secondary&utm_campaign=pilot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm mt-3 flex items-center gap-1.5 transition-colors"
+              style={{ color: "oklch(65% 0.02 248.6)" }}
+              onMouseEnter={e => (e.currentTarget.style.color = "var(--color-ln-yellow)")}
+              onMouseLeave={e => (e.currentTarget.style.color = "oklch(65% 0.02 248.6)")}
+            >
+              or book a call directly →
+            </a>
+
             {/* Anxiety counter */}
-            <p className="text-sm mt-4 text-white/50">
+            <p className="text-sm mt-3 text-white/50">
               Not another personality test. Real intelligence, built on your actual leadership data.
             </p>
 
