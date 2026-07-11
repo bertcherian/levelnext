@@ -128,10 +128,10 @@ export default function Landing() {
         <div className="relative max-w-7xl mx-auto px-6 md:px-10 py-10 md:py-0 md:min-h-[calc(100vh-65px)] flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
 
           {/* ── Left: Text + CTA ──────────────────────────────────────────────── */}
-          <div className="flex flex-col items-start text-left md:w-[52%] md:py-12 order-2 md:order-1">
+          <div className="flex flex-col items-start text-left md:w-[52%] md:py-6 order-2 md:order-1">
 
             {/* Pill badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-6"
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-4"
               style={{
                 background: "oklch(from var(--color-ln-yellow) l c h / 0.12)",
                 color: "var(--color-ln-yellow)",
@@ -141,21 +141,21 @@ export default function Landing() {
               For senior leaders who know they have more to give
             </div>
 
-            {/* Headline — reduced size */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.1] mb-5">
+            {/* Headline — compact size */}
+            <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold leading-[1.15] mb-4">
               <span className="text-white">Know Exactly Where Your Leadership Stands.</span><br />
               <span style={{ color: "var(--color-ln-yellow)" }}>Fix What's Holding You Back.</span>
             </h1>
 
             {/* Sub-headline */}
-            <p className="text-base md:text-lg leading-relaxed mb-4 text-white/80 max-w-lg">
+            <p className="text-sm md:text-base leading-relaxed mb-3 text-white/80 max-w-lg">
               Most leaders plateau — from gaps they're ignoring or don't even know.
               The <strong style={{ color: "var(--color-ln-yellow)" }}>LevelNext Leadership Intelligence System</strong> gives you
               precision diagnostics, daily AI coaching, and practice to close the gap.
             </p>
 
             {/* Friction reducer */}
-            <p className="text-sm mb-7 text-white/50">
+            <p className="text-xs mb-5 text-white/50">
               Free to start · First diagnostic in 10 minutes · No credit card
             </p>
 
