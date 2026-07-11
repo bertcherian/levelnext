@@ -13,9 +13,6 @@ const TIDYCAL_URL = "https://tidycal.com/metaresults/pilot";
 const TEAM_SIZE_OPTIONS = [
   "1–10 leaders",
   "11–25 leaders",
-  "26–50 leaders",
-  "51–100 leaders",
-  "100+ leaders",
 ];
 
 export default function ApplyForPilot() {
