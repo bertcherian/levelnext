@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/levelnext-logo_525d7189.png";
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 const VIDEO_URL = "/manus-storage/levelnext_explainer_v5_a20a9a42.mp4";
 
 const SOCIAL_PROOF = [
@@ -94,25 +94,27 @@ export default function Landing() {
     <div className="min-h-screen flex flex-col" style={{ background: "var(--color-ln-navy)", color: "white" }}>
 
       {/* ── Sticky Header ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 px-6 md:px-10 py-4 flex items-center justify-between"
+      <header className="sticky top-0 z-50 px-6 md:px-10 py-4"
         style={{
           background: "oklch(from var(--color-ln-navy) l c h / 0.95)",
           backdropFilter: "blur(12px)",
           borderBottom: "1px solid oklch(from white 30% 0 0 / 0.08)"
         }}>
-        <img src={LOGO_URL} alt="LevelNext" className="h-9 w-auto" />
-        <div className="flex items-center gap-3">
-          <a href={getLoginUrl()}>
-            <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10 text-sm">
-              Sign In
-            </Button>
-          </a>
-          <a href={getLoginUrl()}>
-            <Button size="sm" className="font-semibold text-sm px-5"
-              style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-              Apply for a Pilot →
-            </Button>
-          </a>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <img src={LOGO_URL} alt="LevelNext" className="h-14 w-auto" />
+          <div className="flex items-center gap-3">
+            <a href={getLoginUrl()}>
+              <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10 text-sm">
+                Sign In
+              </Button>
+            </a>
+            <a href={getLoginUrl()}>
+              <Button size="sm" className="font-semibold text-sm px-5"
+                style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
+                Apply for a Pilot →
+              </Button>
+            </a>
+          </div>
         </div>
       </header>
 
@@ -143,9 +145,8 @@ export default function Landing() {
 
             {/* Headline — reduced size */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.1] mb-5">
-              <span className="text-white">The Gap Between Where You Are</span><br />
-              <span className="text-white">And What's Next</span>{" "}
-              <span style={{ color: "var(--color-ln-yellow)" }}>Is Leadership.</span>
+              <span className="text-white">Know Exactly Where Your Leadership Stands.</span><br />
+              <span style={{ color: "var(--color-ln-yellow)" }}>Fix What's Holding You Back.</span>
             </h1>
 
             {/* Sub-headline */}
@@ -410,7 +411,7 @@ export default function Landing() {
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer className="px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4"
         style={{ borderTop: "1px solid oklch(from white 20% 0 0 / 0.08)" }}>
-        <img src={LOGO_URL} alt="LevelNext" className="h-8 w-auto opacity-60" />
+        <img src={LOGO_URL} alt="LevelNext" className="h-12 w-auto opacity-70" />
         <p className="text-sm text-center" style={{ color: "oklch(40% 0.02 248.6)" }}>
           © 2026 LevelNext · Powered by Meta Results Pvt. Ltd.
         </p>
