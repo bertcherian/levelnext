@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { pilotApplications } from "../../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
+import { notifyOwner } from "../_core/notification";
 
 export const pilotApplicationRouter = router({
   // Public: submit a pilot application
@@ -32,6 +33,22 @@ export const pilotApplicationRouter = router({
         message: input.message ?? null,
         status: "new",
       });
+
+      // Notify the owner of the new pilot application (fire-and-forget)
+      notifyOwner({
+        title: `🚀 New Pilot Application — ${input.name}`,
+        content: [
+          `Name: ${input.name}`,
+          `Email: ${input.email}`,
+          input.phone ? `Phone: ${input.phone}` : null,
+          `Company: ${input.company}`,
+          input.companyUrl ? `Website: ${input.companyUrl}` : null,
+          input.teamSize ? `Team Size: ${input.teamSize}` : null,
+          input.message ? `\nMessage: ${input.message}` : null,
+          `\nView all applications: /admin/pilot-applications`,
+        ].filter(Boolean).join("\n"),
+      }).catch(() => { /* non-critical — don't fail the submission */ });
+
       return { success: true };
     }),
 
