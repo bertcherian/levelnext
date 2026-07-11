@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield } from "lucide-react";
 
@@ -65,22 +65,11 @@ const DIAGNOSTICS = [
 export default function Landing() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
-  const videoRef = useRef<HTMLVideoElement>(null);
-
   useEffect(() => {
     if (!loading && isAuthenticated) {
       navigate("/home");
     }
   }, [isAuthenticated, loading, navigate]);
-
-  // Autoplay video on mount
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {
-        // Autoplay blocked — silently ignore, user can click play
-      });
-    }
-  }, []);
 
   if (loading) {
     return (
@@ -191,14 +180,10 @@ export default function Landing() {
             <div className="relative rounded-2xl overflow-hidden shadow-2xl"
               style={{ border: "2px solid oklch(from var(--color-ln-yellow) l c h / 0.3)" }}>
               <video
-                ref={videoRef}
                 src={VIDEO_URL}
                 className="w-full block"
                 style={{ aspectRatio: "16/9", objectFit: "cover" }}
-                autoPlay
-                muted
                 playsInline
-                loop
                 controls
               />
             </div>
