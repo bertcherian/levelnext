@@ -17,6 +17,7 @@ import {
   Zap,
   MoreHorizontal,
   Activity,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -226,6 +227,30 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                 </li>
               );
             })}
+            {/* Admin-only: Pilot Applications */}
+            {user?.role === "admin" && (() => {
+              const isActive = isNavActive("/admin/pilot-applications");
+              return (
+                <li key="/admin/pilot-applications-mobile">
+                  <div className="mt-3 mb-1 px-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Admin</p>
+                  </div>
+                  <Link href="/admin/pilot-applications" onClick={() => setSidebarOpen(false)}>
+                    <div
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                        isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                      )}
+                      style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                    >
+                      <Briefcase size={18} className="flex-shrink-0" />
+                      <span>Pilot Applications</span>
+                      {isActive && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })()}
           </ul>
         </nav>
 
@@ -297,6 +322,30 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                 </li>
               );
             })}
+            {/* Admin-only: Pilot Applications */}
+            {user?.role === "admin" && (() => {
+              const isActive = isNavActive("/admin/pilot-applications");
+              return (
+                <li key="/admin/pilot-applications">
+                  <div className="mt-3 mb-1 px-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Admin</p>
+                  </div>
+                  <Link href="/admin/pilot-applications">
+                    <div
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                        isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                      )}
+                      style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                    >
+                      <Briefcase size={18} className={cn("flex-shrink-0", isActive ? "" : "group-hover:scale-105 transition-transform")} />
+                      <span>Pilot Applications</span>
+                      {isActive && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })()}
           </ul>
         </nav>
 
