@@ -1,12 +1,13 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield } from "lucide-react";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 const VIDEO_URL = "/manus-storage/levelnext_explainer_v5_a20a9a42.mp4";
+const POSTER_URL = "/manus-storage/video_poster_9c31f573.jpg";
 
 const SOCIAL_PROOF = [
   {
@@ -65,11 +66,19 @@ const DIAGNOSTICS = [
 export default function Landing() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
   useEffect(() => {
     if (!loading && isAuthenticated) {
       navigate("/home");
     }
   }, [isAuthenticated, loading, navigate]);
+
+  function handlePlay() {
+    setPlaying(true);
+    videoRef.current?.play();
+  }
 
   if (loading) {
     return (
@@ -180,14 +189,42 @@ export default function Landing() {
             <div className="relative rounded-2xl overflow-hidden shadow-2xl"
               style={{ border: "2px solid oklch(from var(--color-ln-yellow) l c h / 0.3)" }}>
               <video
+                ref={videoRef}
                 src={VIDEO_URL}
+                poster={POSTER_URL}
                 className="w-full block"
                 style={{ aspectRatio: "16/9", objectFit: "cover" }}
                 playsInline
                 controls
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
               />
+              {/* Custom play button overlay — hidden once playing */}
+              {!playing && (
+                <button
+                  onClick={handlePlay}
+                  aria-label="Play video"
+                  className="absolute inset-0 flex items-center justify-center w-full h-full"
+                  style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.35)", backdropFilter: "blur(2px)", border: "none", cursor: "pointer" }}
+                >
+                  <div className="flex items-center justify-center rounded-full"
+                    style={{
+                      width: 72, height: 72,
+                      background: "var(--color-ln-yellow)",
+                      boxShadow: "0 0 0 8px oklch(from var(--color-ln-yellow) l c h / 0.25), 0 8px 32px rgba(0,0,0,0.5)",
+                    }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                      <polygon points="10,7 22,14 10,21" fill="var(--color-ln-navy)" />
+                    </svg>
+                  </div>
+                  <span className="absolute bottom-4 left-0 right-0 text-center text-xs font-semibold tracking-wide"
+                    style={{ color: "white", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+                    Watch the 85-second overview
+                  </span>
+                </button>
+              )}
             </div>
-            {/* Caption below video */}
             <p className="text-xs text-center mt-3" style={{ color: "oklch(50% 0.02 248.6)" }}>
               See LevelNext in action — 85 seconds
             </p>
