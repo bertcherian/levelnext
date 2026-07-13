@@ -33,6 +33,15 @@ import {
   STI_QUESTIONS, STI_DIMENSIONS,
   scoreSti,
 } from "../../shared/modules/stiData";
+import {
+  getCiQuestions, getCiDimensions, getCiModule, scoreCiModule,
+} from "../../shared/modules/careerData";
+
+const CI_MODULE_CODES = ["CPI", "CRS", "CMK", "CST", "CAO", "AIR"] as const;
+type CiModuleCode = typeof CI_MODULE_CODES[number];
+function isCiModule(code: string): code is CiModuleCode {
+  return (CI_MODULE_CODES as readonly string[]).includes(code);
+}
 
 // ─── Scoring helpers ──────────────────────────────────────────────────────────
 function scoreLii(responses: Record<string, number>) {
@@ -145,8 +154,19 @@ function scoreEci(responses: Record<string, number>) {
 export const assessmentRouter = router({
   // Get questions for a module
   getQuestions: publicProcedure
-    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "STI"]) }))
+    .input(z.object({ moduleType: z.string() }))
     .query(({ input }) => {
+      // Career Intelligence modules
+      if (isCiModule(input.moduleType)) {
+        const questions = getCiQuestions(input.moduleType);
+        const dimensions = getCiDimensions(input.moduleType);
+        const meta = getCiModule(input.moduleType);
+        return {
+          questions: questions.map((q) => ({ id: q.id, text: q.text, dimensionId: q.dimensionId, reversed: q.reverseScored })),
+          pillars: dimensions.map((d) => ({ id: d.id, label: d.label, description: d.description, color: meta?.color ?? "#D4AF37" })),
+          totalQuestions: questions.length,
+        };
+      }
       if (input.moduleType === "TII") {
         return {
           questions: TII_QUESTIONS.map((q) => ({ id: String(q.id), text: q.text, dimensionId: q.dimensionId })),
@@ -195,7 +215,7 @@ export const assessmentRouter = router({
 
   // Start or resume an assessment session
   startSession: protectedProcedure
-    .input(z.object({ moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "STI"]) }))
+    .input(z.object({ moduleType: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -207,7 +227,7 @@ export const assessmentRouter = router({
         .where(
           and(
             eq(assessmentSessions.userId, ctx.user.id),
-            eq(assessmentSessions.moduleType, input.moduleType),
+            eq(assessmentSessions.moduleType, input.moduleType as any),
             eq(assessmentSessions.status, "in_progress")
           )
         )
@@ -219,7 +239,7 @@ export const assessmentRouter = router({
 
       const [session] = await db
         .insert(assessmentSessions)
-        .values({ userId: ctx.user.id, moduleType: input.moduleType, responses: {} })
+        .values({ userId: ctx.user.id, moduleType: input.moduleType as any, responses: {} })
         .$returningId();
 
       return { sessionId: session.id, resumed: false, responses: {} };
@@ -249,7 +269,7 @@ export const assessmentRouter = router({
     .input(
       z.object({
         sessionId: z.number(),
-        moduleType: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "STI"]),
+        moduleType: z.string(),
         responses: z.record(z.string(), z.number()),
         participantName: z.string(),
         participantEmail: z.string().email(),
@@ -263,7 +283,22 @@ export const assessmentRouter = router({
 
       // Score the responses
       let scored: { edgeScore: number; dimensionScores: Record<string, number>; zone: string; archetype: string; [key: string]: unknown };
-      if (input.moduleType === "ECI") scored = scoreEci(input.responses);
+      if (isCiModule(input.moduleType)) {
+        const ciResult = scoreCiModule(input.moduleType, input.responses);
+        scored = {
+          edgeScore: ciResult.edgeScore,
+          dimensionScores: ciResult.dimensionScores,
+          zone: ciResult.zone,
+          archetype: ciResult.archetypeId,
+          zoneLabel: ciResult.zoneLabel,
+          zoneDescription: ciResult.zoneDescription,
+          zoneImplication: ciResult.zoneImplication,
+          archetypeLabel: ciResult.archetypeLabel,
+          archetypeDescription: "",
+          archetypeStrengths: [],
+          archetypeRisks: [],
+        };
+      } else if (input.moduleType === "ECI") scored = scoreEci(input.responses);
       else if (input.moduleType === "TII") scored = scoreTii(input.responses);
       else if (input.moduleType === "LII") scored = scoreLii(input.responses);
       else if (input.moduleType === "LDI") {
@@ -308,7 +343,7 @@ export const assessmentRouter = router({
         .values({
           sessionId: input.sessionId,
           userId: ctx.user.id,
-          moduleType: input.moduleType,
+          moduleType: input.moduleType as any,
           slug,
           participantName: input.participantName,
           participantEmail: input.participantEmail,
@@ -328,8 +363,10 @@ export const assessmentRouter = router({
         .set({ status: "completed", completedAt: new Date(), responses: input.responses })
         .where(eq(assessmentSessions.id, input.sessionId));
 
-      // Update the Leadership Graph
-      await updateLeadershipGraph(ctx.user.id, input.moduleType as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI", scored);
+      // Update the Leadership Graph (LI modules only)
+      if (!isCiModule(input.moduleType)) {
+        await updateLeadershipGraph(ctx.user.id, input.moduleType as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI", scored);
+      }
 
       return {
         reportId: report.id,

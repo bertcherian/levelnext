@@ -14,6 +14,13 @@ const MODULE_META: Record<string, { label: string; dimensionLabel: string }> = {
   GCC: { label: "GCC Readiness", dimensionLabel: "Readiness Dimension Breakdown" },
   LDI: { label: "Leadership Derailment Intelligence", dimensionLabel: "Derailment Risk Dimension Breakdown" },
   STI: { label: "Strategic Thinking Intelligence", dimensionLabel: "Strategic Dimension Breakdown" },
+  // Career Intelligence modules
+  CPI: { label: "Career Positioning Intelligence", dimensionLabel: "Positioning Dimension Breakdown" },
+  CRS: { label: "Career Resilience Intelligence", dimensionLabel: "Resilience Dimension Breakdown" },
+  CMK: { label: "Career Marketability Intelligence", dimensionLabel: "Marketability Dimension Breakdown" },
+  CST: { label: "Career Strategy Intelligence", dimensionLabel: "Strategy Dimension Breakdown" },
+  CAO: { label: "Career Optionality Intelligence", dimensionLabel: "Optionality Dimension Breakdown" },
+  AIR: { label: "AI Readiness Intelligence", dimensionLabel: "AI Readiness Dimension Breakdown" },
 };
 
 const DIMENSION_LABELS: Record<string, Record<string, string>> = {
@@ -83,6 +90,49 @@ const DIMENSION_LABELS: Record<string, Record<string, string>> = {
     scenario_thinking: "Scenario Thinking",
     innovation_opportunity: "Innovation & Opportunity",
     strategic_communication: "Strategic Communication",
+  },
+  // Career Intelligence dimension labels
+  CPI: {
+    value_proposition: "Value Proposition Clarity",
+    professional_identity: "Professional Identity Strength",
+    positioning_differentiation: "Positioning & Differentiation",
+    narrative_coherence: "Career Narrative Coherence",
+    target_market_clarity: "Target Market Clarity",
+  },
+  CRS: {
+    adversity_response: "Adversity Response",
+    adaptability: "Adaptability & Flexibility",
+    emotional_regulation: "Emotional Regulation Under Pressure",
+    recovery_speed: "Recovery Speed",
+    future_orientation: "Future Orientation",
+  },
+  CMK: {
+    professional_brand: "Professional Brand Strength",
+    network_capital: "Network Capital",
+    digital_presence: "Digital Presence & Visibility",
+    thought_leadership: "Thought Leadership",
+    market_intelligence: "Market Intelligence",
+  },
+  CST: {
+    strategic_clarity: "Strategic Career Clarity",
+    planning_discipline: "Planning & Execution Discipline",
+    opportunity_sensing: "Opportunity Sensing",
+    stakeholder_strategy: "Stakeholder Strategy",
+    risk_management: "Career Risk Management",
+  },
+  CAO: {
+    role_breadth: "Role & Function Breadth",
+    industry_transferability: "Industry Transferability",
+    geographic_mobility: "Geographic & Work Model Flexibility",
+    financial_runway: "Financial Runway",
+    portfolio_readiness: "Portfolio Career Readiness",
+  },
+  AIR: {
+    ai_literacy: "AI Literacy & Understanding",
+    ai_workflow: "AI Workflow Integration",
+    ai_strategy: "AI Strategic Positioning",
+    human_differentiation: "Human Differentiation",
+    ai_mindset: "AI Mindset & Adaptability",
   },
 };
 

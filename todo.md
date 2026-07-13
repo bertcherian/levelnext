@@ -303,3 +303,9 @@
 ### Career Intelligence — Phase 6 (next)
 - [ ] Career Intelligence landing page at /career
 - [ ] Update LevelNext home to present both products
+
+## Career Intelligence — Phase 2 (Diagnostics Data Layer)
+- [x] careerData.ts: 6 CI modules (CPI, CRS, CMK, CST, CAO, AIR) with questions, dimensions, scoring, zones, archetypes
+- [x] assessment router: extended getQuestions, startSession, submit to handle CI module codes
+- [x] pdfReport router: CI module metadata and dimension labels added
+- [x] TypeScript: zero errors across full project
