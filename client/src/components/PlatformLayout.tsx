@@ -107,7 +107,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
   // Active product detection for product-aware nav
   const { data: activeProduct } = trpc.products.getActiveProduct.useQuery(undefined, {
     enabled: isAuthenticated,
-    staleTime: 30_000,
+    staleTime: 5_000,
+    refetchOnWindowFocus: true,
   });
   const activeProductId = activeProduct?.productId ?? "leadership_intelligence";
   const isCareerProduct = activeProductId === "career_intelligence";

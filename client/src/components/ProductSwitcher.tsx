@@ -35,11 +35,17 @@ export default function ProductSwitcher() {
   const [open, setOpen] = useState(false);
   const [, navigate] = useLocation();
 
+  const utils = trpc.useUtils();
   const { data: activeProduct, refetch } = trpc.products.getActiveProduct.useQuery();
-  const { data: enrolledProducts } = trpc.products.getEnrolledProducts.useQuery();
+  const { data: enrolledProducts } = trpc.products.getEnrolledProducts.useQuery(undefined, {
+    // Short stale time so the switcher appears quickly after admin enrollment
+    staleTime: 5_000,
+    refetchOnWindowFocus: true,
+  });
   const switchProduct = trpc.products.switchProduct.useMutation({
     onSuccess: (_data, variables) => {
       refetch();
+      utils.products.getEnrolledProducts.invalidate();
       const config = PRODUCT_CONFIG[variables.productId];
       if (config) {
         toast.success(`Switched to ${config.label}`);
