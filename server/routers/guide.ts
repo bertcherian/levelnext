@@ -3,7 +3,7 @@ import { eq, desc, gte, and } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { guideConversations, guideSessions, users, tenantUsers, organisations, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
+import { guideConversations, guideSessions, users, tenantUsers, organisations, commitments, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
 type OrgContext = {
@@ -345,6 +345,46 @@ Return ONLY a JSON array of 4 strings. No explanation, no markdown, just the arr
         return { questions: [] as string[] };
       }
     }),
+
+  // Save a commitment from a Guide session
+  saveCommitment: protectedProcedure
+    .input(z.object({
+      text: z.string().min(5).max(500),
+      conversationId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Supersede any existing pending guide commitments — only one active at a time
+      await db.update(commitments)
+        .set({ status: "postponed" })
+        .where(and(
+          eq(commitments.userId, ctx.user.id),
+          eq(commitments.status, "pending"),
+          eq(commitments.sourceType, "guide"),
+        ));
+      await db.insert(commitments).values({
+        userId: ctx.user.id,
+        text: input.text,
+        sourceType: "guide",
+        sourceId: input.conversationId ?? null,
+        status: "pending",
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      });
+      return { saved: true, text: input.text };
+    }),
+
+  // Get the current active commitment for this user
+  getActiveCommitment: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const result = await db.select()
+      .from(commitments)
+      .where(and(eq(commitments.userId, ctx.user.id), eq(commitments.status, "pending")))
+      .orderBy(desc(commitments.createdAt))
+      .limit(1);
+    return result[0] ?? null;
+  }),
 
   // Clear conversation history
   clearConversation: protectedProcedure.mutation(async ({ ctx }) => {

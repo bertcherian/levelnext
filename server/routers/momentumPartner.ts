@@ -351,10 +351,21 @@ Return only the opening script, no labels or preamble.`;
       })
       .from(momentumPartnerCalls)
       .innerJoin(users, eq(momentumPartnerCalls.userId, users.id))
-      .where(eq(momentumPartnerCalls.escalateToCoach, true))
+            .where(eq(momentumPartnerCalls.escalateToCoach, true))
       .orderBy(desc(momentumPartnerCalls.calledAt))
       .limit(50);
-
     return escalated;
   }),
+
+  // ── Resolve an escalation (mark as handled by coach) ─────────────────────────────────
+  resolveEscalation: adminProcedure
+    .input(z.object({ callId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(momentumPartnerCalls)
+        .set({ escalateToCoach: false })
+        .where(eq(momentumPartnerCalls.id, input.callId));
+      return { resolved: true };
+    }),
 });

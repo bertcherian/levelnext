@@ -6,7 +6,7 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Send, Loader2, RotateCcw, Sparkles, Target, ChevronRight, BookOpen, MessageCircle, Bookmark, BookmarkCheck, Trash2 } from "lucide-react";
+import { Send, Loader2, RotateCcw, Sparkles, Target, ChevronRight, BookOpen, MessageCircle, Bookmark, BookmarkCheck, Trash2, CheckCircle2, X } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 // Daily prompts rotate based on day of week
@@ -181,6 +181,24 @@ export default function Guide() {
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpGenerated, setFollowUpGenerated] = useState(false);
 
+  // ── Commitment setter ────────────────────────────────────────────────────────
+  const [showCommitmentPanel, setShowCommitmentPanel] = useState(false);
+  const [commitmentText, setCommitmentText] = useState("");
+  const [commitmentSaved, setCommitmentSaved] = useState(false);
+  const { data: activeCommitment, refetch: refetchCommitment } = trpc.guide.getActiveCommitment.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
+  const saveCommitment = trpc.guide.saveCommitment.useMutation({
+    onSuccess: () => {
+      refetchCommitment();
+      setCommitmentSaved(true);
+      toast.success("Commitment saved — your Momentum Partner will track this on your next call.");
+      setTimeout(() => { setShowCommitmentPanel(false); setCommitmentSaved(false); }, 2200);
+    },
+    onError: () => toast.error("Could not save commitment. Please try again."),
+  });
+
   const generateFollowUp = trpc.guide.generateFollowUpQuestions.useMutation({
     onSuccess: (data) => {
       setFollowUpQuestions(data.questions);
@@ -219,6 +237,12 @@ export default function Guide() {
     const updated = favorites.filter(f => f.id !== id);
     saveFavorites(updated);
     setFavorites(updated);
+  };
+
+  const handleSaveCommitment = () => {
+    const text = commitmentText.trim();
+    if (!text || saveCommitment.isPending) return;
+    saveCommitment.mutate({ text, conversationId: conversation?.id ?? undefined });
   };
 
   const handleGenerateFollowUp = () => {
@@ -604,7 +628,16 @@ export default function Guide() {
               <p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>Your personal leadership coach</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {messages.length >= 4 && !showCommitmentPanel && (
+              <button
+                onClick={() => { setShowCommitmentPanel(true); setCommitmentText(activeCommitment?.text ?? ""); }}
+                className="text-xs flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-lg font-medium"
+                style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)", color: "var(--color-ln-navy)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.4)" }}
+              >
+                <CheckCircle2 size={12} /> Set Commitment
+              </button>
+            )}
             <button
               onClick={() => setView("home")}
               className="text-xs flex items-center gap-1 transition-colors hover:opacity-70 px-3 py-1.5 rounded-lg"
@@ -718,6 +751,58 @@ export default function Guide() {
             </>
           )}
         </div>
+
+        {/* Commitment Setter Panel */}
+        {showCommitmentPanel && (
+          <div className="px-4 sm:px-6 py-4 border-t flex-shrink-0"
+            style={{ borderColor: "var(--color-ln-yellow)", background: "oklch(99% 0.018 85)", borderTopWidth: "2px" }}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={14} style={{ color: "var(--color-ln-navy)" }} />
+                <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-ln-navy)" }}>
+                  Set Your Commitment
+                </p>
+              </div>
+              <button onClick={() => setShowCommitmentPanel(false)} className="p-1 rounded hover:bg-black/8 transition-colors">
+                <X size={13} style={{ color: "var(--color-ln-muted)" }} />
+              </button>
+            </div>
+            <p className="text-xs mb-2" style={{ color: "var(--color-ln-muted)" }}>
+              What is the one thing you commit to practising before your next Momentum call?
+            </p>
+            {activeCommitment && !commitmentSaved && (
+              <p className="text-xs mb-2 px-3 py-1.5 rounded-lg" style={{ background: "oklch(95% 0.02 248.6)", color: "var(--color-ln-navy)" }}>
+                Current: "{activeCommitment.text.slice(0, 80)}{activeCommitment.text.length > 80 ? '…' : ''}"
+              </p>
+            )}
+            {commitmentSaved ? (
+              <div className="flex items-center gap-2 py-1.5" style={{ color: "oklch(40% 0.15 145)" }}>
+                <CheckCircle2 size={15} />
+                <span className="text-sm font-semibold">Commitment saved!</span>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Textarea
+                  value={commitmentText}
+                  onChange={(e) => setCommitmentText(e.target.value)}
+                  placeholder="e.g. I will pause for 3 seconds before responding in any disagreement conversation this fortnight."
+                  className="flex-1 resize-none text-sm min-h-[56px] max-h-[100px]"
+                  rows={2}
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSaveCommitment(); } }}
+                />
+                <Button
+                  onClick={handleSaveCommitment}
+                  disabled={!commitmentText.trim() || saveCommitment.isPending}
+                  className="h-auto px-3 py-2 flex-shrink-0 self-end rounded-xl"
+                  style={{ background: "var(--color-ln-navy)", color: "white" }}
+                >
+                  {saveCommitment.isPending ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Input */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-t flex-shrink-0"

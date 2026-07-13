@@ -30,6 +30,7 @@ import AdminManageInvites from "@/pages/AdminManageInvites";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminMomentumQueue from "@/pages/AdminMomentumQueue";
 import AdminMomentumBrief from "@/pages/AdminMomentumBrief";
+import AdminEscalations from "@/pages/AdminEscalations";
 import JoinPage from "@/pages/JoinPage";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 
@@ -62,6 +63,7 @@ function Router() {
       <Route path="/admin/invites" component={AdminManageInvites} />
       <Route path="/admin/momentum" component={AdminMomentumQueue} />
       <Route path="/admin/momentum/:userId" component={AdminMomentumBrief} />
+      <Route path="/admin/escalations" component={AdminEscalations} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />
