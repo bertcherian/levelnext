@@ -62,7 +62,14 @@ export const productsRouter = router({
         )
       )
       .orderBy(desc(userProductEnrollments.lastActiveAt));
-    return enrollments;
+    // Deduplicate by productId — keep only the first (most recent) enrollment per product
+    const seen = new Set<string>();
+    const unique = enrollments.filter((e) => {
+      if (seen.has(e.enrollment.productId)) return false;
+      seen.add(e.enrollment.productId);
+      return true;
+    });
+    return unique;
   }),
 
   // ── Get the user's active product (most recently used) ──────────────────────
