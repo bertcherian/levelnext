@@ -18,6 +18,7 @@ import {
   MoreHorizontal,
   Activity,
   Briefcase,
+  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -108,8 +109,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-ivory)" }}>
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-col items-center leading-tight animate-pulse">
-            <span className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-ln-navy)" }}>LevelNext</span>
-            <span className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>The Leadership Intelligence Platform</span>
+            <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-14 object-contain" />
+            <span className="text-xs font-medium tracking-wide mt-1" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </div>
           <p className="text-sm text-ln-muted">Loading your platform…</p>
         </div>
@@ -122,8 +123,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-navy)" }}>
         <div className="flex flex-col items-center gap-8 p-8 max-w-sm w-full">
           <div className="flex flex-col items-center leading-tight">
-            <span className="text-3xl font-bold tracking-tight text-white">LevelNext</span>
-            <span className="text-sm font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>The Leadership Intelligence Platform</span>
+            <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-20 object-contain" />
+            <span className="text-sm font-medium tracking-wide mt-1" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-white mb-2">Welcome to LevelNext</h1>
@@ -184,8 +185,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         {/* Drawer header */}
         <div className="flex items-center justify-between px-5 py-5 border-b" style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
           <Link href="/home" onClick={() => setSidebarOpen(false)} className="flex flex-col leading-tight cursor-pointer select-none">
-            <span className="text-xl font-bold tracking-tight text-white">LevelNext</span>
-            <span className="text-xs font-medium tracking-wide" style={{ color: "var(--color-ln-yellow)" }}>The Leadership Intelligence Platform</span>
+            <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-10 object-contain" />
+            <span className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </Link>
           <button
             className="text-white/60 hover:text-white transition-colors p-1"
@@ -229,26 +230,46 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             })}
             {/* Admin-only: Pilot Applications */}
             {user?.role === "admin" && (() => {
-              const isActive = isNavActive("/admin/pilot-applications");
+              const isActivePilot = isNavActive("/admin/pilot-applications");
+              const isActiveInvites = isNavActive("/admin/invites");
               return (
-                <li key="/admin/pilot-applications-mobile">
-                  <div className="mt-3 mb-1 px-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Admin</p>
-                  </div>
-                  <Link href="/admin/pilot-applications" onClick={() => setSidebarOpen(false)}>
-                    <div
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
-                        isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
-                      )}
-                      style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
-                    >
-                      <Briefcase size={18} className="flex-shrink-0" />
-                      <span>Pilot Applications</span>
-                      {isActive && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                <>
+                  <li key="/admin-section-mobile">
+                    <div className="mt-3 mb-1 px-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Admin</p>
                     </div>
-                  </Link>
-                </li>
+                  </li>
+                  <li key="/admin/pilot-applications-mobile">
+                    <Link href="/admin/pilot-applications" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActivePilot ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActivePilot ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Briefcase size={18} className="flex-shrink-0" />
+                        <span>Pilot Applications</span>
+                        {isActivePilot && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/invites-mobile">
+                    <Link href="/admin/invites" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveInvites ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveInvites ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Link2 size={18} className="flex-shrink-0" />
+                        <span>Manage Invites</span>
+                        {isActiveInvites && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                </>
               );
             })()}
           </ul>
@@ -285,8 +306,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-5 border-b" style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
           <Link href="/home" className="flex flex-col leading-tight cursor-pointer select-none">
-            <span className="text-xl font-bold tracking-tight text-white">LevelNext</span>
-            <span className="text-xs font-medium tracking-wide" style={{ color: "var(--color-ln-yellow)" }}>The Leadership Intelligence Platform</span>
+            <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-10 object-contain" />
+            <span className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </Link>
         </div>
 
@@ -322,28 +343,48 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                 </li>
               );
             })}
-            {/* Admin-only: Pilot Applications */}
+            {/* Admin-only nav items */}
             {user?.role === "admin" && (() => {
-              const isActive = isNavActive("/admin/pilot-applications");
+              const isActivePilot = isNavActive("/admin/pilot-applications");
+              const isActiveInvites = isNavActive("/admin/invites");
               return (
-                <li key="/admin/pilot-applications">
-                  <div className="mt-3 mb-1 px-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Admin</p>
-                  </div>
-                  <Link href="/admin/pilot-applications">
-                    <div
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
-                        isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
-                      )}
-                      style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
-                    >
-                      <Briefcase size={18} className={cn("flex-shrink-0", isActive ? "" : "group-hover:scale-105 transition-transform")} />
-                      <span>Pilot Applications</span>
-                      {isActive && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                <>
+                  <li key="/admin-section-desktop">
+                    <div className="mt-3 mb-1 px-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Admin</p>
                     </div>
-                  </Link>
-                </li>
+                  </li>
+                  <li key="/admin/pilot-applications">
+                    <Link href="/admin/pilot-applications">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActivePilot ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActivePilot ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Briefcase size={18} className={cn("flex-shrink-0", isActivePilot ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Pilot Applications</span>
+                        {isActivePilot && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/invites">
+                    <Link href="/admin/invites">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveInvites ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveInvites ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Link2 size={18} className={cn("flex-shrink-0", isActiveInvites ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Manage Invites</span>
+                        {isActiveInvites && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                </>
               );
             })()}
           </ul>
@@ -399,7 +440,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               />
             )}
           </button>
-          <span className="text-base font-bold tracking-tight" style={{ color: "var(--color-ln-navy)" }}>LevelNext</span>
+          <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-8 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(17%) sepia(41%) saturate(800%) hue-rotate(190deg) brightness(85%)" }} />
           <Avatar className="h-8 w-8">
             <AvatarFallback className="text-xs font-semibold" style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
               {initials}
