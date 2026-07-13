@@ -22,6 +22,7 @@ import {
   LayoutDashboard,
   Phone,
   AlertCircle,
+  UserCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -258,6 +259,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveInvites = isNavActive("/admin/invites");
               const isActiveMomentumMobile = isNavActive("/admin/momentum");
               const isActiveEscalationsMobile = isNavActive("/admin/escalations");
+              const isActiveEnrollmentsMobile = isNavActive("/admin/enrollments");
               return (
                 <>
                   <li key="/admin-section-mobile">
@@ -337,6 +339,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         <AlertCircle size={18} className="flex-shrink-0" />
                         <span>Escalation Inbox</span>
                         {isActiveEscalationsMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/enrollments-mobile">
+                    <Link href="/admin/enrollments" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveEnrollmentsMobile ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveEnrollmentsMobile ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <UserCog size={18} className="flex-shrink-0" />
+                        <span>Product Enrollments</span>
+                        {isActiveEnrollmentsMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
                   </li>
@@ -423,6 +440,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveInvites = isNavActive("/admin/invites");
               const isActiveMomentum = isNavActive("/admin/momentum");
               const isActiveEscalations = isNavActive("/admin/escalations");
+              const isActiveEnrollments = isNavActive("/admin/enrollments");
               return (
                 <>
                   <li key="/admin-section-desktop">
@@ -502,6 +520,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         <AlertCircle size={18} className={cn("flex-shrink-0", isActiveEscalations ? "" : "group-hover:scale-105 transition-transform")} />
                         <span>Escalation Inbox</span>
                         {isActiveEscalations && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/enrollments">
+                    <Link href="/admin/enrollments">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveEnrollments ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveEnrollments ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <UserCog size={18} className={cn("flex-shrink-0", isActiveEnrollments ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Product Enrollments</span>
+                        {isActiveEnrollments && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
                   </li>

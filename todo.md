@@ -324,3 +324,14 @@
 - [x] CI_NAV_ITEMS — product-aware navigation in PlatformLayout
 - [x] Route /career wired in App.tsx
 - [x] Zero TypeScript errors
+
+## Career Intelligence — Phase 5 (Admin Enrollment)
+- [x] AdminProductEnrollments page at /admin/enrollments
+- [x] Enroll / unenroll users per product with one click
+- [x] Stats cards (total users, LI count, CI count, both)
+- [x] Search by name/email + filter by product
+- [x] Sortable columns (name, email, joined, enrollments)
+- [x] CSV export
+- [x] Product Enrollments nav item in desktop sidebar and mobile drawer
+- [x] Route wired in App.tsx
+- [x] Zero TypeScript errors
