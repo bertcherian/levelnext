@@ -271,3 +271,35 @@
 - [x] client/src/pages/Progress.tsx — add STI to MODULE_LABELS, MODULE_COLORS, barData
 - [x] client/src/pages/Insights.tsx — add STI to MODULE_LABELS, MODULE_DESCRIPTIONS, tooltips
 - [x] TypeScript check + vitest + screenshot + checkpoint
+
+### Career Intelligence — Product Layer (Phase 1)
+- [x] Extend DB schema: products, product_modules, user_product_enrollments tables
+- [x] Widen moduleType enums across 6 tables to include CPI, CRS, CMK, CST, CAO, AIR
+- [x] Run migration (0018_big_archangel.sql) and apply to DB
+- [x] Seed products table: Leadership Intelligence + Career Intelligence with coach prompts
+- [x] Seed product_modules: LI sequence (ECI→TII→LII→GCC→LDI→STI) + CI sequence (CPI→CRS→CMK→CST→CAO→AIR)
+- [x] Build productsRouter: getAll, getModules, getEnrolledProducts, getActiveProduct, switchProduct, admin procedures
+- [x] Make unlock router product-aware: reads module sequence from product_modules table
+- [x] Wire productsRouter into routers.ts
+
+### Career Intelligence — Phase 2 (next)
+- [ ] Build careerData.ts: 6 CI diagnostics with questions, dimensions, scoring bands, archetypes
+- [ ] Extend assessment router to handle CI module codes
+- [ ] Build CI report scoring functions
+
+### Career Intelligence — Phase 3 (next)
+- [ ] Make Guide system prompt product-aware (reads coachPrompt from active product)
+- [ ] Make Practice Coach product-aware (reads practiceCoachPrompt from active product)
+
+### Career Intelligence — Phase 4 (next)
+- [ ] Product switcher UI in sidebar
+- [ ] Career Intelligence Home dashboard
+- [ ] Career Intelligence navigation (product-aware labels)
+- [ ] Career Intelligence onboarding (3-question intake)
+
+### Career Intelligence — Phase 5 (next)
+- [ ] Admin Product Enrollments page at /admin/enrollments
+
+### Career Intelligence — Phase 6 (next)
+- [ ] Career Intelligence landing page at /career
+- [ ] Update LevelNext home to present both products

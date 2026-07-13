@@ -25,6 +25,8 @@ import {
   reports,
   users,
   tenantUsers,
+  productModules,
+  userProductEnrollments,
   type LeadershipGraph,
   type DiagnosticUnlockProgress,
 } from "../../drizzle/schema";
@@ -35,19 +37,58 @@ const TIME_GATE_DAYS = 21;
 const MISSION_TARGET = 5;
 const GUIDE_SESSION_TARGET = 3;
 
-// Ordered sequence of modules — each module unlocks the next
-const MODULE_SEQUENCE = ["ECI", "TII", "LII", "GCC", "LDI", "STI"] as const;
-type ModuleType = (typeof MODULE_SEQUENCE)[number];
+// Fallback sequence used if DB is unavailable
+const FALLBACK_MODULE_SEQUENCE = ["ECI", "TII", "LII", "GCC", "LDI", "STI"];
+type ModuleType = string;
 
-// Which module unlocks which
-const UNLOCK_MAP: Record<ModuleType, ModuleType | null> = {
-  ECI: "TII",
-  TII: "LII",
-  LII: "GCC",
-  GCC: "LDI",
-  LDI: "STI",
-  STI: null,
-};
+// Helper: get the module sequence for a user's active product from the DB
+async function getProductModuleSequence(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  userId: number
+): Promise<string[]> {
+  try {
+    const [enrollment] = await db
+      .select({ productId: userProductEnrollments.productId })
+      .from(userProductEnrollments)
+      .where(and(eq(userProductEnrollments.userId, userId), eq(userProductEnrollments.isActive, true)))
+      .orderBy(userProductEnrollments.lastActiveAt)
+      .limit(1);
+    const productId = enrollment?.productId ?? "leadership_intelligence";
+    const modules = await db
+      .select({ moduleCode: productModules.moduleCode, isEntryPoint: productModules.isEntryPoint })
+      .from(productModules)
+      .where(eq(productModules.productId, productId))
+      .orderBy(productModules.sequenceOrder);
+    if (modules.length === 0) return [...FALLBACK_MODULE_SEQUENCE];
+    return modules.map((m) => m.moduleCode);
+  } catch {
+    return [...FALLBACK_MODULE_SEQUENCE];
+  }
+}
+
+// Helper: get the entry point module code for a user's active product
+async function getEntryPointModule(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  userId: number
+): Promise<string> {
+  try {
+    const [enrollment] = await db
+      .select({ productId: userProductEnrollments.productId })
+      .from(userProductEnrollments)
+      .where(and(eq(userProductEnrollments.userId, userId), eq(userProductEnrollments.isActive, true)))
+      .orderBy(userProductEnrollments.lastActiveAt)
+      .limit(1);
+    const productId = enrollment?.productId ?? "leadership_intelligence";
+    const [entry] = await db
+      .select({ moduleCode: productModules.moduleCode })
+      .from(productModules)
+      .where(and(eq(productModules.productId, productId), eq(productModules.isEntryPoint, true)))
+      .limit(1);
+    return entry?.moduleCode ?? "ECI";
+  } catch {
+    return "ECI";
+  }
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -111,11 +152,15 @@ export const unlockRouter = router({
       progressByTarget.set(row.toModule, row);
     }
 
+    // Get the module sequence for this user's active product
+    const MODULE_SEQUENCE = await getProductModuleSequence(db, userId);
+    const ENTRY_MODULE = await getEntryPointModule(db, userId);
+
     // Build status for each module
     const statuses = await Promise.all(
       MODULE_SEQUENCE.map(async (moduleId) => {
-        // ECI is always unlocked
-        if (moduleId === "ECI") {
+        // Entry point module is always unlocked
+        if (moduleId === ENTRY_MODULE) {
           return {
             moduleId,
             state: "unlocked" as const,
@@ -150,7 +195,7 @@ export const unlockRouter = router({
 
         // Find the prerequisite module (the one before this in the sequence)
         const prereqIdx = MODULE_SEQUENCE.indexOf(moduleId) - 1;
-        const prereqModule = MODULE_SEQUENCE[prereqIdx];
+        const prereqModule = MODULE_SEQUENCE[prereqIdx] as string;
         const prereqCompleted = completedModules.includes(prereqModule);
 
         if (!prereqCompleted) {
@@ -178,7 +223,7 @@ export const unlockRouter = router({
           const [prereqReport] = await db
             .select({ createdAt: reports.createdAt, dimensionScores: reports.dimensionScores })
             .from(reports)
-            .where(and(eq(reports.userId, userId), eq(reports.moduleType, prereqModule)))
+            .where(and(eq(reports.userId, userId), eq(reports.moduleType, prereqModule as any)))
             .orderBy(desc(reports.createdAt))
             .limit(1);
 
@@ -206,8 +251,8 @@ export const unlockRouter = router({
           await db.insert(diagnosticUnlockProgress).values({
             userId,
             tenantId,
-            fromModule: prereqModule,
-            toModule: moduleId,
+            fromModule: prereqModule as any,
+            toModule: moduleId as any,
             fromCompletedAt: prereqReport.createdAt,
             focusDimension,
           });
@@ -219,7 +264,7 @@ export const unlockRouter = router({
             .where(
               and(
                 eq(diagnosticUnlockProgress.userId, userId),
-                eq(diagnosticUnlockProgress.toModule, moduleId)
+                eq(diagnosticUnlockProgress.toModule, moduleId as any)
               )
             )
             .limit(1);
@@ -270,7 +315,7 @@ export const unlockRouter = router({
           .where(
             and(
               eq(dailyMissions.userId, userId),
-              eq(dailyMissions.moduleType, prereqModule),
+              eq(dailyMissions.moduleType, prereqModule as any),
               eq(dailyMissions.status, "complete"),
               gte(dailyMissions.completedAt, new Date(progress.fromCompletedAt))
             )
@@ -284,7 +329,7 @@ export const unlockRouter = router({
           .where(
             and(
               eq(guideSessions.userId, userId),
-              eq(guideSessions.moduleType, prereqModule),
+              eq(guideSessions.moduleType, prereqModule as any),
               gte(guideSessions.createdAt, new Date(progress.fromCompletedAt))
             )
           );
@@ -353,7 +398,7 @@ export const unlockRouter = router({
    * Marks narrativeShown = true after first call.
    */
   getNarrativeUnlock: protectedProcedure
-    .input(z.object({ toModule: z.enum(["ECI", "TII", "LII", "GCC", "LDI", "STI"]) }))
+    .input(z.object({ toModule: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -364,7 +409,7 @@ export const unlockRouter = router({
         .where(
           and(
             eq(diagnosticUnlockProgress.userId, ctx.user.id),
-            eq(diagnosticUnlockProgress.toModule, input.toModule)
+            eq(diagnosticUnlockProgress.toModule, input.toModule as any)
           )
         )
         .limit(1);
@@ -393,9 +438,9 @@ export const unlockRouter = router({
       const toLabel = moduleLabel(input.toModule);
 
       const archetype =
-        graph?.archetypes?.[progress.fromModule as ModuleType] ?? null;
+        graph?.archetypes?.[progress.fromModule as keyof typeof graph.archetypes] ?? null;
       const archetypeLabel = archetype
-        ? archetype.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+        ? (archetype as string).replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
         : null;
 
       const prompt = `You are Guide, a leadership coach inside LevelNext.

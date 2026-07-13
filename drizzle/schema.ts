@@ -59,7 +59,7 @@ export const assessmentSessions = mysqlTable("assessment_sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").references(() => users.id),
   tenantId: int("tenantId").references(() => tenants.id),
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI"]).notNull(),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
   status: mysqlEnum("status", ["in_progress", "completed", "abandoned"]).default("in_progress").notNull(),
   // Partial responses saved for resume
   responses: json("responses").$type<Record<string, number>>(),
@@ -79,7 +79,7 @@ export const reports = mysqlTable("reports", {
   tenantId: int("tenantId").references(() => tenants.id),
   slug: varchar("slug", { length: 100 }).unique(),
   // Which diagnostic module generated this report
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI"]).notNull(),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
   participantName: varchar("participantName", { length: 255 }).notNull(),
   participantEmail: varchar("participantEmail", { length: 320 }).notNull(),
   participantRole: varchar("participantRole", { length: 255 }),
@@ -127,7 +127,7 @@ export type GuideConversation = typeof guideConversations.$inferSelect;
 export const dailyMissions = mysqlTable("daily_missions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id),
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "GENERAL"]).notNull().default("GENERAL"),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "GENERAL", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull().default("GENERAL"),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
   status: mysqlEnum("status", ["pending", "in_progress", "complete"]).default("pending").notNull(),
@@ -532,7 +532,7 @@ export const guideSessions = mysqlTable("guide_sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id),
   // Which diagnostic module this session is attributed to (most recently completed)
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "GENERAL"]).notNull().default("GENERAL"),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "GENERAL", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull().default("GENERAL"),
   // The guide conversation this session belongs to
   conversationId: int("conversationId").references(() => guideConversations.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -547,9 +547,9 @@ export const diagnosticUnlockProgress = mysqlTable("diagnostic_unlock_progress",
   userId: int("userId").notNull().references(() => users.id),
   tenantId: int("tenantId").references(() => tenants.id),
   // The module that was just completed (the prerequisite)
-  fromModule: mysqlEnum("fromModule", ["ECI", "TII", "LII", "GCC", "LDI", "STI"]).notNull(),
+  fromModule: mysqlEnum("fromModule", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
   // The module being unlocked
-  toModule: mysqlEnum("toModule", ["ECI", "TII", "LII", "GCC", "LDI", "STI"]).notNull(),
+  toModule: mysqlEnum("toModule", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
   // When the fromModule diagnostic was completed (starts the 21-day clock)
   fromCompletedAt: timestamp("fromCompletedAt").notNull(),
   // Layer 1: time gate — 21 days from fromCompletedAt
@@ -898,3 +898,55 @@ export const momentumPartnerCalls = mysqlTable("momentum_partner_calls", {
 });
 export type MomentumPartnerCall = typeof momentumPartnerCalls.$inferSelect;
 export type InsertMomentumPartnerCall = typeof momentumPartnerCalls.$inferInsert;
+
+// ─── Products ─────────────────────────────────────────────────────────────────
+// Defines each intelligence product (e.g. Leadership Intelligence, Career Intelligence)
+export const products = mysqlTable("products", {
+  id: varchar("id", { length: 50 }).primaryKey(), // e.g. 'leadership_intelligence'
+  name: varchar("name", { length: 255 }).notNull(), // e.g. 'Leadership Intelligence'
+  tagline: varchar("tagline", { length: 255 }), // e.g. 'Know your edge. Grow it.'
+  coachRole: varchar("coachRole", { length: 100 }).notNull(), // e.g. 'Executive Leadership Coach'
+  coachName: varchar("coachName", { length: 100 }).notNull().default("Guide"), // e.g. 'Guide'
+  coachPrompt: text("coachPrompt").notNull(), // Full system prompt for the AI Guide
+  practiceCoachPrompt: text("practiceCoachPrompt"), // Override for Practice Coach
+  primaryOutcomes: json("primaryOutcomes").$type<string[]>(), // e.g. ['Career clarity', 'Market positioning']
+  journeyStages: json("journeyStages").$type<string[]>(), // e.g. ['Discover', 'Position', 'Prepare']
+  accentColor: varchar("accentColor", { length: 50 }).default("var(--color-ln-yellow)"), // CSS color
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = typeof products.$inferInsert;
+
+// ─── Product Modules ──────────────────────────────────────────────────────────
+// Defines the diagnostic sequence for each product
+export const productModules = mysqlTable("product_modules", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: varchar("productId", { length: 50 }).notNull().references(() => products.id),
+  moduleCode: varchar("moduleCode", { length: 20 }).notNull(), // e.g. 'ECI', 'CPI'
+  moduleName: varchar("moduleName", { length: 255 }).notNull(), // e.g. 'Executive Communication Intelligence'
+  moduleDescription: text("moduleDescription"),
+  sequenceOrder: int("sequenceOrder").notNull(), // 1-based position in the product journey
+  isEntryPoint: boolean("isEntryPoint").default(false).notNull(), // true for the first module (always unlocked)
+  prerequisiteCode: varchar("prerequisiteCode", { length: 20 }), // module code that must be completed first
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProductModule = typeof productModules.$inferSelect;
+export type InsertProductModule = typeof productModules.$inferInsert;
+
+// ─── User Product Enrollments ─────────────────────────────────────────────────
+// Links users to one or more products; tracks their active product
+export const userProductEnrollments = mysqlTable("user_product_enrollments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  productId: varchar("productId", { length: 50 }).notNull().references(() => products.id),
+  enrolledAt: timestamp("enrolledAt").defaultNow().notNull(),
+  enrolledBy: int("enrolledBy").references(() => users.id), // admin who enrolled them
+  isActive: boolean("isActive").default(true).notNull(),
+  // The last time this user switched to this product (used to restore active product on login)
+  lastActiveAt: timestamp("lastActiveAt").defaultNow().notNull(),
+});
+export type UserProductEnrollment = typeof userProductEnrollments.$inferSelect;
+export type InsertUserProductEnrollment = typeof userProductEnrollments.$inferInsert;
