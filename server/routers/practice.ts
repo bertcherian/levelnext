@@ -7,10 +7,76 @@ import { invokeLLM } from "../_core/llm";
 import {
   practiceSessions,
   practiceAttempts,
+  userProductEnrollments,
   type PracticeScenario,
   type PracticeMessage,
   type PracticeFeedback,
 } from "../../drizzle/schema";
+
+// ── Career Intelligence prompts ─────────────────────────────────────────────────────
+const CI_CONVERSATION_TYPES = [
+  "Salary Negotiation", "Promotion Conversation", "Internal Career Move",
+  "Career Pivot Discussion", "Executive Job Interview", "Networking Conversation",
+  "Managing Your Manager", "Visibility & Sponsorship Ask", "Resignation Conversation",
+  "Counter-offer Handling", "Career Boundary Setting", "Asking for a Stretch Assignment",
+  "Feedback on Career Trajectory", "Stakeholder Influence for Career Growth", "Difficult Career Feedback",
+];
+
+function CI_COACH_SYSTEM_PROMPT(issueText: string, userName: string): string {
+  return `You are the LevelNext Career Practice Coach — a sophisticated career strategy and conversation practice system.
+Your role is to help ${userName} navigate high-stakes career conversations with clarity, confidence, and strategy.
+The professional has described this career situation:
+"${issueText}"
+Your primary responsibilities:
+1. Understand the career situation and clarify the desired outcome.
+2. Identify the real career challenge beneath the surface (positioning, visibility, leverage, timing).
+3. Surface assumptions the professional may be making about their market value or options.
+4. Clarify the specific observable behaviour or message they need to deliver.
+5. Decide whether they should prepare, practise, or explore the issue more deeply with Career Strategist.
+Coaching approach:
+- Ask ONE focused question at a time.
+- Use Socratic questioning — help the professional discover insights themselves.
+- After 4–6 exchanges, provide a structured coaching summary.
+Career-specific questions:
+- What outcome do you want from this conversation?
+- What is your BATNA here?
+- What leverage do you have that you are not using?
+- What assumptions are you making about what is possible?
+- What would someone with more career optionality do here?
+When ready, provide a structured summary in <COACHING_SUMMARY> tags with JSON:
+{
+  "realIssue": "...", "careerGap": "...", "behaviourToStrengthen": "...",
+  "conversationNeeded": "...", "recommendedApproach": "...",
+  "suggestedOpeningLines": ["...", "...", "..."],
+  "likelyResistance": "...", "howToHandleResistance": "...",
+  "recommendedSimulation": "...", "commitmentSuggestion": "..."
+}
+Tone: strategic, calm, direct, practical. Never generic. Keep responses under 120 words unless giving the final summary.`.trim();
+}
+
+function CI_SCENARIO_GENERATOR_PROMPT(issueText: string, userName: string, coachingSummary?: string): string {
+  const context = coachingSummary ? `Coaching summary: ${coachingSummary}` : `Direct request from professional`;
+  return `You are the LevelNext Career scenario generator. Create a realistic role play simulation for this career situation.
+Professional: ${userName}
+Issue: "${issueText}"
+${context}
+Generate a scenario in this EXACT JSON format:
+{
+  "conversationType": "one of: ${CI_CONVERSATION_TYPES.join(' | ')}",
+  "userRole": "the professional's role (e.g., Senior Product Manager)",
+  "avatarRole": "the other person's role (e.g., Hiring Manager)",
+  "relationship": "one of: Hiring Manager | Current Manager | HR Business Partner | Executive Sponsor | Peer | Recruiter | Mentor | Board Member",
+  "context": "2-3 sentence description of the career situation",
+  "stakes": "why this conversation matters — career and financial impact",
+  "desiredOutcome": "what the professional wants to achieve",
+  "behaviourToStrengthen": "the specific observable career behaviour this simulation develops",
+  "avatarPersonality": "one of: Skeptical | Busy Executive | Analytical | Passive | Dominant | Political | Defensive | Overloaded",
+  "difficultyLevel": "Medium",
+  "successCriteria": "2-3 specific behaviours that indicate the professional handled this well",
+  "category": "one of: Career Positioning | Career Negotiation | Career Navigation"
+}
+Return ONLY the JSON object. No explanation, no markdown code blocks.`;
+}
 
 // ── System prompts ─────────────────────────────────────────────────────────────
 
@@ -375,7 +441,16 @@ export const practiceRouter = router({
         content: m.content,
       }));
 
-      const systemMsg = { role: "system" as const, content: COACH_SYSTEM_PROMPT(session.issueText, ctx.user.name ?? "Leader") };
+      // Detect active product to pick the right coach prompt
+      let activeProductId = "leadership_intelligence";
+      try {
+        const enrollResult = await db.select({ productId: userProductEnrollments.productId }).from(userProductEnrollments).where(and(eq(userProductEnrollments.userId, ctx.user.id), eq(userProductEnrollments.isActive, true))).limit(1);
+        if (enrollResult[0]) activeProductId = enrollResult[0].productId;
+      } catch { /* non-fatal */ }
+      const coachPromptContent = activeProductId === "career_intelligence"
+        ? CI_COACH_SYSTEM_PROMPT(session.issueText, ctx.user.name ?? "Professional")
+        : COACH_SYSTEM_PROMPT(session.issueText, ctx.user.name ?? "Leader");
+      const systemMsg = { role: "system" as const, content: coachPromptContent };
       const llmResult = await invokeLLM({
         model: "gpt-4o-mini",
         messages: [systemMsg, ...llmMessages],
@@ -418,7 +493,15 @@ export const practiceRouter = router({
       const session = rows[0];
       if (!session) throw new TRPCError({ code: "NOT_FOUND" });
 
-      const prompt = SCENARIO_GENERATOR_PROMPT(session.issueText, ctx.user.name ?? "Leader", input.coachingSummary);
+      // Detect active product to pick the right scenario generator
+      let activeProductIdForScenario = "leadership_intelligence";
+      try {
+        const enrollResult = await db.select({ productId: userProductEnrollments.productId }).from(userProductEnrollments).where(and(eq(userProductEnrollments.userId, ctx.user.id), eq(userProductEnrollments.isActive, true))).limit(1);
+        if (enrollResult[0]) activeProductIdForScenario = enrollResult[0].productId;
+      } catch { /* non-fatal */ }
+      const prompt = activeProductIdForScenario === "career_intelligence"
+        ? CI_SCENARIO_GENERATOR_PROMPT(session.issueText, ctx.user.name ?? "Professional", input.coachingSummary)
+        : SCENARIO_GENERATOR_PROMPT(session.issueText, ctx.user.name ?? "Leader", input.coachingSummary);
       const llmResult = await invokeLLM({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],

@@ -309,3 +309,11 @@
 - [x] assessment router: extended getQuestions, startSession, submit to handle CI module codes
 - [x] pdfReport router: CI module metadata and dimension labels added
 - [x] TypeScript: zero errors across full project
+
+## Career Intelligence — Phase 3 (Coach Identity)
+- [x] guide.ts: Career Strategist system prompt added (CAREER_STRATEGIST_PROMPT)
+- [x] guide.ts: sendMessage detects active product, switches to Career Strategist for CI users
+- [x] practice.ts: CI_COACH_SYSTEM_PROMPT and CI_SCENARIO_GENERATOR_PROMPT added
+- [x] practice.ts: sendCoachMessage and generateScenario detect active product, use CI prompts for CI users
+- [x] CI scenario types: 15 career-specific conversation types (Salary Negotiation, Promotion, Interview, etc.)
+- [x] TypeScript: zero errors across full project

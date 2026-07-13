@@ -3,7 +3,7 @@ import { eq, desc, gte, and } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { guideConversations, guideSessions, users, tenantUsers, organisations, commitments, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
+import { guideConversations, guideSessions, users, tenantUsers, organisations, commitments, userProductEnrollments, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
 type OrgContext = {
@@ -19,6 +19,51 @@ type OrgContext = {
   industry?: string | null;
 } | null;
 
+// ─── Career Strategist system prompt ───────────────────────────────────────
+const CAREER_STRATEGIST_PROMPT = (ciData: Record<string, any> | null, userName: string): string => {
+  const moduleLabels: Record<string, string> = {
+    CPI: "Career Positioning", CRS: "Career Resilience", CMK: "Career Marketability",
+    CST: "Career Strategy", CAO: "Career Optionality", AIR: "AI Readiness",
+  };
+  const moduleContext = ciData && Object.keys(ciData).length > 0
+    ? Object.entries(ciData).map(([key, mod]: [string, any]) => {
+        const label = moduleLabels[key] ?? key;
+        const lines = [
+          `[${label} Diagnostic]`,
+          `- Career Edge: ${Math.round(mod.edgeScore ?? 0)}/100`,
+          `- Zone: ${mod.zoneLabel ?? mod.zone}`,
+          `- Archetype: ${mod.archetypeLabel ?? mod.archetype}`,
+        ];
+        if (mod.dimensionScores && Object.keys(mod.dimensionScores).length > 0) {
+          const topDims = Object.entries(mod.dimensionScores as Record<string, number>)
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+            .slice(0, 3)
+            .map(([k, v]) => `${k.replace(/_/g, ' ')} (${Math.round(v as number)})`)
+            .join(', ');
+          lines.push(`- Strongest dimensions: ${topDims}`);
+        }
+        return lines.join('\n');
+      }).join('\n\n')
+    : 'No Career Intelligence diagnostics completed yet — encourage the professional to complete their first Career Positioning diagnostic to unlock personalised career coaching.';
+  return `You are Career Strategist — the personal AI career coach inside LevelNext, the Career Intelligence Platform.
+Your role is to help ${userName} design and accelerate their career with clarity, strategy, and confidence.
+CAREER INTELLIGENCE PROFILE FOR ${userName.toUpperCase()}:
+${moduleContext}
+COACHING PRINCIPLES:
+1. Be direct, strategic, and executive in tone — never generic or HR-textbook-like
+2. Always reference ${userName}'s actual career archetype, strengths, and growth edges when giving advice
+3. Suggest specific, actionable "Career Missions" — short practices for today or this week
+4. Never use the words: score, assessment, test, training, course, module, bot, chatbot, weakness, failure
+5. Always use: Career Edge, Career Capital, Career Mission, Career Positioning, Marketability, Optionality, Career Momentum
+6. Keep responses concise — 2-4 paragraphs maximum unless asked for depth
+7. End with a question or a suggested Career Mission to maintain momentum
+8. You are a trusted career strategist, not a cheerleader — be honest when a career pivot or repositioning is needed
+9. Focus on: career positioning, marketability, salary negotiation, career transitions, executive presence in the job market, building optionality
+10. Always distinguish between short-term career moves and long-term career capital building
+Respond in a warm, strategic, and confident tone.`.trim();
+};
+
+// ─── Leadership Guide system prompt ─────────────────────────────────────────
 const GUIDE_SYSTEM_PROMPT = (graph: LeadershipGraph | null, userName: string, orgCtx?: OrgContext): string => {
   const g = graph as any;
   const modules = g?.modules ?? {};
@@ -218,8 +263,37 @@ export const guideRouter = router({
         content: m.content,
       }));
 
+      // Detect active product to select the right coach identity
+      let activeProductId = "leadership_intelligence";
+      try {
+        const enrollResult = await db
+          .select({ productId: userProductEnrollments.productId })
+          .from(userProductEnrollments)
+          .where(and(eq(userProductEnrollments.userId, ctx.user.id), eq(userProductEnrollments.isActive, true)))
+          .limit(1);
+        if (enrollResult[0]) activeProductId = enrollResult[0].productId;
+      } catch { /* non-fatal */ }
+
+      // Build appropriate system prompt based on active product
+      let systemPromptContent: string;
+      if (activeProductId === "career_intelligence") {
+        const { reports: reportsTable } = await import('../../drizzle/schema');
+        const ciCodes = ["CPI", "CRS", "CMK", "CST", "CAO", "AIR"];
+        const ciReports = await db.select().from(reportsTable).where(eq(reportsTable.userId, ctx.user.id)).orderBy(desc(reportsTable.createdAt));
+        const ciData: Record<string, any> = {};
+        for (const r of ciReports) {
+          const code = r.moduleType as string;
+          if (ciCodes.includes(code) && !ciData[code]) {
+            ciData[code] = { edgeScore: r.edgeScore, zone: r.zone, zoneLabel: r.zone?.replace(/_/g, ' '), archetype: r.archetype, archetypeLabel: r.archetype?.replace(/_/g, ' '), dimensionScores: r.dimensionScores };
+          }
+        }
+        systemPromptContent = CAREER_STRATEGIST_PROMPT(ciData, userName);
+      } else {
+        systemPromptContent = GUIDE_SYSTEM_PROMPT(graph, userName, orgContext);
+      }
+
       // Call the LLM — prepend system prompt as a system message
-      const systemMsg = { role: "system" as const, content: GUIDE_SYSTEM_PROMPT(graph, userName, orgContext) };
+      const systemMsg = { role: "system" as const, content: systemPromptContent };
       const llmResult = await invokeLLM({
         model: "gpt-4o-mini",
         messages: [systemMsg, ...llmMessages],
