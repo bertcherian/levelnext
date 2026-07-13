@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { cn } from "@/lib/utils";
+import ProductSwitcher from "@/components/ProductSwitcher";
 
 // Full sidebar nav items
 const NAV_ITEMS = [
@@ -40,6 +41,17 @@ const NAV_ITEMS = [
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
   { label: "Progress", icon: BarChart3, href: "/progress" },
   { label: "Organisation", icon: Building2, href: "/organisation" },
+  { label: "Settings", icon: Settings, href: "/settings" },
+];
+
+// Career Intelligence nav items
+const CI_NAV_ITEMS = [
+  { label: "Career Home", icon: Briefcase, href: "/career" },
+  { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
+  { label: "Practice Coach", icon: Zap, href: "/practice" },
+  { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
+  { label: "Progress", icon: BarChart3, href: "/progress" },
+  { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 
@@ -90,6 +102,14 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
       window.location.href = "/";
     },
   });
+
+  // Active product detection for product-aware nav
+  const { data: activeProduct } = trpc.products.getActiveProduct.useQuery(undefined, {
+    enabled: isAuthenticated,
+    staleTime: 30_000,
+  });
+  const activeProductId = activeProduct?.productId ?? "leadership_intelligence";
+  const isCareerProduct = activeProductId === "career_intelligence";
 
   // Notification badge: count of modules where all gates have passed but the
   // narrative has not yet been shown (i.e. user is ready for next diagnostic
@@ -202,7 +222,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         {/* Drawer nav */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-0.5">
-            {NAV_ITEMS.map((item) => {
+            {(isCareerProduct ? CI_NAV_ITEMS : NAV_ITEMS).map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
@@ -362,10 +382,12 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
           </Link>
         </div>
 
+        {/* Product Switcher */}
+        <ProductSwitcher />
         {/* Desktop nav */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-0.5">
-            {NAV_ITEMS.map((item) => {
+            {(isCareerProduct ? CI_NAV_ITEMS : NAV_ITEMS).map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;

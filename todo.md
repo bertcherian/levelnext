@@ -317,3 +317,10 @@
 - [x] practice.ts: sendCoachMessage and generateScenario detect active product, use CI prompts for CI users
 - [x] CI scenario types: 15 career-specific conversation types (Salary Negotiation, Promotion, Interview, etc.)
 - [x] TypeScript: zero errors across full project
+
+## Career Intelligence — Phase 4 (UI)
+- [x] CareerHome dashboard page at /career
+- [x] ProductSwitcher component in sidebar (only visible when enrolled in 2+ products)
+- [x] CI_NAV_ITEMS — product-aware navigation in PlatformLayout
+- [x] Route /career wired in App.tsx
+- [x] Zero TypeScript errors
