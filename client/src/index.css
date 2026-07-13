@@ -15,7 +15,7 @@
   --color-secondary: oklch(95% 0.008 80);
   --color-secondary-foreground: oklch(20% 0 0);
   --color-muted: oklch(95% 0.008 80);
-  --color-muted-foreground: oklch(40% 0 0);
+  --color-muted-foreground: oklch(22% 0 0);
   --color-accent: oklch(95% 0.008 80);
   --color-accent-foreground: oklch(22.5% 0.07 248.6);
   --color-destructive: oklch(55% 0.22 27);
@@ -42,7 +42,7 @@
 
   /* Text */
   --color-ln-text:        oklch(20% 0 0);              /* 80% black — primary text */
-  --color-ln-muted:       oklch(40% 0 0);              /* Darker muted text for readability */
+  --color-ln-muted:       oklch(22% 0 0);              /* ~80% black — muted/secondary text */
   --color-ln-border:      oklch(90% 0.01 248.6);      /* Subtle borders */
 
   /* Shadows */
@@ -119,6 +119,27 @@
   p {
     color: var(--color-ln-text);
   }
+}
+
+/* ─── Global Text Colour Override — all grey text → 80% black ───────────────── */
+/* Tailwind text-gray-* and text-slate-* classes that render as light grey */
+.text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600 {
+  color: oklch(22% 0 0) !important;
+}
+.text-slate-400, .text-slate-500, .text-slate-600 {
+  color: oklch(22% 0 0) !important;
+}
+.text-zinc-400, .text-zinc-500 {
+  color: oklch(22% 0 0) !important;
+}
+/* Navy opacity variants used for secondary text */
+[class*="text-[var(--color-ln-navy)]/"] {
+  opacity: 1 !important;
+  color: oklch(22% 0 0) !important;
+}
+/* Muted text utility */
+.text-muted-foreground {
+  color: oklch(22% 0 0) !important;
 }
 
 /* ─── Typing Indicator Animation ────────────────────────────────────────────── */
