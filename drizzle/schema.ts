@@ -866,3 +866,35 @@ export const platformInvites = mysqlTable("platform_invites", {
 });
 export type PlatformInvite = typeof platformInvites.$inferSelect;
 export type InsertPlatformInvite = typeof platformInvites.$inferInsert;
+
+// ─── Momentum Partner Calls ───────────────────────────────────────────────────
+// Tracks fortnightly accountability calls between a Momentum Partner and a leader
+export const momentumPartnerCalls = mysqlTable("momentum_partner_calls", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // Scheduled date for the call (fortnightly cadence)
+  scheduledAt: timestamp("scheduledAt").notNull(),
+  // Actual call date (set when logged)
+  calledAt: timestamp("calledAt"),
+  // The commitment being tracked (copied from commitments table at call creation)
+  commitmentText: text("commitmentText"),
+  commitmentId: int("commitmentId").references(() => commitments.id),
+  // Outcome logged by Momentum Partner after the call
+  outcome: mysqlEnum("outcome", ["implemented", "partial", "not_implemented", "no_show"]),
+  // Confidence level the leader expressed (1–5)
+  leaderConfidence: int("leaderConfidence"),
+  // Notes from the call (what the leader said, specific examples given)
+  callNotes: text("callNotes"),
+  // Blocker mentioned by the leader
+  blockerMentioned: text("blockerMentioned"),
+  // Whether to escalate to Executive Coach
+  escalateToCoach: boolean("escalateToCoach").default(false).notNull(),
+  // AI-generated opening script for the Momentum Partner
+  suggestedOpening: text("suggestedOpening"),
+  // Status of the call record
+  status: mysqlEnum("status", ["scheduled", "completed", "missed"]).default("scheduled").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type MomentumPartnerCall = typeof momentumPartnerCalls.$inferSelect;
+export type InsertMomentumPartnerCall = typeof momentumPartnerCalls.$inferInsert;

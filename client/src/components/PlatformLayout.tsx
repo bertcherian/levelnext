@@ -20,6 +20,7 @@ import {
   Briefcase,
   Link2,
   LayoutDashboard,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -234,6 +235,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveAdmin = location === "/admin";
               const isActivePilot = isNavActive("/admin/pilot-applications");
               const isActiveInvites = isNavActive("/admin/invites");
+              const isActiveMomentumMobile = isNavActive("/admin/momentum");
               return (
                 <>
                   <li key="/admin-section-mobile">
@@ -283,6 +285,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         <Link2 size={18} className="flex-shrink-0" />
                         <span>Manage Invites</span>
                         {isActiveInvites && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/momentum-mobile">
+                    <Link href="/admin/momentum" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveMomentumMobile ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveMomentumMobile ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Phone size={18} className="flex-shrink-0" />
+                        <span>Momentum Partner</span>
+                        {isActiveMomentumMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
                   </li>
@@ -365,6 +382,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveAdmin = location === "/admin";
               const isActivePilot = isNavActive("/admin/pilot-applications");
               const isActiveInvites = isNavActive("/admin/invites");
+              const isActiveMomentum = isNavActive("/admin/momentum");
               return (
                 <>
                   <li key="/admin-section-desktop">
@@ -414,6 +432,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         <Link2 size={18} className={cn("flex-shrink-0", isActiveInvites ? "" : "group-hover:scale-105 transition-transform")} />
                         <span>Manage Invites</span>
                         {isActiveInvites && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/momentum">
+                    <Link href="/admin/momentum">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveMomentum ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveMomentum ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Phone size={18} className={cn("flex-shrink-0", isActiveMomentum ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Momentum Partner</span>
+                        {isActiveMomentum && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
                   </li>

@@ -19,6 +19,7 @@ import { enterpriseOnboardingRouter } from "./routers/enterpriseOnboarding";
 import { pilotApplicationRouter } from "./routers/pilotApplication";
 import { platformInvitesRouter } from "./routers/platformInvites";
 import { adminStatsRouter } from "./routers/adminStats";
+import { momentumPartnerRouter } from "./routers/momentumPartner";
 
 export const appRouter = router({
   system: systemRouter,
@@ -47,6 +48,7 @@ export const appRouter = router({
   pilotApplication: pilotApplicationRouter,
   platformInvites: platformInvitesRouter,
   adminStats: adminStatsRouter,
+  momentumPartner: momentumPartnerRouter,
 });
 
 export type AppRouter = typeof appRouter;

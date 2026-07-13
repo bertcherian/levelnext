@@ -28,6 +28,8 @@ import ApplyForPilot from "@/pages/ApplyForPilot";
 import AdminPilotApplications from "@/pages/AdminPilotApplications";
 import AdminManageInvites from "@/pages/AdminManageInvites";
 import AdminDashboard from "@/pages/AdminDashboard";
+import AdminMomentumQueue from "@/pages/AdminMomentumQueue";
+import AdminMomentumBrief from "@/pages/AdminMomentumBrief";
 import JoinPage from "@/pages/JoinPage";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 
@@ -58,6 +60,8 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/pilot-applications" component={AdminPilotApplications} />
       <Route path="/admin/invites" component={AdminManageInvites} />
+      <Route path="/admin/momentum" component={AdminMomentumQueue} />
+      <Route path="/admin/momentum/:userId" component={AdminMomentumBrief} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />
