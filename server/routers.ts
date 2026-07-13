@@ -18,6 +18,7 @@ import { priorAssessmentImportRouter } from "./routers/priorAssessmentImport";
 import { enterpriseOnboardingRouter } from "./routers/enterpriseOnboarding";
 import { pilotApplicationRouter } from "./routers/pilotApplication";
 import { platformInvitesRouter } from "./routers/platformInvites";
+import { adminStatsRouter } from "./routers/adminStats";
 
 export const appRouter = router({
   system: systemRouter,
@@ -45,6 +46,7 @@ export const appRouter = router({
   enterpriseOnboarding: enterpriseOnboardingRouter,
   pilotApplication: pilotApplicationRouter,
   platformInvites: platformInvitesRouter,
+  adminStats: adminStatsRouter,
 });
 
 export type AppRouter = typeof appRouter;

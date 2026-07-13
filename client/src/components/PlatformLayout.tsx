@@ -19,6 +19,7 @@ import {
   Activity,
   Briefcase,
   Link2,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -228,8 +229,9 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                 </li>
               );
             })}
-            {/* Admin-only: Pilot Applications */}
+            {/* Admin-only nav items */}
             {user?.role === "admin" && (() => {
+              const isActiveAdmin = location === "/admin";
               const isActivePilot = isNavActive("/admin/pilot-applications");
               const isActiveInvites = isNavActive("/admin/invites");
               return (
@@ -238,6 +240,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                     <div className="mt-3 mb-1 px-3">
                       <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Admin</p>
                     </div>
+                  </li>
+                  <li key="/admin-mobile">
+                    <Link href="/admin" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveAdmin ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveAdmin ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <LayoutDashboard size={18} className="flex-shrink-0" />
+                        <span>Admin Dashboard</span>
+                        {isActiveAdmin && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
                   </li>
                   <li key="/admin/pilot-applications-mobile">
                     <Link href="/admin/pilot-applications" onClick={() => setSidebarOpen(false)}>
@@ -345,6 +362,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             })}
             {/* Admin-only nav items */}
             {user?.role === "admin" && (() => {
+              const isActiveAdmin = location === "/admin";
               const isActivePilot = isNavActive("/admin/pilot-applications");
               const isActiveInvites = isNavActive("/admin/invites");
               return (
@@ -353,6 +371,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                     <div className="mt-3 mb-1 px-3">
                       <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Admin</p>
                     </div>
+                  </li>
+                  <li key="/admin-desktop">
+                    <Link href="/admin">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveAdmin ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveAdmin ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <LayoutDashboard size={18} className={cn("flex-shrink-0", isActiveAdmin ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Admin Dashboard</span>
+                        {isActiveAdmin && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
                   </li>
                   <li key="/admin/pilot-applications">
                     <Link href="/admin/pilot-applications">

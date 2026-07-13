@@ -27,6 +27,7 @@ import EnterpriseOnboardingWizard from "@/pages/EnterpriseOnboardingWizard";
 import ApplyForPilot from "@/pages/ApplyForPilot";
 import AdminPilotApplications from "@/pages/AdminPilotApplications";
 import AdminManageInvites from "@/pages/AdminManageInvites";
+import AdminDashboard from "@/pages/AdminDashboard";
 import JoinPage from "@/pages/JoinPage";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/enterprise-onboarding" component={EnterpriseOnboardingWizard} />
       <Route path="/apply" component={ApplyForPilot} />
       <Route path="/join" component={JoinPage} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/pilot-applications" component={AdminPilotApplications} />
       <Route path="/admin/invites" component={AdminManageInvites} />
       <Route path="/progress" component={Progress} />
