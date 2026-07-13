@@ -850,3 +850,19 @@ export const pilotApplications = mysqlTable("pilot_applications", {
 });
 export type PilotApplication = typeof pilotApplications.$inferSelect;
 export type InsertPilotApplication = typeof pilotApplications.$inferInsert;
+
+// ─── Platform Invites (Magic Links) ──────────────────────────────────────────
+export const platformInvites = mysqlTable("platform_invites", {
+  id: int("id").autoincrement().primaryKey(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  invitedBy: int("invitedBy").references(() => users.id),
+  pilotApplicationId: int("pilotApplicationId").references(() => pilotApplications.id),
+  status: mysqlEnum("status", ["pending", "accepted", "expired"]).default("pending").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  acceptedAt: timestamp("acceptedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PlatformInvite = typeof platformInvites.$inferSelect;
+export type InsertPlatformInvite = typeof platformInvites.$inferInsert;

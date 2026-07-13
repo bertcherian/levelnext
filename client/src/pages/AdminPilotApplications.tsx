@@ -6,34 +6,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   ExternalLink, Mail, Phone, Building2, Calendar,
   Search, Download, Users, CheckCircle2, Clock, XCircle,
-  RefreshCw, Briefcase
+  RefreshCw, Briefcase, Send
 } from "lucide-react";
-
 type Status = "new" | "contacted" | "booked" | "declined";
+
+type AppRow = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  company: string;
+  companyUrl: string | null;
+  teamSize: string | null;
+  message: string | null;
+  status: string;
+  createdAt: Date;
+};
 
 const STATUS_CONFIG: Record<Status, { label: string; color: string; icon: React.ReactNode }> = {
   new: {
     label: "New",
-    color: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+    color: "bg-blue-500/15 text-blue-700 border-blue-500/30",
     icon: <Clock size={12} />,
   },
   contacted: {
     label: "Contacted",
-    color: "bg-yellow-500/15 text-yellow-300 border-yellow-500/30",
+    color: "bg-yellow-500/15 text-yellow-700 border-yellow-500/30",
     icon: <RefreshCw size={12} />,
   },
   booked: {
     label: "Booked",
-    color: "bg-green-500/15 text-green-300 border-green-500/30",
+    color: "bg-green-500/15 text-green-700 border-green-500/30",
     icon: <CheckCircle2 size={12} />,
   },
   declined: {
     label: "Declined",
-    color: "bg-red-500/15 text-red-300 border-red-500/30",
+    color: "bg-red-500/15 text-red-700 border-red-500/30",
     icon: <XCircle size={12} />,
   },
 };
@@ -51,6 +64,8 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
   );
 }
 
+
+
 export default function AdminPilotApplications() {
   const { data, isLoading, refetch } = trpc.pilotApplication.list.useQuery();
   const updateStatus = trpc.pilotApplication.updateStatus.useMutation({
@@ -60,6 +75,16 @@ export default function AdminPilotApplications() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [inviteApp, setInviteApp] = useState<AppRow | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+
+  const generateInvite = trpc.platformInvites.generateInvite.useMutation({
+    onSuccess: (result) => {
+      setInviteUrl(result.inviteUrl);
+      toast.success("Invite sent! Magic link email delivered.");
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   // Stats
   const stats = useMemo(() => {
@@ -118,7 +143,7 @@ export default function AdminPilotApplications() {
               {data ? `${data.length} total application${data.length !== 1 ? "s" : ""}` : "Loading…"}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <a
               href="https://tidycal.com/metaresults/pilot"
               target="_blank"
@@ -138,10 +163,10 @@ export default function AdminPilotApplications() {
         {/* Stats */}
         {!isLoading && data && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-            <StatCard label="Total" value={stats.total} icon={<Users size={16} />} color="bg-blue-500/10 text-blue-400" />
-            <StatCard label="New" value={stats.new} icon={<Clock size={16} />} color="bg-blue-500/10 text-blue-400" />
-            <StatCard label="Booked" value={stats.booked} icon={<CheckCircle2 size={16} />} color="bg-green-500/10 text-green-400" />
-            <StatCard label="Contacted" value={stats.contacted} icon={<RefreshCw size={16} />} color="bg-yellow-500/10 text-yellow-400" />
+            <StatCard label="Total" value={stats.total} icon={<Users size={16} />} color="bg-blue-500/10 text-blue-600" />
+            <StatCard label="New" value={stats.new} icon={<Clock size={16} />} color="bg-blue-500/10 text-blue-600" />
+            <StatCard label="Booked" value={stats.booked} icon={<CheckCircle2 size={16} />} color="bg-green-500/10 text-green-600" />
+            <StatCard label="Contacted" value={stats.contacted} icon={<RefreshCw size={16} />} color="bg-yellow-500/10 text-yellow-600" />
           </div>
         )}
 
@@ -247,7 +272,7 @@ export default function AdminPilotApplications() {
                     </p>
                   </div>
 
-                  {/* Right: status badge + dropdown */}
+                  {/* Right: status + actions */}
                   <div className="flex flex-row md:flex-col items-center md:items-end gap-2 shrink-0">
                     <Badge className={`text-xs font-semibold border flex items-center gap-1 ${sc.color}`}>
                       {sc.icon} {sc.label}
@@ -273,6 +298,14 @@ export default function AdminPilotApplications() {
                         <Mail size={12} /> Email
                       </Button>
                     </a>
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs gap-1 w-36 font-semibold"
+                      style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+                      onClick={() => { setInviteApp(app); setInviteUrl(null); }}
+                    >
+                      <Send size={12} /> Send Invite
+                    </Button>
                   </div>
                 </div>
               );
@@ -280,6 +313,70 @@ export default function AdminPilotApplications() {
           </div>
         )}
       </div>
+
+      {/* Send Invite Modal */}
+      <Dialog open={!!inviteApp} onOpenChange={(open) => { if (!open) { setInviteApp(null); setInviteUrl(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle style={{ color: "var(--color-ln-navy)" }}>Send Magic Link Invite</DialogTitle>
+            <DialogDescription>
+              A personalised invite email will be sent to <strong>{inviteApp?.email}</strong> with a secure one-click access link. The link expires in 7 days.
+            </DialogDescription>
+          </DialogHeader>
+          {!inviteUrl ? (
+            <div className="space-y-4 pt-2">
+              <div className="rounded-lg p-3 text-sm border" style={{ background: "#fffbeb", borderColor: "#fde68a", color: "#92400e" }}>
+                <strong>{inviteApp?.name}</strong> ({inviteApp?.company}) will receive a branded LevelNext invite email with a one-click link to access the platform.
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setInviteApp(null)}>Cancel</Button>
+                <Button
+                  style={{ background: "var(--color-ln-navy)", color: "white" }}
+                  disabled={generateInvite.isPending}
+                  onClick={() => {
+                    if (!inviteApp) return;
+                    generateInvite.mutate({
+                      email: inviteApp.email,
+                      name: inviteApp.name,
+                      pilotApplicationId: inviteApp.id,
+                      origin: window.location.origin,
+                    });
+                  }}
+                >
+                  {generateInvite.isPending ? "Sending…" : "Send Invite Email"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 pt-2">
+              <div className="rounded-lg p-3 text-sm border" style={{ background: "#f0fdf4", borderColor: "#bbf7d0", color: "#166534" }}>
+                ✓ Invite email sent to <strong>{inviteApp?.email}</strong>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium" style={{ color: "#555" }}>Magic link (copy to share manually if needed):</p>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={inviteUrl}
+                    className="flex-1 text-xs border rounded px-2 py-1.5 font-mono"
+                    style={{ background: "#f9f9f9" }}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { navigator.clipboard.writeText(inviteUrl); toast.success("Copied!"); }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={() => { setInviteApp(null); setInviteUrl(null); }}>Done</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </PlatformLayout>
   );
 }
