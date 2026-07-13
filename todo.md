@@ -335,3 +335,17 @@
 - [x] Product Enrollments nav item in desktop sidebar and mobile drawer
 - [x] Route wired in App.tsx
 - [x] Zero TypeScript errors
+
+## Career Intelligence — Phase 6 (Landing Page)
+- [x] CareerLanding page at /career-intelligence
+- [x] Hero with Career Edge Score visual mockup and indigo/violet CI identity
+- [x] "For Who" section with 6 audience profiles
+- [x] 6 CI diagnostics section (CPI, CRS, CMK, CST, CAO, AIR) with cards
+- [x] "What makes it different" section (4 differentiators)
+- [x] 5-stage Career Intelligence Journey section
+- [x] Cross-link to Leadership Intelligence landing
+- [x] Final CTA with Apply for Early Access and Book a Discovery Call
+- [x] Footer with Meta Results copyright
+- [x] "Career Intelligence" nav link added to main Landing page header
+- [x] Route wired in App.tsx
+- [x] Zero TypeScript errors

@@ -33,6 +33,7 @@ import AdminMomentumBrief from "@/pages/AdminMomentumBrief";
 import AdminEscalations from "@/pages/AdminEscalations";
 import CareerHome from "@/pages/CareerHome";
 import AdminProductEnrollments from "@/pages/AdminProductEnrollments";
+import CareerLanding from "@/pages/CareerLanding";
 import JoinPage from "@/pages/JoinPage";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 
@@ -68,6 +69,7 @@ function Router() {
       <Route path="/admin/escalations" component={AdminEscalations} />
       <Route path="/career" component={CareerHome} />
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
+      <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />
