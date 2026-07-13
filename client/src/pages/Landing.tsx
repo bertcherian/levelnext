@@ -142,9 +142,9 @@ export default function Landing() {
             </div>
 
             {/* Headline — compact size */}
-            <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold leading-[1.15] mb-4">
-              <span className="text-white">Know Exactly Where Your Leadership Stands.</span><br />
-              <span style={{ color: "var(--color-ln-yellow)" }}>Fix What's Holding You Back.</span>
+            <h1 className="font-bold leading-[1.2] mb-4">
+              <span className="block text-2xl sm:text-3xl md:text-3xl text-white">Find your Gaps. Fix them.</span>
+              <span className="block text-lg sm:text-xl md:text-xl whitespace-nowrap" style={{ color: "var(--color-ln-yellow)" }}>Increase your Leadership Intelligence.</span>
             </h1>
 
             {/* Sub-headline */}
