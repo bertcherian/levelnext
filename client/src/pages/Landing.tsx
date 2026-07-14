@@ -146,7 +146,7 @@ export default function Landing() {
 
             {/* Headline — compact size */}
             <h1 className="font-bold leading-[1.2] mb-4">
-              <span className="block text-2xl sm:text-3xl md:text-3xl text-white">Find your Gaps. Fix them.</span>
+              <span className="block text-2xl sm:text-3xl md:text-3xl text-white" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, letterSpacing: "-0.01em", textTransform: "uppercase" }}>Find your Gaps. Fix them.</span>
               <span className="block text-lg sm:text-xl md:text-xl whitespace-nowrap" style={{ color: "var(--color-ln-yellow)" }}>Increase your Leadership Intelligence.</span>
             </h1>
 

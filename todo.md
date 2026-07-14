@@ -377,4 +377,4 @@
 - [x] useAuth: update getLoginUrl fallback to /login
 - [x] TypeScript check: zero errors
 - [x] Configure SMTP secrets (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM) — Brevo verified
-- [ ] Save checkpoint
+- [x] Save checkpoint
