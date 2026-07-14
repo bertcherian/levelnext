@@ -160,17 +160,25 @@ export default function Landing() {
               </Button>
             </a>
 
-            {/* Direct booking link */}
+            {/* Secondary CTA — Book a discovery call */}
             <a
               href="https://tidycal.com/metaresults/pilot?utm_source=landing&utm_medium=hero_secondary&utm_campaign=pilot"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm mt-3 flex items-center gap-1.5 transition-colors"
-              style={{ color: "oklch(65% 0.02 248.6)" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "var(--color-ln-yellow)")}
-              onMouseLeave={e => (e.currentTarget.style.color = "oklch(65% 0.02 248.6)")}
+              className="mt-3"
             >
-              or book a call directly →
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-13 px-8 text-base font-semibold rounded-xl"
+                style={{
+                  borderColor: "oklch(from var(--color-ln-yellow) l c h / 0.5)",
+                  color: "var(--color-ln-yellow)",
+                  background: "transparent",
+                }}
+              >
+                Book a Discovery Call
+              </Button>
             </a>
 
             {/* Anxiety counter */}
