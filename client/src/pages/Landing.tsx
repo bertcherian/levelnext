@@ -133,21 +133,10 @@ export default function Landing() {
           {/* ── Left: Text + CTA ──────────────────────────────────────────────── */}
           <div className="flex flex-col items-start text-left md:w-[52%] md:py-6 order-2 md:order-1">
 
-            {/* Pill badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-4"
-              style={{
-                background: "oklch(from var(--color-ln-yellow) l c h / 0.12)",
-                color: "var(--color-ln-yellow)",
-                border: "1.5px solid oklch(from var(--color-ln-yellow) l c h / 0.35)"
-              }}>
-              <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
-              For senior leaders who know they have more to give
-            </div>
-
-            {/* Headline — compact size */}
-            <h1 className="font-bold leading-[1.2] mb-4">
-              <span className="block text-2xl sm:text-3xl md:text-3xl text-white" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, letterSpacing: "-0.01em", textTransform: "uppercase" }}>Find your Gaps. Fix them.</span>
-              <span className="block text-lg sm:text-xl md:text-xl whitespace-nowrap" style={{ color: "var(--color-ln-yellow)" }}>Increase your Leadership Intelligence.</span>
+            {/* Headline */}
+            <h1 className="font-bold leading-[1.1] mb-4">
+              <span className="block text-4xl sm:text-5xl md:text-5xl text-white" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, letterSpacing: "-0.01em", textTransform: "uppercase" }}>Find your Gaps. Fix them.</span>
+              <span className="block text-xl sm:text-2xl md:text-2xl" style={{ color: "var(--color-ln-yellow)" }}>Increase your Leadership Intelligence.</span>
             </h1>
 
             {/* Sub-headline */}
