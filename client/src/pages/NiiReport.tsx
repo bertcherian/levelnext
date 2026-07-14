@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,189 @@ import { Badge } from "@/components/ui/badge";
 import {
   Loader2, ArrowLeft, Sparkles, ChevronDown, ChevronUp,
   Target, TrendingUp, AlertTriangle, Calendar, Brain,
-  CheckCircle2, Users, Compass, Shield, Lightbulb, MessageSquare, Network
+  CheckCircle2, Users, Compass, Shield, Lightbulb, MessageSquare, Network,
+  Download, FileText
 } from "lucide-react";
 import { toast } from "sonner";
+
+// ── Sample PDF CDN link for NII ───────────────────────────────────────────────────────────────
+const NII_SAMPLE_PDF = "/manus-storage/nii_sample_report_placeholder.pdf";
+
+// PDF generation steps
+const PDF_STEPS = [
+  { key: "narrative", label: "Generating Navigator's narrative…", duration: 5000 },
+  { key: "building",  label: "Building your PDF…",              duration: 3000 },
+  { key: "ready",    label: "Your report is ready!",            duration: 0 },
+];
+
+async function generateNiiClientPdf(reportData: any, narrative: string): Promise<void> {
+  const { jsPDF } = await import("jspdf");
+  const GOLD_HEX = "#D4AF37";
+  const navyRgb = { r: 10, g: 26, b: 47 };
+  const goldRgb = { r: 212, g: 175, b: 55 };
+  const charcoalRgb = { r: 45, g: 55, b: 72 };
+
+  const zoneColor = (reportData.zone ?? "").includes("master") ? GOLD_HEX
+    : (reportData.zone ?? "").includes("proficient") ? "#22C55E"
+    : (reportData.zone ?? "").includes("developing") ? "#3B82F6"
+    : (reportData.zone ?? "").includes("emerging") ? "#F59E0B"
+    : "#EF4444";
+  function hexToRgb(hex: string) {
+    const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : { r: 0, g: 0, b: 0 };
+  }
+
+  const zoneRgb = hexToRgb(zoneColor);
+  const zoneLabel = (reportData.zone ?? "").replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const archetypeLabel = (reportData.archetype ?? "").replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const completedDate = new Date(reportData.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const W = 210;
+  let y = 0;
+
+  // Cover block
+  doc.setFillColor(navyRgb.r, navyRgb.g, navyRgb.b);
+  doc.rect(0, 0, W, 80, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(255, 255, 255);
+  doc.text("LevelNext", 20, 22);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(goldRgb.r, goldRgb.g, goldRgb.b);
+  doc.text("THE LEADERSHIP INTELLIGENCE PLATFORM", 20, 29);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(goldRgb.r, goldRgb.g, goldRgb.b);
+  doc.text("NAVIGATION INTELLIGENCE · LEADERSHIP INSIGHT REPORT", 20, 42);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(255, 255, 255);
+  doc.text(reportData.participantName ?? "Leader", 20, 54);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(200, 210, 225);
+  const roleDate = [reportData.participantRole, completedDate].filter(Boolean).join("  ·  ");
+  doc.text(roleDate, 20, 62);
+  doc.setDrawColor(goldRgb.r, goldRgb.g, goldRgb.b);
+  doc.setLineWidth(1.5);
+  doc.circle(185, 40, 16, "S");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(goldRgb.r, goldRgb.g, goldRgb.b);
+  doc.text(String(Math.round(reportData.edgeScore ?? 0)), 185, 38, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(200, 210, 225);
+  doc.text("Edge", 185, 44, { align: "center" });
+
+  y = 90;
+
+  // Zone & Archetype
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(goldRgb.r, goldRgb.g, goldRgb.b);
+  doc.text("YOUR NAVIGATION PROFILE", 20, y);
+  y += 7;
+  doc.setFillColor(zoneRgb.r, zoneRgb.g, zoneRgb.b);
+  doc.roundedRect(20, y, 55, 7, 3, 3, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(255, 255, 255);
+  doc.text(zoneLabel, 47.5, y + 4.5, { align: "center" });
+  y += 11;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(navyRgb.r, navyRgb.g, navyRgb.b);
+  doc.text(archetypeLabel, 20, y);
+  y += 16;
+
+  // Dimension Breakdown
+  const dimScores = (reportData.dimensionScores ?? {}) as Record<string, number>;
+  const NII_DIM_LABELS: Record<string, string> = {
+    organizational_awareness: "Organizational Awareness",
+    stakeholder_navigation: "Stakeholder Navigation",
+    relationship_capital: "Relationship Capital",
+    political_navigation: "Political Navigation",
+    decision_pathway_intelligence: "Decision Pathway Intelligence",
+    enterprise_alignment: "Enterprise Alignment",
+    coalition_building: "Coalition Building",
+    reputation_credibility: "Reputation & Credibility",
+    timing_strategic_judgment: "Timing & Strategic Judgment",
+    ethical_leadership_navigation: "Ethical Leadership Navigation",
+  };
+  const labeledDims = Object.entries(dimScores)
+    .filter(([k]) => NII_DIM_LABELS[k])
+    .sort(([, a], [, b]) => b - a)
+    .map(([k, v]) => ({ label: NII_DIM_LABELS[k] ?? k, score: Math.round(v) }));
+
+  if (labeledDims.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(goldRgb.r, goldRgb.g, goldRgb.b);
+    doc.text("DIMENSION BREAKDOWN", 20, y);
+    y += 6;
+    for (const dim of labeledDims) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(charcoalRgb.r, charcoalRgb.g, charcoalRgb.b);
+      doc.text(dim.label, 20, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(navyRgb.r, navyRgb.g, navyRgb.b);
+      doc.text(String(dim.score), 190, y, { align: "right" });
+      doc.setFillColor(226, 232, 240);
+      doc.roundedRect(20, y + 2, 160, 3, 1.5, 1.5, "F");
+      const barW = Math.min(160, (dim.score / 100) * 160);
+      const barColor = dim.score >= 75 ? "#16a34a" : dim.score >= 55 ? "#D4AF37" : dim.score >= 40 ? "#d97706" : "#dc2626";
+      const bRgb = hexToRgb(barColor);
+      doc.setFillColor(bRgb.r, bRgb.g, bRgb.b);
+      doc.roundedRect(20, y + 2, barW, 3, 1.5, 1.5, "F");
+      y += 11;
+    }
+    y += 4;
+  }
+
+  // Navigator's Narrative
+  if (narrative) {
+    if (y > 220) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(goldRgb.r, goldRgb.g, goldRgb.b);
+    doc.text("NAVIGATOR'S ANALYSIS", 20, y);
+    y += 7;
+    const paragraphs = narrative.split(/\n\n+/).filter(Boolean);
+    for (const para of paragraphs) {
+      if (y > 260) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(charcoalRgb.r, charcoalRgb.g, charcoalRgb.b);
+      const lines = doc.splitTextToSize(para, 170) as string[];
+      doc.text(lines, 20, y);
+      y += lines.length * 5 + 5;
+    }
+  }
+
+  // Footer
+  const pageCount = doc.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setFillColor(navyRgb.r, navyRgb.g, navyRgb.b);
+    doc.rect(0, 282, W, 15, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    doc.text("LevelNext — The Leadership Intelligence Platform", 20, 289);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(200, 210, 225);
+    doc.text("Copyright: Meta Results Pvt. Ltd., Bangalore, India  ·  reports@metaresults.com", 190, 289, { align: "right" });
+  }
+
+  const filename = `LevelNext_NII_${(reportData.participantName ?? "Report").replace(/\s+/g, "_")}.pdf`;
+  doc.save(filename);
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type NiiDimensionAnalysis = {
@@ -152,6 +332,10 @@ export default function NiiReport() {
   const [expandedDims, setExpandedDims] = useState<Set<string>>(new Set());
   const [generating, setGenerating] = useState(false);
   const [analysis, setAnalysis] = useState<NiiAnalysis | null>(null);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [pdfDone, setPdfDone] = useState(false);
+  const [pdfStep, setPdfStep] = useState(0);
+  const stepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: report, isLoading: reportLoading } = trpc.assessment.getReport.useQuery(
     { slug: slug ?? "" },
@@ -170,6 +354,43 @@ export default function NiiReport() {
     onSuccess: (data) => { setAnalysis(data); setGenerating(false); toast.success("Your Navigation Intelligence analysis is ready."); },
     onError: () => { setGenerating(false); toast.error("Analysis generation failed. Please try again."); },
   });
+
+  const generateNarrative = trpc.pdfReport.generateNarrative.useMutation({
+    onSuccess: async (data) => {
+      setPdfStep(2);
+      try {
+        await generateNiiClientPdf(data.report, data.narrative);
+        setPdfDone(true);
+        toast.success("Your NII PDF has been downloaded.");
+      } catch {
+        toast.error("PDF generation failed. Please try again.");
+      } finally {
+        setTimeout(() => setPdfGenerating(false), 1000);
+      }
+    },
+    onError: () => {
+      setPdfGenerating(false);
+      setPdfStep(0);
+      toast.error("Failed to generate narrative. Please try again.");
+    },
+  });
+
+  const handleDownload = () => {
+    if (!report?.id) return;
+    setPdfGenerating(true);
+    setPdfDone(false);
+    setPdfStep(0);
+    let current = 0;
+    const advance = () => {
+      current += 1;
+      if (current < 2) {
+        setPdfStep(current);
+        stepTimerRef.current = setTimeout(advance, PDF_STEPS[current]?.duration ?? 3000);
+      }
+    };
+    stepTimerRef.current = setTimeout(advance, PDF_STEPS[0]?.duration ?? 5000);
+    generateNarrative.mutate({ reportId: report.id });
+  };
 
   const handleGenerate = () => {
     if (!report?.id) return;
@@ -225,9 +446,43 @@ export default function NiiReport() {
           <span className="text-sm font-bold tracking-wide" style={{ color: IVORY }}>
             Navigation Intelligence™
           </span>
-          <Badge style={{ background: GOLD + "22", color: GOLD, border: `1px solid ${GOLD}40` }}>NII</Badge>
+          <div className="flex items-center gap-2">
+            <Badge style={{ background: GOLD + "22", color: GOLD, border: `1px solid ${GOLD}40` }}>NII</Badge>
+            <button
+              onClick={handleDownload}
+              disabled={pdfGenerating}
+              className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all duration-150 active:scale-[0.97]"
+              style={{ background: pdfDone ? "#16a34a" : GOLD, color: NAVY }}
+            >
+              {pdfGenerating
+                ? <><Loader2 size={12} className="animate-spin" /> {PDF_STEPS[pdfStep]?.label ?? "Working…"}</>
+                : pdfDone
+                ? <><CheckCircle2 size={12} /> Downloaded</>
+                : <><Download size={12} /> Export PDF</>}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* PDF Step Progress Bar */}
+      {pdfGenerating && (
+        <div className="px-4 py-2 flex items-center gap-3 border-b" style={{ background: NAVY, borderColor: "rgba(255,255,255,0.1)" }}>
+          {PDF_STEPS.map((step, i) => {
+            const isDone = i < pdfStep;
+            const isActive = i === pdfStep;
+            return (
+              <div key={step.key} className="flex items-center gap-1.5">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
+                  style={{ background: isDone ? "#16a34a" : isActive ? GOLD : "rgba(255,255,255,0.1)", color: isDone || isActive ? NAVY : "rgba(255,255,255,0.4)" }}>
+                  {isDone ? <CheckCircle2 size={11} /> : isActive ? <Loader2 size={11} className="animate-spin" /> : <FileText size={11} />}
+                </div>
+                <span className="text-xs hidden sm:block" style={{ color: isDone ? "#86efac" : isActive ? GOLD : "rgba(255,255,255,0.3)" }}>{step.label}</span>
+                {i < PDF_STEPS.length - 1 && <div className="w-3 h-px mx-0.5 hidden sm:block" style={{ background: isDone ? "#16a34a" : "rgba(255,255,255,0.15)" }} />}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="max-w-3xl mx-auto px-4 pt-8">
         {/* Hero score card */}
@@ -460,6 +715,48 @@ export default function NiiReport() {
             })}
           </Section>
         )}
+        {/* Sample Report Download */}
+        <div className="rounded-2xl p-5 flex items-center gap-4 mt-4" style={{ background: IVORY, border: "1px solid #E5E7EB" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: GOLD + "18", border: `1px solid ${GOLD}44` }}>
+            <FileText size={18} style={{ color: GOLD }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm" style={{ color: NAVY }}>View Sample Report</p>
+            <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>See how a completed Navigation Intelligence report looks with full coaching narrative.</p>
+          </div>
+          <a href={NII_SAMPLE_PDF} target="_blank" rel="noopener noreferrer">
+            <Button size="sm" variant="outline" className="font-semibold flex-shrink-0" style={{ borderColor: "#E5E7EB", color: NAVY }}>
+              <Download size={13} className="mr-1.5" /> Sample PDF
+            </Button>
+          </a>
+        </div>
+
+        {/* PDF Export CTA */}
+        <div className="rounded-2xl p-6 mt-4 mb-8" style={{ background: NAVY }}>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="text-white font-semibold mb-1">Export this report as a PDF</p>
+              <p className="text-xs" style={{ color: "rgba(200,210,225,0.8)" }}>Includes Navigator's coaching narrative. Branded by LevelNext · Meta Results.</p>
+            </div>
+            <button
+              onClick={handleDownload}
+              disabled={pdfGenerating}
+              className="flex items-center gap-2 font-bold px-5 py-2.5 rounded-full transition-all duration-150 active:scale-[0.97] flex-shrink-0"
+              style={{ background: pdfDone ? "#16a34a" : GOLD, color: NAVY, minWidth: 160 }}
+            >
+              {pdfGenerating
+                ? <><Loader2 size={16} className="animate-spin" /> {PDF_STEPS[pdfStep]?.label ?? "Working…"}</>
+                : pdfDone
+                ? <><CheckCircle2 size={16} /> Download Again</>
+                : <><Download size={16} /> Export PDF</>}
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs pb-8" style={{ color: "#9CA3AF" }}>
+          Copyright: Meta Results Pvt. Ltd., Bangalore, India · reports@metaresults.com
+        </p>
       </div>
     </div>
   );

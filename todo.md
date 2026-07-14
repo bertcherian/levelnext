@@ -385,3 +385,9 @@
 - [x] Bulk invite via CSV upload — server bulkInvite procedure + UI dialog with file picker, preview table, send all
 - [x] TypeScript check: zero errors
 - [x] Save checkpoint
+
+## Phase 31 — CI Diagnostics Fix, NII Unlock, NII PDF, Sample PDF Links (Jul 15)
+- [x] Diagnostics.tsx: make page product-aware — CI users see CPI/CRS/CMK/CST/CAO/AIR with no gate (coach-guided selection)
+- [x] unlock.ts: add NII to FALLBACK_MODULE_SEQUENCE and DB product_modules for leadership_intelligence (after STI)
+- [x] NiiReport.tsx: add PDF export button (same pattern as Report.tsx — jsPDF client-side)
+- [x] Report.tsx + CpiReport.tsx + NiiReport.tsx: wire sample PDF CDN links as "View Sample Report" CTAs

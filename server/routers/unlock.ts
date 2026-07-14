@@ -38,7 +38,7 @@ const MISSION_TARGET = 5;
 const GUIDE_SESSION_TARGET = 3;
 
 // Fallback sequence used if DB is unavailable
-const FALLBACK_MODULE_SEQUENCE = ["ECI", "TII", "LII", "GCC", "LDI", "STI"];
+const FALLBACK_MODULE_SEQUENCE = ["ECI", "TII", "LII", "GCC", "LDI", "STI", "NII"];
 type ModuleType = string;
 
 // Helper: get the module sequence for a user's active product from the DB
@@ -432,7 +432,9 @@ export const unlockRouter = router({
         : m === "LII" ? "Leadership Influence Intelligence"
         : m === "GCC" ? "GCC Readiness"
         : m === "LDI" ? "Leadership Derailment Intelligence"
-        : "Strategic Thinking Intelligence";
+        : m === "STI" ? "Strategic Thinking Intelligence"
+        : m === "NII" ? "Navigation Intelligence"
+        : m;
 
       const fromLabel = moduleLabel(progress.fromModule);
       const toLabel = moduleLabel(input.toModule);

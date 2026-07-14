@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -20,9 +20,11 @@ import {
   Upload,
   Brain,
   FileText,
+  Briefcase,
 } from "lucide-react";
 
-const MODULES = [
+// ── Leadership Intelligence modules ───────────────────────────────────────────
+const LI_MODULES = [
   {
     id: "ECI",
     route: "eci",
@@ -92,6 +94,70 @@ const MODULES = [
     description: "Measure your Organizational Awareness, Stakeholder Navigation, Relationship Capital, Political Navigation, Decision Pathway Intelligence, Enterprise Alignment, Coalition Building, Reputation & Credibility, Timing & Strategic Judgment, and Ethical Leadership Navigation.",
     questions: "30 questions · ~10 minutes",
     color: "#1a3a5c",
+  },
+];
+
+// ── Career Intelligence modules (no gate — coach-guided selection) ─────────────
+const CI_MODULES = [
+  {
+    id: "CPI",
+    route: "cpi",
+    label: "Career Positioning Intelligence",
+    shortLabel: "CPI",
+    tagline: "Know exactly where you stand — and where you should be.",
+    description: "Measure how clearly you own and communicate your career identity. Covers your personal brand clarity, positioning in your market, differentiation from peers, and the strength of your professional narrative.",
+    questions: "30 questions · ~10 minutes",
+    color: "#D4AF37",
+  },
+  {
+    id: "CRS",
+    route: "crs",
+    label: "Career Resilience Intelligence",
+    shortLabel: "CRS",
+    tagline: "Bounce forward, not just back.",
+    description: "Measure your ability to adapt and recover when career plans change. Covers your adaptability under uncertainty, emotional recovery speed, resourcefulness in setbacks, and your capacity to pivot with purpose.",
+    questions: "30 questions · ~10 minutes",
+    color: "#3B82F6",
+  },
+  {
+    id: "CMK",
+    route: "cmk",
+    label: "Career Marketability Intelligence",
+    shortLabel: "CMK",
+    tagline: "How visible, valued, and in-demand are you in the market?",
+    description: "Measure how visible and valuable you are to the market. Covers your external visibility, skill relevance, network strength, thought leadership presence, and how recruiters and decision-makers perceive your brand.",
+    questions: "30 questions · ~10 minutes",
+    color: "#22C55E",
+  },
+  {
+    id: "CST",
+    route: "cst",
+    label: "Career Strategy Intelligence",
+    shortLabel: "CST",
+    tagline: "Are you playing the long game — or just reacting?",
+    description: "Measure the clarity and ambition of your 3–5 year career plan. Covers your strategic career vision, goal-setting discipline, decision-making framework, and your ability to navigate career crossroads with intention.",
+    questions: "30 questions · ~10 minutes",
+    color: "#F59E0B",
+  },
+  {
+    id: "CAO",
+    route: "cao",
+    label: "Career Optionality Intelligence",
+    shortLabel: "CAO",
+    tagline: "How many real options do you have beyond your current role?",
+    description: "Measure how many real options you have beyond your current role. Covers your portfolio of opportunities, cross-functional mobility, entrepreneurial readiness, and the depth of your career safety net.",
+    questions: "30 questions · ~10 minutes",
+    color: "#8B5CF6",
+  },
+  {
+    id: "AIR",
+    route: "air",
+    label: "AI Readiness Intelligence",
+    shortLabel: "AIR",
+    tagline: "Are you leading AI — or being replaced by it?",
+    description: "Measure your readiness to work with and alongside AI effectively. Covers your AI literacy, workflow integration, strategic use of AI tools, and your ability to lead AI-augmented teams with confidence.",
+    questions: "30 questions · ~10 minutes",
+    color: "#EC4899",
   },
 ];
 
@@ -205,13 +271,13 @@ function NarrativeBanner({ toModule, onDismiss }: { toModule: string; onDismiss:
   );
 }
 
-// ── Module card ────────────────────────────────────────────────────────────────
-function ModuleCard({
+// ── LI Module card (with progressive unlock gates) ────────────────────────────
+function LiModuleCard({
   mod,
   status,
   completedModules,
 }: {
-  mod: (typeof MODULES)[0];
+  mod: (typeof LI_MODULES)[0];
   status: ModuleStatus | undefined;
   completedModules: string[];
 }) {
@@ -309,9 +375,82 @@ function ModuleCard({
   );
 }
 
-// Simulated new-user status for the preview toggle
-// Preview mode: ECI is unlocked (first module), LII is locked (prior module completed, gates not yet met),
-// GCC is not_started (LII not yet completed). This gives the richest preview of all three lock states.
+// ── CI Module card (no gate — coach-guided selection) ─────────────────────────
+function CiModuleCard({
+  mod,
+  completedModules,
+}: {
+  mod: (typeof CI_MODULES)[0];
+  completedModules: string[];
+}) {
+  const done = completedModules.includes(mod.id);
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden card-lift"
+      style={{
+        background: "white",
+        border: done ? `1px solid oklch(from var(--color-ln-yellow) l c h / 0.5)` : "1px solid var(--color-ln-border)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
+      <div className="flex">
+        <div className="w-1.5 flex-shrink-0" style={{ background: done ? "var(--color-ln-yellow)" : mod.color }} />
+        <div className="flex-1 p-4 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <span
+                  className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                  style={{
+                    background: done ? "oklch(from var(--color-ln-yellow) l c h / 0.15)" : `${mod.color}18`,
+                    color: done ? "var(--color-ln-navy)" : mod.color,
+                    border: `1px solid ${mod.color}30`,
+                  }}
+                >
+                  {mod.shortLabel}
+                </span>
+                {done && (
+                  <span className="flex items-center gap-1 text-xs font-medium" style={{ color: "#16a34a" }}>
+                    <CheckCircle2 size={13} /> Complete
+                  </span>
+                )}
+                {!done && (
+                  <span
+                    className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded"
+                    style={{ background: `${mod.color}12`, color: mod.color }}
+                  >
+                    <Sparkles size={11} /> Available
+                  </span>
+                )}
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold mb-1" style={{ color: "var(--color-ln-navy)" }}>{mod.label}</h2>
+              <p className="text-sm font-medium mb-3" style={{ color: "var(--color-ln-muted)" }}>{mod.tagline}</p>
+              <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--color-ln-text)" }}>{mod.description}</p>
+              <p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>{mod.questions}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 mt-4 flex-wrap">
+            <Link href={`/diagnostics/${mod.route}`}>
+              <Button
+                className="font-semibold"
+                style={{
+                  background: done ? "var(--color-ln-ivory-dark)" : mod.color,
+                  color: done ? "var(--color-ln-navy)" : "white",
+                }}
+              >
+                {done ? "Retake Diagnostic" : "Begin Diagnostic"}
+                <ArrowRight size={14} className="ml-1.5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Simulated new-user status for the LI preview toggle
 const NEW_USER_STATUSES: ModuleStatus[] = [
   { moduleId: "ECI", state: "unlocked", daysRemaining: 0, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
   { moduleId: "TII", state: "locked", daysRemaining: 18, missionsCompleted: 1, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: "Priority Clarity", narrativeReady: false, narrativeShown: false },
@@ -319,6 +458,7 @@ const NEW_USER_STATUSES: ModuleStatus[] = [
   { moduleId: "GCC", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
   { moduleId: "LDI", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
   { moduleId: "STI", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
+  { moduleId: "NII", state: "not_started", daysRemaining: 21, missionsCompleted: 0, missionTarget: 5, guideSessionsCompleted: 0, guideSessionTarget: 3, commitmentSet: false, focusDimension: null, narrativeReady: false, narrativeShown: false },
 ];
 
 export default function Diagnostics() {
@@ -331,8 +471,14 @@ export default function Diagnostics() {
     enabled: isAuthenticated,
     refetchOnWindowFocus: true,
   });
+  const { data: activeProduct } = trpc.products.getActiveProduct.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
 
   useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [loading, isAuthenticated, navigate]);
+
+  const activeProductId = activeProduct?.productId ?? "leadership_intelligence";
+  const isCareerProduct = activeProductId === "career_intelligence";
 
   // When preview mode is on, simulate a fresh user who has only ECI unlocked
   const completedModules = viewAsNewUser ? [] : ((graph?.completedModules ?? []) as string[]);
@@ -340,6 +486,67 @@ export default function Diagnostics() {
   const statusMap = new Map<string, ModuleStatus>();
   for (const s of activeStatuses) statusMap.set(s.moduleId, s as ModuleStatus);
 
+  // ── Career Intelligence view ─────────────────────────────────────────────────
+  if (isCareerProduct) {
+    return (
+      <PlatformLayout title="Diagnostics">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 animate-fade-in">
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <Briefcase size={15} style={{ color: "var(--color-ln-yellow)" }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-ln-yellow)" }}>Career Intelligence</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Career Diagnostics</h1>
+            <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
+              Six career intelligence modules. Work with your coach to choose the diagnostic that matters most right now.
+            </p>
+          </div>
+
+          {/* Coach-guided note */}
+          <div className="mb-6 rounded-xl p-4 flex items-start gap-3" style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.08)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.25)" }}>
+            <MessageSquare size={16} className="flex-shrink-0 mt-0.5" style={{ color: "var(--color-ln-yellow)" }} />
+            <p className="text-sm" style={{ color: "var(--color-ln-navy)" }}>
+              <strong>Coach-guided selection.</strong> All six diagnostics are available. Your coach will help you decide which one to take next based on your current career priorities and goals.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {CI_MODULES.map((mod) => (
+              <CiModuleCard key={mod.id} mod={mod} completedModules={completedModules} />
+            ))}
+          </div>
+
+          {/* Prior Assessments Import Card */}
+          <div className="mt-6 rounded-2xl p-5" style={{ background: "var(--color-ln-ivory-dark)", border: "1px solid var(--color-ln-border)" }}>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.12)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.3)" }}>
+                <FileText size={18} style={{ color: "var(--color-ln-gold)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>Upload Prior Assessments</p>
+                <p className="text-xs mt-1" style={{ color: "var(--color-ln-muted)" }}>
+                  Already have a DISC, Hogan, Gallup StrengthsFinder, 360° feedback, or any other career assessment? Upload it and your Career Strategist will extract the relevant insights to enrich your coaching context.
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {["DISC", "Hogan", "Gallup", "360°", "EQ", "Enneagram", "MBTI"].map((tag) => (
+                    <span key={tag} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)", color: "var(--color-ln-navy)" }}>{tag}</span>
+                  ))}
+                </div>
+                <Link href="/import-prior-assessments">
+                  <Button variant="outline" size="sm" className="mt-3 font-medium text-xs" style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-navy)" }}>
+                    <Upload size={12} className="mr-1.5" />
+                    Upload Prior Assessment Report
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </PlatformLayout>
+    );
+  }
+
+  // ── Leadership Intelligence view (existing gated flow) ───────────────────────
   return (
     <PlatformLayout title="Diagnostics">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 animate-fade-in">
@@ -347,7 +554,7 @@ export default function Diagnostics() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Diagnostics</h1>
             <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
-              Six intelligence modules. Each one builds your Leadership Edge — unlocked through application, not just completion.
+              Seven intelligence modules. Each one builds your Leadership Edge — unlocked through application, not just completion.
             </p>
           </div>
           {/* View as new user toggle */}
@@ -379,8 +586,8 @@ export default function Diagnostics() {
           </div>
         )}
         <div className="space-y-6">
-          {MODULES.map((mod) => (
-            <ModuleCard key={mod.id} mod={mod} status={statusMap.get(mod.id)} completedModules={completedModules} />
+          {LI_MODULES.map((mod) => (
+            <LiModuleCard key={mod.id} mod={mod} status={statusMap.get(mod.id)} completedModules={completedModules} />
           ))}
         </div>
         {/* Prior Assessments Import Card */}

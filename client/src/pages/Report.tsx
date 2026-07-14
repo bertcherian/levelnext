@@ -101,6 +101,16 @@ const ZONE_COLORS: Record<string, string> = {
   strategic: "#22C55E",
 };
 
+// ── Sample PDF CDN links (one per module) ─────────────────────────────────────
+const SAMPLE_PDF_URLS: Record<string, string> = {
+  ECI: "/manus-storage/eci_sample_report_c8069499.pdf",
+  TII: "/manus-storage/tii_sample_report_03aa8359.pdf",
+  LII: "/manus-storage/lii_sample_report_35396687.pdf",
+  LDI: "/manus-storage/ldi_sample_report_5079e55f.pdf",
+  STI: "/manus-storage/sti_sample_report_f8e5b386.pdf",
+  NII: "/manus-storage/nii_sample_report_placeholder.pdf",
+};
+
 const NAVY = "#12345A";
 const YELLOW = "#F2B705";
 const CHARCOAL = "#2D3748";
@@ -775,6 +785,24 @@ export default function Report() {
               Your 30-Day Leadership Focus
             </p>
             <p className="text-sm leading-relaxed" style={{ color: "var(--color-ln-navy)" }}>{llmThirtyDay}</p>
+          </div>
+        )}
+
+        {/* Sample Report Download */}
+        {SAMPLE_PDF_URLS[moduleType] && (
+          <div className="rounded-2xl p-5 flex items-center gap-4" style={{ background: "var(--color-ln-ivory-dark)", border: "1px solid var(--color-ln-border)" }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.3)" }}>
+              <FileText size={18} style={{ color: "var(--color-ln-yellow)" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>View Sample Report</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--color-ln-muted)" }}>See how a completed {MODULE_LABELS[moduleType] ?? moduleType} report looks with full coaching narrative.</p>
+            </div>
+            <a href={SAMPLE_PDF_URLS[moduleType]} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="outline" className="font-semibold flex-shrink-0" style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-navy)" }}>
+                <Download size={13} className="mr-1.5" /> Sample PDF
+              </Button>
+            </a>
           </div>
         )}
 

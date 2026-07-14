@@ -36,6 +36,16 @@ type CpiAnalysis = {
   coachChallengeQuestion: string;
 };
 
+// ─── Sample PDF CDN links ────────────────────────────────────────────────────
+const SAMPLE_PDF_URLS: Record<string, string> = {
+  CPI: "/manus-storage/cpi_sample_report_b3dd24bb.pdf",
+  CRS: "/manus-storage/crs_sample_report_62c7166a.pdf",
+  CMK: "/manus-storage/cmk_sample_report_49fea189.pdf",
+  CST: "/manus-storage/cst_sample_report_0d2f06f6.pdf",
+  CAO: "/manus-storage/cao_sample_report_0cde1f59.pdf",
+  AIR: "/manus-storage/air_sample_report_111953bf.pdf",
+};
+
 // ─── Brand colours ────────────────────────────────────────────────────────────
 const NAVY   = "#0A1A2F";
 const GOLD   = "#D4AF37";
@@ -488,6 +498,24 @@ export default function CpiReport() {
             </Button>
           </div>
         )}
+
+        {/* ── Sample Report Download ── */}
+        <div className="rounded-2xl p-5 flex items-center gap-4 mb-4" style={{ background: "#F8F5F0", border: "1px solid #E5E7EB" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: GOLD + "18", border: `1px solid ${GOLD}44` }}>
+            <BookOpen size={18} style={{ color: GOLD }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm" style={{ color: NAVY }}>View Sample Report</p>
+            <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>See how a completed Career Positioning Intelligence report looks with full coaching narrative.</p>
+          </div>
+          {SAMPLE_PDF_URLS["CPI"] && (
+            <a href={SAMPLE_PDF_URLS["CPI"]} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="outline" className="font-semibold flex-shrink-0" style={{ borderColor: "#E5E7EB", color: NAVY }}>
+                <Download size={13} className="mr-1.5" /> Sample PDF
+              </Button>
+            </a>
+          )}
+        </div>
 
         {/* ── Footer ── */}
         <div className="text-center py-6 border-t" style={{ borderColor: "#E5E7EB" }}>
