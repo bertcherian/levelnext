@@ -4,7 +4,16 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   Search,
@@ -12,11 +21,11 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
-  RefreshCw,
   Link2,
   Trash2,
   Download,
   Users,
+  UserPlus,
 } from "lucide-react";
 
 type InviteStatus = "pending" | "accepted" | "expired";
@@ -56,6 +65,18 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
 
 export default function AdminManageInvites() {
   const { data, isLoading, refetch } = trpc.platformInvites.listInvites.useQuery();
+
+  const createInvite = trpc.platformInvites.generateInvite.useMutation({
+    onSuccess: () => {
+      refetch();
+      setDialogOpen(false);
+      setInviteName("");
+      setInviteEmail("");
+      toast.success("Invite sent! The magic link email is on its way.");
+    },
+    onError: (err: { message: string }) => toast.error(err.message),
+  });
+
   const revokeInvite = trpc.platformInvites.revokeInvite.useMutation({
     onSuccess: () => {
       refetch();
@@ -66,6 +87,9 @@ export default function AdminManageInvites() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
 
   const invites = data ?? [];
 
@@ -100,8 +124,20 @@ export default function AdminManageInvites() {
   }
 
   function handleCopyLink(token: string) {
-    const url = `${window.location.origin}/join?token=${token}`;
+    const url = `${window.location.origin}/login?invite=${token}`;
     navigator.clipboard.writeText(url).then(() => toast.success("Invite link copied!"));
+  }
+
+  function handleSendInvite() {
+    if (!inviteEmail.trim()) {
+      toast.error("Please enter an email address");
+      return;
+    }
+    createInvite.mutate({
+      email: inviteEmail.trim(),
+      name: inviteName.trim() || undefined,
+      origin: window.location.origin,
+    });
   }
 
   function handleExportCSV() {
@@ -136,19 +172,30 @@ export default function AdminManageInvites() {
               Manage Invites
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              All magic link invites sent to pilot participants
+              Send magic link invites to clients — they sign in directly with their email, no account needed
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={handleExportCSV}
-            disabled={filtered.length === 0}
-          >
-            <Download size={14} />
-            Export CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleExportCSV}
+              disabled={filtered.length === 0}
+            >
+              <Download size={14} />
+              Export CSV
+            </Button>
+            <Button
+              size="sm"
+              className="gap-2 font-semibold"
+              style={{ background: "var(--color-ln-navy)", color: "white" }}
+              onClick={() => setDialogOpen(true)}
+            >
+              <UserPlus size={15} />
+              Send Invite
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -222,11 +269,22 @@ export default function AdminManageInvites() {
           ) : filtered.length === 0 ? (
             <div className="py-16 text-center">
               <Mail size={32} className="mx-auto mb-3 text-muted-foreground opacity-40" />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-4">
                 {invites.length === 0
-                  ? "No invites sent yet. Use the Send Invite button in Pilot Applications."
+                  ? "No invites sent yet. Click \"Send Invite\" to invite your first client."
                   : "No invites match your search."}
               </p>
+              {invites.length === 0 && (
+                <Button
+                  size="sm"
+                  className="gap-2 font-semibold"
+                  style={{ background: "var(--color-ln-navy)", color: "white" }}
+                  onClick={() => setDialogOpen(true)}
+                >
+                  <UserPlus size={15} />
+                  Send First Invite
+                </Button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -335,6 +393,62 @@ export default function AdminManageInvites() {
           </p>
         )}
       </div>
+
+      {/* Send Invite Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send Invite</DialogTitle>
+            <DialogDescription>
+              Enter the client's details. They'll receive a magic link email — one click and they're in LevelNext, no account needed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-name">Full Name <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                id="invite-name"
+                placeholder="e.g. Priya Sharma"
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSendInvite()}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-email">Email Address <span className="text-red-500">*</span></Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="e.g. priya@company.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSendInvite()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={createInvite.isPending}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendInvite}
+              disabled={createInvite.isPending || !inviteEmail.trim()}
+              className="gap-2 font-semibold"
+              style={{ background: "var(--color-ln-navy)", color: "white" }}
+            >
+              {createInvite.isPending ? (
+                <>Sending…</>
+              ) : (
+                <>
+                  <Mail size={15} />
+                  Send Magic Link
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PlatformLayout>
   );
 }
