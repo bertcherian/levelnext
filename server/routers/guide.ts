@@ -35,12 +35,21 @@ const CAREER_STRATEGIST_PROMPT = (ciData: Record<string, any> | null, userName: 
           `- Archetype: ${mod.archetypeLabel ?? mod.archetype}`,
         ];
         if (mod.dimensionScores && Object.keys(mod.dimensionScores).length > 0) {
-          const topDims = Object.entries(mod.dimensionScores as Record<string, number>)
-            .sort(([, a], [, b]) => (b as number) - (a as number))
-            .slice(0, 3)
-            .map(([k, v]) => `${k.replace(/_/g, ' ')} (${Math.round(v as number)})`)
-            .join(', ');
+          const dimEntries = Object.entries(mod.dimensionScores as Record<string, number>)
+            .sort(([, a], [, b]) => (b as number) - (a as number));
+          const topDims = dimEntries.slice(0, 3).map(([k, v]) => `${k.replace(/_/g, ' ')} (${Math.round(v as number)})`).join(', ');
           lines.push(`- Strongest dimensions: ${topDims}`);
+          const bottomDims = dimEntries.slice(-2).map(([k, v]) => `${k.replace(/_/g, ' ')} (${Math.round(v as number)})`).join(', ');
+          lines.push(`- Growth edge dimensions: ${bottomDims}`);
+        }
+        if (mod.llmAnalysis && typeof mod.llmAnalysis === 'object') {
+          const llm = mod.llmAnalysis as any;
+          if (llm.coachFocusAreas?.length) lines.push(`- Coach focus areas: ${(llm.coachFocusAreas as string[]).join('; ')}`);
+          if (llm.blindSpots?.length) {
+            const bsTitles = (llm.blindSpots as any[]).slice(0, 2).map((b: any) => b.title).join('; ');
+            lines.push(`- Key blind spots: ${bsTitles}`);
+          }
+          if (llm.coachChallengeQuestion) lines.push(`- Challenge question: ${llm.coachChallengeQuestion}`);
         }
         return lines.join('\n');
       }).join('\n\n')
@@ -284,7 +293,7 @@ export const guideRouter = router({
         for (const r of ciReports) {
           const code = r.moduleType as string;
           if (ciCodes.includes(code) && !ciData[code]) {
-            ciData[code] = { edgeScore: r.edgeScore, zone: r.zone, zoneLabel: r.zone?.replace(/_/g, ' '), archetype: r.archetype, archetypeLabel: r.archetype?.replace(/_/g, ' '), dimensionScores: r.dimensionScores };
+            ciData[code] = { edgeScore: r.edgeScore, zone: r.zone, zoneLabel: r.zone?.replace(/_/g, ' '), archetype: r.archetype, archetypeLabel: r.archetype?.replace(/_/g, ' '), dimensionScores: r.dimensionScores, llmAnalysis: r.llmAnalysis };
           }
         }
         systemPromptContent = CAREER_STRATEGIST_PROMPT(ciData, userName);

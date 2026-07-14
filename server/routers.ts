@@ -20,6 +20,7 @@ import { pilotApplicationRouter } from "./routers/pilotApplication";
 import { platformInvitesRouter } from "./routers/platformInvites";
 import { adminStatsRouter } from "./routers/adminStats";
 import { momentumPartnerRouter } from "./routers/momentumPartner";
+import { cpiReportRouter } from "./routers/cpiReport";
 import { productsRouter } from "./routers/products";
 
 export const appRouter = router({
@@ -50,6 +51,7 @@ export const appRouter = router({
   platformInvites: platformInvitesRouter,
   adminStats: adminStatsRouter,
   momentumPartner: momentumPartnerRouter,
+  cpiReport: cpiReportRouter,
   products: productsRouter,
 });
 

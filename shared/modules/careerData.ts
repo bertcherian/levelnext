@@ -112,62 +112,200 @@ export const CI_MODULES: CiModuleMeta[] = [
 ];
 
 // ─── CPI: Career Positioning Intelligence ─────────────────────────────────────
+// Mega-prompt specification: 6 dimensions × 5 questions = 30 questions
+// Scoring: 0–100, 5 bands, 7 archetypes
 
 export const CPI_DIMENSIONS: CiDimension[] = [
-  { id: "value_proposition", moduleCode: "CPI", label: "Value Proposition Clarity", description: "Ability to articulate a clear, differentiated professional value proposition", weight: 0.25 },
-  { id: "professional_identity", moduleCode: "CPI", label: "Professional Identity Strength", description: "Clarity and confidence in your professional identity and what you stand for", weight: 0.20 },
-  { id: "positioning_differentiation", moduleCode: "CPI", label: "Positioning & Differentiation", description: "How distinctly you are positioned relative to peers at the same level", weight: 0.20 },
-  { id: "narrative_coherence", moduleCode: "CPI", label: "Career Narrative Coherence", description: "The clarity and persuasiveness of your career story across contexts", weight: 0.20 },
-  { id: "target_market_clarity", moduleCode: "CPI", label: "Target Market Clarity", description: "How clearly you have defined the organisations, roles, and decision-makers you are targeting", weight: 0.15 },
+  {
+    id: "executive_value_proposition",
+    moduleCode: "CPI",
+    label: "Executive Value Proposition",
+    description: "Measures whether you can clearly explain the unique value you create — your clarity, differentiation, commercial impact, business contribution, and executive maturity.",
+    weight: 0.20,
+  },
+  {
+    id: "executive_narrative",
+    moduleCode: "CPI",
+    label: "Executive Narrative",
+    description: "Measures how well you tell the story of your career — coherence, progression, achievement framing, influence stories, and memorable communication.",
+    weight: 0.18,
+  },
+  {
+    id: "professional_credibility",
+    moduleCode: "CPI",
+    label: "Professional Credibility",
+    description: "Measures whether others immediately perceive executive capability — through expertise, judgement, confidence, trust, and consistency.",
+    weight: 0.18,
+  },
+  {
+    id: "market_visibility",
+    moduleCode: "CPI",
+    label: "Market Visibility",
+    description: "Measures how visible you are in your target market — LinkedIn presence, networking, referrals, thought leadership, and internal visibility.",
+    weight: 0.18,
+  },
+  {
+    id: "differentiation",
+    moduleCode: "CPI",
+    label: "Differentiation",
+    description: "Measures whether you stand out — through specialist expertise, unique experience, innovation, versatility, and executive brand.",
+    weight: 0.14,
+  },
+  {
+    id: "future_positioning",
+    moduleCode: "CPI",
+    label: "Future Positioning",
+    description: "Measures preparation for the next role rather than success in the current one — future skills, AI readiness, business breadth, strategic thinking, and continuous reinvention.",
+    weight: 0.12,
+  },
 ];
 
 export const CPI_QUESTIONS: CiQuestion[] = [
-  // Value Proposition Clarity (6 questions)
-  { id: "cpi_vp_1", dimensionId: "value_proposition", moduleCode: "CPI", text: "I can articulate my professional value proposition in two sentences or less." },
-  { id: "cpi_vp_2", dimensionId: "value_proposition", moduleCode: "CPI", text: "I know specifically what business problems I solve better than most people at my level." },
-  { id: "cpi_vp_3", dimensionId: "value_proposition", moduleCode: "CPI", text: "My value proposition is grounded in evidence — I can cite specific outcomes I have delivered." },
-  { id: "cpi_vp_4", dimensionId: "value_proposition", moduleCode: "CPI", text: "I regularly update my value proposition as my experience and the market evolve." },
-  { id: "cpi_vp_5", dimensionId: "value_proposition", moduleCode: "CPI", text: "I find it difficult to explain what makes me different from other strong candidates.", reverseScored: true },
-  { id: "cpi_vp_6", dimensionId: "value_proposition", moduleCode: "CPI", text: "When asked 'why should we hire you?', I respond with confidence and specificity." },
-  // Professional Identity Strength (5 questions)
-  { id: "cpi_pi_1", dimensionId: "professional_identity", moduleCode: "CPI", text: "I have a clear sense of the kind of leader or professional I am and want to be." },
-  { id: "cpi_pi_2", dimensionId: "professional_identity", moduleCode: "CPI", text: "I know which professional values are non-negotiable for me in any role." },
-  { id: "cpi_pi_3", dimensionId: "professional_identity", moduleCode: "CPI", text: "I feel confident describing my professional identity in a senior leadership conversation." },
-  { id: "cpi_pi_4", dimensionId: "professional_identity", moduleCode: "CPI", text: "I sometimes feel unsure of what I truly stand for professionally.", reverseScored: true },
-  { id: "cpi_pi_5", dimensionId: "professional_identity", moduleCode: "CPI", text: "My professional identity remains consistent whether I am speaking to a peer, a recruiter, or a board member." },
-  // Positioning & Differentiation (5 questions)
-  { id: "cpi_pd_1", dimensionId: "positioning_differentiation", moduleCode: "CPI", text: "I know how I am perceived relative to peers at my level in my industry." },
-  { id: "cpi_pd_2", dimensionId: "positioning_differentiation", moduleCode: "CPI", text: "I have a deliberate strategy for how I want to be known in my field." },
-  { id: "cpi_pd_3", dimensionId: "positioning_differentiation", moduleCode: "CPI", text: "I can name two or three things that genuinely differentiate me from others with similar experience." },
-  { id: "cpi_pd_4", dimensionId: "positioning_differentiation", moduleCode: "CPI", text: "I blend in with the crowd rather than standing out in my professional context.", reverseScored: true },
-  { id: "cpi_pd_5", dimensionId: "positioning_differentiation", moduleCode: "CPI", text: "Decision-makers in my target market know who I am and what I bring." },
-  // Narrative Coherence (5 questions)
-  { id: "cpi_nc_1", dimensionId: "narrative_coherence", moduleCode: "CPI", text: "My career story has a clear thread — each role builds logically on the last." },
-  { id: "cpi_nc_2", dimensionId: "narrative_coherence", moduleCode: "CPI", text: "I can explain career transitions or non-linear moves in a way that strengthens rather than weakens my story." },
-  { id: "cpi_nc_3", dimensionId: "narrative_coherence", moduleCode: "CPI", text: "My LinkedIn profile, CV, and verbal introduction tell a consistent story." },
-  { id: "cpi_nc_4", dimensionId: "narrative_coherence", moduleCode: "CPI", text: "I struggle to explain why I made certain career choices when asked directly.", reverseScored: true },
-  { id: "cpi_nc_5", dimensionId: "narrative_coherence", moduleCode: "CPI", text: "I have a compelling answer to 'tell me about yourself' that is tailored to senior audiences." },
-  // Target Market Clarity (4 questions)
-  { id: "cpi_tm_1", dimensionId: "target_market_clarity", moduleCode: "CPI", text: "I have a clear picture of the types of organisations where I would thrive and add the most value." },
-  { id: "cpi_tm_2", dimensionId: "target_market_clarity", moduleCode: "CPI", text: "I know which decision-makers I need to be known by to advance my career goals." },
-  { id: "cpi_tm_3", dimensionId: "target_market_clarity", moduleCode: "CPI", text: "I am vague about which roles or organisations I am actually targeting.", reverseScored: true },
-  { id: "cpi_tm_4", dimensionId: "target_market_clarity", moduleCode: "CPI", text: "I have researched the specific market segments where my profile is most competitive." },
+  // Dimension 1: Executive Value Proposition (5 questions)
+  { id: "cpi_evp_1", dimensionId: "executive_value_proposition", moduleCode: "CPI", text: "In the last six months, I have articulated my professional value proposition clearly to at least one senior decision-maker." },
+  { id: "cpi_evp_2", dimensionId: "executive_value_proposition", moduleCode: "CPI", text: "I can name the specific business problem I solve better than most people at my level." },
+  { id: "cpi_evp_3", dimensionId: "executive_value_proposition", moduleCode: "CPI", text: "When asked 'why should we choose you?', I respond with evidence-backed specificity rather than general statements." },
+  { id: "cpi_evp_4", dimensionId: "executive_value_proposition", moduleCode: "CPI", text: "I find it difficult to explain what makes me commercially different from other strong candidates at my level.", reverseScored: true },
+  { id: "cpi_evp_5", dimensionId: "executive_value_proposition", moduleCode: "CPI", text: "In the last six months, I have updated my value proposition to reflect new outcomes I have delivered." },
+  // Dimension 2: Executive Narrative (5 questions)
+  { id: "cpi_en_1", dimensionId: "executive_narrative", moduleCode: "CPI", text: "My career story has a clear, logical thread — each role builds on the last in a way that makes sense to others." },
+  { id: "cpi_en_2", dimensionId: "executive_narrative", moduleCode: "CPI", text: "In the last six months, I have told my career story in a way that visibly engaged a senior audience." },
+  { id: "cpi_en_3", dimensionId: "executive_narrative", moduleCode: "CPI", text: "I struggle to explain certain career transitions or gaps in a way that strengthens rather than weakens my story.", reverseScored: true },
+  { id: "cpi_en_4", dimensionId: "executive_narrative", moduleCode: "CPI", text: "My LinkedIn profile, CV, and verbal introduction tell a consistent, coherent story about who I am and where I am going." },
+  { id: "cpi_en_5", dimensionId: "executive_narrative", moduleCode: "CPI", text: "I frame my career achievements in terms of business impact and outcomes, not just activities and responsibilities." },
+  // Dimension 3: Professional Credibility (5 questions)
+  { id: "cpi_pc_1", dimensionId: "professional_credibility", moduleCode: "CPI", text: "Senior leaders and peers consistently seek my input on important decisions in my domain." },
+  { id: "cpi_pc_2", dimensionId: "professional_credibility", moduleCode: "CPI", text: "In the last six months, I have been introduced or referred to someone based on my professional reputation." },
+  { id: "cpi_pc_3", dimensionId: "professional_credibility", moduleCode: "CPI", text: "I sometimes feel that my expertise is not fully recognised by the people who matter most to my career.", reverseScored: true },
+  { id: "cpi_pc_4", dimensionId: "professional_credibility", moduleCode: "CPI", text: "I demonstrate consistent judgement and follow-through, which has built trust with key stakeholders." },
+  { id: "cpi_pc_5", dimensionId: "professional_credibility", moduleCode: "CPI", text: "My professional reputation is consistent — people who know me in different contexts describe me in similar terms." },
+  // Dimension 4: Market Visibility (5 questions)
+  { id: "cpi_mv_1", dimensionId: "market_visibility", moduleCode: "CPI", text: "In the last six months, I have been approached by a recruiter, headhunter, or external opportunity without actively applying." },
+  { id: "cpi_mv_2", dimensionId: "market_visibility", moduleCode: "CPI", text: "My LinkedIn profile accurately reflects my current level, expertise, and career ambitions." },
+  { id: "cpi_mv_3", dimensionId: "market_visibility", moduleCode: "CPI", text: "I am largely invisible to decision-makers and talent networks outside my current organisation.", reverseScored: true },
+  { id: "cpi_mv_4", dimensionId: "market_visibility", moduleCode: "CPI", text: "In the last six months, I have shared a perspective, insight, or piece of content that reached people beyond my immediate team." },
+  { id: "cpi_mv_5", dimensionId: "market_visibility", moduleCode: "CPI", text: "I have a deliberate strategy for building and maintaining visibility with people who influence career opportunities in my field." },
+  // Dimension 5: Differentiation (5 questions)
+  { id: "cpi_df_1", dimensionId: "differentiation", moduleCode: "CPI", text: "I can name two or three things that genuinely differentiate me from others with similar experience and title." },
+  { id: "cpi_df_2", dimensionId: "differentiation", moduleCode: "CPI", text: "In the last six months, someone has described me in a way that captured what makes me distinctive." },
+  { id: "cpi_df_3", dimensionId: "differentiation", moduleCode: "CPI", text: "I blend in with peers at my level rather than standing out in a memorable way.", reverseScored: true },
+  { id: "cpi_df_4", dimensionId: "differentiation", moduleCode: "CPI", text: "I have a deliberate executive brand — a consistent set of qualities and values I am known for across contexts." },
+  { id: "cpi_df_5", dimensionId: "differentiation", moduleCode: "CPI", text: "My unique combination of experience, expertise, and perspective is difficult to replicate." },
+  // Dimension 6: Future Positioning (5 questions)
+  { id: "cpi_fp_1", dimensionId: "future_positioning", moduleCode: "CPI", text: "In the last six months, I have deliberately developed a skill or perspective that prepares me for my next role, not just my current one." },
+  { id: "cpi_fp_2", dimensionId: "future_positioning", moduleCode: "CPI", text: "I have a clear picture of the role or level I am positioning myself for in the next 18–36 months." },
+  { id: "cpi_fp_3", dimensionId: "future_positioning", moduleCode: "CPI", text: "I am primarily focused on performing well in my current role rather than positioning for the next one.", reverseScored: true },
+  { id: "cpi_fp_4", dimensionId: "future_positioning", moduleCode: "CPI", text: "I understand how AI and emerging technologies are reshaping my function, and I am actively building relevant capabilities." },
+  { id: "cpi_fp_5", dimensionId: "future_positioning", moduleCode: "CPI", text: "I regularly seek exposure to business areas, industries, or perspectives outside my current domain to broaden my strategic relevance." },
 ];
 
 export const CPI_ZONES: CiZone[] = [
-  { id: "undefined", label: "Undefined", range: [0, 39], color: "#EF4444", description: "Your professional positioning is unclear or inconsistent.", implication: "You are likely being overlooked for opportunities that match your actual capability. Immediate work on your value proposition and career narrative is needed." },
-  { id: "emerging", label: "Emerging", range: [40, 59], color: "#F59E0B", description: "You have some positioning elements in place but they lack sharpness and consistency.", implication: "You are visible but not memorable. Sharpening your differentiation and narrative will significantly improve how you are perceived." },
-  { id: "positioned", label: "Positioned", range: [60, 74], color: "#3B82F6", description: "You have a reasonably clear professional identity and can articulate your value.", implication: "You are competitive. Focused work on differentiation and target market clarity will move you from good to exceptional." },
-  { id: "compelling", label: "Compelling", range: [75, 89], color: "#22C55E", description: "You have a strong, differentiated positioning that resonates with your target market.", implication: "You are well-positioned. Your focus should be on amplifying your visibility and ensuring your positioning evolves with market shifts." },
-  { id: "magnetic", label: "Magnetic", range: [90, 100], color: "#D4AF37", description: "Your positioning is exceptional — clear, differentiated, and market-validated.", implication: "You attract opportunities rather than chasing them. Your work is to maintain this edge and help others develop similar clarity." },
+  {
+    id: "immediate_repositioning",
+    label: "Immediate Repositioning Needed",
+    range: [0, 59],
+    color: "#EF4444",
+    description: "Your positioning is unclear, inconsistent, or invisible to the market.",
+    implication: "You are likely being overlooked for opportunities that match your actual capability. Immediate, focused work on your value proposition, narrative, and visibility is needed before the gap widens further.",
+  },
+  {
+    id: "career_drift",
+    label: "Career Drift Emerging",
+    range: [60, 69],
+    color: "#F59E0B",
+    description: "You have some positioning elements in place, but they lack sharpness, consistency, or market reach.",
+    implication: "You are visible but not memorable. Without deliberate action, your career trajectory will plateau. Sharpening your differentiation and narrative will significantly improve how decision-makers perceive you.",
+  },
+  {
+    id: "solid_underleveraged",
+    label: "Solid but Underleveraged",
+    range: [70, 79],
+    color: "#3B82F6",
+    description: "You have a reasonably clear professional identity and can articulate your value, but you are not fully capitalising on it.",
+    implication: "You are competitive. Focused work on differentiation, market visibility, and future positioning will move you from good to exceptional — and unlock opportunities you are currently not being considered for.",
+  },
+  {
+    id: "strong_market_position",
+    label: "Strong Market Position",
+    range: [80, 89],
+    color: "#22C55E",
+    description: "You have a strong, differentiated positioning that resonates with your target market.",
+    implication: "You are well-positioned and attracting the right attention. Your focus should be on amplifying your visibility, deepening your future positioning, and ensuring your brand evolves ahead of market shifts.",
+  },
+  {
+    id: "exceptional_positioning",
+    label: "Exceptional Executive Positioning",
+    range: [90, 100],
+    color: "#D4AF37",
+    description: "Your positioning is exceptional — clear, differentiated, market-validated, and future-ready.",
+    implication: "You attract opportunities rather than chasing them. Your work is to maintain this edge, continue reinventing ahead of the market, and leverage your positioning to create strategic optionality.",
+  },
 ];
 
 export const CPI_ARCHETYPES: CiArchetype[] = [
-  { id: "the_authority", moduleCode: "CPI", label: "The Authority", description: "You are known for a specific domain of expertise and are the go-to person in your field.", strengths: ["Deep credibility", "Clear differentiation", "Strong referral network"], risks: ["Over-specialisation", "Difficulty pivoting", "Narrow opportunity set"], icon: "🏆" },
-  { id: "the_generalist_leader", moduleCode: "CPI", label: "The Generalist Leader", description: "You are valued for breadth, adaptability, and the ability to lead across functions.", strengths: ["Versatility", "Cross-functional credibility", "Attractive to complex roles"], risks: ["Positioning dilution", "Hard to stand out in specialist markets", "Narrative can feel unfocused"], icon: "🌐" },
-  { id: "the_change_agent", moduleCode: "CPI", label: "The Change Agent", description: "You are known for driving transformation, navigating ambiguity, and building new capabilities.", strengths: ["High demand in disrupted industries", "Strong narrative around impact", "Attracts stretch roles"], risks: ["Perceived as unstable", "May struggle in steady-state environments", "Needs strong evidence of outcomes"], icon: "⚡" },
-  { id: "the_connector", moduleCode: "CPI", label: "The Connector", description: "Your value lies in your ability to build relationships, align stakeholders, and open doors.", strengths: ["Strong network capital", "High trust with senior leaders", "Excellent at matrix environments"], risks: ["Undervalued in technical roles", "Positioning can feel soft", "Needs hard outcome evidence"], icon: "🤝" },
-  { id: "the_builder", moduleCode: "CPI", label: "The Builder", description: "You are known for creating things from scratch — teams, functions, products, or markets.", strengths: ["Highly valued in growth contexts", "Strong 0-to-1 narrative", "Attracts entrepreneurial organisations"], risks: ["Less competitive in maintenance roles", "Needs to demonstrate scale", "Can be seen as restless"], icon: "🏗️" },
+  {
+    id: "the_hidden_expert",
+    moduleCode: "CPI",
+    label: "The Hidden Expert",
+    description: "You possess deep expertise and deliver exceptional results, but your value is largely invisible outside your immediate circle. Decision-makers who could accelerate your career simply do not know you exist. Your positioning gap is not capability — it is visibility and narrative.",
+    strengths: ["Deep technical or functional credibility", "Strong delivery track record", "Trusted by those who work with you directly"],
+    risks: ["Overlooked for promotions and stretch roles", "Dependent on internal sponsors who may leave", "Vulnerable in restructuring or market downturns"],
+    icon: "🔍",
+  },
+  {
+    id: "the_reliable_operator",
+    moduleCode: "CPI",
+    label: "The Reliable Operator",
+    description: "You are known for getting things done consistently and reliably. Leaders trust you to execute. However, your positioning is defined by dependability rather than strategic impact — which limits how high you can go. You are seen as essential but not yet executive.",
+    strengths: ["High trust with current leadership", "Strong execution reputation", "Consistent and dependable"],
+    risks: ["Positioned as a doer, not a strategist", "Passed over for senior roles requiring vision", "Narrative focused on activities rather than outcomes"],
+    icon: "⚙️",
+  },
+  {
+    id: "the_trusted_leader",
+    moduleCode: "CPI",
+    label: "The Trusted Leader",
+    description: "You have built genuine credibility and trust with senior stakeholders. People follow you and advocate for you. Your positioning is strong internally, but you may not yet have the external visibility or future-readiness that would make you magnetic to the broader market.",
+    strengths: ["Strong internal brand and sponsorship", "Credible leadership presence", "Respected across functions"],
+    risks: ["Limited external market visibility", "May be seen as organisation-specific rather than portable", "Future positioning may lag behind current performance"],
+    icon: "🤝",
+  },
+  {
+    id: "the_emerging_executive",
+    moduleCode: "CPI",
+    label: "The Emerging Executive",
+    description: "You are on the right trajectory and showing the early signals of executive presence — but your positioning is still developing. Your narrative is not yet fully formed, your differentiation is not sharp enough, and your market visibility is limited. You have the raw material; now you need the architecture.",
+    strengths: ["Strong growth trajectory", "High potential recognised internally", "Hungry to develop and improve"],
+    risks: ["Narrative lacks executive maturity", "Differentiation not yet clear or memorable", "May be outpaced by peers with stronger positioning"],
+    icon: "🌱",
+  },
+  {
+    id: "the_strategic_builder",
+    moduleCode: "CPI",
+    label: "The Strategic Builder",
+    description: "You are known for creating things — teams, functions, capabilities, or markets. Your narrative is built around growth and transformation. You attract organisations that need to build something new, and your positioning is strongest in contexts of change and ambiguity.",
+    strengths: ["Compelling 0-to-1 narrative", "Highly valued in growth and transformation contexts", "Strong differentiation through unique build experience"],
+    risks: ["Less competitive in steady-state or optimisation roles", "Needs to demonstrate scale and sustainability", "May be perceived as restless or unable to maintain"],
+    icon: "🏗️",
+  },
+  {
+    id: "the_industry_influencer",
+    moduleCode: "CPI",
+    label: "The Industry Influencer",
+    description: "You have built a visible presence beyond your organisation. You are known in your industry, your perspective is sought, and your name opens doors. Your positioning is proactive rather than reactive — you shape how the market perceives your domain, not just yourself.",
+    strengths: ["Strong external brand and thought leadership", "Attracts inbound opportunities", "High referral and recommendation rate"],
+    risks: ["Must continuously produce valuable perspectives to maintain relevance", "Risk of brand becoming broader than depth", "Needs to ensure internal credibility matches external profile"],
+    icon: "📡",
+  },
+  {
+    id: "the_transformational_executive",
+    moduleCode: "CPI",
+    label: "The Transformational Executive",
+    description: "You are operating at the highest level of career positioning. Your value proposition is clear, your narrative is compelling, your credibility is established, your visibility is strategic, and you are actively preparing for the next stage of your career. You attract opportunities; you do not chase them.",
+    strengths: ["Exceptional clarity of value and differentiation", "Strong market visibility and inbound opportunities", "Future-ready and continuously reinventing"],
+    risks: ["Must guard against complacency", "Positioning requires ongoing maintenance as markets shift", "Risk of over-commitment to current identity as the market evolves"],
+    icon: "🚀",
+  },
 ];
 
 // ─── CRS: Career Resilience Intelligence ──────────────────────────────────────

@@ -619,7 +619,7 @@ export default function Assessment() {
             {reportSlug && (
               <div className="text-center pb-6">
                 <button
-                  onClick={() => navigate(`/report/${reportSlug}`)}
+                  onClick={() => navigate(moduleType === 'cpi' ? `/cpi-report/${reportSlug}` : `/report/${reportSlug}`)}
                   className="text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
                   style={{ color: "oklch(55% 0.02 248.6)" }}
                 >

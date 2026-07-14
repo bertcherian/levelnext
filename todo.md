@@ -349,3 +349,10 @@
 - [x] "Career Intelligence" nav link added to main Landing page header
 - [x] Route wired in App.tsx
 - [x] Zero TypeScript errors
+
+## CPI Diagnostic — Full Build (Phase 1-5)
+- [x] Upgraded CPI data: 6 dimensions, 30 behaviour-based questions, 7 archetypes, 5 score bands
+- [x] CPI LLM report engine: generateAnalysis procedure with 8 structured JSON sections
+- [x] CPI Report UI page at /cpi-report/:slug with all 8 sections
+- [x] AI Coach configuration: CPI llmAnalysis (coachFocusAreas, blindSpots, coachChallengeQuestion) feeds into Career Strategist
+- [x] CPI route wired in App.tsx, Assessment.tsx routes CPI completions to /cpi-report/:slug
