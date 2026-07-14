@@ -384,4 +384,4 @@
 - [x] Add Copy Link button next to Resend icon on each invite row
 - [x] Bulk invite via CSV upload — server bulkInvite procedure + UI dialog with file picker, preview table, send all
 - [x] TypeScript check: zero errors
-- [ ] Save checkpoint
+- [x] Save checkpoint

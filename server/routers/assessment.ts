@@ -36,6 +36,10 @@ import {
 import {
   getCiQuestions, getCiDimensions, getCiModule, scoreCiModule,
 } from "../../shared/modules/careerData";
+import {
+  NII_QUESTIONS, NII_DIMENSIONS,
+  scoreNii,
+} from "../../shared/modules/niiData";
 
 const CI_MODULE_CODES = ["CPI", "CRS", "CMK", "CST", "CAO", "AIR"] as const;
 type CiModuleCode = typeof CI_MODULE_CODES[number];
@@ -202,6 +206,13 @@ export const assessmentRouter = router({
           totalQuestions: LII_QUESTIONS.length,
         };
       }
+      if (input.moduleType === "NII") {
+        return {
+          questions: NII_QUESTIONS.map((q) => ({ id: q.id, text: q.text, dimensionId: q.dimensionId, reversed: q.reverseScored })),
+          pillars: NII_DIMENSIONS.map((d) => ({ id: d.id, label: d.name, description: d.definition, color: "#0A1A2F" })),
+          totalQuestions: NII_QUESTIONS.length,
+        };
+      }
       // GCC
       const allQuestions = GCC_MODULES.flatMap((m) =>
         m.questions.map((q) => ({ id: String(q.id), text: q.text, dimensionId: m.id, pillarId: m.id }))
@@ -333,6 +344,27 @@ export const assessmentRouter = router({
           })),
         };
       }
+      else if (input.moduleType === "NII") {
+        const niiResult = scoreNii(input.responses);
+        scored = {
+          edgeScore: niiResult.edgeScore,
+          dimensionScores: niiResult.dimensionScores,
+          zone: niiResult.zoneId,
+          archetype: niiResult.archetypeId,
+          zoneLabel: niiResult.zoneLabel,
+          zoneDescription: niiResult.zoneDescription,
+          maturityLevelId: niiResult.maturityLevelId,
+          maturityLevelName: niiResult.maturityLevelName,
+          maturityLevelNumber: niiResult.maturityLevelNumber,
+          archetypeLabel: niiResult.archetypeLabel,
+          archetypeTagline: niiResult.archetypeTagline,
+          archetypeDescription: niiResult.archetypeLabel,
+          archetypeStrengths: niiResult.archetypeStrengths,
+          archetypeRisks: niiResult.archetypeRisks,
+          topStrengths: niiResult.topStrengths,
+          developmentPriorities: niiResult.developmentPriorities,
+        };
+      }
       else scored = scoreGcc(input.responses);
 
       const slug = nanoid(16);
@@ -365,7 +397,7 @@ export const assessmentRouter = router({
 
       // Update the Leadership Graph (LI modules only)
       if (!isCiModule(input.moduleType)) {
-        await updateLeadershipGraph(ctx.user.id, input.moduleType as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI", scored);
+        await updateLeadershipGraph(ctx.user.id, input.moduleType as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII", scored);
       }
 
       return {

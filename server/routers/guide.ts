@@ -79,7 +79,14 @@ const GUIDE_SYSTEM_PROMPT = (graph: LeadershipGraph | null, userName: string, or
 
   const moduleContext = Object.keys(modules).length > 0
     ? Object.entries(modules).map(([key, mod]: [string, any]) => {
-        const moduleLabel = key === 'ECI' ? 'Executive Communication' : key === 'LII' ? 'Leadership Influence' : 'GCC Readiness';
+        const moduleLabel = key === 'ECI' ? 'Executive Communication'
+        : key === 'LII' ? 'Leadership Influence'
+        : key === 'TII' ? 'Leadership Time Intelligence'
+        : key === 'LDI' ? 'Leadership Derailment Intelligence'
+        : key === 'STI' ? 'Strategic Thinking Intelligence'
+        : key === 'NII' ? 'Navigation Intelligence'
+        : key === 'GCC' ? 'GCC Readiness'
+        : key;
         const lines = [
           `[${moduleLabel} Diagnostic]`,
           `- Edge: ${Math.round(mod.edgeScore ?? 0)}/100`,
@@ -376,7 +383,12 @@ export const guideRouter = router({
 
       const moduleLabel = report.moduleType === 'ECI' ? 'Executive Communication'
         : report.moduleType === 'LII' ? 'Leadership Influence'
-        : 'GCC Readiness';
+        : report.moduleType === 'TII' ? 'Leadership Time Intelligence'
+        : report.moduleType === 'LDI' ? 'Leadership Derailment Intelligence'
+        : report.moduleType === 'STI' ? 'Strategic Thinking Intelligence'
+        : report.moduleType === 'NII' ? 'Navigation Intelligence'
+        : report.moduleType === 'GCC' ? 'GCC Readiness'
+        : (report.moduleType as string) ?? 'Leadership Intelligence';
 
       const archetypeLabel = (report.archetype as string)
         ?.replace(/_/g, ' ')

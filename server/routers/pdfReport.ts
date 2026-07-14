@@ -14,6 +14,7 @@ const MODULE_META: Record<string, { label: string; dimensionLabel: string }> = {
   GCC: { label: "GCC Readiness", dimensionLabel: "Readiness Dimension Breakdown" },
   LDI: { label: "Leadership Derailment Intelligence", dimensionLabel: "Derailment Risk Dimension Breakdown" },
   STI: { label: "Strategic Thinking Intelligence", dimensionLabel: "Strategic Dimension Breakdown" },
+  NII: { label: "Navigation Intelligence", dimensionLabel: "Navigation Dimension Breakdown" },
   // Career Intelligence modules
   CPI: { label: "Career Positioning Intelligence", dimensionLabel: "Positioning Dimension Breakdown" },
   CRS: { label: "Career Resilience Intelligence", dimensionLabel: "Resilience Dimension Breakdown" },
@@ -90,6 +91,18 @@ const DIMENSION_LABELS: Record<string, Record<string, string>> = {
     scenario_thinking: "Scenario Thinking",
     innovation_opportunity: "Innovation & Opportunity",
     strategic_communication: "Strategic Communication",
+  },
+  NII: {
+    organizational_awareness: "Organizational Awareness",
+    stakeholder_navigation: "Stakeholder Navigation",
+    relationship_capital: "Relationship Capital",
+    political_navigation: "Political Navigation",
+    decision_pathway: "Decision Pathway Intelligence",
+    enterprise_alignment: "Enterprise Alignment",
+    coalition_building: "Coalition Building",
+    reputation_credibility: "Reputation & Credibility",
+    timing_strategic_judgment: "Timing & Strategic Judgment",
+    ethical_navigation: "Ethical Leadership Navigation",
   },
   // Career Intelligence dimension labels
   CPI: {

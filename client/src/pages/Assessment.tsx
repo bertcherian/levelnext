@@ -43,6 +43,12 @@ const MODULE_META: Record<string, { label: string; tagline: string; color: strin
     color: "#1e3a5f",
     questionCount: 30,
   },
+  nii: {
+    label: "Navigation Intelligence",
+    tagline: "Measure how effectively you navigate complex organizational systems, stakeholder networks, and political landscapes.",
+    color: "#1a3a5c",
+    questionCount: 30,
+  },
   // Career Intelligence modules
   cpi: {
     label: "Career Positioning Intelligence",
@@ -193,7 +199,7 @@ export default function Assessment() {
   const [result, setResult] = useState<SubmitResult | null>(null);
 
   const { data: questionsData, isLoading: questionsLoading, isError: questionsError } = trpc.assessment.getQuestions.useQuery(
-    { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" },
+    { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII" },
     { enabled: isAuthenticated }
   );
 
@@ -253,7 +259,7 @@ export default function Assessment() {
   const handleSubmit = () => {
     submitAssessment.mutate({
       sessionId: 0,
-      moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI",
+      moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII",
       responses,
       participantName: user?.name ?? "Leader",
       participantEmail: user?.email ?? "leader@levelnext.com",
@@ -689,7 +695,7 @@ export default function Assessment() {
             {reportSlug && (
               <div className="text-center pb-6">
                 <button
-                  onClick={() => navigate(moduleType === 'cpi' ? `/cpi-report/${reportSlug}` : `/report/${reportSlug}`)}
+                  onClick={() => navigate(moduleType === 'cpi' ? `/cpi-report/${reportSlug}` : moduleType === 'nii' ? `/nii-report/${reportSlug}` : `/report/${reportSlug}`)}
                   className="text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
                   style={{ color: "oklch(55% 0.02 248.6)" }}
                 >

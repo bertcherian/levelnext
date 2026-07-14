@@ -168,7 +168,7 @@ ${context}
 
 Generate a scenario in this EXACT JSON format:
 {
-  "conversationType": "one of: Difficult Feedback | Accountability | Stakeholder Influence | Managing Up | Conflict Resolution | Executive Pitch | Performance Conversation | Career Conversation | Delegation | Expectation Reset | Setting Boundaries | Saying No | Delivering Bad News | Coaching a Team Member | Responding Under Pressure | Challenging Groupthink | Asking for Resources | Negotiation",
+  "conversationType": "one of: Difficult Feedback | Accountability | Stakeholder Influence | Managing Up | Conflict Resolution | Executive Pitch | Performance Conversation | Career Conversation | Delegation | Expectation Reset | Setting Boundaries | Saying No | Delivering Bad News | Coaching a Team Member | Responding Under Pressure | Challenging Groupthink | Asking for Resources | Negotiation | Navigating Organizational Politics | Building Cross-functional Coalition | Winning Support Without Authority | Presenting to Skeptical Executive | Managing Competing Priorities | Navigating Ambiguous Decision | Protecting Team from Political Pressure | Recovering Damaged Relationship",
   "userRole": "the leader's role (e.g., Senior Engineering Manager)",
   "avatarRole": "the other person's role (e.g., Senior Engineer)",
   "relationship": "one of: Direct Report | Peer | Boss | Client | Stakeholder | Executive | Team Member | Cross-functional Partner",

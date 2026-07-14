@@ -21,6 +21,7 @@ import { platformInvitesRouter } from "./routers/platformInvites";
 import { adminStatsRouter } from "./routers/adminStats";
 import { momentumPartnerRouter } from "./routers/momentumPartner";
 import { cpiReportRouter } from "./routers/cpiReport";
+import { niiReportRouter } from "./routers/niiReport";
 import { productsRouter } from "./routers/products";
 import { emailAuthRouter } from "./routers/emailAuth";
 
@@ -53,6 +54,7 @@ export const appRouter = router({
   adminStats: adminStatsRouter,
   momentumPartner: momentumPartnerRouter,
   cpiReport: cpiReportRouter,
+  niiReport: niiReportRouter,
   products: productsRouter,
   emailAuth: emailAuthRouter,
 });

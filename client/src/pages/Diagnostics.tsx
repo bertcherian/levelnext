@@ -83,6 +83,16 @@ const MODULES = [
     questions: "30 questions · ~10 minutes",
     color: "#1e3a5f",
   },
+  {
+    id: "NII",
+    route: "nii",
+    label: "Navigation Intelligence",
+    shortLabel: "NII",
+    tagline: "How effectively do you navigate complex organizational systems and political landscapes?",
+    description: "Measure your Organizational Awareness, Stakeholder Navigation, Relationship Capital, Political Navigation, Decision Pathway Intelligence, Enterprise Alignment, Coalition Building, Reputation & Credibility, Timing & Strategic Judgment, and Ethical Leadership Navigation.",
+    questions: "30 questions · ~10 minutes",
+    color: "#1a3a5c",
+  },
 ];
 
 type UnlockState = "unlocked" | "locked" | "completed" | "not_started";
@@ -147,7 +157,7 @@ function NarrativeBanner({ toModule, onDismiss }: { toModule: string; onDismiss:
 
   useEffect(() => {
     getNarrative.mutate(
-      { toModule: toModule as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" },
+      { toModule: toModule as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII" },
       { onSuccess: (data) => setNarrative(data.narrative) }
     );
   }, [toModule]); // eslint-disable-line react-hooks/exhaustive-deps

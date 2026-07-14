@@ -59,7 +59,7 @@ export const assessmentSessions = mysqlTable("assessment_sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").references(() => users.id),
   tenantId: int("tenantId").references(() => tenants.id),
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "NII", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
   status: mysqlEnum("status", ["in_progress", "completed", "abandoned"]).default("in_progress").notNull(),
   // Partial responses saved for resume
   responses: json("responses").$type<Record<string, number>>(),
@@ -79,7 +79,7 @@ export const reports = mysqlTable("reports", {
   tenantId: int("tenantId").references(() => tenants.id),
   slug: varchar("slug", { length: 100 }).unique(),
   // Which diagnostic module generated this report
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "NII", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
   participantName: varchar("participantName", { length: 255 }).notNull(),
   participantEmail: varchar("participantEmail", { length: 320 }).notNull(),
   participantRole: varchar("participantRole", { length: 255 }),
@@ -127,7 +127,7 @@ export type GuideConversation = typeof guideConversations.$inferSelect;
 export const dailyMissions = mysqlTable("daily_missions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id),
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "GENERAL", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull().default("GENERAL"),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "NII", "GENERAL", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull().default("GENERAL"),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
   status: mysqlEnum("status", ["pending", "in_progress", "complete"]).default("pending").notNull(),
@@ -149,6 +149,7 @@ export type LeadershipGraph = {
     GCC?: number;
     LDI?: number;
     STI?: number;
+    NII?: number;
   };
   // Per-module archetypes
   archetypes?: {
@@ -158,6 +159,7 @@ export type LeadershipGraph = {
     GCC?: string;
     LDI?: string;
     STI?: string;
+    NII?: string;
   };
   // Per-module zones
   zones?: {
@@ -167,13 +169,14 @@ export type LeadershipGraph = {
     GCC?: string;
     LDI?: string;
     STI?: string;
+    NII?: string;
   };
   // Key strengths aggregated across modules
   strengths?: string[];
   // Key growth opportunities aggregated across modules
   growthOpportunities?: string[];
   // Completed module types
-  completedModules?: ("ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI")[];
+  completedModules?: ("ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII")[];
   // Last updated timestamp
   lastUpdated?: string;
   // Full per-module data (stored after each diagnostic completion)
@@ -252,6 +255,23 @@ export type LeadershipGraph = {
       archetypeRisks?: string[];
       dimensionScores?: Record<string, number>;
       topDevelopmentAreas?: Array<{ dimensionId: string; dimensionName: string; pct: number }>;
+      completedAt?: string;
+    };
+    NII?: {
+      edgeScore?: number;
+      zone?: string;
+      zoneLabel?: string;
+      maturityLevelId?: string;
+      maturityLevelName?: string;
+      maturityLevelNumber?: number;
+      archetype?: string;
+      archetypeLabel?: string;
+      archetypeTagline?: string;
+      archetypeStrengths?: string[];
+      archetypeRisks?: string[];
+      dimensionScores?: Record<string, number>;
+      topStrengths?: Array<{ dimensionId: string; dimensionName: string; score: number }>;
+      developmentPriorities?: Array<{ dimensionId: string; dimensionName: string; score: number }>;
       completedAt?: string;
     };
   };
@@ -532,7 +552,7 @@ export const guideSessions = mysqlTable("guide_sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id),
   // Which diagnostic module this session is attributed to (most recently completed)
-  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "GENERAL", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull().default("GENERAL"),
+  moduleType: mysqlEnum("moduleType", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "NII", "GENERAL", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull().default("GENERAL"),
   // The guide conversation this session belongs to
   conversationId: int("conversationId").references(() => guideConversations.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -547,9 +567,9 @@ export const diagnosticUnlockProgress = mysqlTable("diagnostic_unlock_progress",
   userId: int("userId").notNull().references(() => users.id),
   tenantId: int("tenantId").references(() => tenants.id),
   // The module that was just completed (the prerequisite)
-  fromModule: mysqlEnum("fromModule", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
+  fromModule: mysqlEnum("fromModule", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "NII", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
   // The module being unlocked
-  toModule: mysqlEnum("toModule", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
+  toModule: mysqlEnum("toModule", ["ECI", "TII", "LII", "GCC", "LDI", "STI", "NII", "CPI", "CRS", "CMK", "CST", "CAO", "AIR"]).notNull(),
   // When the fromModule diagnostic was completed (starts the 21-day clock)
   fromCompletedAt: timestamp("fromCompletedAt").notNull(),
   // Layer 1: time gate — 21 days from fromCompletedAt

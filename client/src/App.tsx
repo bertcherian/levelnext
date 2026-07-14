@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import Assessment from "./pages/Assessment";
 import Report from "./pages/Report";
 import CpiReport from "./pages/CpiReport";
+import NiiReport from "./pages/NiiReport";
 import ImportEci from "./pages/ImportEci";
 import ImportChatgpt from "./pages/ImportChatgpt";
 import ImportPriorAssessments from "./pages/ImportPriorAssessments";
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/onboard" component={Onboarding} />
       <Route path="/report/:slug" component={Report} />
       <Route path="/cpi-report/:slug" component={CpiReport} />
+      <Route path="/nii-report/:slug" component={NiiReport} />
 
       {/* Platform (authenticated) */}
       <Route path="/home" component={Home} />
