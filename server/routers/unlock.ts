@@ -51,7 +51,7 @@ async function getProductModuleSequence(
       .select({ productId: userProductEnrollments.productId })
       .from(userProductEnrollments)
       .where(and(eq(userProductEnrollments.userId, userId), eq(userProductEnrollments.isActive, true)))
-      .orderBy(userProductEnrollments.lastActiveAt)
+      .orderBy(desc(userProductEnrollments.lastActiveAt))
       .limit(1);
     const productId = enrollment?.productId ?? "leadership_intelligence";
     const modules = await db
@@ -76,7 +76,7 @@ async function getEntryPointModule(
       .select({ productId: userProductEnrollments.productId })
       .from(userProductEnrollments)
       .where(and(eq(userProductEnrollments.userId, userId), eq(userProductEnrollments.isActive, true)))
-      .orderBy(userProductEnrollments.lastActiveAt)
+      .orderBy(desc(userProductEnrollments.lastActiveAt))
       .limit(1);
     const productId = enrollment?.productId ?? "leadership_intelligence";
     const [entry] = await db
