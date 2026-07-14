@@ -161,6 +161,72 @@ export const platformInvitesRouter = router({
       };
     }),
 
+  // Admin: resend an expired or pending invite — generates a fresh 7-day token and re-sends the email
+  resendInvite: protectedProcedure
+    .input(z.object({ id: z.number(), origin: z.string().url() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // Find the invite
+      const [invite] = await db
+        .select()
+        .from(platformInvites)
+        .where(eq(platformInvites.id, input.id))
+        .limit(1);
+
+      if (!invite) throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found" });
+      if (invite.status === "accepted") throw new TRPCError({ code: "BAD_REQUEST", message: "Invite already accepted" });
+
+      // Generate a fresh token and reset expiry
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      await db
+        .update(platformInvites)
+        .set({ token, expiresAt, status: "pending" })
+        .where(eq(platformInvites.id, input.id));
+
+      const inviteUrl = `${input.origin}/login?invite=${token}`;
+      const firstName = invite.name?.split(" ")[0] || "there";
+
+      await sendEmail({
+        to: invite.email,
+        subject: "Your LevelNext invite has been refreshed — sign in now",
+        html: `
+          <div style="font-family: Inter, Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #f8f7f4; padding: 40px 20px;">
+            <div style="background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e8e6e0;">
+              <h1 style="color: #12345A; font-size: 24px; margin: 0 0 16px;">Hi ${firstName},</h1>
+              <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                Your LevelNext invite has been refreshed with a new link. Click below to sign in — this link is valid for 7 days.
+              </p>
+              <div style="text-align: center; margin-bottom: 24px;">
+                <a href="${inviteUrl}" style="display: inline-block; background: #F2B705; color: #12345A; font-weight: 700; font-size: 16px; padding: 16px 40px; border-radius: 8px; text-decoration: none;">
+                  Sign in to LevelNext →
+                </a>
+              </div>
+              <p style="color: #555; font-size: 13px; text-align: center; margin: 0;">
+                This link expires in 7 days. If you have any questions, reply to this email.
+              </p>
+            </div>
+            <p style="color: #888; font-size: 12px; text-align: center; margin-top: 24px;">
+              LevelNext by Meta Results Pvt. Ltd. · Bangalore, India
+            </p>
+          </div>
+        `,
+      });
+
+      await notifyOwner({
+        title: "Invite Resent",
+        content: `Invite resent to ${invite.email}${invite.name ? ` (${invite.name})` : ""}. New expiry: 7 days.`,
+      });
+
+      return { success: true, inviteUrl, expiresAt };
+    }),
+
   // Called after user successfully logs in via the invite link — marks invite as accepted
   markAccepted: protectedProcedure
     .input(z.object({ token: z.string() }))

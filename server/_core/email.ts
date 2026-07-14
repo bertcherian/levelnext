@@ -37,7 +37,7 @@ export async function sendEmail({
     });
 
     await transporter.sendMail({
-      from: `"LevelNext" <${from}>`,
+      from: `"Bert from LevelNext" <${from}>`,
       to,
       subject,
       html,

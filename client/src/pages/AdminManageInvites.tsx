@@ -26,6 +26,7 @@ import {
   Download,
   Users,
   UserPlus,
+  RefreshCw,
 } from "lucide-react";
 
 type InviteStatus = "pending" | "accepted" | "expired";
@@ -73,6 +74,14 @@ export default function AdminManageInvites() {
       setInviteName("");
       setInviteEmail("");
       toast.success("Invite sent! The magic link email is on its way.");
+    },
+    onError: (err: { message: string }) => toast.error(err.message),
+  });
+
+  const resendInvite = trpc.platformInvites.resendInvite.useMutation({
+    onSuccess: () => {
+      refetch();
+      toast.success("Invite resent! A fresh magic link email is on its way.");
     },
     onError: (err: { message: string }) => toast.error(err.message),
   });
@@ -373,7 +382,21 @@ export default function AdminManageInvites() {
                                 <Trash2 size={15} />
                               </Button>
                             )}
-                            {inv.effectiveStatus !== "pending" && (
+                            {/* Resend — only for expired invites */}
+                            {inv.effectiveStatus === "expired" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2 text-xs gap-1 text-muted-foreground hover:text-ln-navy"
+                                title="Resend invite with fresh 7-day link"
+                                disabled={resendInvite.isPending}
+                                onClick={() => resendInvite.mutate({ id: inv.id, origin: window.location.origin })}
+                              >
+                                <RefreshCw size={13} />
+                                Resend
+                              </Button>
+                            )}
+                            {inv.effectiveStatus === "accepted" && (
                               <span className="text-xs text-muted-foreground opacity-40 pr-1">—</span>
                             )}
                           </div>
