@@ -104,7 +104,7 @@ export default function Landing() {
             <a href="/career-intelligence" className="hidden md:block text-sm text-white/60 hover:text-white transition-colors font-medium">
               Career Intelligence
             </a>
-            <a href={getLoginUrl()}>
+            <a href="/login">
               <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10 text-sm">
                 Sign In
               </Button>
@@ -453,7 +453,7 @@ export default function Landing() {
         <p className="text-sm text-center" style={{ color: "oklch(40% 0.02 248.6)" }}>
           © 2026 LevelNext · Powered by Meta Results Pvt. Ltd.
         </p>
-        <a href={getLoginUrl()}>
+        <a href="/login">
           <Button variant="ghost" size="sm" className="text-white/40 hover:text-white/70 text-xs">
             Sign In →
           </Button>

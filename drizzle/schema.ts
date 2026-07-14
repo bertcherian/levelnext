@@ -950,3 +950,18 @@ export const userProductEnrollments = mysqlTable("user_product_enrollments", {
 });
 export type UserProductEnrollment = typeof userProductEnrollments.$inferSelect;
 export type InsertUserProductEnrollment = typeof userProductEnrollments.$inferInsert;
+
+// ─── Magic Link Tokens ────────────────────────────────────────────────────────
+// One-time email authentication tokens — allows clients to sign in without a Manus account
+export const magicLinkTokens = mysqlTable("magic_link_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  email: varchar("email", { length: 320 }).notNull(),
+  userId: int("userId").references(() => users.id), // set after first use (user created)
+  inviteToken: varchar("inviteToken", { length: 64 }), // platform invite token to auto-accept
+  expiresAt: timestamp("expiresAt").notNull(),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type MagicLinkToken = typeof magicLinkTokens.$inferSelect;
+export type InsertMagicLinkToken = typeof magicLinkTokens.$inferInsert;

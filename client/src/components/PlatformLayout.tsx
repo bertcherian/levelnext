@@ -157,7 +157,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               Sign in to continue your leadership journey.
             </p>
           </div>
-          <a href={getLoginUrl()} className="w-full">
+          <a href="/login" className="w-full">
             <Button className="w-full h-12 text-base font-semibold" style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
               Sign In to LevelNext
             </Button>

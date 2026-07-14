@@ -50,7 +50,7 @@ export const platformInvitesRouter = router({
         status: "pending",
       });
 
-      const inviteUrl = `${input.origin}/join?token=${token}`;
+      const inviteUrl = `${input.origin}/login?invite=${token}`;
 
       // Send invite email
       const firstName = input.name?.split(" ")[0] || "there";

@@ -283,26 +283,26 @@
 - [x] Wire productsRouter into routers.ts
 
 ### Career Intelligence — Phase 2 (next)
-- [ ] Build careerData.ts: 6 CI diagnostics with questions, dimensions, scoring bands, archetypes
-- [ ] Extend assessment router to handle CI module codes
-- [ ] Build CI report scoring functions
+- [x] Build careerData.ts: 6 CI diagnostics with questions, dimensions, scoring bands, archetypes
+- [x] Extend assessment router to handle CI module codes
+- [x] Build CI report scoring functions
 
 ### Career Intelligence — Phase 3 (next)
-- [ ] Make Guide system prompt product-aware (reads coachPrompt from active product)
-- [ ] Make Practice Coach product-aware (reads practiceCoachPrompt from active product)
+- [x] Make Guide system prompt product-aware (reads coachPrompt from active product)
+- [x] Make Practice Coach product-aware (reads practiceCoachPrompt from active product)
 
 ### Career Intelligence — Phase 4 (next)
-- [ ] Product switcher UI in sidebar
-- [ ] Career Intelligence Home dashboard
-- [ ] Career Intelligence navigation (product-aware labels)
-- [ ] Career Intelligence onboarding (3-question intake)
+- [x] Product switcher UI in sidebar
+- [x] Career Intelligence Home dashboard
+- [x] Career Intelligence navigation (product-aware labels)
+- [x] Career Intelligence onboarding (3-question intake)
 
 ### Career Intelligence — Phase 5 (next)
-- [ ] Admin Product Enrollments page at /admin/enrollments
+- [x] Admin Product Enrollments page at /admin/enrollments
 
 ### Career Intelligence — Phase 6 (next)
-- [ ] Career Intelligence landing page at /career
-- [ ] Update LevelNext home to present both products
+- [x] Career Intelligence landing page at /career
+- [x] Update LevelNext home to present both products
 
 ## Career Intelligence — Phase 2 (Diagnostics Data Layer)
 - [x] careerData.ts: 6 CI modules (CPI, CRS, CMK, CST, CAO, AIR) with questions, dimensions, scoring, zones, archetypes
@@ -356,3 +356,25 @@
 - [x] CPI Report UI page at /cpi-report/:slug with all 8 sections
 - [x] AI Coach configuration: CPI llmAnalysis (coachFocusAreas, blindSpots, coachChallengeQuestion) feeds into Career Strategist
 - [x] CPI route wired in App.tsx, Assessment.tsx routes CPI completions to /cpi-report/:slug
+
+## Assessment Intro Screen — Premium Restyling
+- [x] Add Playfair Display Google Font (700/800 weight, italic) to client/index.html
+- [x] Add .font-playfair and .text-gradient-gold CSS utilities to index.css
+- [x] Restyle Assessment.tsx intro screen: Playfair Display hero headline, two-line treatment (bold ivory + italic gold gradient last word), gold-bordered badge pill, bullet-list "What to expect" box, rounded-full CTA button
+- [x] Add CI module entries (CPI, CRS, CMK, CST, CAO, AIR) to MODULE_META with labels and taglines
+- [x] Zero TypeScript errors
+
+## Magic Link Email Authentication
+- [x] DB schema: magic_link_tokens table (id, token, email, userId, expiresAt, usedAt, inviteToken, createdAt)
+- [x] Run migration and apply SQL
+- [x] Server: emailAuth router — requestMagicLink (generate token, send email), verifyMagicLink (validate token, create session, return cookie)
+- [x] Server: register /api/auth/magic-link/verify GET route in Express (sets cookie, redirects to app)
+- [x] Client: /login page — email input form, "check your inbox" state, handles ?token= param for auto-verify
+- [x] Client: /login?invite=TOKEN — auto-fills email from invite record, shows personalised message
+- [x] Server: auto-accept platform invite on magic link first login if inviteToken present
+- [x] Landing page: update Sign In button to go to /login (magic link) instead of Manus OAuth directly; keep Manus OAuth as secondary option
+- [x] PlatformLayout: update unauthenticated redirect to /login
+- [x] useAuth: update getLoginUrl fallback to /login
+- [x] TypeScript check: zero errors
+- [x] Configure SMTP secrets (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM) — Brevo verified
+- [ ] Save checkpoint

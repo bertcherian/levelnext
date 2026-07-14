@@ -22,6 +22,7 @@ import { adminStatsRouter } from "./routers/adminStats";
 import { momentumPartnerRouter } from "./routers/momentumPartner";
 import { cpiReportRouter } from "./routers/cpiReport";
 import { productsRouter } from "./routers/products";
+import { emailAuthRouter } from "./routers/emailAuth";
 
 export const appRouter = router({
   system: systemRouter,
@@ -53,6 +54,7 @@ export const appRouter = router({
   momentumPartner: momentumPartnerRouter,
   cpiReport: cpiReportRouter,
   products: productsRouter,
+  emailAuth: emailAuthRouter,
 });
 
 export type AppRouter = typeof appRouter;

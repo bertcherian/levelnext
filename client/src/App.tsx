@@ -36,6 +36,7 @@ import CareerHome from "@/pages/CareerHome";
 import AdminProductEnrollments from "@/pages/AdminProductEnrollments";
 import CareerLanding from "@/pages/CareerLanding";
 import JoinPage from "@/pages/JoinPage";
+import Login from "@/pages/Login";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 
 function Router() {
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/enterprise-onboarding" component={EnterpriseOnboardingWizard} />
       <Route path="/apply" component={ApplyForPilot} />
       <Route path="/join" component={JoinPage} />
+      <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/pilot-applications" component={AdminPilotApplications} />
       <Route path="/admin/invites" component={AdminManageInvites} />
