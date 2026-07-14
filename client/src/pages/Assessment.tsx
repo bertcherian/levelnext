@@ -43,6 +43,43 @@ const MODULE_META: Record<string, { label: string; tagline: string; color: strin
     color: "#1e3a5f",
     questionCount: 30,
   },
+  // Career Intelligence modules
+  cpi: {
+    label: "Career Positioning Intelligence",
+    tagline: "Know exactly where you stand — and where you should be.",
+    color: "#D4AF37",
+    questionCount: 30,
+  },
+  crs: {
+    label: "Career Resilience Intelligence",
+    tagline: "Bounce forward, not just back.",
+    color: "#3B82F6",
+    questionCount: 30,
+  },
+  cmk: {
+    label: "Career Marketability Intelligence",
+    tagline: "How visible and valuable are you to the market?",
+    color: "#22C55E",
+    questionCount: 30,
+  },
+  cst: {
+    label: "Career Strategy Intelligence",
+    tagline: "Are you playing the long game — or just reacting?",
+    color: "#F59E0B",
+    questionCount: 30,
+  },
+  cao: {
+    label: "Career Optionality Intelligence",
+    tagline: "How many doors are open to you right now?",
+    color: "#8B5CF6",
+    questionCount: 30,
+  },
+  air: {
+    label: "AI Readiness Intelligence",
+    tagline: "Are you leading AI — or being replaced by it?",
+    color: "#EC4899",
+    questionCount: 30,
+  },
 };
 
 const SCALE_LABELS: Record<number, string> = {
@@ -251,6 +288,12 @@ export default function Assessment() {
   }
 
   // ── Intro Screen ─────────────────────────────────────────────────────────────
+  // Split meta.label into two lines for the hero headline
+  // First word(s) = line 1 (bold white), rest = line 2 (italic gold gradient)
+  const labelWords = meta.label.split(" ");
+  const heroLine1 = labelWords.slice(0, -1).join(" "); // all but last word
+  const heroLine2 = labelWords[labelWords.length - 1];  // last word italic gold
+
   if (phase === "intro") {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "var(--color-ln-navy)" }}>
@@ -270,19 +313,33 @@ export default function Assessment() {
         <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
           <div className="w-full max-w-lg text-center">
             {/* Module badge */}
-            <span className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-6"
-              style={{ background: "oklch(25% 0.072 248.6)", color: "var(--color-ln-yellow)" }}>
+            <span
+              className="inline-block text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-8"
+              style={{ background: "oklch(25% 0.072 248.6)", color: "var(--color-ln-yellow)", border: "1px solid oklch(35% 0.1 82)" }}
+            >
               {moduleType.toUpperCase()} Diagnostic
             </span>
 
-            <h1 className="text-3xl font-bold text-white mb-4 leading-tight">{meta.label}</h1>
+            {/* Hero headline — Playfair Display, two-line treatment */}
+            <h1
+              className="font-playfair mb-5 leading-tight"
+              style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", fontWeight: 700, color: "rgb(248, 245, 240)" }}
+            >
+              {heroLine1 && (
+                <span className="block">{heroLine1}</span>
+              )}
+              <span className="text-gradient-gold italic block">{heroLine2}</span>
+            </h1>
+
             <p className="text-base mb-8 leading-relaxed" style={{ color: "oklch(75% 0.02 248.6)" }}>
               {meta.tagline}
             </p>
 
             {/* What to expect */}
-            <div className="rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 text-left space-y-4"
-              style={{ background: "oklch(20% 0.072 248.6)" }}>
+            <div
+              className="rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 text-left space-y-4"
+              style={{ background: "oklch(20% 0.072 248.6)", border: "1px solid oklch(28% 0.072 248.6)" }}
+            >
               <p className="text-sm font-semibold text-white mb-3">What to expect</p>
               {moduleType === "eci" && pillarGroups.length > 0 ? (
                 <div className="space-y-2">
@@ -299,25 +356,38 @@ export default function Assessment() {
                   })}
                 </div>
               ) : (
-                <p className="text-sm" style={{ color: "oklch(75% 0.02 248.6)" }}>
-                  {totalQ} questions across key leadership dimensions. Takes approximately 8–12 minutes.
-                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--color-ln-yellow)" }} />
+                    <span className="text-sm" style={{ color: "oklch(80% 0.02 248.6)" }}>
+                      {totalQ > 0 ? totalQ : meta.questionCount} questions across key dimensions
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--color-ln-yellow)" }} />
+                    <span className="text-sm" style={{ color: "oklch(80% 0.02 248.6)" }}>8–12 minutes to complete</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--color-ln-yellow)" }} />
+                    <span className="text-sm" style={{ color: "oklch(80% 0.02 248.6)" }}>Answer based on your typical behaviour</span>
+                  </div>
+                </div>
               )}
               <div className="pt-3 border-t" style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
                 <p className="text-xs" style={{ color: "oklch(60% 0.02 248.6)" }}>
-                  Answer based on your typical behaviour, not your ideal. There are no right or wrong answers.
+                  There are no right or wrong answers — honest responses give you the most accurate insight.
                 </p>
               </div>
             </div>
 
             <Button
               onClick={() => setPhase("questions")}
-              className="w-full h-14 text-base font-semibold rounded-xl"
+              className="w-full h-14 text-base font-bold rounded-full transition-all active:scale-[0.97]"
               style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
             >
               Begin Diagnostic <ChevronRight size={18} className="ml-2" />
             </Button>
-            <p className="text-xs mt-4" style={{ color: "oklch(50% 0.02 248.6)" }}>
+            <p className="text-xs mt-4" style={{ color: "oklch(45% 0.02 248.6)" }}>
               Your responses are private and feed directly into your Leadership Edge profile.
             </p>
           </div>

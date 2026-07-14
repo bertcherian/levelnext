@@ -241,3 +241,15 @@
 @media (min-width: 768px)  { .container { max-width: 768px; } }
 @media (min-width: 1024px) { .container { max-width: 1024px; } }
 @media (min-width: 1280px) { .container { max-width: 1280px; } }
+
+/* ─── Diagnostic Intro — Premium Typography ──────────────────────────────────── */
+.font-playfair {
+  font-family: "Playfair Display", serif;
+}
+.text-gradient-gold {
+  background: linear-gradient(135deg, #F2B705 0%, #D4AF37 40%, #F2B705 70%, #FFD700 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
