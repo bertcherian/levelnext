@@ -378,3 +378,10 @@
 - [x] TypeScript check: zero errors
 - [x] Configure SMTP secrets (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM) — Brevo verified
 - [x] Save checkpoint
+
+## Invite System Improvements (Jul 14)
+- [x] Personalise invite email subject line with client first name (e.g. "Priya, your LevelNext access is ready")
+- [x] Add Copy Link button next to Resend icon on each invite row
+- [x] Bulk invite via CSV upload — server bulkInvite procedure + UI dialog with file picker, preview table, send all
+- [x] TypeScript check: zero errors
+- [ ] Save checkpoint

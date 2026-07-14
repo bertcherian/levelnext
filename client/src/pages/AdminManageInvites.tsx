@@ -27,6 +27,8 @@ import {
   Users,
   UserPlus,
   RefreshCw,
+  Upload,
+  AlertCircle,
 } from "lucide-react";
 
 type InviteStatus = "pending" | "accepted" | "expired";
@@ -99,6 +101,49 @@ export default function AdminManageInvites() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+
+  // Bulk invite state
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkRows, setBulkRows] = useState<{ email: string; name: string; valid: boolean; error?: string }[]>([]);
+  const [bulkResult, setBulkResult] = useState<{ sent: number; failed: number } | null>(null);
+
+  const bulkInvite = trpc.platformInvites.bulkInvite.useMutation({
+    onSuccess: (res) => {
+      refetch();
+      setBulkResult({ sent: res.sent, failed: res.failed });
+    },
+    onError: (err: { message: string }) => toast.error(err.message),
+  });
+
+  function handleCSVFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = (e.target?.result as string) ?? "";
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      // Skip header row if it contains 'email' or 'name'
+      const start = lines[0]?.toLowerCase().includes("email") ? 1 : 0;
+      const rows = lines.slice(start).map((line) => {
+        const parts = line.split(",").map((p) => p.replace(/^"|"$/g, "").trim());
+        const email = parts[0] ?? "";
+        const name = parts[1] ?? "";
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const valid = emailRegex.test(email);
+        return { email, name, valid, error: valid ? undefined : "Invalid email" };
+      }).filter((r) => r.email);
+      setBulkRows(rows);
+      setBulkResult(null);
+    };
+    reader.readAsText(file);
+  }
+
+  function handleBulkSend() {
+    const valid = bulkRows.filter((r) => r.valid);
+    if (!valid.length) return;
+    bulkInvite.mutate({
+      invitees: valid.map((r) => ({ email: r.email, name: r.name || undefined })),
+      origin: window.location.origin,
+    });
+  }
 
   const invites = data ?? [];
 
@@ -194,6 +239,15 @@ export default function AdminManageInvites() {
             >
               <Download size={14} />
               Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => { setBulkRows([]); setBulkResult(null); setBulkDialogOpen(true); }}
+            >
+              <Upload size={14} />
+              Bulk Invite
             </Button>
             <Button
               size="sm"
@@ -382,19 +436,30 @@ export default function AdminManageInvites() {
                                 <Trash2 size={15} />
                               </Button>
                             )}
-                            {/* Resend — only for expired invites */}
+                            {/* Resend + Copy Link — only for expired invites */}
                             {inv.effectiveStatus === "expired" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 px-2 text-xs gap-1 text-muted-foreground hover:text-ln-navy"
-                                title="Resend invite with fresh 7-day link"
-                                disabled={resendInvite.isPending}
-                                onClick={() => resendInvite.mutate({ id: inv.id, origin: window.location.origin })}
-                              >
-                                <RefreshCw size={13} />
-                                Resend
-                              </Button>
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 px-2 text-xs gap-1 text-muted-foreground hover:text-ln-navy"
+                                  title="Resend invite with fresh 7-day link"
+                                  disabled={resendInvite.isPending}
+                                  onClick={() => resendInvite.mutate({ id: inv.id, origin: window.location.origin })}
+                                >
+                                  <RefreshCw size={13} />
+                                  Resend
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-ln-navy"
+                                  title="Copy invite link"
+                                  onClick={() => handleCopyLink(inv.token)}
+                                >
+                                  <Link2 size={15} />
+                                </Button>
+                              </>
                             )}
                             {inv.effectiveStatus === "accepted" && (
                               <span className="text-xs text-muted-foreground opacity-40 pr-1">—</span>
@@ -416,6 +481,112 @@ export default function AdminManageInvites() {
           </p>
         )}
       </div>
+
+      {/* Bulk Invite Dialog */}
+      <Dialog open={bulkDialogOpen} onOpenChange={(o) => { if (!bulkInvite.isPending) setBulkDialogOpen(o); }}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Bulk Invite via CSV</DialogTitle>
+            <DialogDescription>
+              Upload a CSV file with two columns: <strong>email</strong> (required) and <strong>name</strong> (optional). A magic link email will be sent to each valid address.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!bulkResult ? (
+            <div className="space-y-4 py-2">
+              {/* File picker */}
+              <label
+                className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-8 cursor-pointer hover:bg-muted/40 transition-colors"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleCSVFile(f); }}
+              >
+                <Upload size={24} className="text-muted-foreground" />
+                <span className="text-sm font-medium">Click to upload or drag &amp; drop a CSV file</span>
+                <span className="text-xs text-muted-foreground">Format: email, name (one row per person)</span>
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCSVFile(f); }}
+                />
+              </label>
+
+              {/* Preview table */}
+              {bulkRows.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">
+                      {bulkRows.filter((r) => r.valid).length} valid · {bulkRows.filter((r) => !r.valid).length} invalid
+                    </p>
+                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => setBulkRows([])}>
+                      Clear
+                    </Button>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto rounded-lg border text-sm">
+                    <table className="w-full">
+                      <thead className="bg-muted/50 sticky top-0">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-medium">Email</th>
+                          <th className="px-3 py-2 text-left font-medium">Name</th>
+                          <th className="px-3 py-2 text-left font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bulkRows.map((row, i) => (
+                          <tr key={i} className={row.valid ? "" : "bg-red-50"}>
+                            <td className="px-3 py-1.5">{row.email}</td>
+                            <td className="px-3 py-1.5 text-muted-foreground">{row.name || "—"}</td>
+                            <td className="px-3 py-1.5">
+                              {row.valid ? (
+                                <span className="text-green-600 text-xs font-medium">✓ Valid</span>
+                              ) : (
+                                <span className="text-red-600 text-xs flex items-center gap-1">
+                                  <AlertCircle size={11} /> {row.error}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="py-6 text-center space-y-2">
+              <CheckCircle2 size={40} className="mx-auto text-green-500" />
+              <p className="text-lg font-semibold">{bulkResult.sent} invite{bulkResult.sent !== 1 ? "s" : ""} sent!</p>
+              {bulkResult.failed > 0 && (
+                <p className="text-sm text-red-600">{bulkResult.failed} failed — check the email addresses and try again.</p>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setBulkDialogOpen(false)} disabled={bulkInvite.isPending}>
+              {bulkResult ? "Close" : "Cancel"}
+            </Button>
+            {!bulkResult && (
+              <Button
+                onClick={handleBulkSend}
+                disabled={bulkInvite.isPending || bulkRows.filter((r) => r.valid).length === 0}
+                className="gap-2 font-semibold"
+                style={{ background: "var(--color-ln-navy)", color: "white" }}
+              >
+                {bulkInvite.isPending ? (
+                  <>Sending…</>
+                ) : (
+                  <>
+                    <Mail size={15} />
+                    Send {bulkRows.filter((r) => r.valid).length > 0 ? `${bulkRows.filter((r) => r.valid).length} Invites` : "Invites"}
+                  </>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Send Invite Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

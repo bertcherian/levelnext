@@ -56,7 +56,7 @@ export const platformInvitesRouter = router({
       const firstName = input.name?.split(" ")[0] || "there";
       await sendEmail({
         to: input.email,
-        subject: "You're invited to LevelNext — Your Leadership Intelligence Platform",
+        subject: firstName !== "there" ? `${firstName}, your LevelNext access is ready` : "Your LevelNext access is ready",
         html: `
           <div style="font-family: Inter, Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #f8f7f4; padding: 40px 20px;">
             <div style="text-align: center; margin-bottom: 32px;">
@@ -161,6 +161,100 @@ export const platformInvitesRouter = router({
       };
     }),
 
+  // Admin: bulk invite — accepts an array of {email, name} and sends invites to all
+  bulkInvite: protectedProcedure
+    .input(
+      z.object({
+        invitees: z.array(
+          z.object({
+            email: z.string().email(),
+            name: z.string().optional(),
+          })
+        ).min(1).max(200),
+        origin: z.string().url(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      const results: { email: string; success: boolean; error?: string }[] = [];
+
+      for (const invitee of input.invitees) {
+        try {
+          const email = invitee.email.toLowerCase().trim();
+          const token = crypto.randomBytes(32).toString("hex");
+          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+          // Expire existing pending invites for this email
+          await db
+            .update(platformInvites)
+            .set({ status: "expired" })
+            .where(
+              and(
+                eq(platformInvites.email, email),
+                eq(platformInvites.status, "pending")
+              )
+            );
+
+          await db.insert(platformInvites).values({
+            token,
+            email,
+            name: invitee.name,
+            invitedBy: ctx.user.id,
+            expiresAt,
+            status: "pending",
+          });
+
+          const inviteUrl = `${input.origin}/login?invite=${token}`;
+          const firstName = invitee.name?.split(" ")[0] || "there";
+
+          await sendEmail({
+            to: email,
+            subject: firstName !== "there" ? `${firstName}, your LevelNext access is ready` : "Your LevelNext access is ready",
+            html: `
+              <div style="font-family: Inter, Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #f8f7f4; padding: 40px 20px;">
+                <div style="background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e8e6e0;">
+                  <h1 style="color: #12345A; font-size: 24px; margin: 0 0 16px;">Hi ${firstName},</h1>
+                  <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6; margin: 0 0 16px;">
+                    You've been personally invited to access <strong>LevelNext</strong> — the Leadership Intelligence Platform built for senior leaders who want to know exactly where they stand and close the gap to what's next.
+                  </p>
+                  <div style="text-align: center; margin: 32px 0 24px;">
+                    <a href="${inviteUrl}" style="display: inline-block; background: #F2B705; color: #12345A; font-weight: 700; font-size: 16px; padding: 16px 40px; border-radius: 8px; text-decoration: none;">
+                      Accept Your Invitation →
+                    </a>
+                  </div>
+                  <p style="color: #555; font-size: 13px; text-align: center; margin: 0;">
+                    This invite link expires in 7 days.
+                  </p>
+                </div>
+                <p style="color: #888; font-size: 12px; text-align: center; margin-top: 24px;">
+                  LevelNext by Meta Results Pvt. Ltd. · Bangalore, India
+                </p>
+              </div>
+            `,
+          });
+
+          results.push({ email, success: true });
+        } catch (err) {
+          results.push({ email: invitee.email, success: false, error: String(err) });
+        }
+      }
+
+      const sent = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success).length;
+
+      await notifyOwner({
+        title: "Bulk Invites Sent",
+        content: `${sent} invite${sent !== 1 ? "s" : ""} sent successfully${failed > 0 ? `, ${failed} failed` : ""}.`,
+      });
+
+      return { sent, failed, results };
+    }),
+
   // Admin: resend an expired or pending invite — generates a fresh 7-day token and re-sends the email
   resendInvite: protectedProcedure
     .input(z.object({ id: z.number(), origin: z.string().url() }))
@@ -195,7 +289,7 @@ export const platformInvitesRouter = router({
 
       await sendEmail({
         to: invite.email,
-        subject: "Your LevelNext invite has been refreshed — sign in now",
+        subject: firstName !== "there" ? `${firstName}, your LevelNext invite has been refreshed` : "Your LevelNext invite has been refreshed",
         html: `
           <div style="font-family: Inter, Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #f8f7f4; padding: 40px 20px;">
             <div style="background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e8e6e0;">
