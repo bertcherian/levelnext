@@ -27,6 +27,7 @@ import { productsRouter } from "./routers/products";
 import { emailAuthRouter } from "./routers/emailAuth";
 import { liReportRouter } from "./routers/liReport";
 import { leadsRouter } from "./routers/leads";
+import { playbookRouter } from "./routers/playbookRouter";
 
 export const appRouter = router({
   system: systemRouter,
@@ -63,6 +64,7 @@ export const appRouter = router({
   emailAuth: emailAuthRouter,
   liReport: liReportRouter,
   leads: leadsRouter,
+  playbook: playbookRouter,
 });
 
 export type AppRouter = typeof appRouter;

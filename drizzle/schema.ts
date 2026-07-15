@@ -998,3 +998,66 @@ export const leadCaptures = mysqlTable("lead_captures", {
 });
 export type LeadCapture = typeof leadCaptures.$inferSelect;
 export type InsertLeadCapture = typeof leadCaptures.$inferInsert;
+
+// ─── Leader Playbook ──────────────────────────────────────────────────────────
+// playbook_sessions: one row per leader situation the user brings to the Playbook
+export const playbookSessions = mysqlTable("playbook_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // Raw situation text entered by the leader
+  situationText: text("situationText").notNull(),
+  // LLM classification output (JSON)
+  classification: json("classification"),
+  // Primary playbook type (e.g. "Managing Up", "Customer Escalation")
+  playbookType: varchar("playbookType", { length: 100 }),
+  // Full 13-section playbook content (JSON)
+  playbookContent: json("playbookContent"),
+  // Whether the leader has marked the conversation as done (triggers reflection prompt)
+  conversationDone: boolean("conversationDone").default(false).notNull(),
+  // Checklist completion state (JSON)
+  checklistState: json("checklistState"),
+  // Script edits saved by the leader (JSON)
+  scriptEdits: json("scriptEdits"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PlaybookSession = typeof playbookSessions.$inferSelect;
+export type InsertPlaybookSession = typeof playbookSessions.$inferInsert;
+
+// playbook_reflections: post-meeting reflection linked to a session
+export const playbookReflections = mysqlTable("playbook_reflections", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull().references(() => playbookSessions.id),
+  userId: int("userId").notNull().references(() => users.id),
+  whatHappened: text("whatHappened"),
+  whatSurprised: text("whatSurprised"),
+  whatWorked: text("whatWorked"),
+  whatDidnt: text("whatDidnt"),
+  whatToChange: text("whatToChange"),
+  // Overall outcome: win / partial / loss / unclear
+  outcome: varchar("outcome", { length: 20 }),
+  // LLM-generated reflection insight
+  reflectionInsight: text("reflectionInsight"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PlaybookReflection = typeof playbookReflections.$inferSelect;
+export type InsertPlaybookReflection = typeof playbookReflections.$inferInsert;
+
+// playbook_patterns: aggregated pattern intelligence per user
+export const playbookPatterns = mysqlTable("playbook_patterns", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id).unique(),
+  // Situation frequency map (JSON: { "Managing Up": 5, "Difficult Feedback": 3, ... })
+  situationFrequency: json("situationFrequency"),
+  // Competency signals (JSON: { "Executive Communication": { count: 5, avgOutcome: 0.7 }, ... })
+  competencySignals: json("competencySignals"),
+  // Avoided situations (JSON: string[])
+  avoidedSituations: json("avoidedSituations"),
+  // Recurring challenges (JSON: string[])
+  recurringChallenges: json("recurringChallenges"),
+  totalSessions: int("totalSessions").default(0).notNull(),
+  totalReflections: int("totalReflections").default(0).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PlaybookPattern = typeof playbookPatterns.$inferSelect;
+export type InsertPlaybookPattern = typeof playbookPatterns.$inferInsert;

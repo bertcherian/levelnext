@@ -436,3 +436,15 @@
 - [x] Wire into LiReport.tsx loading state (replace Loader2 spinner)
 - [x] Wire into CiReport.tsx loading state (replace Loader2 spinner)
 - [x] Save checkpoint
+
+## Phase 38 — Leader Playbook Phase 1: DB + Server Router (Jul 15)
+- [x] Add playbook_sessions table to drizzle/schema.ts
+- [x] Add playbook_reflections table to drizzle/schema.ts
+- [x] Add playbook_patterns table to drizzle/schema.ts
+- [x] Generate migration SQL (0022_supreme_patriot.sql) and apply via webdev_execute_sql
+- [x] Build server/routers/playbookRouter.ts with classify procedure (LLM classification engine)
+- [x] Build generate procedure (13-section LLM playbook generator with personalisation from Leadership Graph)
+- [x] Build getSession, listSessions, markDone, saveChecklist, saveScript, saveReflection, getPatterns procedures
+- [x] Register playbookRouter in server/routers.ts as trpc.playbook.*
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint
