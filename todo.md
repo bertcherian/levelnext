@@ -409,3 +409,12 @@
 - [x] Update Assessment.tsx to route all LI modules to /li-report/:moduleCode/:slug
 - [x] NII sample PDF not yet generated (pending); LiReport.tsx hides sample CTA for placeholder URLs
 - [x] Save checkpoint
+
+## Phase 35 — NII & GCC Sample PDFs (Jul 15)
+- [x] Write gen_nii_gcc_reports.py with full NII and GCC sample report configs
+- [x] Generate NII sample PDF (721 KB) at /home/ubuntu/sample_reports/nii_sample_report.pdf
+- [x] Generate GCC sample PDF (722 KB) at /home/ubuntu/sample_reports/gcc_sample_report.pdf
+- [x] Upload both to CDN: /manus-storage/nii_sample_report_2a0eed48.pdf and /manus-storage/gcc_sample_report_4fe3df81.pdf
+- [x] Update LiReport.tsx SAMPLE_PDF_URLS for NII and GCC with real CDN paths
+- [x] TypeScript clean, dev server running
+- [x] Save checkpoint
