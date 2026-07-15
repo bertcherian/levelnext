@@ -23,6 +23,7 @@ import CpiReport from "./pages/CpiReport";
 import NiiReport from "./pages/NiiReport";
 import CiReport from "./pages/CiReport";
 import LiReport from "./pages/LiReport";
+import LeaderPlaybook from "./pages/LeaderPlaybook";
 import CareerProgress from "./pages/CareerProgress";
 import ImportEci from "./pages/ImportEci";
 import ImportChatgpt from "./pages/ImportChatgpt";
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/nii-report/:slug" component={NiiReport} />
       <Route path="/ci-report/:moduleCode/:slug" component={CiReport} />
       <Route path="/li-report/:moduleCode/:slug" component={LiReport} />
+      <Route path="/playbook" component={LeaderPlaybook} />
 
       {/* Platform (authenticated) */}
       <Route path="/home" component={Home} />

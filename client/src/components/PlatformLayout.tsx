@@ -23,6 +23,7 @@ import {
   Phone,
   AlertCircle,
   UserCog,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
   { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
   { label: "AI Practice Coach", icon: Zap, href: "/practice" },
+  { label: "Leader Playbook", icon: BookOpen, href: "/playbook" },
   { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
   { label: "Insights", icon: Lightbulb, href: "/insights" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },

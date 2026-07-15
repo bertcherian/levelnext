@@ -448,3 +448,12 @@
 - [x] Register playbookRouter in server/routers.ts as trpc.playbook.*
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Phase 39 — Leader Playbook Phase 2: UI (Jul 15)
+- [x] Build client/src/pages/LeaderPlaybook.tsx — situation input screen with InfinityLoader classification state
+- [x] Build PlaybookSession view — 13-section accordion with interactive checklist, script editor, reflection form
+- [x] Build PlaybookHistory sidebar — list of past sessions with situation summary and playbook type
+- [x] Register /playbook route in App.tsx
+- [x] Add "Leader Playbook" nav item to PlatformLayout LI sidebar (BookOpen icon, between Practice Coach and Growth Profile)
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint
