@@ -379,9 +379,11 @@ function LiModuleCard({
 function CiModuleCard({
   mod,
   completedModules,
+  reportSlug,
 }: {
   mod: (typeof CI_MODULES)[0];
   completedModules: string[];
+  reportSlug?: string;
 }) {
   const done = completedModules.includes(mod.id);
 
@@ -431,12 +433,24 @@ function CiModuleCard({
             </div>
           </div>
           <div className="flex items-center gap-3 mt-4 flex-wrap">
+            {done && reportSlug && (
+              <Link href={`/ci-report/${mod.id}/${reportSlug}`}>
+                <Button
+                  className="font-semibold"
+                  style={{ background: mod.color, color: "white" }}
+                >
+                  View Report
+                  <ArrowRight size={14} className="ml-1.5" />
+                </Button>
+              </Link>
+            )}
             <Link href={`/diagnostics/${mod.route}`}>
               <Button
+                variant="outline"
                 className="font-semibold"
                 style={{
-                  background: done ? "var(--color-ln-ivory-dark)" : mod.color,
-                  color: done ? "var(--color-ln-navy)" : "white",
+                  borderColor: done ? "var(--color-ln-border)" : mod.color,
+                  color: done ? "var(--color-ln-muted)" : mod.color,
                 }}
               >
                 {done ? "Retake Diagnostic" : "Begin Diagnostic"}
@@ -475,6 +489,23 @@ export default function Diagnostics() {
     enabled: isAuthenticated,
   });
 
+  // For CI view: fetch user's reports to get slugs for completed modules
+  const activeProductId0 = activeProduct?.productId ?? "leadership_intelligence";
+  const { data: myReports } = trpc.report.myReports.useQuery(undefined, {
+    enabled: isAuthenticated && activeProductId0 === "career_intelligence",
+  });
+  // Build a map of moduleCode -> latest report slug for CI modules
+  const ciReportSlugMap = new Map<string, string>();
+  if (myReports) {
+    const ciCodes = ["CPI","CRS","CMK","CST","CAO","AIR"];
+    for (const r of myReports) {
+      const mc = (r.moduleType ?? "").toUpperCase();
+      if (ciCodes.includes(mc) && !ciReportSlugMap.has(mc) && r.slug) {
+        ciReportSlugMap.set(mc, r.slug);
+      }
+    }
+  }
+
   useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [loading, isAuthenticated, navigate]);
 
   const activeProductId = activeProduct?.productId ?? "leadership_intelligence";
@@ -512,7 +543,7 @@ export default function Diagnostics() {
 
           <div className="space-y-6">
             {CI_MODULES.map((mod) => (
-              <CiModuleCard key={mod.id} mod={mod} completedModules={completedModules} />
+              <CiModuleCard key={mod.id} mod={mod} completedModules={completedModules} reportSlug={ciReportSlugMap.get(mod.id)} />
             ))}
           </div>
 

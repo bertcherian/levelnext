@@ -21,6 +21,7 @@ import Assessment from "./pages/Assessment";
 import Report from "./pages/Report";
 import CpiReport from "./pages/CpiReport";
 import NiiReport from "./pages/NiiReport";
+import CiReport from "./pages/CiReport";
 import ImportEci from "./pages/ImportEci";
 import ImportChatgpt from "./pages/ImportChatgpt";
 import ImportPriorAssessments from "./pages/ImportPriorAssessments";
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/report/:slug" component={Report} />
       <Route path="/cpi-report/:slug" component={CpiReport} />
       <Route path="/nii-report/:slug" component={NiiReport} />
+      <Route path="/ci-report/:moduleCode/:slug" component={CiReport} />
 
       {/* Platform (authenticated) */}
       <Route path="/home" component={Home} />

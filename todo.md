@@ -391,3 +391,12 @@
 - [x] unlock.ts: add NII to FALLBACK_MODULE_SEQUENCE and DB product_modules for leadership_intelligence (after STI)
 - [x] NiiReport.tsx: add PDF export button (same pattern as Report.tsx — jsPDF client-side)
 - [x] Report.tsx + CpiReport.tsx + NiiReport.tsx: wire sample PDF CDN links as "View Sample Report" CTAs
+
+## Phase 32 — Shared CI Report Page (Jul 15)
+- [x] Build server/routers/ciReport.ts — shared router for all 6 CI modules
+- [x] Build client/src/pages/CiReport.tsx — shared report page with module-aware content, jsPDF export, sample PDF CTAs
+- [x] Register /ci-report/:moduleCode/:slug route in App.tsx
+- [x] Register ciReport router in server/routers.ts
+- [x] Update Diagnostics.tsx CI module cards to link to /ci-report/:moduleCode/:slug
+- [x] CpiReport.tsx kept as-is for backwards compat; Assessment.tsx now routes all CI modules to /ci-report/:moduleCode/:slug
+- [x] Save checkpoint and publish

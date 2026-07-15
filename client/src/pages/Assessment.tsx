@@ -695,7 +695,16 @@ export default function Assessment() {
             {reportSlug && (
               <div className="text-center pb-6">
                 <button
-                  onClick={() => navigate(moduleType === 'cpi' ? `/cpi-report/${reportSlug}` : moduleType === 'nii' ? `/nii-report/${reportSlug}` : `/report/${reportSlug}`)}
+                  onClick={() => {
+                    const ciModules = ['cpi','crs','cmk','cst','cao','air'];
+                    if (ciModules.includes(moduleType)) {
+                      navigate(`/ci-report/${moduleType.toUpperCase()}/${reportSlug}`);
+                    } else if (moduleType === 'nii') {
+                      navigate(`/nii-report/${reportSlug}`);
+                    } else {
+                      navigate(`/report/${reportSlug}`);
+                    }
+                  }}
                   className="text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
                   style={{ color: "oklch(55% 0.02 248.6)" }}
                 >
