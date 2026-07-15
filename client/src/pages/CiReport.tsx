@@ -34,7 +34,7 @@ const CI_MODULE_META: Record<string, {
     color: "#3B82F6",
     icon: <Shield size={18} />,
     coachLabel: "Resilience Coach",
-    samplePdf: "/manus-storage/crs_sample_report_62c7166a.pdf",
+    samplePdf: "/manus-storage/crs_sample_report_29d51b3d.pdf",
   },
   CMK: {
     label: "Career Marketability Intelligence",
@@ -42,7 +42,7 @@ const CI_MODULE_META: Record<string, {
     color: "#22C55E",
     icon: <BarChart2 size={18} />,
     coachLabel: "Marketability Coach",
-    samplePdf: "/manus-storage/cmk_sample_report_49fea189.pdf",
+    samplePdf: "/manus-storage/cmk_sample_report_0da2bd93.pdf",
   },
   CST: {
     label: "Career Strategy Intelligence",
@@ -50,7 +50,7 @@ const CI_MODULE_META: Record<string, {
     color: "#F59E0B",
     icon: <Map size={18} />,
     coachLabel: "Strategy Coach",
-    samplePdf: "/manus-storage/cst_sample_report_0d2f06f6.pdf",
+    samplePdf: "/manus-storage/cst_sample_report_262b5be8.pdf",
   },
   CAO: {
     label: "Career Optionality Intelligence",
@@ -58,7 +58,7 @@ const CI_MODULE_META: Record<string, {
     color: "#8B5CF6",
     icon: <Layers size={18} />,
     coachLabel: "Optionality Coach",
-    samplePdf: "/manus-storage/cao_sample_report_0cde1f59.pdf",
+    samplePdf: "/manus-storage/cao_sample_report_8e3de3c8.pdf",
   },
   AIR: {
     label: "AI Readiness Intelligence",
@@ -66,7 +66,7 @@ const CI_MODULE_META: Record<string, {
     color: "#06B6D4",
     icon: <Cpu size={18} />,
     coachLabel: "AI Career Coach",
-    samplePdf: "/manus-storage/air_sample_report_111953bf.pdf",
+    samplePdf: "/manus-storage/air_sample_report_286d3b6b.pdf",
   },
 };
 
