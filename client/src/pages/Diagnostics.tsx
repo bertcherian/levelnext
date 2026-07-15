@@ -276,10 +276,12 @@ function LiModuleCard({
   mod,
   status,
   completedModules,
+  reportSlug,
 }: {
   mod: (typeof LI_MODULES)[0];
   status: ModuleStatus | undefined;
   completedModules: string[];
+  reportSlug?: string;
 }) {
   const [showGates, setShowGates] = useState(false);
   const [narrativeDismissed, setNarrativeDismissed] = useState(false);
@@ -339,6 +341,14 @@ function LiModuleCard({
                 <Link href={`/diagnostics/${mod.route}`}>
                   <Button className="font-semibold" style={{ background: done ? "var(--color-ln-ivory-dark)" : "var(--color-ln-navy)", color: done ? "var(--color-ln-navy)" : "white" }}>
                     {done ? "Retake Diagnostic" : "Begin Diagnostic"}
+                    <ArrowRight size={14} className="ml-1.5" />
+                  </Button>
+                </Link>
+              )}
+              {done && reportSlug && (
+                <Link href={`/li-report/${mod.id}/${reportSlug}`}>
+                  <Button variant="outline" className="font-semibold" style={{ borderColor: mod.color, color: mod.color }}>
+                    View Report
                     <ArrowRight size={14} className="ml-1.5" />
                   </Button>
                 </Link>
@@ -489,19 +499,24 @@ export default function Diagnostics() {
     enabled: isAuthenticated,
   });
 
-  // For CI view: fetch user's reports to get slugs for completed modules
-  const activeProductId0 = activeProduct?.productId ?? "leadership_intelligence";
+  // Fetch user's reports to get slugs for completed modules (both LI and CI)
   const { data: myReports } = trpc.report.myReports.useQuery(undefined, {
-    enabled: isAuthenticated && activeProductId0 === "career_intelligence",
+    enabled: isAuthenticated,
   });
   // Build a map of moduleCode -> latest report slug for CI modules
   const ciReportSlugMap = new Map<string, string>();
+  // Build a map of moduleCode -> latest report slug for LI modules
+  const liReportSlugMap = new Map<string, string>();
   if (myReports) {
     const ciCodes = ["CPI","CRS","CMK","CST","CAO","AIR"];
+    const liCodes = ["ECI","TII","LII","GCC","LDI","STI","NII"];
     for (const r of myReports) {
       const mc = (r.moduleType ?? "").toUpperCase();
       if (ciCodes.includes(mc) && !ciReportSlugMap.has(mc) && r.slug) {
         ciReportSlugMap.set(mc, r.slug);
+      }
+      if (liCodes.includes(mc) && !liReportSlugMap.has(mc) && r.slug) {
+        liReportSlugMap.set(mc, r.slug);
       }
     }
   }
@@ -618,7 +633,7 @@ export default function Diagnostics() {
         )}
         <div className="space-y-6">
           {LI_MODULES.map((mod) => (
-            <LiModuleCard key={mod.id} mod={mod} status={statusMap.get(mod.id)} completedModules={completedModules} />
+            <LiModuleCard key={mod.id} mod={mod} status={statusMap.get(mod.id)} completedModules={completedModules} reportSlug={liReportSlugMap.get(mod.id)} />
           ))}
         </div>
         {/* Prior Assessments Import Card */}

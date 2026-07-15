@@ -25,6 +25,7 @@ import { ciReportRouter } from "./routers/ciReport";
 import { niiReportRouter } from "./routers/niiReport";
 import { productsRouter } from "./routers/products";
 import { emailAuthRouter } from "./routers/emailAuth";
+import { liReportRouter } from "./routers/liReport";
 
 export const appRouter = router({
   system: systemRouter,
@@ -59,6 +60,7 @@ export const appRouter = router({
   niiReport: niiReportRouter,
   products: productsRouter,
   emailAuth: emailAuthRouter,
+  liReport: liReportRouter,
 });
 
 export type AppRouter = typeof appRouter;

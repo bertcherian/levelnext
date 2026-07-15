@@ -400,3 +400,12 @@
 - [x] Update Diagnostics.tsx CI module cards to link to /ci-report/:moduleCode/:slug
 - [x] CpiReport.tsx kept as-is for backwards compat; Assessment.tsx now routes all CI modules to /ci-report/:moduleCode/:slug
 - [x] Save checkpoint and publish
+
+## Phase 34 — Shared LI Report Page (Jul 15)
+- [x] Build server/routers/liReport.ts — shared router for all 7 LI modules (ECI, TII, LII, GCC, LDI, STI, NII)
+- [x] Build client/src/pages/LiReport.tsx — shared report page matching CiReport.tsx design
+- [x] Register /li-report/:moduleCode/:slug route in App.tsx
+- [x] Register liReport router in server/routers.ts
+- [x] Update Assessment.tsx to route all LI modules to /li-report/:moduleCode/:slug
+- [x] NII sample PDF not yet generated (pending); LiReport.tsx hides sample CTA for placeholder URLs
+- [x] Save checkpoint

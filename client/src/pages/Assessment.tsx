@@ -697,10 +697,11 @@ export default function Assessment() {
                 <button
                   onClick={() => {
                     const ciModules = ['cpi','crs','cmk','cst','cao','air'];
+                    const liModules = ['eci','tii','lii','gcc','ldi','sti','nii'];
                     if (ciModules.includes(moduleType)) {
                       navigate(`/ci-report/${moduleType.toUpperCase()}/${reportSlug}`);
-                    } else if (moduleType === 'nii') {
-                      navigate(`/nii-report/${reportSlug}`);
+                    } else if (liModules.includes(moduleType)) {
+                      navigate(`/li-report/${moduleType.toUpperCase()}/${reportSlug}`);
                     } else {
                       navigate(`/report/${reportSlug}`);
                     }
