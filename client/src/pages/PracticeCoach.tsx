@@ -2418,6 +2418,8 @@ export default function PracticeCoach() {
   const [screen, setScreen] = useState<Screen>(() => {
     const params = new URLSearchParams(window.location.search);
     const screenParam = params.get('screen');
+    // If coming from Leader Playbook with a pre-filled issue, jump straight to scenario-setup
+    if (!screenParam && params.get('playbook_issue')) return 'scenario-setup';
     return (screenParam as Screen) || "home";
   });
 
@@ -2431,7 +2433,12 @@ export default function PracticeCoach() {
       setScreen('home');
     }
   }, [location, search]);
-  const [issue, setIssue] = useState('');
+  // Read playbook pre-fill params (set by Leader Playbook "Practice this conversation" button)
+  const [issue, setIssue] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const playbookIssue = params.get('playbook_issue');
+    return playbookIssue ? decodeURIComponent(playbookIssue) : '';
+  });
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [scenario, setScenario] = useState<PracticeScenario | null>(null);
   const [feedback, setFeedback] = useState<{ feedback: PracticeFeedback; score: number; attemptId: number } | null>(null);

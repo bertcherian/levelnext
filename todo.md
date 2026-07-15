@@ -466,3 +466,12 @@
 - [x] LeaderPlaybook.tsx: read ?situation= query param on mount and pre-fill textarea + auto-focus
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Phase 41 — Playbook → Practice Coach Integration (Jul 15)
+- [x] Read PracticeCoach.tsx to understand session setup form and how to inject pre-loaded context
+- [x] Update PracticeCoach.tsx screen initializer to detect ?playbook_issue param and jump to scenario-setup
+- [x] Update PracticeCoach.tsx issue useState initializer to pre-fill from ?playbook_issue param
+- [x] Add "Practice this conversation →" purple CTA button to LeaderPlaybook.tsx Role-Play Setup section
+- [x] Button navigates to /practice?playbook_issue=...&playbook_persona=...&playbook_context=... with encoded params
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint

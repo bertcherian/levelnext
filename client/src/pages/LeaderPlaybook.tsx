@@ -230,7 +230,20 @@ function SectionContent({ sectionKey, content, color }: { sectionKey: string; co
         </div>
       );
 
-    case "rolePlaySetup":
+    case "rolePlaySetup": {
+      const buildPracticeUrl = () => {
+        const params = new URLSearchParams();
+        // Compose a rich issue text for the Practice Coach session
+        const issueText = [
+          content.persona ? `Practise against: ${content.persona}.` : '',
+          content.openingLine ? `Their opening line: "${content.openingLine}"` : '',
+          content.likelyChallenges?.length ? `Likely challenges: ${content.likelyChallenges.slice(0, 2).join('; ')}.` : '',
+        ].filter(Boolean).join(' ');
+        params.set('playbook_issue', encodeURIComponent(issueText));
+        params.set('playbook_persona', encodeURIComponent(content.persona ?? ''));
+        params.set('playbook_context', encodeURIComponent(content.openingLine ?? ''));
+        return `/practice?${params.toString()}`;
+      };
       return (
         <div className="mt-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -239,8 +252,23 @@ function SectionContent({ sectionKey, content, color }: { sectionKey: string; co
           </div>
           <ListCard label="Likely Challenges" items={content.likelyChallenges} color="#8B1A1A" icon="⚠️" />
           <ListCard label="Success Criteria" items={content.successCriteria} color={color} icon="✓" />
+          {/* Practice Coach CTA */}
+          <div className="mt-2 rounded-xl border border-[#7B5EA7]/30 bg-[#7B5EA7]/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-[#7B5EA7]">Ready to rehearse?</p>
+              <p className="text-xs text-gray-500 mt-0.5">Open the AI Practice Coach with this scenario pre-loaded — persona, context, and opening line are already set.</p>
+            </div>
+            <button
+              onClick={() => { window.location.href = buildPracticeUrl(); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#7B5EA7] text-white text-sm font-semibold hover:bg-[#6a4f96] transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              <Zap className="w-4 h-4" />
+              Practice this conversation →
+            </button>
+          </div>
         </div>
       );
+    }
 
     case "decisionSupport":
       return (
