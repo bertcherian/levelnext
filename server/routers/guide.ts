@@ -358,7 +358,28 @@ export const guideRouter = router({
         });
       }
 
-      return { message: assistantMessage, conversationId: convId };
+      // ── Playbook signal detection ────────────────────────────────────────────
+      // Lightweight keyword heuristic on the user's message — no extra LLM call.
+      // Triggers when the user describes a specific interpersonal or strategic situation.
+      const PLAYBOOK_KEYWORDS = [
+        "conversation", "stakeholder", "difficult", "pushback", "rejected", "conflict",
+        "negotiate", "negotiation", "feedback", "performance", "accountability",
+        "influence", "persuade", "align", "alignment", "resistance", "pushback",
+        "meeting", "presentation", "board", "executive", "CEO", "CXO", "boss",
+        "team", "report", "direct report", "underperform", "underperforming",
+        "escalate", "escalation", "crisis", "urgent", "deadline", "pressure",
+        "prepare", "preparation", "strategy", "approach", "handle", "deal with",
+        "how do I", "how should I", "what should I do", "help me with",
+        "navigate", "situation", "challenge", "problem", "issue",
+      ];
+      const msgLower = input.message.toLowerCase();
+      // Only signal for LI product (not CI career coach)
+      const isLiProduct = activeProductId !== "career_intelligence";
+      const hasPlaybookKeyword = PLAYBOOK_KEYWORDS.some(kw => msgLower.includes(kw.toLowerCase()));
+      // Require at least 20 chars and a keyword to avoid signalling on trivial messages
+      const playbookSignal = isLiProduct && input.message.length >= 20 && hasPlaybookKeyword;
+
+      return { message: assistantMessage, conversationId: convId, playbookSignal };
     }),
 
   // Generate follow-up questions based on the latest completed diagnostic report

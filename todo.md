@@ -457,3 +457,12 @@
 - [x] Add "Leader Playbook" nav item to PlatformLayout LI sidebar (BookOpen icon, between Practice Coach and Growth Profile)
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Phase 40 — Guide → Leader Playbook Wiring (Jul 15)
+- [x] Read Guide.tsx and guide server router to understand chat flow
+- [x] Add playbookSignal field to guide.ts sendMessage return (keyword heuristic, no extra LLM call, LI-only)
+- [x] Track playbookCTAIndexes and lastUserMessage state in Guide.tsx
+- [x] Render inline Playbook CTA card after assistant reply when playbookSignal fires (gold border, BookOpen icon, navy CTA button)
+- [x] LeaderPlaybook.tsx: read ?situation= query param on mount and pre-fill textarea + auto-focus
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint

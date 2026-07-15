@@ -77,6 +77,10 @@ export default function Guide() {
   const [input, setInput] = useState("");
   const [view, setView] = useState<"home" | "chat">("home");
   const [unlockContextSent, setUnlockContextSent] = useState(false);
+  // Track which assistant message indexes should show the Playbook CTA
+  const [playbookCTAIndexes, setPlaybookCTAIndexes] = useState<Set<number>>(new Set());
+  // Track the last user message for pre-filling the Playbook situation input
+  const [lastUserMessage, setLastUserMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const utils = trpc.useUtils();
@@ -92,9 +96,20 @@ export default function Guide() {
   );
 
   const sendMessage = trpc.guide.sendMessage.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.guide.getConversation.invalidate();
       setInput("");
+      // If the server detected a playbook-applicable situation, mark the next assistant message index
+      if (data?.playbookSignal) {
+        // The new assistant message will be at the current messages length + 1 (after user + assistant)
+        // We use a timestamp-based key stored in state to match after invalidation
+        setPlaybookCTAIndexes(prev => {
+          const next = new Set(prev);
+          // We'll match by the assistant message timestamp stored in data.message.timestamp
+          next.add(data.message.timestamp as unknown as number);
+          return next;
+        });
+      }
     },
     onError: () => toast.error("Guide is unavailable right now. Please try again."),
   });
@@ -137,6 +152,7 @@ export default function Guide() {
     const text = (msg ?? input).trim();
     if (!text || sendMessage.isPending) return;
     setView("chat");
+    setLastUserMessage(text);
     sendMessage.mutate({ message: text });
     if (!msg) setInput("");
   };
@@ -144,6 +160,7 @@ export default function Guide() {
   const handlePromptClick = (prompt: string) => {
     setInput(prompt);
     setView("chat");
+    setLastUserMessage(prompt);
     sendMessage.mutate({ message: prompt });
   };
 
@@ -715,6 +732,39 @@ export default function Guide() {
                       </button>
                     )}
                   </div>
+                  {/* Inline Playbook CTA — shown after assistant reply when playbookSignal fired */}
+                  {msg.role === "assistant" && playbookCTAIndexes.has(msg.timestamp as unknown as number) && (
+                    <div
+                      className="mt-3 ml-11 rounded-xl px-4 py-3 flex items-start gap-3 animate-slide-up"
+                      style={{
+                        background: "oklch(from var(--color-ln-yellow) l c h / 0.10)",
+                        border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.35)",
+                        maxWidth: "82%",
+                      }}
+                    >
+                      <BookOpen size={18} className="flex-shrink-0 mt-0.5" style={{ color: "var(--color-ln-yellow)" }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--color-ln-navy)" }}>
+                          This looks like a situation for your Leader Playbook
+                        </p>
+                        <p className="text-xs mb-2" style={{ color: "var(--color-ln-muted)" }}>
+                          Get a structured coaching plan with stakeholder analysis, conversation script, and pre-meeting checklist.
+                        </p>
+                        <a
+                          href={`/playbook?situation=${encodeURIComponent(lastUserMessage)}`}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150"
+                          style={{
+                            background: "var(--color-ln-navy)",
+                            color: "var(--color-ln-yellow)",
+                          }}
+                        >
+                          <BookOpen size={12} />
+                          Open Leader Playbook
+                          <ChevronRight size={11} />
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
               {sendMessage.isPending && (

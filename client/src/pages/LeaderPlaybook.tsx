@@ -510,6 +510,17 @@ export default function LeaderPlaybook() {
   const [showHistory, setShowHistory] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Pre-fill situation from ?situation= query param (set by Guide inline Playbook CTA)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const prefilledSituation = params.get("situation");
+    if (prefilledSituation && prefilledSituation.trim().length >= 10) {
+      setSituationText(decodeURIComponent(prefilledSituation));
+      // Auto-scroll to the textarea
+      setTimeout(() => textareaRef.current?.focus(), 300);
+    }
+  }, []);
+
   // tRPC mutations
   const classifyMutation = trpc.playbook.classify.useMutation({
     onSuccess: (data) => {
