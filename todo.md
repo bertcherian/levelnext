@@ -430,3 +430,9 @@
 - [x] Update CI_NAV_ITEMS Progress link to /career/progress in PlatformLayout.tsx
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Phase 37 — Infinity Logo Loading Animation (Jul 15)
+- [x] Build InfinityLoader component with CSS animation (draw-on stroke, pulse glow, fade-in/out)
+- [x] Wire into LiReport.tsx loading state (replace Loader2 spinner)
+- [x] Wire into CiReport.tsx loading state (replace Loader2 spinner)
+- [x] Save checkpoint

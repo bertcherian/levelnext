@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import InfinityLoader from "@/components/InfinityLoader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -477,11 +478,7 @@ export default function LiReport() {
 
   // ── Loading ──
   if (reportLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: IVORY }}>
-        <Loader2 size={32} className="animate-spin" style={{ color: accent }} />
-      </div>
-    );
+    return <InfinityLoader visible={true} label="Loading your report…" />;
   }
 
   if (!report) {
