@@ -1,9 +1,10 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield } from "lucide-react";
+import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield, Download, FileText } from "lucide-react";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 const VIDEO_URL = "/manus-storage/levelnext_explainer_v5_a20a9a42.mp4";
@@ -63,11 +64,35 @@ const DIAGNOSTICS = [
   { code: "STI", name: "Strategic Thinking", desc: "How you think at the level above your role" },
 ];
 
+const SAMPLE_MODULES = [
+  { code: "ECI", name: "Executive Communication Intelligence", desc: "How you land influence in the room", path: "/manus-storage/eci_sample_report_c8069499.pdf" },
+  { code: "LII", name: "Leadership Influence Intelligence", desc: "How you shape decisions and culture", path: "/manus-storage/lii_sample_report_35396687.pdf" },
+  { code: "STI", name: "Strategic Thinking Intelligence", desc: "How you think at the level above your role", path: "/manus-storage/sti_sample_report_f8e5b386.pdf" },
+];
+
 export default function Landing() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadName, setLeadName] = useState("");
+  const [selectedModule, setSelectedModule] = useState(SAMPLE_MODULES[0]);
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
+  const [leadError, setLeadError] = useState("");
+  const captureMutation = trpc.leads.captureEmail.useMutation({
+    onSuccess: () => {
+      setLeadSubmitted(true);
+      const link = document.createElement("a");
+      link.href = selectedModule.path;
+      link.download = `LevelNext_${selectedModule.code}_Sample_Report.pdf`;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    onError: (err) => setLeadError(err.message),
+  });
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -397,6 +422,99 @@ export default function Landing() {
                 <p className="text-base leading-relaxed" style={{ color: "oklch(78% 0.02 248.6)" }}>{item.counter}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SAMPLE REPORT LEAD MAGNET ─────────────────────────────────────── */}
+      <section className="px-6 py-16 md:py-24">
+        <div className="max-w-4xl mx-auto">
+          <div className="rounded-2xl overflow-hidden" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.2)" }}>
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {/* Left: copy + module selector */}
+              <div className="p-8 md:p-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText size={16} style={{ color: "var(--color-ln-yellow)" }} />
+                  <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-ln-yellow)" }}>Free Sample Report</span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 leading-tight">
+                  See what a LevelNext diagnostic report actually looks like.
+                </h2>
+                <p className="text-base leading-relaxed mb-6" style={{ color: "oklch(72% 0.02 248.6)" }}>
+                  Pick a diagnostic, enter your email, and download a sample report instantly — so you know exactly what you're signing up for.
+                </p>
+                <div className="flex flex-col gap-2">
+                  {SAMPLE_MODULES.map((m) => (
+                    <button key={m.code}
+                      onClick={() => { setSelectedModule(m); setLeadSubmitted(false); setLeadError(""); }}
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all"
+                      style={{
+                        background: selectedModule.code === m.code ? "oklch(from var(--color-ln-yellow) l c h / 0.12)" : "oklch(from white 12% 0 0 / 0.04)",
+                        border: `1px solid ${selectedModule.code === m.code ? "oklch(from var(--color-ln-yellow) l c h / 0.4)" : "oklch(from white 20% 0 0 / 0.06)"}`,
+                      }}>
+                      <span className="text-xs font-bold px-2 py-1 rounded flex-shrink-0" style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)", color: "var(--color-ln-yellow)" }}>{m.code}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-white">{m.name}</p>
+                        <p className="text-xs" style={{ color: "oklch(60% 0.02 248.6)" }}>{m.desc}</p>
+                      </div>
+                      {selectedModule.code === m.code && <CheckCircle2 size={14} className="flex-shrink-0" style={{ color: "var(--color-ln-yellow)" }} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Right: email capture form */}
+              <div className="p-8 md:p-10 flex flex-col justify-center" style={{ background: "oklch(from white 8% 0 0 / 0.04)", borderLeft: "1px solid oklch(from white 20% 0 0 / 0.06)" }}>
+                {leadSubmitted ? (
+                  <div className="text-center">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)" }}>
+                      <Download size={24} style={{ color: "var(--color-ln-yellow)" }} />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">Your report is downloading!</h3>
+                    <p className="text-sm mb-4" style={{ color: "oklch(65% 0.02 248.6)" }}>
+                      If it didn't start automatically,{" "}
+                      <a href={selectedModule.path} target="_blank" rel="noreferrer" className="underline" style={{ color: "var(--color-ln-yellow)" }}>click here to download</a>.
+                    </p>
+                    <p className="text-xs mb-4" style={{ color: "oklch(50% 0.02 248.6)" }}>Ready to get your own personalised report?</p>
+                    <a href="/apply">
+                      <Button size="sm" style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>Apply for a Pilot →</Button>
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-bold text-white mb-1">Get the {selectedModule.code} Sample Report</h3>
+                    <p className="text-sm mb-5" style={{ color: "oklch(60% 0.02 248.6)" }}>Enter your details and download instantly — no spam, ever.</p>
+                    <div className="flex flex-col gap-3">
+                      <input
+                        type="text"
+                        placeholder="Your name"
+                        value={leadName}
+                        onChange={(e) => setLeadName(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                        style={{ background: "oklch(from white 12% 0 0 / 0.06)", border: "1px solid oklch(from white 25% 0 0 / 0.1)", color: "white" }}
+                      />
+                      <input
+                        type="email"
+                        placeholder="Your work email"
+                        value={leadEmail}
+                        onChange={(e) => setLeadEmail(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter" && leadEmail) captureMutation.mutate({ email: leadEmail, name: leadName || undefined, moduleCode: selectedModule.code }); }}
+                        className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                        style={{ background: "oklch(from white 12% 0 0 / 0.06)", border: "1px solid oklch(from white 25% 0 0 / 0.1)", color: "white" }}
+                      />
+                      {leadError && <p className="text-xs text-red-400">{leadError}</p>}
+                      <Button
+                        disabled={!leadEmail || captureMutation.isPending}
+                        onClick={() => captureMutation.mutate({ email: leadEmail, name: leadName || undefined, moduleCode: selectedModule.code })}
+                        className="w-full h-12 font-bold text-sm"
+                        style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
+                        {captureMutation.isPending ? "Preparing..." : (<><Download size={15} className="mr-2" />Download Free Sample Report</>)}
+                      </Button>
+                      <p className="text-xs text-center" style={{ color: "oklch(45% 0.02 248.6)" }}>No spam. Unsubscribe anytime.</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </section>

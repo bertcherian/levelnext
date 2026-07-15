@@ -23,6 +23,7 @@ import CpiReport from "./pages/CpiReport";
 import NiiReport from "./pages/NiiReport";
 import CiReport from "./pages/CiReport";
 import LiReport from "./pages/LiReport";
+import CareerProgress from "./pages/CareerProgress";
 import ImportEci from "./pages/ImportEci";
 import ImportChatgpt from "./pages/ImportChatgpt";
 import ImportPriorAssessments from "./pages/ImportPriorAssessments";
@@ -78,6 +79,7 @@ function Router() {
       <Route path="/admin/momentum/:userId" component={AdminMomentumBrief} />
       <Route path="/admin/escalations" component={AdminEscalations} />
       <Route path="/career" component={CareerHome} />
+      <Route path="/career/progress" component={CareerProgress} />
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/progress" component={Progress} />

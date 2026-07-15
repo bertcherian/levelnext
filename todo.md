@@ -418,3 +418,15 @@
 - [x] Update LiReport.tsx SAMPLE_PDF_URLS for NII and GCC with real CDN paths
 - [x] TypeScript clean, dev server running
 - [x] Save checkpoint
+
+## Phase 36 — LI Report Test, Landing Lead Magnet, CI Progress Page (Jul 15)
+- [x] Verify LiReport.tsx router procedure and data flow are correct end-to-end (getReport + getAnalysis + generateAnalysis all confirmed)
+- [x] Add sample PDF download lead magnet section with email capture to Landing.tsx (ECI/LII/STI selector, name + email form, auto-download on submit)
+- [x] Build lead_captures DB table + migration applied
+- [x] Build server/routers/leads.ts with captureEmail (public) and listLeads (admin) procedures
+- [x] Register leadsRouter in server/routers.ts
+- [x] Build client/src/pages/CareerProgress.tsx — CI progress summary page with composite score banner, journey stage grouping, module cards, coach guidance note
+- [x] Register /career/progress route in App.tsx
+- [x] Update CI_NAV_ITEMS Progress link to /career/progress in PlatformLayout.tsx
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint

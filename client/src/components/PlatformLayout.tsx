@@ -51,7 +51,7 @@ const CI_NAV_ITEMS = [
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
   { label: "Practice Coach", icon: Zap, href: "/practice" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
-  { label: "Progress", icon: BarChart3, href: "/progress" },
+  { label: "Progress", icon: BarChart3, href: "/career/progress" },
   { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];

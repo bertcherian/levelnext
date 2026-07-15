@@ -985,3 +985,16 @@ export const magicLinkTokens = mysqlTable("magic_link_tokens", {
 });
 export type MagicLinkToken = typeof magicLinkTokens.$inferSelect;
 export type InsertMagicLinkToken = typeof magicLinkTokens.$inferInsert;
+
+// ─── Lead Captures (Landing Page Email Capture) ───────────────────────────────
+// Stores email addresses captured from the landing page sample report lead magnet
+export const leadCaptures = mysqlTable("lead_captures", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 200 }),
+  source: varchar("source", { length: 64 }).default("sample_report").notNull(), // e.g. sample_report, landing_cta
+  moduleCode: varchar("moduleCode", { length: 16 }), // which sample PDF they requested
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LeadCapture = typeof leadCaptures.$inferSelect;
+export type InsertLeadCapture = typeof leadCaptures.$inferInsert;
