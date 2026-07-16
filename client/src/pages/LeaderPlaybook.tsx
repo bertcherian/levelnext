@@ -488,6 +488,224 @@ function ReflectionForm({ sessionId, existingReflection, prompts }: {
   );
 }
 
+// ─── Section Nav Panel ────────────────────────────────────────────────────────────
+function SectionNavPanel({
+  openSections,
+  activeSection,
+  onNavClick,
+}: {
+  openSections: Set<string>;
+  activeSection: string | null;
+  onNavClick: (key: string) => void;
+}) {
+  return (
+    <div className="w-52 flex-shrink-0 hidden xl:block">
+      <div
+        className="sticky top-6 rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden"
+        style={{ maxHeight: "calc(100vh - 48px)" }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center gap-2 px-4 py-3 border-b border-gray-100"
+          style={{ background: "#12345A" }}
+        >
+          <BookOpen size={13} className="text-[#F2B705] flex-shrink-0" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-white/80">Sections</span>
+        </div>
+        {/* Nav items */}
+        <nav className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 120px)" }}>
+          <ul className="py-2">
+            {SECTION_META.map((meta) => {
+              const Icon = meta.icon;
+              const isActive = activeSection === meta.key;
+              const isOpen = openSections.has(meta.key);
+              return (
+                <li key={meta.key}>
+                  <button
+                    onClick={() => onNavClick(meta.key)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all duration-150 group"
+                    style={{
+                      background: isActive ? `${meta.color}12` : "transparent",
+                      borderLeft: isActive ? `2.5px solid ${meta.color}` : "2.5px solid transparent",
+                    }}
+                  >
+                    <div
+                      className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
+                      style={{ background: isActive ? `${meta.color}20` : "transparent" }}
+                    >
+                      <Icon
+                        size={11}
+                        style={{ color: isActive ? meta.color : "#9ca3af" }}
+                      />
+                    </div>
+                    <span
+                      className="text-[11px] font-medium leading-tight"
+                      style={{ color: isActive ? meta.color : "#6b7280" }}
+                    >
+                      {meta.label}
+                    </span>
+                    {isOpen && !isActive && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </div>
+    </div>
+  );
+}
+
+// ─── Session View (extracted for clean section-nav wiring) ────────────────────────────────────────────────────────────
+function SessionView({
+  pc,
+  classification,
+  sessionId,
+  sessionData,
+  openSections,
+  toggleSection,
+  expandAll,
+  collapseAll,
+  onNewPlaybook,
+  onSelectHistory,
+}: {
+  pc: PlaybookContent;
+  classification: Classification | null;
+  sessionId: number | null;
+  sessionData: any;
+  openSections: Set<string>;
+  toggleSection: (key: string) => void;
+  expandAll: () => void;
+  collapseAll: () => void;
+  onNewPlaybook: () => void;
+  onSelectHistory: (id: number) => void;
+}) {
+  const [activeSection, setActiveSection] = useState<string | null>("situationSummary");
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Scroll-spy: observe which section is nearest the top of the viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the topmost visible section
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length > 0) {
+          const id = visible[0].target.getAttribute("data-section");
+          if (id) setActiveSection(id);
+        }
+      },
+      { rootMargin: "-20% 0px -60% 0px", threshold: 0 }
+    );
+    Object.values(sectionRefs.current).forEach((el) => { if (el) observer.observe(el); });
+    return () => observer.disconnect();
+  }, [openSections]);
+
+  // Click nav item: open section + smooth scroll to it
+  const handleNavClick = (key: string) => {
+    // Open section if not already open
+    if (!openSections.has(key)) toggleSection(key);
+    setActiveSection(key);
+    // Small delay to allow accordion to open before scrolling
+    setTimeout(() => {
+      const el = sectionRefs.current[key];
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
+
+  return (
+    <div className="flex gap-6 max-w-7xl mx-auto px-4 py-6">
+      {/* Left: History sidebar */}
+      <HistoryPanel onSelect={onSelectHistory} currentSessionId={sessionId} />
+
+      {/* Centre: Main content */}
+      <div className="flex-1 min-w-0">
+        {/* Top bar */}
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={onNewPlaybook} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#12345A] transition-colors">
+            <ArrowLeft size={14} /> New Playbook
+          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={collapseAll} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded">Collapse all</button>
+            <button onClick={expandAll} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded">Expand all</button>
+          </div>
+        </div>
+
+        {/* Situation headline */}
+        <div className="mb-6">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#12345A] flex items-center justify-center flex-shrink-0 mt-0.5">
+              <BookOpen size={18} className="text-[#F2B705]" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-[#12345A] leading-tight">
+                {pc.situationSummary?.headline ?? "Playbook"}
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                {classification && (
+                  <Badge variant="outline" className="text-xs border-[#12345A] text-[#12345A]">
+                    {classification.primarySituation?.replace(/_/g, " ")}
+                  </Badge>
+                )}
+                {classification?.urgency && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${URGENCY_COLORS[classification.urgency] ?? "bg-gray-100 text-gray-600"}`}>
+                    {classification.urgency} urgency
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Personalisation banner */}
+        {pc.personalisation && <PersonalisationBanner content={pc.personalisation} />}
+
+        {/* 13 sections with scroll-spy refs */}
+        <div className="space-y-0">
+          {SECTION_META.map((meta, idx) => {
+            const content = pc[meta.key as keyof PlaybookContent];
+            return (
+              <div
+                key={meta.key}
+                data-section={meta.key}
+                ref={(el) => { sectionRefs.current[meta.key] = el; }}
+                style={{ scrollMarginTop: "80px" }}
+              >
+                <AccordionSection
+                  meta={meta}
+                  content={content}
+                  isOpen={openSections.has(meta.key)}
+                  onToggle={() => toggleSection(meta.key)}
+                  isFirst={idx === 0}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Reflection */}
+        {sessionData && (
+          <ReflectionForm
+            sessionId={sessionId!}
+            existingReflection={sessionData.reflection}
+            prompts={pc.reflectionPrompts?.prompts ?? []}
+          />
+        )}
+      </div>
+
+      {/* Right: Section nav */}
+      <SectionNavPanel
+        openSections={openSections}
+        activeSection={activeSection}
+        onNavClick={handleNavClick}
+      />
+    </div>
+  );
+}
+
 // ─── History Panel ────────────────────────────────────────────────────────────
 function HistoryPanel({ onSelect, currentSessionId }: { onSelect: (id: number) => void; currentSessionId: number | null }) {
   const { data: sessions } = trpc.playbook.listSessions.useQuery({ limit: 20 });
@@ -780,79 +998,18 @@ export default function LeaderPlaybook() {
   if (view === "session" && playbookContent) {
     const pc = playbookContent;
     return (
-      <div className="flex gap-8 max-w-6xl mx-auto px-4 py-6">
-        {/* History sidebar */}
-        <HistoryPanel onSelect={handleSelectHistory} currentSessionId={sessionId} />
-
-        {/* Main content */}
-        <div className="flex-1 min-w-0">
-          {/* Top bar */}
-          <div className="flex items-center justify-between mb-6">
-            <button onClick={() => setView("input")} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#12345A] transition-colors">
-              <ArrowLeft size={14} /> New Playbook
-            </button>
-            <div className="flex items-center gap-2">
-              <button onClick={collapseAll} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded">Collapse all</button>
-              <button onClick={expandAll} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded">Expand all</button>
-            </div>
-          </div>
-
-          {/* Situation headline */}
-          <div className="mb-6">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#12345A] flex items-center justify-center flex-shrink-0 mt-0.5">
-                <BookOpen size={18} className="text-[#F2B705]" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-[#12345A] leading-tight">
-                  {pc.situationSummary?.headline ?? "Leader Playbook"}
-                </h1>
-                <div className="flex items-center gap-2 mt-1">
-                  {classification && (
-                    <Badge variant="outline" className="text-xs border-[#12345A] text-[#12345A]">
-                      {classification.primarySituation?.replace(/_/g, " ")}
-                    </Badge>
-                  )}
-                  {classification?.urgency && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${URGENCY_COLORS[classification.urgency] ?? "bg-gray-100 text-gray-600"}`}>
-                      {classification.urgency} urgency
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Personalisation banner */}
-          {pc.personalisation && <PersonalisationBanner content={pc.personalisation} />}
-
-          {/* 13 sections (excluding personalisation which is shown in banner) */}
-          <div className="space-y-0">
-            {SECTION_META.map((meta, idx) => {
-              const content = pc[meta.key as keyof PlaybookContent];
-              return (
-                <AccordionSection
-                  key={meta.key}
-                  meta={meta}
-                  content={content}
-                  isOpen={openSections.has(meta.key)}
-                  onToggle={() => toggleSection(meta.key)}
-                  isFirst={idx === 0}
-                />
-              );
-            })}
-          </div>
-
-          {/* Reflection */}
-          {sessionData && (
-            <ReflectionForm
-              sessionId={sessionId!}
-              existingReflection={sessionData.reflection}
-              prompts={pc.reflectionPrompts?.prompts ?? []}
-            />
-          )}
-        </div>
-      </div>
+      <SessionView
+        pc={pc}
+        classification={classification}
+        sessionId={sessionId}
+        sessionData={sessionData}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        expandAll={expandAll}
+        collapseAll={collapseAll}
+        onNewPlaybook={() => setView("input")}
+        onSelectHistory={handleSelectHistory}
+      />
     );
   }
 
