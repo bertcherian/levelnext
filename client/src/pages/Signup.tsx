@@ -260,13 +260,13 @@ export default function Signup() {
                 <h2 className="text-2xl font-bold mb-3" style={{ color: "#12345A" }}>
                   Check your inbox
                 </h2>
-                <p className="text-sm mb-2" style={{ color: "#555" }}>
+                <p className="text-sm mb-2" style={{ color: "#333" }}>
                   We've sent your sign-in link to
                 </p>
                 <p className="font-semibold text-base mb-4" style={{ color: "#12345A" }}>
                   {email}
                 </p>
-                <p className="text-sm mb-6" style={{ color: "#888" }}>
+                <p className="text-sm mb-6" style={{ color: "#333" }}>
                   Click the link in the email to access LevelNext. The link expires in 15 minutes.
                 </p>
 
@@ -291,13 +291,13 @@ export default function Signup() {
 
                 <button
                   className="text-sm underline"
-                  style={{ color: "#888" }}
+                  style={{ color: "#333" }}
                   onClick={() => { setState("form"); setErrorMsg(null); setDevToken(null); }}
                 >
                   Use a different email
                 </button>
 
-                <p className="text-xs mt-6" style={{ color: "#bbb" }}>
+                <p className="text-xs mt-6" style={{ color: "#555" }}>
                   Didn't receive it? Check your spam folder or try a different email address.
                 </p>
               </div>

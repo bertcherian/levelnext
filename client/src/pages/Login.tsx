@@ -210,13 +210,13 @@ export default function Login() {
               <h1 className="text-2xl font-bold mb-3" style={{ color: "#12345A" }}>
                 Check your inbox
               </h1>
-              <p className="text-sm mb-2" style={{ color: "#555" }}>
+              <p className="text-sm mb-2" style={{ color: "#333" }}>
                 We've sent a sign-in link to
               </p>
               <p className="font-semibold text-base mb-6" style={{ color: "#12345A" }}>
                 {email}
               </p>
-              <p className="text-sm mb-8" style={{ color: "#888" }}>
+              <p className="text-sm mb-8" style={{ color: "#333" }}>
                 Click the link in the email to sign in. The link expires in 15 minutes.
               </p>
 
@@ -250,14 +250,14 @@ export default function Login() {
                 </Button>
                 <button
                   className="text-sm underline"
-                  style={{ color: "#888" }}
+                  style={{ color: "#333" }}
                   onClick={handleResend}
                 >
                   Resend sign-in link
                 </button>
               </div>
 
-              <p className="text-xs mt-6" style={{ color: "#bbb" }}>
+              <p className="text-xs mt-6" style={{ color: "#555" }}>
                 Didn't receive it? Check your spam folder or try a different email address.
               </p>
             </div>
