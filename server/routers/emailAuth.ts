@@ -189,6 +189,9 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       // For magic link users, openId is derived from their email (email-based identity)
       const openId = `email_${Buffer.from(email).toString("base64url")}`;
 
+      // Track whether this is a brand-new user for post-login redirect
+      let isNewUser = false;
+
       // Check if user already exists by openId
       let [existingUser] = await db
         .select()
@@ -209,6 +212,7 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
           existingUser = userByEmail;
         } else {
           // Create a new user
+          isNewUser = true;
           await db.insert(users).values({
             openId,
             email,
@@ -264,8 +268,9 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Redirect to app
-      res.redirect(302, `${origin}/`);
+      // Redirect to app — new users go to onboarding, returning users go to home
+      const postLoginPath = isNewUser ? "/onboard" : "/home";
+      res.redirect(302, `${origin}${postLoginPath}`);
     } catch (error) {
       console.error("[MagicLink] Verify failed:", error);
       res.redirect(`${origin}/login?error=server_error`);
