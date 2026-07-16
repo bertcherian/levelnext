@@ -1362,3 +1362,121 @@ export const outreachDrafts = mysqlTable("outreach_drafts", {
 });
 export type OutreachDraft = typeof outreachDrafts.$inferSelect;
 export type InsertOutreachDraft = typeof outreachDrafts.$inferInsert;
+
+
+// ─── Manager Effectiveness Platform ──────────────────────────────────────────
+
+// Stores completed diagnostic results for each MEP diagnostic
+export const mepDiagnosticResults = mysqlTable("mep_diagnostic_results", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  // Diagnostic code: MEI, DI, FI, CI_COACH, THI, EXI, CONFI, O1I, TCI, OWI
+  diagnosticCode: varchar("diagnosticCode", { length: 20 }).notNull(),
+  // Raw responses: { questionId: score (1-5) }
+  responses: json("responses").$type<Record<string, number>>().notNull(),
+  // Computed dimension scores: { dimensionId: score (0-100) }
+  dimensionScores: json("dimensionScores").$type<Record<string, number>>().notNull(),
+  // Overall score 0-100
+  overallScore: float("overallScore").notNull(),
+  // Zone label: e.g. "Developing", "Effective", "Exceptional"
+  zone: varchar("zone", { length: 50 }),
+  // AI-generated analysis (strengths, risks, blind spots, learning path)
+  llmAnalysis: json("llmAnalysis").$type<Record<string, any>>(),
+  completedAt: timestamp("completedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type MepDiagnosticResult = typeof mepDiagnosticResults.$inferSelect;
+export type InsertMepDiagnosticResult = typeof mepDiagnosticResults.$inferInsert;
+
+// Manager Guide — chat sessions
+export const managerGuideSessions = mysqlTable("manager_guide_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ManagerGuideSession = typeof managerGuideSessions.$inferSelect;
+
+// Manager Guide — individual messages
+export type ManagerGuideMessageRole = "user" | "assistant";
+export type ManagerGuideMessageContent = { role: ManagerGuideMessageRole; content: string; timestamp: string };
+export const managerGuideMessages = mysqlTable("manager_guide_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["user", "assistant"]).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ManagerGuideMessage = typeof managerGuideMessages.$inferSelect;
+
+// Manager Playbook — situation → structured AI playbook sessions
+export const managerPlaybookSessions = mysqlTable("manager_playbook_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  situation: text("situation").notNull(),
+  situationType: varchar("situationType", { length: 100 }),
+  // AI-generated playbook: { diagnosis, possibleCauses, framework, conversationGuide, questions, actionPlan, commonMistakes, followUpPlan, learningResources }
+  playbook: json("playbook").$type<Record<string, any>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ManagerPlaybookSession = typeof managerPlaybookSessions.$inferSelect;
+
+// Behaviour Change Engine — commitments + check-ins
+export const behaviourCommitments = mysqlTable("behaviour_commitments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  commitment: text("commitment").notNull(),
+  // Source diagnostic that triggered this commitment
+  sourceDiagnostic: varchar("sourceDiagnostic", { length: 20 }),
+  targetDate: timestamp("targetDate"),
+  status: mysqlEnum("status", ["active", "completed", "abandoned"]).default("active").notNull(),
+  // Check-in history: [{ date, done, howItWent, whatHappened, whatLearned, aiCoaching }]
+  checkIns: json("checkIns").$type<Array<Record<string, any>>>().default([]),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BehaviourCommitment = typeof behaviourCommitments.$inferSelect;
+
+// Daily Management Brief — one per user per day
+export const mepDailyBriefs = mysqlTable("mep_daily_briefs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  briefDate: varchar("briefDate", { length: 10 }).notNull(), // YYYY-MM-DD
+  // AI-generated brief content
+  brief: json("brief").$type<Record<string, any>>(),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+});
+export type MepDailyBrief = typeof mepDailyBriefs.$inferSelect;
+
+// MEP Practice Partner — role-play sessions
+export const mepPracticeSessions = mysqlTable("mep_practice_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  scenario: varchar("scenario", { length: 255 }).notNull(),
+  scenarioType: varchar("scenarioType", { length: 100 }),
+  // Personality of the AI counterpart
+  counterpartPersonality: varchar("counterpartPersonality", { length: 100 }),
+  // Full conversation: [{ role, content, timestamp }]
+  messages: json("messages").$type<Array<Record<string, any>>>().default([]),
+  // AI coaching feedback at end of session
+  coachingFeedback: json("coachingFeedback").$type<Record<string, any>>(),
+  status: mysqlEnum("status", ["active", "completed"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type MepPracticeSession = typeof mepPracticeSessions.$inferSelect;
+
+// ── MEP Layer 6: Team Intelligence ───────────────────────────────────────────
+export const managerTeamMembers = mysqlTable("manager_team_members", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: varchar("userId", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  role: varchar("role", { length: 255 }),
+  notes: text("notes"),
+  lastInsight: json("lastInsight").$type<Record<string, any>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ManagerTeamMember = typeof managerTeamMembers.$inferSelect;

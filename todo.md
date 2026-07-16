@@ -537,3 +537,56 @@
 - [x] Admin users (role = admin) bypass filter and always see all platforms
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Manager Effectiveness Platform — Sprint 1 (Jul 16)
+- [ ] DB schema: mep_diagnostic_results table (10 diagnostics, dimension scores, LLM analysis)
+- [ ] DB schema: manager_guide_sessions + manager_guide_messages tables (AI Guide chat)
+- [ ] DB schema: manager_playbook_sessions table (situation → AI playbook)
+- [ ] DB schema: behaviour_commitments table (commitment tracking + check-ins)
+- [ ] DB schema: mep_daily_briefs table (daily management brief)
+- [ ] DB schema: mep_practice_sessions table (AI practice partner)
+- [ ] Run migration and apply SQL
+- [ ] Backend: mepDiagnostics router (10 diagnostics, submit + get results)
+- [ ] Backend: managerGuide router (AI chat with full manager context)
+- [ ] Backend: managerPlaybook router (situation → structured playbook)
+- [ ] Backend: behaviourEngine router (commitments + check-ins)
+- [ ] Backend: mepDailyBrief router (generate daily management brief)
+- [ ] Backend: mepPractice router (AI practice partner sessions)
+- [ ] Shared: mepData.ts (10 diagnostic question sets + scoring)
+- [ ] Frontend: /manager/home — MEP Home dashboard
+- [ ] Frontend: /manager/diagnostics — Diagnostics hub (10 diagnostics)
+- [ ] Frontend: /manager/guide — AI Manager Guide (chat interface)
+- [ ] Frontend: /manager/playbook — Manager Playbook (situation → AI response)
+- [ ] Frontend: /manager/brief — Daily Management Brief
+- [ ] Frontend: /manager/practice — AI Practice Partner
+- [ ] Frontend: /manager/team — Team Intelligence dashboard
+- [ ] Frontend: /manager/commitments — Behaviour Change Engine
+- [ ] Add manager_effectiveness product to PRODUCT_CONFIG in ProductSwitcher
+- [ ] Add MEP_NAV_ITEMS to PlatformLayout
+- [ ] Register all /manager/* routes in App.tsx
+- [ ] Seed manager_effectiveness product row in DB
+- [ ] Enroll admin user in manager_effectiveness product for testing
+- [ ] TypeScript clean (zero errors)
+- [ ] Save checkpoint
+
+## Manager Effectiveness Platform (MEP) — Sprint 1 (Jul 16)
+- [x] DB schema: mep_diagnostic_results, manager_guide_sessions, manager_guide_messages, manager_playbook_sessions, behaviour_commitments, mep_daily_briefs, mep_practice_sessions, manager_team_members tables
+- [x] Run drizzle-kit generate and apply all migrations
+- [x] Shared data module: shared/modules/mepData.ts with 10 diagnostics, questions, scoring
+- [x] Backend: mep router with all 6 layers (diagnostics, guide, playbook, daily brief, practice partner, behaviour engine, team intelligence)
+- [x] Frontend: ManagerHome at /manager
+- [x] Frontend: ManagerDiagnostics at /manager/diagnostics
+- [x] Frontend: ManagerGuide at /manager/guide
+- [x] Frontend: ManagerPlaybook at /manager/playbook
+- [x] Frontend: ManagerBrief at /manager/brief
+- [x] Frontend: ManagerPractice at /manager/practice
+- [x] Frontend: ManagerCommitments at /manager/commitments
+- [x] Frontend: TeamIntelligence at /manager/team
+- [x] Wire MEP into ProductSwitcher PRODUCT_CONFIG
+- [x] Wire MEP nav into PlatformLayout MEP_NAV_ITEMS
+- [x] Wire all 8 routes into App.tsx
+- [x] Seed manager_effectiveness product in DB
+- [x] Enroll admin user in manager_effectiveness product
+- [x] Update PostLoginProductActivator to redirect MEP users to /manager
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint

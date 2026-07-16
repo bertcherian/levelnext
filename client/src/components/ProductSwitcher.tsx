@@ -15,7 +15,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import { ChevronDown, Briefcase, Brain, Check, Loader2 } from "lucide-react";
+import { ChevronDown, Briefcase, Brain, Check, Loader2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -42,6 +42,14 @@ const PRODUCT_CONFIG: Record<string, {
     color: "#818cf8",
     description: "Own your career trajectory",
     homeRoute: "/career",
+  },
+  manager_effectiveness: {
+    label: "Manager Effectiveness",
+    shortLabel: "Manager",
+    icon: Users,
+    color: "#34d399",
+    description: "Lead your team with impact",
+    homeRoute: "/manager",
   },
 };
 

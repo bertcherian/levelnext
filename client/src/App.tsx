@@ -44,6 +44,14 @@ import AdminMomentumBrief from "@/pages/AdminMomentumBrief";
 import AdminEscalations from "@/pages/AdminEscalations";
 import CareerHome from "@/pages/CareerHome";
 import AdminProductEnrollments from "@/pages/AdminProductEnrollments";
+import ManagerHome from "@/pages/mep/ManagerHome";
+import ManagerDiagnostics from "@/pages/mep/ManagerDiagnostics";
+import ManagerGuide from "@/pages/mep/ManagerGuide";
+import ManagerPlaybook from "@/pages/mep/ManagerPlaybook";
+import ManagerBrief from "@/pages/mep/ManagerBrief";
+import ManagerPractice from "@/pages/mep/ManagerPractice";
+import ManagerCommitments from "@/pages/mep/ManagerCommitments";
+import TeamIntelligence from "@/pages/mep/TeamIntelligence";
 import CareerLanding from "@/pages/CareerLanding";
 import JoinPage from "@/pages/JoinPage";
 import JoinProduct from "@/pages/JoinProduct";
@@ -65,7 +73,7 @@ function PostLoginProductActivator() {
     onSuccess: (data) => {
       utils.products.getActiveProduct.invalidate();
       utils.products.getEnrolledProducts.invalidate();
-      const dest = data.productId === "career_intelligence" ? "/career" : "/home";
+      const dest = data.productId === "career_intelligence" ? "/career" : data.productId === "manager_effectiveness" ? "/manager" : "/home";
       window.location.replace(dest);
     },
   });
@@ -130,6 +138,15 @@ function Router() {
       <Route path="/career/relationships" component={RelationshipGraph} />
       <Route path="/career/access-paths" component={AccessPaths} />
       <Route path="/career/brand" component={OutreachEngine} />
+      {/* Manager Effectiveness Platform */}
+      <Route path="/manager" component={ManagerHome} />
+      <Route path="/manager/diagnostics" component={ManagerDiagnostics} />
+      <Route path="/manager/guide" component={ManagerGuide} />
+      <Route path="/manager/playbook" component={ManagerPlaybook} />
+      <Route path="/manager/brief" component={ManagerBrief} />
+      <Route path="/manager/practice" component={ManagerPractice} />
+      <Route path="/manager/commitments" component={ManagerCommitments} />
+      <Route path="/manager/team" component={TeamIntelligence} />
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/progress" component={Progress} />

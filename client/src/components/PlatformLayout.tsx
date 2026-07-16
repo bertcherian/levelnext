@@ -67,6 +67,18 @@ const CI_NAV_ITEMS = [
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 
+// Manager Effectiveness Platform nav items
+const MEP_NAV_ITEMS: { label: string; icon: React.ElementType; href: string; badgeKey?: string }[] = [
+  { label: "Manager Home", icon: Home, href: "/manager" },
+  { label: "Diagnostics", icon: LayoutGrid, href: "/manager/diagnostics" },
+  { label: "Manager Guide", icon: MessageSquare, href: "/manager/guide" },
+  { label: "Playbook", icon: BookOpen, href: "/manager/playbook" },
+  { label: "Daily Brief", icon: Lightbulb, href: "/manager/brief" },
+  { label: "Practice Partner", icon: Zap, href: "/manager/practice" },
+  { label: "Commitments", icon: Activity, href: "/manager/commitments" },
+  { label: "Settings", icon: Settings, href: "/settings" },
+];
+
 // Bottom tab bar — 5 primary destinations + More
 const BOTTOM_TABS = [
   { label: "Home", icon: Home, href: "/home" },
@@ -123,6 +135,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
   });
   const activeProductId = activeProduct?.productId ?? "leadership_intelligence";
   const isCareerProduct = activeProductId === "career_intelligence";
+  const isMepProduct = activeProductId === "manager_effectiveness";
 
   // Notification badge: count of modules where all gates have passed but the
   // narrative has not yet been shown (i.e. user is ready for next diagnostic
@@ -235,7 +248,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         {/* Drawer nav */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-0.5">
-            {(isCareerProduct ? CI_NAV_ITEMS : NAV_ITEMS).map((item) => {
+            {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : NAV_ITEMS).map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
@@ -416,7 +429,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         {/* Desktop nav */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-0.5">
-            {(isCareerProduct ? CI_NAV_ITEMS : NAV_ITEMS).map((item) => {
+            {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : NAV_ITEMS).map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;

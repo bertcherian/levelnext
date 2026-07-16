@@ -30,6 +30,7 @@ import { leadsRouter } from "./routers/leads";
 import { playbookRouter } from "./routers/playbookRouter";
 import { careerAccessRouter } from "./routers/careerAccess";
 import { outreachEngineRouter } from "./routers/outreachEngine";
+import { mepRouter } from "./routers/mep";
 
 export const appRouter = router({
   system: systemRouter,
@@ -69,6 +70,7 @@ export const appRouter = router({
   playbook: playbookRouter,
   careerAccess: careerAccessRouter,
   outreachEngine: outreachEngineRouter,
+  mep: mepRouter,
 });
 
 export type AppRouter = typeof appRouter;

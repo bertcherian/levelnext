@@ -190,6 +190,20 @@
       "when": 1784216995128,
       "tag": "0026_grey_captain_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1784221171646,
+      "tag": "0027_flawless_wolfpack",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1784222483337,
+      "tag": "0028_needy_thanos",
+      "breakpoints": true
     }
   ]
 }
