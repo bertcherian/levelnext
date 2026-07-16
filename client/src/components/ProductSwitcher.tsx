@@ -1,5 +1,19 @@
+/**
+ * ProductSwitcher
+ *
+ * Enrollment-gated platform switcher:
+ * - Admin users: always see all platforms in the dropdown (bypass enrollment check)
+ * - Non-admin with 2+ enrollments: see a dropdown filtered to their enrolled platforms only
+ * - Non-admin with exactly 1 enrollment: see a static label — NO dropdown, no way to switch
+ * - Non-admin with 0 enrollments: nothing rendered (edge case)
+ *
+ * This prevents clients from accidentally (or intentionally) roaming into platforms
+ * they have not purchased.
+ */
+
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { ChevronDown, Briefcase, Brain, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,17 +45,23 @@ const PRODUCT_CONFIG: Record<string, {
   },
 };
 
+// All known product IDs — used for admin override
+const ALL_PRODUCT_IDS = Object.keys(PRODUCT_CONFIG);
+
 export default function ProductSwitcher() {
   const [open, setOpen] = useState(false);
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+
+  const isAdmin = user?.role === "admin";
 
   const utils = trpc.useUtils();
   const { data: activeProduct, refetch } = trpc.products.getActiveProduct.useQuery();
   const { data: enrolledProducts } = trpc.products.getEnrolledProducts.useQuery(undefined, {
-    // Short stale time so the switcher appears quickly after admin enrollment
     staleTime: 5_000,
     refetchOnWindowFocus: true,
   });
+
   const switchProduct = trpc.products.switchProduct.useMutation({
     onSuccess: (_data, variables) => {
       refetch();
@@ -60,10 +80,41 @@ export default function ProductSwitcher() {
   const activeConfig = PRODUCT_CONFIG[activeId];
   const ActiveIcon = activeConfig?.icon ?? Brain;
 
-  // Only show switcher if user is enrolled in more than one product
-  const enrolledIds = enrolledProducts?.map((e: any) => e.enrollment.productId) ?? [];
-  if (enrolledIds.length <= 1) return null;
+  // Determine which product IDs to show in the switcher
+  const enrolledIds: string[] = enrolledProducts?.map((e: any) => e.enrollment.productId) ?? [];
+  // Admins see all platforms; non-admins see only their enrolled platforms
+  const visibleIds: string[] = isAdmin ? ALL_PRODUCT_IDS : enrolledIds;
 
+  // ── Case 1: Nothing to show (0 enrolled, non-admin) ──────────────────────
+  if (!isAdmin && enrolledIds.length === 0) return null;
+
+  // ── Case 2: Single enrollment (non-admin) — static label, no dropdown ────
+  if (!isAdmin && enrolledIds.length === 1) {
+    return (
+      <div className="px-3 pb-3">
+        <div
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm"
+          style={{ background: "oklch(from white 15% 0 0 / 0.08)", border: "1px solid oklch(from white 15% 0 0 / 0.1)" }}
+        >
+          <div
+            className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+            style={{ background: `oklch(from ${activeConfig?.color ?? "var(--color-ln-yellow)"} l c h / 0.2)` }}
+          >
+            <ActiveIcon size={13} style={{ color: activeConfig?.color ?? "var(--color-ln-yellow)" }} />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-xs font-semibold truncate text-white">{activeConfig?.shortLabel ?? "Product"}</p>
+            <p className="text-[10px] truncate" style={{ color: "oklch(55% 0.02 248.6)" }}>
+              {activeConfig?.description ?? ""}
+            </p>
+          </div>
+          {/* No chevron — no dropdown */}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Case 3: Multiple products visible (multi-enrollment user or admin) ────
   return (
     <div className="relative px-3 pb-3">
       <button
@@ -75,8 +126,10 @@ export default function ProductSwitcher() {
         )}
         style={{ background: "oklch(from white 15% 0 0 / 0.08)" }}
       >
-        <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
-          style={{ background: `oklch(from ${activeConfig?.color ?? "var(--color-ln-yellow)"} l c h / 0.2)` }}>
+        <div
+          className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+          style={{ background: `oklch(from ${activeConfig?.color ?? "var(--color-ln-yellow)"} l c h / 0.2)` }}
+        >
           <ActiveIcon size={13} style={{ color: activeConfig?.color ?? "var(--color-ln-yellow)" }} />
         </div>
         <div className="flex-1 min-w-0 text-left">
@@ -102,10 +155,13 @@ export default function ProductSwitcher() {
             style={{ top: "calc(100% + 4px)", background: "oklch(18% 0.04 248.6)", border: "1px solid oklch(30% 0.04 248.6)" }}
           >
             <div className="p-1">
-              <p className="text-[10px] font-semibold uppercase tracking-widest px-3 py-2" style={{ color: "oklch(45% 0.02 248.6)" }}>
-                Your Products
+              <p
+                className="text-[10px] font-semibold uppercase tracking-widest px-3 py-2"
+                style={{ color: "oklch(45% 0.02 248.6)" }}
+              >
+                {isAdmin ? "All Platforms" : "Your Products"}
               </p>
-              {enrolledIds.map((productId: string) => {
+              {visibleIds.map((productId: string) => {
                 const config = PRODUCT_CONFIG[productId];
                 if (!config) return null;
                 const Icon = config.icon;
@@ -122,8 +178,13 @@ export default function ProductSwitcher() {
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-100 hover:bg-white/8"
                     disabled={isSwitching}
                   >
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: `oklch(from ${config.color} l c h / 0.18)`, border: `1px solid oklch(from ${config.color} l c h / 0.3)` }}>
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{
+                        background: `oklch(from ${config.color} l c h / 0.18)`,
+                        border: `1px solid oklch(from ${config.color} l c h / 0.3)`,
+                      }}
+                    >
                       {isSwitching
                         ? <Loader2 size={13} className="animate-spin" style={{ color: config.color }} />
                         : <Icon size={13} style={{ color: config.color }} />}
@@ -136,6 +197,15 @@ export default function ProductSwitcher() {
                   </button>
                 );
               })}
+
+              {/* Admin badge */}
+              {isAdmin && (
+                <div className="px-3 pt-1 pb-2">
+                  <p className="text-[9px]" style={{ color: "oklch(40% 0.02 248.6)" }}>
+                    Admin view — all platforms visible regardless of enrollment
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </>

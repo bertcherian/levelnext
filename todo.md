@@ -528,3 +528,12 @@
 - [x] Update Landing page hero: Sign Up Free as primary CTA button
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Platform Enrollment Gating (Jul 16)
+- [x] Read platform switcher component and products router
+- [x] Update products router: getEnrolledProducts already returns correct data — no backend change needed
+- [x] Update platform switcher: filter dropdown to enrolled products only (non-admin users)
+- [x] Hide dropdown entirely when user has exactly one enrolled product — show static label instead
+- [x] Admin users (role = admin) bypass filter and always see all platforms
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint
