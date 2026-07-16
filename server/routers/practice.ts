@@ -560,10 +560,11 @@ export const practiceRouter = router({
         try { coachingSummary = JSON.parse(summaryMatch[1].trim()); } catch { /* ignore */ }
       }
 
+            const updatePayload: Record<string, unknown> = { coachingTranscript: finalMessages, status: "coaching" };
+      if (coachingSummary) updatePayload.coachingSummaryData = coachingSummary;
       await db.update(practiceSessions)
-        .set({ coachingTranscript: finalMessages, status: "coaching" })
+        .set(updatePayload)
         .where(eq(practiceSessions.id, input.sessionId));
-
       return { message: assistantMsg, coachingSummary, messages: finalMessages };
     }),
 
@@ -931,6 +932,33 @@ export const practiceRouter = router({
       : null;
 
     return { sessions, attempts, totalAttempts: attempts.length, averageScore };
+  }),
+
+  // Observer History — returns all sessions with ontological coaching data
+  getObserverHistory: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const sessions = await db
+      .select({
+        id: practiceSessions.id,
+        issueText: practiceSessions.issueText,
+        coachingSummaryData: practiceSessions.coachingSummaryData,
+        status: practiceSessions.status,
+        createdAt: practiceSessions.createdAt,
+      })
+      .from(practiceSessions)
+      .where(eq(practiceSessions.userId, ctx.user.id))
+      .orderBy(desc(practiceSessions.createdAt))
+      .limit(50);
+    // Only return sessions that have ontological data
+    const withObserver = sessions.filter(s =>
+      s.coachingSummaryData &&
+      (s.coachingSummaryData.dominantNarrative ||
+       s.coachingSummaryData.reframedNarrative ||
+       s.coachingSummaryData.ontologicalDistinction ||
+       s.coachingSummaryData.moodCheck)
+    );
+    return { sessions: withObserver, total: withObserver.length };
   }),
 
   // Alias: sendRolePlayMessage → sendSimulationMessage (UI compatibility)

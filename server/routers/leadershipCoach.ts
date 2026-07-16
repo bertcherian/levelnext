@@ -210,7 +210,7 @@ Generate a comprehensive Before-Meeting Brief. Return ONLY valid JSON matching t
         .map(a => `Q: ${a.question}\nA: ${a.answer}`)
         .join('\n\n');
 
-      const prompt = `You are an expert executive leadership coach conducting an after-meeting debrief.${contextPrompt}
+      const prompt = `You are an expert executive leadership coach conducting an after-meeting debrief. You are also trained in ontological coaching — you understand that behaviour change begins with a shift in the observer (the person's way of seeing, interpreting, and being).${contextPrompt}
 
 Conversation context: ${input.conversationContext}
 
@@ -228,7 +228,10 @@ Generate a comprehensive After-Meeting Debrief Report. Return ONLY valid JSON:
   "recoveryMove": "The best recovery move if needed",
   "suggestedFollowUpMessage": "A draft follow-up message to send",
   "recommendedPractice": "Specific practice scenario to prepare for next time",
-  "growthProfileUpdate": "One-sentence update to add to the leader's growth profile"
+  "growthProfileUpdate": "One-sentence update to add to the leader's growth profile",
+  "nextPracticeGoal": "A single, specific, personalised goal for the leader's next practice session — written as a first-person commitment, e.g. 'In my next practice I will stay curious instead of defending, and ask at least one open question before responding to pushback.'",
+  "nextPracticeScenario": "A concrete scenario description to practice next time — specific enough to be used as a Practice Coach prompt, e.g. 'Prepare for a follow-up conversation with a stakeholder who pushed back on your proposal in the last meeting. Your goal: listen for their concern before re-pitching.'",
+  "observerShift": "The single most important shift in how the leader sees this situation or person that would change what becomes possible — written as a coaching observation, e.g. 'You may be entering conversations as someone who needs to be right. What if you entered as someone who is genuinely curious about what they are missing?'"
 }`;
 
       const response = await invokeLLM({

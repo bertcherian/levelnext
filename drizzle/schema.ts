@@ -325,6 +325,25 @@ export type PracticeFeedback = {
   suggestedRealWorldAction: string;
 };
 
+// ─── Coaching Summary Data (Ontological fields) ──────────────────────────────
+export type CoachingSummaryData = {
+  realIssue?: string;
+  leadershipGap?: string;
+  behaviourToStrengthen?: string;
+  conversationNeeded?: string;
+  recommendedApproach?: string;
+  suggestedOpeningLines?: string[];
+  likelyResistance?: string;
+  howToHandleResistance?: string;
+  recommendedSimulation?: string;
+  commitmentSuggestion?: string;
+  diagnosticLink?: string;
+  dominantNarrative?: string;
+  ontologicalDistinction?: string;
+  reframedNarrative?: string;
+  moodCheck?: string;
+};
+
 // ─── Practice Sessions ────────────────────────────────────────────────────────
 export const practiceSessions = mysqlTable("practice_sessions", {
   id: int("id").autoincrement().primaryKey(),
@@ -332,6 +351,7 @@ export const practiceSessions = mysqlTable("practice_sessions", {
   issueText: text("issueText").notNull(),
   scenario: json("scenario").$type<PracticeScenario>(),
   coachingTranscript: json("coachingTranscript").$type<PracticeMessage[]>(),
+  coachingSummaryData: json("coachingSummaryData").$type<CoachingSummaryData>(),
   status: varchar("status", { length: 50 }).default("setup").notNull(), // setup | coaching | roleplay | feedback | complete
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -422,6 +442,9 @@ export type AfterMeetingDebriefData = {
   suggestedFollowUpMessage: string;
   recommendedPractice: string;
   growthProfileUpdate: string;
+  nextPracticeGoal?: string;  // Personalised goal for the user's next practice session
+  nextPracticeScenario?: string; // Specific scenario to practice next
+  observerShift?: string; // What observer shift would most help in the next conversation
 };
 
 export const afterMeetingDebriefs = mysqlTable("after_meeting_debriefs", {

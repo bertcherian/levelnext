@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
@@ -80,7 +81,8 @@ type Screen =
   | "coach-brief"
   | "privacy-settings"
   | "create-commitment"
-  | "practice-plan";
+  | "practice-plan"
+  | "observer-history";
 
 const SUGGESTION_CHIPS = [
   "Give feedback to a defensive team member",
@@ -200,6 +202,7 @@ function HomeScreen({
   onHistory,
   onCreateCommitment,
   onPracticePlan,
+  onObserverHistory,
 }: {
   onCoachFirst: (issue: string) => void;
   onSimulateFirst: (issue: string) => void;
@@ -210,6 +213,7 @@ function HomeScreen({
   onHistory: () => void;
   onCreateCommitment: () => void;
   onPracticePlan: () => void;
+  onObserverHistory: () => void;
 }) {
   const [issue, setIssue] = useState("");
   const [showAllChips, setShowAllChips] = useState(false);
@@ -330,13 +334,23 @@ function HomeScreen({
             <Zap className="w-5 h-5 text-[var(--color-ln-gold)]" />
             <h1 className="text-xl font-bold text-[var(--color-ln-navy)]">Practice</h1>
           </div>
-          <button
-            onClick={onHistory}
-            className="flex items-center gap-1.5 text-xs text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
-          >
-            <History className="w-3.5 h-3.5" />
-            History
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onObserverHistory}
+              className="flex items-center gap-1.5 text-xs text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
+              style={{ borderColor: 'rgba(212,175,55,0.4)' }}
+            >
+              <Compass className="w-3.5 h-3.5" style={{ color: 'var(--color-ln-gold)' }} />
+              Observer Log
+            </button>
+            <button
+              onClick={onHistory}
+              className="flex items-center gap-1.5 text-xs text-[var(--color-ln-navy)]/60 hover:text-[var(--color-ln-navy)] border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+              History
+            </button>
+          </div>
         </div>
         <p className="text-sm text-[var(--color-ln-navy)]/60">
           Your private leadership practice space. Everything here is confidential.
@@ -996,6 +1010,74 @@ function AfterMeetingDebriefScreen({
             Practice This Now
           </Button>
         </SectionCard>
+
+        {/* ── Ontological Next Practice Block ── */}
+        {(report.nextPracticeGoal || report.observerShift || report.nextPracticeScenario) && (
+          <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'rgba(212,175,55,0.35)', background: 'linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(10,26,47,0.03) 100%)' }}>
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: 'rgba(212,175,55,0.2)', background: 'rgba(212,175,55,0.08)' }}>
+              <Target className="w-4 h-4" style={{ color: 'var(--color-ln-gold)' }} />
+              <p className="text-xs font-bold tracking-wide uppercase" style={{ color: 'var(--color-ln-navy)' }}>Your Next Practice Goal</p>
+            </div>
+            <div className="p-4 space-y-4">
+
+              {/* Next Practice Goal */}
+              {report.nextPracticeGoal && (
+                <div>
+                  <p className="text-xs font-semibold mb-1.5" style={{ color: 'var(--color-ln-navy)', opacity: 0.55 }}>Your commitment for next time</p>
+                  <div className="rounded-lg px-3 py-2.5 text-sm leading-relaxed font-medium" style={{ background: 'rgba(10,26,47,0.05)', border: '1px solid rgba(10,26,47,0.12)', color: 'var(--color-ln-navy)' }}>
+                    “{report.nextPracticeGoal}”
+                  </div>
+                </div>
+              )}
+
+              {/* Observer Shift */}
+              {report.observerShift && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Compass className="w-3 h-3" style={{ color: 'var(--color-ln-gold)' }} />
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-xs font-semibold cursor-help inline-flex items-center gap-1" style={{ color: 'var(--color-ln-navy)', opacity: 0.55 }}>
+                            Observer shift to try
+                            <span className="text-[10px] rounded-full border px-1" style={{ borderColor: 'rgba(10,26,47,0.2)', color: 'var(--color-ln-navy)', opacity: 0.4 }}>?</span>
+                          </p>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs text-xs">
+                          <p className="font-semibold mb-1">What is an observer shift?</p>
+                          <p>In ontological coaching, your ‘observer’ is the lens you see the world through. Shifting the observer means trying on a different way of seeing the situation — which opens up different actions and possibilities.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="rounded-lg px-3 py-2.5 text-sm leading-relaxed italic" style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.18)', color: '#14532d' }}>
+                    {report.observerShift}
+                  </div>
+                </div>
+              )}
+
+              {/* Next Practice Scenario */}
+              {report.nextPracticeScenario && (
+                <div>
+                  <p className="text-xs font-semibold mb-1.5" style={{ color: 'var(--color-ln-navy)', opacity: 0.55 }}>Scenario to practice</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-3">{report.nextPracticeScenario}</p>
+                  <Button
+                    size="sm"
+                    onClick={() => onPractice(report.nextPracticeScenario!)}
+                    className="text-xs"
+                    style={{ background: 'var(--color-ln-gold)', color: 'var(--color-ln-navy)' }}
+                  >
+                    <Play className="w-3.5 h-3.5 mr-1.5" />
+                    Practice This Scenario
+                  </Button>
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -1888,7 +1970,20 @@ function CoachingScreen({
                 {/* Dominant Narrative → Reframe */}
                 {coachingSummary.dominantNarrative && (
                   <div>
-                    <p className="text-xs font-semibold mb-1.5" style={{ color: 'var(--color-ln-navy)', opacity: 0.55 }}>The narrative you entered with</p>
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-xs font-semibold mb-1.5 cursor-help inline-flex items-center gap-1" style={{ color: 'var(--color-ln-navy)', opacity: 0.55 }}>
+                            The narrative you entered with
+                            <span className="text-[10px] rounded-full border px-1" style={{ borderColor: 'rgba(10,26,47,0.2)', color: 'var(--color-ln-navy)', opacity: 0.4 }}>?</span>
+                          </p>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs text-xs">
+                          <p className="font-semibold mb-1">What is a narrative?</p>
+                          <p>In ontological coaching, a narrative is the story you are telling yourself about a situation or person. It shapes what you see as possible. Most narratives are assessments (opinions) presented to ourselves as facts.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <div className="rounded-lg px-3 py-2.5 text-sm leading-relaxed" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', color: '#7f1d1d' }}>
                       <span className="italic">"{coachingSummary.dominantNarrative}"</span>
                     </div>
@@ -1899,7 +1994,20 @@ function CoachingScreen({
                   <div>
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <ArrowRight className="w-3 h-3" style={{ color: 'var(--color-ln-gold)' }} />
-                      <p className="text-xs font-semibold" style={{ color: 'var(--color-ln-navy)', opacity: 0.55 }}>A fresh way to see this</p>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <p className="text-xs font-semibold cursor-help inline-flex items-center gap-1" style={{ color: 'var(--color-ln-navy)', opacity: 0.55 }}>
+                              A fresh way to see this
+                              <span className="text-[10px] rounded-full border px-1" style={{ borderColor: 'rgba(10,26,47,0.2)', color: 'var(--color-ln-navy)', opacity: 0.4 }}>?</span>
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs">
+                            <p className="font-semibold mb-1">What is a reframe?</p>
+                            <p>A reframe offers an alternative interpretation of the same situation. It does not deny the facts — it opens up a different way of seeing them, which in turn opens up different actions and possibilities.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                     <div className="rounded-lg px-3 py-2.5 text-sm leading-relaxed" style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', color: '#14532d' }}>
                       {coachingSummary.reframedNarrative}
@@ -1911,10 +2019,21 @@ function CoachingScreen({
                 {coachingSummary.ontologicalDistinction && (
                   <div className="flex items-start gap-2">
                     <Lightbulb className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'var(--color-ln-gold)' }} />
-                    <p className="text-xs" style={{ color: 'var(--color-ln-navy)', opacity: 0.7 }}>
-                      <span className="font-semibold">Distinction explored: </span>
-                      {coachingSummary.ontologicalDistinction}
-                    </p>
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-xs cursor-help" style={{ color: 'var(--color-ln-navy)', opacity: 0.7 }}>
+                            <span className="font-semibold">Distinction explored: </span>
+                            <span className="underline decoration-dotted">{coachingSummary.ontologicalDistinction}</span>
+                            <span className="text-[10px] rounded-full border px-1 ml-1" style={{ borderColor: 'rgba(10,26,47,0.2)', color: 'var(--color-ln-navy)', opacity: 0.4 }}>?</span>
+                          </p>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs text-xs">
+                          <p className="font-semibold mb-1">What is a distinction?</p>
+                          <p>Distinctions are precise conceptual tools used in ontological coaching to help you see something you couldn’t see before. Each distinction names a difference that, once noticed, changes how you interpret and respond to a situation.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 )}
 
@@ -1923,7 +2042,20 @@ function CoachingScreen({
                   <div className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(10,26,47,0.04)', border: '1px solid rgba(10,26,47,0.1)' }}>
                     <div className="flex items-center gap-1.5 mb-1">
                       <Wind className="w-3.5 h-3.5" style={{ color: 'var(--color-ln-navy)', opacity: 0.6 }} />
-                      <p className="text-xs font-semibold" style={{ color: 'var(--color-ln-navy)', opacity: 0.6 }}>Mood Check</p>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <p className="text-xs font-semibold cursor-help inline-flex items-center gap-1" style={{ color: 'var(--color-ln-navy)', opacity: 0.6 }}>
+                              Mood Check
+                              <span className="text-[10px] rounded-full border px-1" style={{ borderColor: 'rgba(10,26,47,0.2)', color: 'var(--color-ln-navy)', opacity: 0.4 }}>?</span>
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs">
+                            <p className="font-semibold mb-1">Why does mood matter?</p>
+                            <p>In ontological coaching, moods are not just feelings — they are predispositions to action. The mood you enter a conversation with shapes what you see as possible and what actions occur to you. Shifting your mood before a conversation can change its entire trajectory.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ln-navy)', opacity: 0.8 }}>{coachingSummary.moodCheck}</p>
                   </div>
@@ -2470,6 +2602,135 @@ function FeedbackScreen({
 }
 
 // ── History Screen ────────────────────────────────────────────────────────────
+// ── Observer History Screen ──────────────────────────────────────────────────
+function ObserverHistoryScreen({ onBack }: { onBack: () => void }) {
+  const { data, isLoading } = trpc.practice.getObserverHistory.useQuery();
+  const sessions = data?.sessions ?? [];
+
+  const MOOD_COLORS: Record<string, string> = {
+    resignation: 'text-slate-500 bg-slate-50 border-slate-200',
+    resentment: 'text-red-600 bg-red-50 border-red-200',
+    anxiety: 'text-amber-600 bg-amber-50 border-amber-200',
+    ambition: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+    curiosity: 'text-blue-600 bg-blue-50 border-blue-200',
+    frustration: 'text-orange-600 bg-orange-50 border-orange-200',
+  };
+  const getMoodColor = (mood?: string) => {
+    if (!mood) return 'text-gray-500 bg-gray-50 border-gray-200';
+    const key = mood.toLowerCase().split(' ')[0];
+    return MOOD_COLORS[key] ?? 'text-purple-600 bg-purple-50 border-purple-200';
+  };
+
+  // Tally recurring distinctions
+  const distinctionCount: Record<string, number> = {};
+  sessions.forEach(s => {
+    const d = s.coachingSummaryData?.ontologicalDistinction;
+    if (d) distinctionCount[d] = (distinctionCount[d] ?? 0) + 1;
+  });
+  const topDistinctions = Object.entries(distinctionCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+      <BackButton onBack={onBack} label="Back to Practice" />
+
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Compass className="w-5 h-5" style={{ color: 'var(--color-ln-gold)' }} />
+          <h2 className="text-xl font-bold text-[var(--color-ln-navy)]">Observer Log</h2>
+        </div>
+        <p className="text-sm text-gray-500">
+          A record of the narratives, distinctions, and reframes from your coaching sessions.
+        </p>
+      </div>
+
+      {/* Recurring Patterns Banner */}
+      {topDistinctions.length > 0 && (
+        <div className="mb-6 rounded-xl border p-4" style={{ borderColor: 'rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.05)' }}>
+          <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--color-ln-navy)' }}>Recurring Patterns</p>
+          <div className="flex flex-wrap gap-2">
+            {topDistinctions.map(([d, count]) => (
+              <span key={d} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border" style={{ borderColor: 'rgba(212,175,55,0.4)', background: 'rgba(212,175,55,0.1)', color: 'var(--color-ln-navy)' }}>
+                <Lightbulb className="w-3 h-3" style={{ color: 'var(--color-ln-gold)' }} />
+                {d}
+                <span className="font-bold ml-0.5">×{count}</span>
+              </span>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-2">These distinctions have come up most often in your coaching — they may be pointing to a deeper pattern worth exploring.</p>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="text-center py-16">
+          <div className="w-6 h-6 mx-auto border-2 border-[var(--color-ln-gold)] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {!isLoading && sessions.length === 0 && (
+        <div className="text-center py-16">
+          <Compass className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+          <p className="text-sm text-gray-400">No observer data yet.</p>
+          <p className="text-xs text-gray-300 mt-1">Complete a coaching session to start tracking your observer patterns.</p>
+        </div>
+      )}
+
+      {!isLoading && sessions.length > 0 && (
+        <div className="space-y-4">
+          {sessions.map((session) => {
+            const obs = session.coachingSummaryData!;
+            return (
+              <div key={session.id} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                {/* Session header */}
+                <div className="px-4 py-3 border-b border-gray-100 flex items-start justify-between gap-3">
+                  <p className="text-sm font-medium text-[var(--color-ln-navy)] flex-1 leading-snug">{session.issueText}</p>
+                  <span className="text-xs text-gray-400 flex-shrink-0 mt-0.5">{new Date(session.createdAt).toLocaleDateString()}</span>
+                </div>
+
+                <div className="p-4 space-y-3">
+                  {/* Dominant Narrative */}
+                  {obs.dominantNarrative && (
+                    <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5">
+                      <p className="text-xs font-semibold text-red-700 mb-1">Narrative you entered with</p>
+                      <p className="text-xs text-red-800 italic leading-relaxed">“{obs.dominantNarrative}”</p>
+                    </div>
+                  )}
+
+                  {/* Reframed Narrative */}
+                  {obs.reframedNarrative && (
+                    <div className="rounded-lg bg-emerald-50 border border-emerald-100 px-3 py-2.5">
+                      <p className="text-xs font-semibold text-emerald-700 mb-1">Fresh way to see this</p>
+                      <p className="text-xs text-emerald-800 leading-relaxed">{obs.reframedNarrative}</p>
+                    </div>
+                  )}
+
+                  {/* Distinction + Mood row */}
+                  <div className="flex flex-wrap gap-2">
+                    {obs.ontologicalDistinction && (
+                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border" style={{ borderColor: 'rgba(212,175,55,0.4)', background: 'rgba(212,175,55,0.08)', color: 'var(--color-ln-navy)' }}>
+                        <Lightbulb className="w-3 h-3" style={{ color: 'var(--color-ln-gold)' }} />
+                        {obs.ontologicalDistinction}
+                      </span>
+                    )}
+                    {obs.moodCheck && (
+                      <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border ${getMoodColor(obs.moodCheck)}`}>
+                        <Wind className="w-3 h-3" />
+                        {obs.moodCheck.split('.')[0]}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HistoryScreen({ onBack }: { onBack: () => void }) {
   const { data: historyData } = trpc.practice.getHistory.useQuery();
   const sessions = historyData?.sessions;
@@ -2587,6 +2848,7 @@ export default function PracticeCoach() {
           onHistory={() => setScreen('history')}
           onCreateCommitment={() => setScreen('create-commitment')}
           onPracticePlan={() => setScreen('practice-plan')}
+          onObserverHistory={() => setScreen('observer-history')}
         />
       );
     }
@@ -2692,6 +2954,7 @@ export default function PracticeCoach() {
     if (screen === 'coach-brief') return <CoachBriefScreen onBack={() => setScreen('growth-profile')} />;
     if (screen === 'privacy-settings') return <PrivacySettingsScreen onBack={() => setScreen('growth-profile')} />;
     if (screen === 'history') return <HistoryScreen onBack={goHome} />;
+    if (screen === 'observer-history') return <ObserverHistoryScreen onBack={goHome} />;
     return null;
   }
 

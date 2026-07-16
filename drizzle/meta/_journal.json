@@ -162,6 +162,13 @@
       "when": 1784135408553,
       "tag": "0022_supreme_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1784181230471,
+      "tag": "0023_friendly_sumo",
+      "breakpoints": true
     }
   ]
 }

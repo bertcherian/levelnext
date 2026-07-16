@@ -1,0 +1,1 @@
+ALTER TABLE `practice_sessions` ADD `coachingSummaryData` json;
