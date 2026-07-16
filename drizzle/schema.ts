@@ -1280,3 +1280,85 @@ export const accessPaths = mysqlTable("access_paths", {
 });
 export type AccessPath = typeof accessPaths.$inferSelect;
 export type InsertAccessPath = typeof accessPaths.$inferInsert;
+
+// ─── Sprint 3: Outreach Engine ────────────────────────────────────────────────
+
+// brand_strategies: AI-generated personal brand strategy for the leader
+export const brandStrategies = mysqlTable("brand_strategies", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // LinkedIn presence
+  linkedinHeadline: text("linkedinHeadline"),
+  linkedinSummary: text("linkedinSummary"),
+  linkedinAboutSection: text("linkedinAboutSection"),
+  // Brand positioning
+  brandStatement: text("brandStatement"),
+  uniqueValueProposition: text("uniqueValueProposition"),
+  targetAudience: text("targetAudience"),
+  // Thought leadership pillars
+  thoughtLeadershipPillars: json("thoughtLeadershipPillars").$type<Array<{
+    pillar: string;
+    description: string;
+    contentIdeas: string[];
+    hashtags: string[];
+  }>>().default([]),
+  // Content calendar (4-week plan)
+  contentCalendar: json("contentCalendar").$type<Array<{
+    week: number;
+    contentType: string;
+    topic: string;
+    hook: string;
+    format: string;
+    callToAction: string;
+  }>>().default([]),
+  // Visibility plan
+  visibilityPlan: json("visibilityPlan").$type<{
+    shortTerm: string[];
+    mediumTerm: string[];
+    longTerm: string[];
+    keyPlatforms: string[];
+    networkingEvents: string[];
+    speakingOpportunities: string[];
+  }>(),
+  // Narrative assets
+  careerNarrative: text("careerNarrative"),
+  elevatorPitch: text("elevatorPitch"),
+  executiveBio: text("executiveBio"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BrandStrategy = typeof brandStrategies.$inferSelect;
+export type InsertBrandStrategy = typeof brandStrategies.$inferInsert;
+
+// outreach_drafts: per-contact outreach messages and conversation prep
+export const outreachDrafts = mysqlTable("outreach_drafts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  contactId: int("contactId").references(() => relationshipContacts.id),
+  contactName: varchar("contactName", { length: 200 }).notNull(),
+  contactTitle: varchar("contactTitle", { length: 200 }),
+  contactCompany: varchar("contactCompany", { length: 200 }),
+  outreachGoal: varchar("outreachGoal", { length: 100 }),
+  // Message drafts
+  linkedinMessage: text("linkedinMessage"),
+  emailSubject: text("emailSubject"),
+  emailBody: text("emailBody"),
+  warmIntroRequest: text("warmIntroRequest"),
+  followUpMessage: text("followUpMessage"),
+  // Conversation prep
+  meetingAgenda: json("meetingAgenda").$type<string[]>().default([]),
+  talkingPoints: json("talkingPoints").$type<string[]>().default([]),
+  questionsToAsk: json("questionsToAsk").$type<string[]>().default([]),
+  thingsToAvoid: json("thingsToAvoid").$type<string[]>().default([]),
+  desiredOutcome: text("desiredOutcome"),
+  followUpPlan: text("followUpPlan"),
+  // Status tracking
+  status: varchar("status", { length: 30 }).default("draft").notNull(),
+  sentAt: timestamp("sentAt"),
+  responseReceived: boolean("responseReceived").default(false),
+  userNotes: text("userNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type OutreachDraft = typeof outreachDrafts.$inferSelect;
+export type InsertOutreachDraft = typeof outreachDrafts.$inferInsert;

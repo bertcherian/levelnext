@@ -27,6 +27,7 @@ import {
   Globe,
   Users,
   Route,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -60,6 +61,7 @@ const CI_NAV_ITEMS = [
   { label: "Career Access", icon: Globe, href: "/career/access" },
   { label: "Relationship Graph", icon: Users, href: "/career/relationships" },
   { label: "Access Paths", icon: Route, href: "/career/access-paths" },
+  { label: "Outreach Engine", icon: Sparkles, href: "/career/brand" },
   { label: "Progress", icon: BarChart3, href: "/career/progress" },
   { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
   { label: "Settings", icon: Settings, href: "/settings" },

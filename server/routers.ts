@@ -29,6 +29,7 @@ import { liReportRouter } from "./routers/liReport";
 import { leadsRouter } from "./routers/leads";
 import { playbookRouter } from "./routers/playbookRouter";
 import { careerAccessRouter } from "./routers/careerAccess";
+import { outreachEngineRouter } from "./routers/outreachEngine";
 
 export const appRouter = router({
   system: systemRouter,
@@ -67,6 +68,7 @@ export const appRouter = router({
   leads: leadsRouter,
   playbook: playbookRouter,
   careerAccess: careerAccessRouter,
+  outreachEngine: outreachEngineRouter,
 });
 
 export type AppRouter = typeof appRouter;

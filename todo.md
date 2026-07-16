@@ -500,3 +500,20 @@
 - [x] Frontend: Opportunity Universe view (categorised cards with 10-dimension scores)
 - [x] Wire Career Access into CI sidebar navigation
 - [x] Wire CI diagnostic scores into Career Graph context for AI prompts
+
+## Career Access Intelligence™ — Sprint 3: Outreach Engine (Jul 16)
+- [x] DB schema: brand_strategies table (AI-generated personal brand strategy)
+- [x] DB schema: outreach_drafts table (per-contact outreach messages, conversation prep)
+- [x] Run pnpm drizzle-kit generate and apply migration SQL
+- [x] Backend: outreachEngine router — generateBrandStrategy procedure (AI, pulls career profile + CI scores)
+- [x] Backend: outreachEngine router — getBrandStrategy procedure
+- [x] Backend: outreachEngine router — generateOutreachDraft procedure (per-contact, per-channel)
+- [x] Backend: outreachEngine router — listOutreachDrafts, updateOutreachDraft, deleteOutreachDraft procedures
+- [x] Backend: outreachEngine router — generateConversationPrep procedure (per-contact meeting prep)
+- [x] Frontend: OutreachEngine page at /career/brand with 2 tabs: Brand Strategy, Outreach Drafts
+- [x] Brand Strategy tab: LinkedIn headline/summary, thought leadership pillars, content calendar, visibility plan
+- [x] Outreach Drafts tab: per-contact message drafts (LinkedIn, email, warm intro), status tracking, conversation prep inline
+- [x] Wire /career/brand route in App.tsx
+- [x] Add Outreach Engine nav item to CI sidebar in PlatformLayout.tsx
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint

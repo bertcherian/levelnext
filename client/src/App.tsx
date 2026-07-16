@@ -25,6 +25,7 @@ import CiReport from "./pages/CiReport";
 import LiReport from "./pages/LiReport";
 import LeaderPlaybook from "./pages/LeaderPlaybook";
 import PlaybookPatterns from "./pages/PlaybookPatterns";
+import OutreachEngine from "./pages/OutreachEngine";
 import CareerProgress from "./pages/CareerProgress";
 import CareerAccess from "./pages/CareerAccess";
 import RelationshipGraph from "./pages/RelationshipGraph";
@@ -126,6 +127,7 @@ function Router() {
       <Route path="/career/access" component={CareerAccess} />
       <Route path="/career/relationships" component={RelationshipGraph} />
       <Route path="/career/access-paths" component={AccessPaths} />
+      <Route path="/career/brand" component={OutreachEngine} />
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/progress" component={Progress} />
