@@ -47,6 +47,9 @@ import {
   LayoutDashboard,
   ListChecks,
   Settings,
+  Compass,
+  ArrowRight,
+  Wind,
 } from "lucide-react";
 import type {
   PracticeScenario,
@@ -1728,6 +1731,10 @@ function CoachingScreen({
     leadershipGap: string;
     recommendedApproach: string;
     commitment: string;
+    dominantNarrative?: string;
+    ontologicalDistinction?: string;
+    reframedNarrative?: string;
+    moodCheck?: string;
   } | null>(null);
   const [blindSpot, setBlindSpot] = useState<{ possibleBlindSpot: string; reframe: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1834,30 +1841,97 @@ function CoachingScreen({
 
       {/* Coaching Summary */}
       {coachingSummary && (
-        <div className="mb-4 rounded-xl bg-[var(--color-ln-navy)]/5 border border-[var(--color-ln-navy)]/20 p-4">
-          <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-3 flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
-            Coaching Summary
-          </p>
-          <div className="space-y-2">
-            {[
-              { label: 'Real Issue', value: coachingSummary.realIssue },
-              { label: 'Leadership Gap', value: coachingSummary.leadershipGap },
-              { label: 'Recommended Approach', value: coachingSummary.recommendedApproach },
-            ].map(item => (
-              <div key={item.label}>
-                <p className="text-xs font-semibold text-[var(--color-ln-navy)]/60">{item.label}</p>
-                <p className="text-sm text-[var(--color-ln-navy)]">{item.value}</p>
+        <div className="mb-4 space-y-3">
+
+          {/* ── Your Observer Card ── */}
+          {(coachingSummary.dominantNarrative || coachingSummary.reframedNarrative || coachingSummary.moodCheck) && (
+            <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'rgba(212,175,55,0.35)', background: 'linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(10,26,47,0.03) 100%)' }}>
+              {/* Header */}
+              <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: 'rgba(212,175,55,0.2)', background: 'rgba(212,175,55,0.08)' }}>
+                <Compass className="w-4 h-4" style={{ color: 'var(--color-ln-gold)' }} />
+                <p className="text-xs font-bold tracking-wide uppercase" style={{ color: 'var(--color-ln-navy)' }}>Your Observer</p>
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(212,175,55,0.15)', color: 'var(--color-ln-gold)' }}>
+                  Ontological Insight
+                </span>
               </div>
-            ))}
+
+              <div className="p-4 space-y-4">
+
+                {/* Dominant Narrative → Reframe */}
+                {coachingSummary.dominantNarrative && (
+                  <div>
+                    <p className="text-xs font-semibold mb-1.5" style={{ color: 'var(--color-ln-navy)', opacity: 0.55 }}>The narrative you entered with</p>
+                    <div className="rounded-lg px-3 py-2.5 text-sm leading-relaxed" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', color: '#7f1d1d' }}>
+                      <span className="italic">"{coachingSummary.dominantNarrative}"</span>
+                    </div>
+                  </div>
+                )}
+
+                {coachingSummary.reframedNarrative && (
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <ArrowRight className="w-3 h-3" style={{ color: 'var(--color-ln-gold)' }} />
+                      <p className="text-xs font-semibold" style={{ color: 'var(--color-ln-navy)', opacity: 0.55 }}>A fresh way to see this</p>
+                    </div>
+                    <div className="rounded-lg px-3 py-2.5 text-sm leading-relaxed" style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', color: '#14532d' }}>
+                      {coachingSummary.reframedNarrative}
+                    </div>
+                  </div>
+                )}
+
+                {/* Distinction used */}
+                {coachingSummary.ontologicalDistinction && (
+                  <div className="flex items-start gap-2">
+                    <Lightbulb className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'var(--color-ln-gold)' }} />
+                    <p className="text-xs" style={{ color: 'var(--color-ln-navy)', opacity: 0.7 }}>
+                      <span className="font-semibold">Distinction explored: </span>
+                      {coachingSummary.ontologicalDistinction}
+                    </p>
+                  </div>
+                )}
+
+                {/* Mood Check */}
+                {coachingSummary.moodCheck && (
+                  <div className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(10,26,47,0.04)', border: '1px solid rgba(10,26,47,0.1)' }}>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Wind className="w-3.5 h-3.5" style={{ color: 'var(--color-ln-navy)', opacity: 0.6 }} />
+                      <p className="text-xs font-semibold" style={{ color: 'var(--color-ln-navy)', opacity: 0.6 }}>Mood Check</p>
+                    </div>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ln-navy)', opacity: 0.8 }}>{coachingSummary.moodCheck}</p>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          )}
+
+          {/* ── Coaching Summary Card ── */}
+          <div className="rounded-xl bg-[var(--color-ln-navy)]/5 border border-[var(--color-ln-navy)]/20 p-4">
+            <p className="text-xs font-semibold text-[var(--color-ln-navy)] mb-3 flex items-center gap-1.5">
+              <CheckCircle className="w-3.5 h-3.5 text-[var(--color-ln-gold)]" />
+              Coaching Summary
+            </p>
+            <div className="space-y-2">
+              {[
+                { label: 'Real Issue', value: coachingSummary.realIssue },
+                { label: 'Leadership Gap', value: coachingSummary.leadershipGap },
+                { label: 'Recommended Approach', value: coachingSummary.recommendedApproach },
+              ].map(item => (
+                <div key={item.label}>
+                  <p className="text-xs font-semibold text-[var(--color-ln-navy)]/60">{item.label}</p>
+                  <p className="text-sm text-[var(--color-ln-navy)]">{item.value}</p>
+                </div>
+              ))}
+            </div>
+            <Button
+              onClick={() => sessionId && onProceedToSimulation(sessionId)}
+              className="w-full mt-4 bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-gold)]/90"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Proceed to Practice Simulation
+            </Button>
           </div>
-          <Button
-            onClick={() => sessionId && onProceedToSimulation(sessionId)}
-            className="w-full mt-4 bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] hover:bg-[var(--color-ln-gold)]/90"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            Proceed to Practice Simulation
-          </Button>
+
         </div>
       )}
 
