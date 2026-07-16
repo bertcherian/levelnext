@@ -224,6 +224,7 @@ export default function CareerProgress() {
 
   return (
     <PlatformLayout>
+      <div className="min-h-screen" style={{ background: "var(--color-ln-navy)" }}>
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Page header */}
         <div className="mb-8">
@@ -315,6 +316,7 @@ export default function CareerProgress() {
             )}
           </>
         )}
+      </div>
       </div>
     </PlatformLayout>
   );
