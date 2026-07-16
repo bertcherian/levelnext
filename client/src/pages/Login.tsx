@@ -14,7 +14,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -184,25 +183,6 @@ export default function Login() {
                 </Button>
               </form>
 
-              {/* Divider */}
-              <div className="flex items-center gap-3 my-6">
-                <div className="flex-1 h-px" style={{ background: "#e8e6e0" }} />
-                <span className="text-xs" style={{ color: "#aaa" }}>
-                  or
-                </span>
-                <div className="flex-1 h-px" style={{ background: "#e8e6e0" }} />
-              </div>
-
-              {/* Manus OAuth fallback */}
-              <a href={getLoginUrl()} className="block">
-                <Button
-                  variant="outline"
-                  className="w-full h-11 text-sm font-medium rounded-full bg-white"
-                  style={{ borderColor: "#d1cfc9", color: "#12345A" }}
-                >
-                  Sign in with Manus account
-                </Button>
-              </a>
 
               <p className="text-xs text-center mt-4" style={{ color: "#aaa" }}>
                 By signing in, you agree to our{" "}
