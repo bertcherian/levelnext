@@ -26,6 +26,8 @@ import LiReport from "./pages/LiReport";
 import LeaderPlaybook from "./pages/LeaderPlaybook";
 import CareerProgress from "./pages/CareerProgress";
 import CareerAccess from "./pages/CareerAccess";
+import RelationshipGraph from "./pages/RelationshipGraph";
+import AccessPaths from "./pages/AccessPaths";
 import ImportEci from "./pages/ImportEci";
 import ImportChatgpt from "./pages/ImportChatgpt";
 import ImportPriorAssessments from "./pages/ImportPriorAssessments";
@@ -120,6 +122,8 @@ function Router() {
       <Route path="/career" component={CareerHome} />
       <Route path="/career/progress" component={CareerProgress} />
       <Route path="/career/access" component={CareerAccess} />
+      <Route path="/career/relationships" component={RelationshipGraph} />
+      <Route path="/career/access-paths" component={AccessPaths} />
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/progress" component={Progress} />

@@ -1191,3 +1191,92 @@ export const opportunityUniverse = mysqlTable("opportunity_universe", {
 });
 export type OpportunityUniverse = typeof opportunityUniverse.$inferSelect;
 export type InsertOpportunityUniverse = typeof opportunityUniverse.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAREER ACCESS INTELLIGENCE — SPRINT 2
+// ─────────────────────────────────────────────────────────────────────────────
+
+// relationship_contacts: the user's living Relationship Graph
+export const relationshipContacts = mysqlTable("relationship_contacts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  name: varchar("name", { length: 200 }).notNull(),
+  currentTitle: varchar("currentTitle", { length: 200 }),
+  currentCompany: varchar("currentCompany", { length: 200 }),
+  industry: varchar("industry", { length: 100 }),
+  geography: varchar("geography", { length: 100 }),
+  linkedinUrl: varchar("linkedinUrl", { length: 500 }),
+  email: varchar("email", { length: 200 }),
+  phone: varchar("phone", { length: 50 }),
+  relationshipType: varchar("relationshipType", { length: 50 }).notNull(),
+  howWeKnowEachOther: text("howWeKnowEachOther"),
+  sharedHistory: text("sharedHistory"),
+  scoreTrust: int("scoreTrust"),
+  scoreInfluence: int("scoreInfluence"),
+  scoreAccessibility: int("scoreAccessibility"),
+  scoreRecency: int("scoreRecency"),
+  scoreWarmth: int("scoreWarmth"),
+  scoreStrategicValue: int("scoreStrategicValue"),
+  scoreLikelihoodToHelp: int("scoreLikelihoodToHelp"),
+  compositeScore: int("compositeScore"),
+  recommendedAction: varchar("recommendedAction", { length: 50 }),
+  recommendedActionReason: text("recommendedActionReason"),
+  nextActionDue: timestamp("nextActionDue"),
+  lastContactDate: timestamp("lastContactDate"),
+  contactFrequencyDays: int("contactFrequencyDays").default(90),
+  notes: text("notes"),
+  linkedOpportunityIds: json("linkedOpportunityIds").$type<number[]>().default([]),
+  isKeyConnector: boolean("isKeyConnector").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RelationshipContact = typeof relationshipContacts.$inferSelect;
+export type InsertRelationshipContact = typeof relationshipContacts.$inferInsert;
+
+// access_paths: AI-generated access strategies for each target organisation
+export const accessPaths = mysqlTable("access_paths", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  opportunityId: int("opportunityId").notNull().references(() => opportunityUniverse.id),
+  companyName: varchar("companyName", { length: 200 }).notNull(),
+  targetRole: varchar("targetRole", { length: 200 }),
+  decisionMakers: json("decisionMakers").$type<Array<{
+    name: string; title: string; linkedinUrl?: string; whyTheyMatter: string;
+  }>>().default([]),
+  bestPath: json("bestPath").$type<{
+    description: string; steps: string[]; keyContact?: string;
+    estimatedTimeWeeks: number; confidenceScore: number;
+  }>(),
+  alternativePath: json("alternativePath").$type<{
+    description: string; steps: string[]; keyContact?: string;
+    estimatedTimeWeeks: number; confidenceScore: number;
+  }>(),
+  fastestPath: json("fastestPath").$type<{
+    description: string; steps: string[]; keyContact?: string;
+    estimatedTimeWeeks: number; confidenceScore: number;
+  }>(),
+  safestPath: json("safestPath").$type<{
+    description: string; steps: string[]; keyContact?: string;
+    estimatedTimeWeeks: number; confidenceScore: number;
+  }>(),
+  highestProbabilityPath: json("highestProbabilityPath").$type<{
+    description: string; steps: string[]; keyContact?: string;
+    estimatedTimeWeeks: number; confidenceScore: number;
+  }>(),
+  mutualConnections: json("mutualConnections").$type<Array<{
+    contactName: string; connectionType: string;
+    strengthOfLink: string; suggestedAsk: string;
+  }>>().default([]),
+  warmIntroRequest: text("warmIntroRequest"),
+  directOutreachEmail: text("directOutreachEmail"),
+  linkedinMessage: text("linkedinMessage"),
+  overallAccessScore: int("overallAccessScore"),
+  primaryBarrier: text("primaryBarrier"),
+  keyInsight: text("keyInsight"),
+  status: varchar("status", { length: 30 }).default("not_started").notNull(),
+  userNotes: text("userNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AccessPath = typeof accessPaths.$inferSelect;
+export type InsertAccessPath = typeof accessPaths.$inferInsert;

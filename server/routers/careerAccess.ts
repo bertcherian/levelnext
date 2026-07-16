@@ -8,6 +8,8 @@ import {
   careerProfiles,
   careerStrategyStatements,
   opportunityUniverse,
+  relationshipContacts,
+  accessPaths,
   assessmentSessions,
   reports,
   users,
@@ -438,11 +440,330 @@ Generate 15-20 organisations across all required categories. Be specific and rea
   clearOpportunityUniverse: protectedProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    // Soft-delete by marking all as 'removed'
     await db
       .update(opportunityUniverse)
       .set({ status: "removed" })
       .where(eq(opportunityUniverse.userId, ctx.user.id));
     return { success: true };
   }),
+
+  // ── SPRINT 2: Relationship Graph ─────────────────────────────────────────────
+
+  getRelationships: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    return db
+      .select()
+      .from(relationshipContacts)
+      .where(eq(relationshipContacts.userId, ctx.user.id))
+      .orderBy(desc(relationshipContacts.compositeScore));
+  }),
+
+  addRelationship: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      currentTitle: z.string().optional(),
+      currentCompany: z.string().optional(),
+      industry: z.string().optional(),
+      geography: z.string().optional(),
+      linkedinUrl: z.string().optional(),
+      email: z.string().optional(),
+      phone: z.string().optional(),
+      relationshipType: z.string(),
+      howWeKnowEachOther: z.string().optional(),
+      sharedHistory: z.string().optional(),
+      notes: z.string().optional(),
+      isKeyConnector: z.boolean().optional(),
+      linkedOpportunityIds: z.array(z.number()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [inserted] = await db.insert(relationshipContacts).values({
+        userId: ctx.user.id,
+        ...input,
+        linkedOpportunityIds: input.linkedOpportunityIds ?? [],
+      });
+      // Score the relationship with AI
+      const scoreResult = await scoreRelationshipWithAI(input);
+      if (scoreResult) {
+        await db.update(relationshipContacts)
+          .set(scoreResult)
+          .where(eq(relationshipContacts.userId, ctx.user.id));
+      }
+      return { success: true };
+    }),
+
+  updateRelationship: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      currentTitle: z.string().optional(),
+      currentCompany: z.string().optional(),
+      industry: z.string().optional(),
+      geography: z.string().optional(),
+      linkedinUrl: z.string().optional(),
+      email: z.string().optional(),
+      phone: z.string().optional(),
+      relationshipType: z.string().optional(),
+      howWeKnowEachOther: z.string().optional(),
+      sharedHistory: z.string().optional(),
+      notes: z.string().optional(),
+      isKeyConnector: z.boolean().optional(),
+      linkedOpportunityIds: z.array(z.number()).optional(),
+      lastContactDate: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { id, lastContactDate, ...rest } = input;
+      await db.update(relationshipContacts)
+        .set({
+          ...rest,
+          ...(lastContactDate ? { lastContactDate: new Date(lastContactDate) } : {}),
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(relationshipContacts.id, id),
+          eq(relationshipContacts.userId, ctx.user.id)
+        ));
+      return { success: true };
+    }),
+
+  deleteRelationship: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.delete(relationshipContacts)
+        .where(and(
+          eq(relationshipContacts.id, input.id),
+          eq(relationshipContacts.userId, ctx.user.id)
+        ));
+      return { success: true };
+    }),
+
+  scoreRelationship: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [contact] = await db.select().from(relationshipContacts)
+        .where(and(eq(relationshipContacts.id, input.id), eq(relationshipContacts.userId, ctx.user.id)))
+        .limit(1);
+      if (!contact) throw new TRPCError({ code: "NOT_FOUND" });
+      const scoreResult = await scoreRelationshipWithAI(contact);
+      if (scoreResult) {
+        await db.update(relationshipContacts).set({ ...scoreResult, updatedAt: new Date() })
+          .where(eq(relationshipContacts.id, input.id));
+      }
+      return { success: true, scores: scoreResult };
+    }),
+
+  // ── SPRINT 2: Access Path Intelligence ──────────────────────────────────────
+
+  getAccessPaths: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    return db.select().from(accessPaths)
+      .where(eq(accessPaths.userId, ctx.user.id))
+      .orderBy(desc(accessPaths.createdAt));
+  }),
+
+  getAccessPathForOpportunity: protectedProcedure
+    .input(z.object({ opportunityId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [path] = await db.select().from(accessPaths)
+        .where(and(
+          eq(accessPaths.opportunityId, input.opportunityId),
+          eq(accessPaths.userId, ctx.user.id)
+        ))
+        .limit(1);
+      return path ?? null;
+    }),
+
+  generateAccessPath: protectedProcedure
+    .input(z.object({ opportunityId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Fetch the target opportunity
+      const [opp] = await db.select().from(opportunityUniverse)
+        .where(and(eq(opportunityUniverse.id, input.opportunityId), eq(opportunityUniverse.userId, ctx.user.id)))
+        .limit(1);
+      if (!opp) throw new TRPCError({ code: "NOT_FOUND", message: "Opportunity not found." });
+
+      // Fetch user profile
+      const [profile] = await db.select().from(careerProfiles)
+        .where(eq(careerProfiles.userId, ctx.user.id)).limit(1);
+
+      // Fetch existing relationships for context
+      const contacts = await db.select().from(relationshipContacts)
+        .where(eq(relationshipContacts.userId, ctx.user.id))
+        .orderBy(desc(relationshipContacts.compositeScore))
+        .limit(20);
+
+      const [user] = await db.select({ name: users.name }).from(users)
+        .where(eq(users.id, ctx.user.id)).limit(1);
+
+      const contactSummary = contacts.length > 0
+        ? contacts.map(c => `- ${c.name} (${c.currentTitle ?? ""} at ${c.currentCompany ?? ""}, ${c.relationshipType}, score: ${c.compositeScore ?? "unscored"})`).join("\n")
+        : "No contacts added yet.";
+
+      const systemPrompt = `You are the LevelNext Career Access Intelligence™ Access Path Engine.
+
+Your task: Generate a comprehensive Access Path Strategy for ${user?.name ?? "this leader"} to create access to ${opp.companyName}.
+
+You think like the world's best executive search partner. You always prefer warm introductions over cold outreach.
+You identify the most strategic paths — not the most obvious ones.
+
+Return ONLY valid JSON matching this exact structure:
+{
+  "decisionMakers": [
+    { "name": "Name or Title if unknown", "title": "Exact title", "linkedinUrl": "", "whyTheyMatter": "Why this person is key" }
+  ],
+  "bestPath": {
+    "description": "The optimal path to access",
+    "steps": ["Step 1", "Step 2", "Step 3"],
+    "keyContact": "Name of the key person to engage first",
+    "estimatedTimeWeeks": 8,
+    "confidenceScore": 8
+  },
+  "alternativePath": { "description": "", "steps": [], "keyContact": "", "estimatedTimeWeeks": 12, "confidenceScore": 6 },
+  "fastestPath": { "description": "", "steps": [], "keyContact": "", "estimatedTimeWeeks": 4, "confidenceScore": 5 },
+  "safestPath": { "description": "", "steps": [], "keyContact": "", "estimatedTimeWeeks": 16, "confidenceScore": 9 },
+  "highestProbabilityPath": { "description": "", "steps": [], "keyContact": "", "estimatedTimeWeeks": 10, "confidenceScore": 9 },
+  "mutualConnections": [
+    { "contactName": "Name", "connectionType": "alumni|conference|community|second_degree|direct", "strengthOfLink": "Strong/Medium/Weak", "suggestedAsk": "Specific ask to make" }
+  ],
+  "warmIntroRequest": "A short, warm, executive-tone message to send to a mutual connection asking for an introduction",
+  "directOutreachEmail": "A compelling, short, value-first cold email as a last resort",
+  "linkedinMessage": "A 3-sentence LinkedIn connection note that creates curiosity without desperation",
+  "overallAccessScore": 7,
+  "primaryBarrier": "The single biggest obstacle to access",
+  "keyInsight": "The one strategic insight that changes how they should approach this company"
+}`;
+
+      const userMessage = `Target Company: ${opp.companyName}
+Industry: ${opp.industry ?? "Not specified"}
+Geography: ${opp.geography ?? "Not specified"}
+Potential Role: ${opp.potentialRole ?? profile?.targetRole ?? "Senior Leadership"}
+Hidden Opportunity Signal: ${opp.hiddenOpportunitySignal ?? "Not identified"}
+Why This Company: ${opp.whyThisCompany ?? "High strategic fit"}
+
+Leader Profile:
+- Name: ${user?.name ?? "Not specified"}
+- Target Role: ${profile?.targetRole ?? "Senior Leadership"}
+- Career History: ${profile?.careerHistory ?? "Senior leader"}
+- Industry Expertise: ${(profile?.industryExpertise as string[] | null)?.join(", ") ?? "Not specified"}
+- Key Achievements: ${profile?.keyAchievements ?? "Not specified"}
+- LinkedIn: ${profile?.linkedinUrl ?? "Not provided"}
+
+Existing Network (top contacts by score):
+${contactSummary}
+
+Generate the most strategic access path for this leader to create access to ${opp.companyName}.`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        model: "claude-sonnet-4-5",
+        maxTokens: 3000,
+      });
+
+      const rawText = response.choices[0]?.message?.content;
+      if (!rawText || typeof rawText !== "string") {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI did not return a response." });
+      }
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not parse AI response." });
+      const pathData = JSON.parse(jsonMatch[0]);
+
+      // Upsert the access path
+      const [existing] = await db.select({ id: accessPaths.id }).from(accessPaths)
+        .where(and(eq(accessPaths.opportunityId, input.opportunityId), eq(accessPaths.userId, ctx.user.id)))
+        .limit(1);
+
+      if (existing) {
+        await db.update(accessPaths).set({ ...pathData, updatedAt: new Date() })
+          .where(eq(accessPaths.id, existing.id));
+      } else {
+        await db.insert(accessPaths).values({
+          userId: ctx.user.id,
+          opportunityId: input.opportunityId,
+          companyName: opp.companyName,
+          targetRole: opp.potentialRole ?? profile?.targetRole ?? "Senior Leadership",
+          ...pathData,
+        });
+      }
+      return { success: true, pathData };
+    }),
+
+  updateAccessPathStatus: protectedProcedure
+    .input(z.object({ id: z.number(), status: z.string(), userNotes: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(accessPaths)
+        .set({ status: input.status, userNotes: input.userNotes, updatedAt: new Date() })
+        .where(and(eq(accessPaths.id, input.id), eq(accessPaths.userId, ctx.user.id)));
+      return { success: true };
+    }),
 });
+
+// ── Helper: AI relationship scoring ──────────────────────────────────────────
+async function scoreRelationshipWithAI(contact: {
+  name: string;
+  currentTitle?: string | null;
+  currentCompany?: string | null;
+  relationshipType: string;
+  howWeKnowEachOther?: string | null;
+  sharedHistory?: string | null;
+}) {
+  try {
+    const systemPrompt = `You are a relationship intelligence engine. Score this professional relationship on 7 dimensions (1-10 each) and recommend the best next action.
+
+Return ONLY valid JSON:
+{
+  "scoreTrust": 7,
+  "scoreInfluence": 6,
+  "scoreAccessibility": 8,
+  "scoreRecency": 5,
+  "scoreWarmth": 7,
+  "scoreStrategicValue": 8,
+  "scoreLikelihoodToHelp": 7,
+  "compositeScore": 71,
+  "recommendedAction": "reconnect|strengthen|ask_advice|offer_value|request_intro|maintain|celebrate|share_article|coffee",
+  "recommendedActionReason": "One sentence explaining why this action makes sense now"
+}`;
+
+    const userMessage = `Contact: ${contact.name}
+Title: ${contact.currentTitle ?? "Unknown"}
+Company: ${contact.currentCompany ?? "Unknown"}
+Relationship Type: ${contact.relationshipType}
+How We Know Each Other: ${contact.howWeKnowEachOther ?? "Not specified"}
+Shared History: ${contact.sharedHistory ?? "Not specified"}`;
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+      model: "claude-haiku-4-5",
+      maxTokens: 500,
+    });
+
+    const rawText = response.choices[0]?.message?.content;
+    if (!rawText || typeof rawText !== "string") return null;
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    return JSON.parse(jsonMatch[0]);
+  } catch {
+    return null;
+  }
+}

@@ -25,6 +25,8 @@ import {
   UserCog,
   BookOpen,
   Globe,
+  Users,
+  Route,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -55,6 +57,8 @@ const CI_NAV_ITEMS = [
   { label: "Practice", icon: Zap, href: "/practice" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
   { label: "Career Access", icon: Globe, href: "/career/access" },
+  { label: "Relationship Graph", icon: Users, href: "/career/relationships" },
+  { label: "Access Paths", icon: Route, href: "/career/access-paths" },
   { label: "Progress", icon: BarChart3, href: "/career/progress" },
   { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
   { label: "Settings", icon: Settings, href: "/settings" },

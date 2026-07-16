@@ -176,6 +176,13 @@
       "when": 1784188654896,
       "tag": "0024_smart_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1784189738130,
+      "tag": "0025_steep_martin_li",
+      "breakpoints": true
     }
   ]
 }
