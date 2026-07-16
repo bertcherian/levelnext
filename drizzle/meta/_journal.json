@@ -169,6 +169,13 @@
       "when": 1784181230471,
       "tag": "0023_friendly_sumo",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1784188654896,
+      "tag": "0024_smart_amphibian",
+      "breakpoints": true
     }
   ]
 }

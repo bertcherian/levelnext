@@ -485,3 +485,18 @@
 - [ ] Add Patterns nav item to PlatformLayout LI sidebar under Leader Playbook
 - [ ] TypeScript clean (zero errors)
 - [ ] Save checkpoint
+
+## Career Access Intelligence™ — Sprint 1
+
+- [ ] DB schema: career_profiles table (intake data, career graph)
+- [ ] DB schema: opportunity_universe table (scored organisations)
+- [ ] DB schema: career_strategy_statements table (AI-generated strategy)
+- [ ] Backend: careerAccess router with saveCareerProfile procedure
+- [ ] Backend: generateCareerStrategy procedure (AI, pulls CI diagnostic scores)
+- [ ] Backend: generateOpportunityUniverse procedure (AI, categorised + scored orgs)
+- [ ] Backend: getCareerProfile, getCareerStrategy, getOpportunityUniverse procedures
+- [ ] Frontend: CareerAccess page with multi-step intake form (5 sections)
+- [ ] Frontend: Career Strategy Statement view (AI-generated, exportable)
+- [ ] Frontend: Opportunity Universe view (categorised cards with 10-dimension scores)
+- [ ] Wire Career Access into CI sidebar navigation
+- [ ] Wire CI diagnostic scores into Career Graph context for AI prompts

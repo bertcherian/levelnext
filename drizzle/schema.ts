@@ -1084,3 +1084,110 @@ export const playbookPatterns = mysqlTable("playbook_patterns", {
 });
 export type PlaybookPattern = typeof playbookPatterns.$inferSelect;
 export type InsertPlaybookPattern = typeof playbookPatterns.$inferInsert;
+
+// ─── Career Access Intelligence™ ─────────────────────────────────────────────
+
+// career_profiles: the leader's full career intake (Career Graph foundation)
+export const careerProfiles = mysqlTable("career_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id).unique(),
+  // Section 1: Role & Destination
+  targetRole: varchar("targetRole", { length: 200 }),
+  targetRoleType: varchar("targetRoleType", { length: 100 }), // CXO | VP | GM | Board | Fractional | Founder
+  problemsToSolve: text("problemsToSolve"),
+  legacyStatement: text("legacyStatement"),
+  // Section 2: Industry & Company Preferences
+  targetIndustries: json("targetIndustries").$type<string[]>(),
+  avoidIndustries: json("avoidIndustries").$type<string[]>(),
+  targetCompanyTypes: json("targetCompanyTypes").$type<string[]>(), // MNC | GCC | Startup | PE | Family | Board | Advisory
+  dreamCompanies: json("dreamCompanies").$type<string[]>(),
+  targetGeographies: json("targetGeographies").$type<string[]>(),
+  // Section 3: Compensation & Lifestyle
+  targetCompensationMin: int("targetCompensationMin"), // in lakhs INR or USD thousands
+  targetCompensationMax: int("targetCompensationMax"),
+  compensationCurrency: varchar("compensationCurrency", { length: 10 }).default("INR"),
+  preferredWorkStyle: varchar("preferredWorkStyle", { length: 50 }), // onsite | hybrid | remote | flexible
+  lifestyleStatement: text("lifestyleStatement"),
+  familyConstraints: text("familyConstraints"),
+  // Section 4: Values & Motivation
+  coreValues: json("coreValues").$type<string[]>(),
+  careerMotivation: text("careerMotivation"), // What drives you most right now
+  riskAppetite: varchar("riskAppetite", { length: 20 }), // low | medium | high
+  // Section 5: Professional Assets
+  linkedinUrl: varchar("linkedinUrl", { length: 500 }),
+  resumeUrl: varchar("resumeUrl", { length: 500 }),
+  careerHistory: text("careerHistory"), // brief narrative of career arc
+  keyAchievements: text("keyAchievements"),
+  awardsAndRecognition: text("awardsAndRecognition"),
+  speakingHistory: text("speakingHistory"),
+  publications: text("publications"), // articles, books, patents
+  industryExpertise: json("industryExpertise").$type<string[]>(),
+  // Meta
+  completionPct: int("completionPct").default(0).notNull(), // 0-100
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CareerProfile = typeof careerProfiles.$inferSelect;
+export type InsertCareerProfile = typeof careerProfiles.$inferInsert;
+
+// career_strategy_statements: AI-generated career strategy from the profile
+export const careerStrategyStatements = mysqlTable("career_strategy_statements", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // The full AI-generated strategy (JSON)
+  strategyData: json("strategyData").$type<{
+    headline: string;           // e.g. "Building access to PE-backed CFO roles in APAC FinTech"
+    positioningStatement: string; // 2-3 sentence executive positioning
+    uniqueValueProposition: string; // What makes this leader distinctively valuable
+    targetOpportunityTypes: string[]; // Top 3 opportunity types to pursue
+    primaryNarrative: string;   // The story to tell in every conversation
+    keyStrengths: string[];     // Top 5 strengths to lead with
+    credibilityGaps: string[];  // 2-3 gaps to address proactively
+    timeHorizon: string;        // e.g. "3-6 months for VP roles, 12-18 months for CXO"
+    northStarStatement: string; // The one-sentence career north star
+    immediateActions: string[]; // Top 3 actions to take in the next 30 days
+  }>(),
+  // Which profile version generated this (for versioning)
+  profileVersion: int("profileVersion").default(1).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CareerStrategyStatement = typeof careerStrategyStatements.$inferSelect;
+
+// opportunity_universe: AI-generated scored list of target organisations
+export const opportunityUniverse = mysqlTable("opportunity_universe", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // Organisation details
+  companyName: varchar("companyName", { length: 200 }).notNull(),
+  companyType: varchar("companyType", { length: 50 }).notNull(), // Dream | Likely | Emerging | GCC | PE | FamilyBusiness | Consulting | Board | Advisory | Fractional | OperatingPartner
+  industry: varchar("industry", { length: 100 }),
+  geography: varchar("geography", { length: 100 }),
+  description: text("description"), // Why this company is relevant
+  // 10-dimension scores (1-10 each)
+  scoreFit: int("scoreFit"),
+  scoreGrowth: int("scoreGrowth"),
+  scoreLearning: int("scoreLearning"),
+  scoreInfluence: int("scoreInfluence"),
+  scoreCompensation: int("scoreCompensation"),
+  scoreLeadershipCulture: int("scoreLeadershipCulture"),
+  scoreInnovation: int("scoreInnovation"),
+  scoreStability: int("scoreStability"),
+  scoreCareerAcceleration: int("scoreCareerAcceleration"),
+  scorePurposeAlignment: int("scorePurposeAlignment"),
+  // Composite score (average of 10 dimensions)
+  compositeScore: int("compositeScore"),
+  // AI reasoning
+  whyThisCompany: text("whyThisCompany"),
+  potentialRole: varchar("potentialRole", { length: 200 }),
+  hiddenOpportunitySignal: text("hiddenOpportunitySignal"), // e.g. "Series B raised, likely scaling leadership team"
+  // User actions
+  status: varchar("status", { length: 30 }).default("identified").notNull(), // identified | researching | targeting | active | paused | removed
+  userNotes: text("userNotes"),
+  // Batch tracking (each AI generation creates a batch)
+  batchId: int("batchId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type OpportunityUniverse = typeof opportunityUniverse.$inferSelect;
+export type InsertOpportunityUniverse = typeof opportunityUniverse.$inferInsert;

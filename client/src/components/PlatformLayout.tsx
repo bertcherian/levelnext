@@ -24,6 +24,7 @@ import {
   AlertCircle,
   UserCog,
   BookOpen,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -53,6 +54,7 @@ const CI_NAV_ITEMS = [
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
   { label: "Practice", icon: Zap, href: "/practice" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
+  { label: "Career Access", icon: Globe, href: "/career/access" },
   { label: "Progress", icon: BarChart3, href: "/career/progress" },
   { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
   { label: "Settings", icon: Settings, href: "/settings" },
