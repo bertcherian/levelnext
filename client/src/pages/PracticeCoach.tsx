@@ -880,6 +880,34 @@ function AfterMeetingFormScreen({
               />
             </div>
           ))}
+
+          {/* Ontological Observer Question */}
+          <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'rgba(212,175,55,0.35)', background: 'linear-gradient(135deg, rgba(212,175,55,0.05) 0%, rgba(10,26,47,0.03) 100%)' }}>
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b" style={{ borderColor: 'rgba(212,175,55,0.2)', background: 'rgba(212,175,55,0.07)' }}>
+              <Compass className="w-3.5 h-3.5" style={{ color: 'var(--color-ln-gold)' }} />
+              <p className="text-xs font-bold tracking-wide uppercase" style={{ color: 'var(--color-ln-navy)' }}>Observer Reflection</p>
+            </div>
+            <div className="px-4 py-3">
+              <label className="block text-sm font-medium text-[var(--color-ln-navy)] mb-2 leading-snug">
+                {DEBRIEF_QUESTIONS.length + 1}. Who were you <span className="italic">being</span> in that conversation — and how did that shape what became possible?
+              </label>
+              <p className="text-xs text-[var(--color-ln-navy)]/50 mb-3 leading-relaxed">
+                Consider: the mood you entered with, the story you were telling about the other person, and whether you were listening for confirmation or for something new.
+              </p>
+              <Textarea
+                value={answers[DEBRIEF_QUESTIONS.length] ?? ''}
+                onChange={e => {
+                  const next = [...answers];
+                  while (next.length <= DEBRIEF_QUESTIONS.length) next.push('');
+                  next[DEBRIEF_QUESTIONS.length] = e.target.value;
+                  setAnswers(next);
+                }}
+                placeholder="Reflect on who you were being — your mood, your narrative, your way of listening..."
+                className="min-h-[80px] text-sm resize-none border-gray-200"
+              />
+            </div>
+          </div>
+
         </div>
 
         <Button
@@ -2362,6 +2390,23 @@ function FeedbackScreen({
       {/* Reflection */}
       {!saved && (
         <div className="mb-6 space-y-3">
+
+          {/* Ontological Reflection Prompt */}
+          <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'rgba(212,175,55,0.35)', background: 'linear-gradient(135deg, rgba(212,175,55,0.05) 0%, rgba(10,26,47,0.03) 100%)' }}>
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b" style={{ borderColor: 'rgba(212,175,55,0.2)', background: 'rgba(212,175,55,0.07)' }}>
+              <Compass className="w-3.5 h-3.5" style={{ color: 'var(--color-ln-gold)' }} />
+              <p className="text-xs font-bold tracking-wide uppercase" style={{ color: 'var(--color-ln-navy)' }}>Observer Reflection</p>
+            </div>
+            <div className="px-4 py-3">
+              <p className="text-sm font-medium text-[var(--color-ln-navy)] mb-2 leading-snug">
+                Who were you <span className="italic">being</span> in that conversation — and how did that shape what became possible?
+              </p>
+              <p className="text-xs text-[var(--color-ln-navy)]/50 leading-relaxed">
+                Consider: the mood you entered with, the story you were telling about the other person, and whether you were listening for confirmation or for something new.
+              </p>
+            </div>
+          </div>
+
           <Textarea
             value={reflection}
             onChange={e => setReflection(e.target.value)}
