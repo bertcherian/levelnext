@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { users, pilotApplications, platformInvites, assessmentSessions, reports, practiceSessions } from "../../drizzle/schema";
+import { users, pilotApplications, platformInvites, assessmentSessions, reports, practiceSessions, playbookSessions } from "../../drizzle/schema";
 import { desc, eq, gte, count, sql } from "drizzle-orm";
 
 export const adminStatsRouter = router({
@@ -71,6 +71,10 @@ export const adminStatsRouter = router({
       .orderBy(desc(pilotApplications.createdAt))
       .limit(5);
 
+    // Playbook sessions
+    const [totalPlaybookRow] = await db.select({ count: count() }).from(playbookSessions);
+    const [recentPlaybookRow] = await db.select({ count: count() }).from(playbookSessions).where(gte(playbookSessions.createdAt, thirtyDaysAgo));
+
     return {
       users: {
         total: totalUsersRow.count,
@@ -96,8 +100,48 @@ export const adminStatsRouter = router({
         total: totalPracticeRow.count,
         last30Days: recentPracticeRow.count,
       },
+      playbook: {
+        total: totalPlaybookRow.count,
+        last30Days: recentPlaybookRow.count,
+      },
       recentUsers,
       recentApplications,
     };
+  }),
+
+  // Returns per-user playbook usage for admin view
+  getPlaybookStats: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+    // Per-user session counts
+    const perUser = await db
+      .select({
+        userId: playbookSessions.userId,
+        userName: users.name,
+        userEmail: users.email,
+        sessionCount: count(),
+      })
+      .from(playbookSessions)
+      .leftJoin(users, eq(playbookSessions.userId, users.id))
+      .groupBy(playbookSessions.userId, users.name, users.email)
+      .orderBy(desc(count()))
+      .limit(20);
+
+    // Top situation types
+    const topSituations = await db
+      .select({
+        playbookType: playbookSessions.playbookType,
+        total: count(),
+      })
+      .from(playbookSessions)
+      .groupBy(playbookSessions.playbookType)
+      .orderBy(desc(count()))
+      .limit(10);
+
+    return { perUser, topSituations };
   }),
 });

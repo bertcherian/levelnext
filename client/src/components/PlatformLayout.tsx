@@ -42,6 +42,7 @@ const NAV_ITEMS = [
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
   { label: "Practice", icon: Zap, href: "/practice" },
   { label: "Playbook", icon: BookOpen, href: "/playbook" },
+  { label: "Patterns", icon: BarChart3, href: "/playbook/patterns" },
   { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
   { label: "Insights", icon: Lightbulb, href: "/insights" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },

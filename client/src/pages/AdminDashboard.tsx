@@ -15,6 +15,7 @@ import {
   Clock,
   CheckCircle2,
   ArrowRight,
+  BookOpen,
 } from "lucide-react";
 
 const MODULE_LABELS: Record<string, string> = {
@@ -65,6 +66,86 @@ function StatCard({
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;
+}
+
+function PlaybookStatsSection() {
+  const { data, isLoading } = trpc.adminStats.getPlaybookStats.useQuery();
+
+  return (
+    <div
+      className="rounded-xl border p-6"
+      style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}
+    >
+      <h2 className="text-base font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>
+        Leader Playbook Usage
+      </h2>
+      {isLoading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded" />)}</div>
+          <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded" />)}</div>
+        </div>
+      ) : data ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Per-user session counts */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Sessions per User</p>
+            {data.perUser.length > 0 ? (
+              <div className="space-y-2">
+                {data.perUser.map((u) => (
+                  <div key={u.userId} className="flex items-center gap-3">
+                    <div
+                      className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                      style={{ background: "var(--color-ln-navy)", color: "white" }}
+                    >
+                      {(u.userName ?? u.userEmail ?? "?").slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{u.userName || <span className="text-muted-foreground italic">No name</span>}</p>
+                      <p className="text-xs text-muted-foreground truncate">{u.userEmail || "—"}</p>
+                    </div>
+                    <span
+                      className="text-sm font-bold flex-shrink-0 px-2 py-0.5 rounded"
+                      style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)", color: "var(--color-ln-navy)" }}
+                    >
+                      {u.sessionCount}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-6">No playbook sessions yet.</p>
+            )}
+          </div>
+          {/* Top situation types */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Top Situation Types</p>
+            {data.topSituations.length > 0 ? (
+              <div className="space-y-2">
+                {data.topSituations.map((s) => {
+                  const max = Math.max(...data.topSituations.map((x) => x.total));
+                  const pct = max > 0 ? Math.round((s.total / max) * 100) : 0;
+                  return (
+                    <div key={s.playbookType} className="flex items-center gap-3">
+                      <span className="text-xs font-medium w-36 truncate flex-shrink-0">{s.playbookType || "Unknown"}</span>
+                      <div className="flex-1 h-2 rounded-full bg-black/8 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-indigo-500 transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-semibold w-5 text-right flex-shrink-0">{s.total}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-6">No situation data yet.</p>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export default function AdminDashboard() {
@@ -133,6 +214,13 @@ export default function AdminDashboard() {
               sub={`${data.practice.last30Days} in last 30 days`}
               icon={<Zap size={18} className="text-rose-600" />}
               iconBg="bg-rose-500/12"
+            />
+            <StatCard
+              label="Playbook Sessions"
+              value={data.playbook.total}
+              sub={`${data.playbook.last30Days} in last 30 days`}
+              icon={<BookOpen size={18} className="text-indigo-600" />}
+              iconBg="bg-indigo-500/12"
             />
           </div>
         ) : null}
@@ -227,6 +315,9 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+
+        {/* ── Playbook Usage ── */}
+        <PlaybookStatsSection />
 
         {/* ── Recent Pilot Applications ── */}
         <div

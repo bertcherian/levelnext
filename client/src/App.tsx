@@ -24,6 +24,7 @@ import NiiReport from "./pages/NiiReport";
 import CiReport from "./pages/CiReport";
 import LiReport from "./pages/LiReport";
 import LeaderPlaybook from "./pages/LeaderPlaybook";
+import PlaybookPatterns from "./pages/PlaybookPatterns";
 import CareerProgress from "./pages/CareerProgress";
 import CareerAccess from "./pages/CareerAccess";
 import RelationshipGraph from "./pages/RelationshipGraph";
@@ -94,6 +95,7 @@ function Router() {
       <Route path="/ci-report/:moduleCode/:slug" component={CiReport} />
       <Route path="/li-report/:moduleCode/:slug" component={LiReport} />
       <Route path="/playbook" component={LeaderPlaybook} />
+      <Route path="/playbook/patterns" component={PlaybookPatterns} />
 
       {/* Platform (authenticated) */}
       <Route path="/home" component={Home} />

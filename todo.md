@@ -477,26 +477,26 @@
 - [x] Save checkpoint
 
 ## Phase 42 — Playbook Home Card, Admin Stats, Patterns Page (Jul 15)
-- [ ] Add Leader Playbook entry card to Home.tsx dashboard
-- [ ] Add Playbook usage stats to AdminDashboard.tsx (session count per user, top situation types)
-- [ ] Add getPlaybookStats admin procedure to playbookRouter.ts
-- [ ] Build client/src/pages/PlaybookPatterns.tsx — patterns page with recurring situations, avoided situations, competency signals
-- [ ] Register /playbook/patterns route in App.tsx
-- [ ] Add Patterns nav item to PlatformLayout LI sidebar under Leader Playbook
-- [ ] TypeScript clean (zero errors)
-- [ ] Save checkpoint
+- [x] Add Leader Playbook entry card to Home.tsx dashboard
+- [x] Add Playbook usage stats to AdminDashboard.tsx (session count per user, top situation types)
+- [x] Add getPlaybookStats admin procedure to adminStats.ts (per-user session counts, top situation types)
+- [x] Build client/src/pages/PlaybookPatterns.tsx — patterns page with recurring situations, avoided situations, competency signals
+- [x] Register /playbook/patterns route in App.tsx
+- [x] Add Patterns nav item to PlatformLayout LI sidebar under Leader Playbook
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint
 
 ## Career Access Intelligence™ — Sprint 1
 
-- [ ] DB schema: career_profiles table (intake data, career graph)
-- [ ] DB schema: opportunity_universe table (scored organisations)
-- [ ] DB schema: career_strategy_statements table (AI-generated strategy)
-- [ ] Backend: careerAccess router with saveCareerProfile procedure
-- [ ] Backend: generateCareerStrategy procedure (AI, pulls CI diagnostic scores)
-- [ ] Backend: generateOpportunityUniverse procedure (AI, categorised + scored orgs)
-- [ ] Backend: getCareerProfile, getCareerStrategy, getOpportunityUniverse procedures
-- [ ] Frontend: CareerAccess page with multi-step intake form (5 sections)
-- [ ] Frontend: Career Strategy Statement view (AI-generated, exportable)
-- [ ] Frontend: Opportunity Universe view (categorised cards with 10-dimension scores)
-- [ ] Wire Career Access into CI sidebar navigation
-- [ ] Wire CI diagnostic scores into Career Graph context for AI prompts
+- [x] DB schema: career_profiles table (intake data, career graph)
+- [x] DB schema: opportunity_universe table (scored organisations)
+- [x] DB schema: career_strategy_statements table (AI-generated strategy)
+- [x] Backend: careerAccess router with saveCareerProfile procedure
+- [x] Backend: generateCareerStrategy procedure (AI, pulls CI diagnostic scores)
+- [x] Backend: generateOpportunityUniverse procedure (AI, categorised + scored orgs)
+- [x] Backend: getCareerProfile, getCareerStrategy, getOpportunityUniverse procedures
+- [x] Frontend: CareerAccess page with multi-step intake form (5 sections)
+- [x] Frontend: Career Strategy Statement view (AI-generated, exportable)
+- [x] Frontend: Opportunity Universe view (categorised cards with 10-dimension scores)
+- [x] Wire Career Access into CI sidebar navigation
+- [x] Wire CI diagnostic scores into Career Graph context for AI prompts
