@@ -312,7 +312,7 @@ export default function Assessment() {
           >
             <ArrowLeft size={16} /> Back
           </button>
-          <span className="text-base font-bold tracking-tight text-white">LevelNext</span>
+          <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-8 object-contain" />
           <div className="w-16" />
         </header>
 
@@ -430,7 +430,7 @@ export default function Assessment() {
         {/* Top bar */}
         <header className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div />
-          <span className="text-base font-bold tracking-tight text-white">LevelNext</span>
+          <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-8 object-contain" />
           <div />
         </header>
 
@@ -734,7 +734,7 @@ export default function Assessment() {
         >
           <ArrowLeft size={16} /> Back
         </button>
-        <span className="text-base font-bold tracking-tight" style={{ color: "var(--color-ln-navy)" }}>LevelNext</span>
+        <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-8 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(17%) sepia(41%) saturate(800%) hue-rotate(190deg) brightness(85%)" }} />
         <span className="text-sm font-medium tabular-nums" style={{ color: "var(--color-ln-muted)" }}>
           {answeredCount}/{totalQ}
         </span>
