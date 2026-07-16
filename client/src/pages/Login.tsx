@@ -93,24 +93,22 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#f9f7f4" }}>
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2">
-          <img
-            src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png"
-            alt="LevelNext"
-            className="h-8 object-contain"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-        </div>
-      </div>
+    <div className="min-h-screen flex flex-col" style={{ background: "#12345A" }}>
 
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
+          {/* Centered logo above the form */}
+          <div className="flex flex-col items-center mb-8">
+            <img
+              src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png"
+              alt="LevelNext"
+              className="h-20 object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </div>
           {state === "enter_email" && (
             <div
               className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100"
