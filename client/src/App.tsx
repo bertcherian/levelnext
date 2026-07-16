@@ -41,8 +41,43 @@ import CareerHome from "@/pages/CareerHome";
 import AdminProductEnrollments from "@/pages/AdminProductEnrollments";
 import CareerLanding from "@/pages/CareerLanding";
 import JoinPage from "@/pages/JoinPage";
+import JoinProduct from "@/pages/JoinProduct";
 import Login from "@/pages/Login";
 import PWAInstallBanner from "./components/PWAInstallBanner";
+import { useEffect } from "react";
+import { useAuth } from "./_core/hooks/useAuth";
+import { trpc } from "./lib/trpc";
+
+const LS_KEY = "levelnext_join_product";
+
+// Handles the case where user was redirected to OAuth from /join-product
+// and lands back at "/" after login — we pick up the pending product from localStorage.
+function PostLoginProductActivator() {
+  const { user } = useAuth();
+  const utils = trpc.useUtils();
+  const enrollMutation = trpc.products.selfEnrollAndActivate.useMutation({
+    onSuccess: (data) => {
+      utils.products.getActiveProduct.invalidate();
+      utils.products.getEnrolledProducts.invalidate();
+      const dest = data.productId === "career_intelligence" ? "/career" : "/home";
+      window.location.replace(dest);
+    },
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    const pending = localStorage.getItem(LS_KEY);
+    if (!pending) return;
+    // Only act if we're on the home/landing page (post-OAuth redirect)
+    const path = window.location.pathname;
+    if (path !== "/" && path !== "/home") return;
+    localStorage.removeItem(LS_KEY);
+    enrollMutation.mutate({ productId: pending });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  return null;
+}
 
 function Router() {
   return (
@@ -73,6 +108,7 @@ function Router() {
       <Route path="/enterprise-onboarding" component={EnterpriseOnboardingWizard} />
       <Route path="/apply" component={ApplyForPilot} />
       <Route path="/join" component={JoinPage} />
+      <Route path="/join-product" component={JoinProduct} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/pilot-applications" component={AdminPilotApplications} />
@@ -101,6 +137,7 @@ function App() {
         <TooltipProvider>
           <Toaster richColors position="top-right" />
           <Router />
+          <PostLoginProductActivator />
           <PWAInstallBanner />
         </TooltipProvider>
       </ThemeProvider>

@@ -188,7 +188,41 @@ export const productsRouter = router({
     return enrollments;
   }),
 
-  // ── ADMIN: Enroll a user in a product ───────────────────────────────────────
+  // ── Self-enrol + activate (used by /join?product= flow) ──────────────────────
+  selfEnrollAndActivate: protectedProcedure
+    .input(z.object({ productId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(and(eq(products.id, input.productId), eq(products.isActive, true)))
+        .limit(1);
+      if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+      const [existing] = await db
+        .select()
+        .from(userProductEnrollments)
+        .where(and(eq(userProductEnrollments.userId, ctx.user.id), eq(userProductEnrollments.productId, input.productId)))
+        .limit(1);
+      if (existing) {
+        await db
+          .update(userProductEnrollments)
+          .set({ isActive: true, lastActiveAt: new Date() })
+          .where(eq(userProductEnrollments.id, existing.id));
+      } else {
+        await db.insert(userProductEnrollments).values({
+          userId: ctx.user.id,
+          productId: input.productId,
+          enrolledBy: ctx.user.id,
+          isActive: true,
+          lastActiveAt: new Date(),
+        });
+      }
+      return { success: true, productId: input.productId, productName: product.name };
+    }),
+
+  // ── ADMIN: Enroll a user in a product ───────────────────────────────────────────
   adminEnrollUser: adminOnlyProcedure
     .input(
       z.object({
