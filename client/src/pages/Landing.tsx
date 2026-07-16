@@ -134,10 +134,10 @@ export default function Landing() {
                 Sign In
               </Button>
             </a>
-            <a href="/apply">
+            <a href="/signup">
               <Button size="sm" className="font-semibold text-sm px-5"
                 style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-                Apply for a Pilot →
+                Sign Up Free →
               </Button>
             </a>
           </div>
@@ -177,10 +177,10 @@ export default function Landing() {
             </p>
 
             {/* CTA — above the fold */}
-            <a href="/apply?utm_source=landing&utm_medium=hero&utm_campaign=pilot">
+            <a href="/signup?utm_source=landing&utm_medium=hero&utm_campaign=signup">
               <Button size="lg" className="h-13 px-8 text-base font-bold rounded-xl shadow-lg"
                 style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-                Apply for a Pilot
+                Sign Up Free
                 <ArrowRight size={18} className="ml-2" />
               </Button>
             </a>

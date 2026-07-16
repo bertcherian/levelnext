@@ -47,7 +47,8 @@ import AdminProductEnrollments from "@/pages/AdminProductEnrollments";
 import CareerLanding from "@/pages/CareerLanding";
 import JoinPage from "@/pages/JoinPage";
 import JoinProduct from "@/pages/JoinProduct";
-import Login from "@/pages/Login";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 import { useEffect } from "react";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -116,6 +117,7 @@ function Router() {
       <Route path="/join" component={JoinPage} />
       <Route path="/join-product" component={JoinProduct} />
       <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/pilot-applications" component={AdminPilotApplications} />
       <Route path="/admin/invites" component={AdminManageInvites} />

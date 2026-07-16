@@ -34,6 +34,7 @@ export const emailAuthRouter = router({
         email: z.string().email(),
         origin: z.string().url(),
         inviteToken: z.string().optional(),
+        name: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -41,6 +42,7 @@ export const emailAuthRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
       const email = input.email.toLowerCase().trim();
+      const firstName = input.name?.trim().split(" ")[0] ?? null;
       const token = crypto.randomBytes(48).toString("hex");
       const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MINUTES * 60 * 1000);
 
@@ -55,6 +57,7 @@ export const emailAuthRouter = router({
       const magicLinkUrl = `${input.origin}/api/auth/magic-link/verify?token=${token}`;
 
       // Send the email
+      const greeting = firstName ? `Hi ${firstName},` : "Hi,";
       const emailSent = await sendEmail({
         to: email,
         subject: "Your LevelNext sign-in link",
@@ -64,7 +67,8 @@ export const emailAuthRouter = router({
               <img src="https://storage.manus.space/public/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" style="height: 40px;" />
             </div>
             <div style="background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e8e6e0;">
-              <h1 style="color: #12345A; font-size: 22px; margin: 0 0 16px;">Sign in to LevelNext</h1>
+              <h1 style="color: #12345A; font-size: 22px; margin: 0 0 8px;">Sign in to LevelNext</h1>
+              <p style="color: #555; font-size: 15px; margin: 0 0 24px;">${greeting}</p>
               <p style="color: #1a1a1a; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
                 Click the button below to sign in. This link is valid for ${MAGIC_LINK_EXPIRY_MINUTES} minutes and can only be used once.
               </p>

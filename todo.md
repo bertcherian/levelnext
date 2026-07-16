@@ -517,3 +517,14 @@
 - [x] Add Outreach Engine nav item to CI sidebar in PlatformLayout.tsx
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Open Self-Registration (Jul 16)
+- [x] Add optional `name` field to `requestMagicLink` procedure (emailAuth router)
+- [x] Personalise sign-in email with first name greeting
+- [x] Build client/src/pages/Signup.tsx — open registration page at /signup
+- [x] Signup page: name + email form, value proposition, benefits list, social proof, what-you-get checklist
+- [x] Register /signup route in App.tsx
+- [x] Update Landing page nav: replace "Apply for a Pilot" CTA with "Sign Up Free" primary CTA
+- [x] Update Landing page hero: Sign Up Free as primary CTA button
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint
