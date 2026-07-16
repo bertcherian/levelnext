@@ -187,6 +187,224 @@ type SubmitResult = {
   slug?: string;
 };
 
+// ─── Diagnostic PDF Generator ────────────────────────────────────────────────
+async function generateDiagnosticPdf(
+  result: SubmitResult,
+  moduleType: string,
+  userName: string
+): Promise<void> {
+  const { jsPDF } = await import("jspdf");
+  const meta = MODULE_META[moduleType] ?? MODULE_META.eci;
+  const accentHex = meta.color;
+
+  function hexToRgb(hex: string) {
+    const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : { r: 0, g: 0, b: 0 };
+  }
+
+  const navyRgb    = { r: 10,  g: 26,  b: 47  };
+  const accentRgb  = hexToRgb(accentHex);
+  const yellowRgb  = { r: 212, g: 175, b: 55 };
+  const charcoalRgb = { r: 45, g: 55, b: 72 };
+
+  const isCI = ["cpi","crs","cmk","cst","cao","air"].includes(moduleType);
+  const reportType = isCI ? "CAREER INSIGHT REPORT" : "LEADERSHIP INSIGHT REPORT";
+  const platformLabel = isCI ? "THE CAREER INTELLIGENCE PLATFORM" : "THE LEADERSHIP INTELLIGENCE PLATFORM";
+
+  const zoneLabel = (result.zoneLabel ?? result.zone ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const archetypeLabel = (result.archetypeLabel ?? result.archetype ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const completedDate = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const W = 210;
+  let y = 0;
+
+  // ── Cover ──
+  doc.setFillColor(navyRgb.r, navyRgb.g, navyRgb.b);
+  doc.rect(0, 0, W, 85, "F");
+  // LevelNext wordmark
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(255, 255, 255);
+  doc.text("LevelNext", 20, 22);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(yellowRgb.r, yellowRgb.g, yellowRgb.b);
+  doc.text(platformLabel, 20, 29);
+  // Report type
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(accentRgb.r, accentRgb.g, accentRgb.b);
+  doc.text(`${meta.label.toUpperCase()} · ${reportType}`, 20, 42);
+  // Participant name
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(255, 255, 255);
+  doc.text(userName || "Leader", 20, 56);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(200, 210, 225);
+  doc.text(completedDate, 20, 64);
+  // Score circle
+  doc.setDrawColor(yellowRgb.r, yellowRgb.g, yellowRgb.b);
+  doc.setLineWidth(1.5);
+  doc.circle(185, 42, 17, "S");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(yellowRgb.r, yellowRgb.g, yellowRgb.b);
+  doc.text(String(Math.round(result.edgeScore ?? 0)), 185, 40, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(200, 210, 225);
+  doc.text("Score", 185, 47, { align: "center" });
+
+  y = 98;
+
+  // ── Zone & Archetype ──
+  if (zoneLabel) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(accentRgb.r, accentRgb.g, accentRgb.b);
+    doc.text("YOUR PROFILE", 20, y);
+    y += 7;
+    doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
+    doc.roundedRect(20, y, 80, 7, 3, 3, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    doc.text(zoneLabel, 60, y + 4.5, { align: "center" });
+    y += 11;
+  }
+  if (archetypeLabel) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(navyRgb.r, navyRgb.g, navyRgb.b);
+    doc.text(archetypeLabel, 20, y);
+    y += 7;
+  }
+  if (result.archetypeTagline) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(charcoalRgb.r, charcoalRgb.g, charcoalRgb.b);
+    const taglineLines = doc.splitTextToSize(result.archetypeTagline, 170) as string[];
+    doc.text(taglineLines, 20, y);
+    y += taglineLines.length * 5 + 6;
+  }
+
+  // ── Dimension Breakdown ──
+  const dimScores = (result.dimensionScores ?? {}) as Record<string, number>;
+  const isLii = moduleType === "lii";
+  const labeledDims = Object.entries(dimScores)
+    .sort(([, a], [, b]) => b - a)
+    .map(([k, v]) => ({
+      label: k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      score: isLii ? Math.round(((v - 1) / 4) * 100) : Math.round(v),
+    }));
+
+  if (labeledDims.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(accentRgb.r, accentRgb.g, accentRgb.b);
+    doc.text("DIMENSION BREAKDOWN", 20, y);
+    y += 6;
+    for (const dim of labeledDims) {
+      if (y > 252) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(charcoalRgb.r, charcoalRgb.g, charcoalRgb.b);
+      doc.text(dim.label, 20, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(navyRgb.r, navyRgb.g, navyRgb.b);
+      doc.text(String(dim.score), 190, y, { align: "right" });
+      doc.setFillColor(226, 232, 240);
+      doc.roundedRect(20, y + 2, 160, 3, 1.5, 1.5, "F");
+      const barW = Math.min(160, (dim.score / 100) * 160);
+      const barColor = dim.score >= 75 ? "#16a34a" : dim.score >= 55 ? accentHex : dim.score >= 40 ? "#d97706" : "#dc2626";
+      const bRgb = hexToRgb(barColor);
+      doc.setFillColor(bRgb.r, bRgb.g, bRgb.b);
+      doc.roundedRect(20, y + 2, barW, 3, 1.5, 1.5, "F");
+      y += 11;
+    }
+    y += 4;
+  }
+
+  // ── Strengths & Risks ──
+  if (result.archetypeStrengths && result.archetypeStrengths.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(accentRgb.r, accentRgb.g, accentRgb.b);
+    doc.text("KEY STRENGTHS", 20, y);
+    y += 6;
+    for (const s of result.archetypeStrengths) {
+      if (y > 260) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(charcoalRgb.r, charcoalRgb.g, charcoalRgb.b);
+      const lines = doc.splitTextToSize(`• ${s}`, 165) as string[];
+      doc.text(lines, 25, y);
+      y += lines.length * 5 + 2;
+    }
+    y += 4;
+  }
+  if (result.archetypeRisks && result.archetypeRisks.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor("#dc2626" as any);
+    doc.setTextColor(220, 38, 38);
+    doc.text("WATCH OUTS", 20, y);
+    y += 6;
+    for (const r of result.archetypeRisks) {
+      if (y > 260) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(charcoalRgb.r, charcoalRgb.g, charcoalRgb.b);
+      const lines = doc.splitTextToSize(`• ${r}`, 165) as string[];
+      doc.text(lines, 25, y);
+      y += lines.length * 5 + 2;
+    }
+    y += 4;
+  }
+
+  // ── Zone Implication ──
+  if (result.zoneImplication) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(accentRgb.r, accentRgb.g, accentRgb.b);
+    doc.text("WHAT THIS MEANS FOR YOU", 20, y);
+    y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(charcoalRgb.r, charcoalRgb.g, charcoalRgb.b);
+    const implLines = doc.splitTextToSize(result.zoneImplication, 170) as string[];
+    doc.text(implLines, 20, y);
+    y += implLines.length * 5 + 6;
+  }
+
+  // ── Footer on all pages ──
+  const pageCount = doc.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setFillColor(navyRgb.r, navyRgb.g, navyRgb.b);
+    doc.rect(0, 282, W, 15, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    doc.text("LevelNext — The Leadership Intelligence Platform", 20, 289);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(200, 210, 225);
+    doc.text("Copyright: Meta Results Pvt. Ltd., Bangalore, India  ·  reports@metaresults.com", 190, 289, { align: "right" });
+  }
+
+  const safeModule = moduleType.toUpperCase();
+  const safeName = (userName || "Report").replace(/\s+/g, "_");
+  doc.save(`LevelNext_${safeModule}_${safeName}.pdf`);
+}
+
 export default function Assessment() {
   const params = useParams<{ moduleType: string }>();
   const moduleType = params.moduleType?.toLowerCase() ?? "eci";
@@ -197,6 +415,7 @@ export default function Assessment() {
   const [currentQ, setCurrentQ] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>({});
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const { data: questionsData, isLoading: questionsLoading, isError: questionsError } = trpc.assessment.getQuestions.useQuery(
     { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII" },
@@ -676,7 +895,7 @@ export default function Assessment() {
             })()}
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pb-8">
+            <div className="flex flex-col sm:flex-row gap-3 pb-4">
               <Button
                 onClick={() => navigate("/guide")}
                 className="flex-1 font-semibold h-12"
@@ -690,6 +909,30 @@ export default function Assessment() {
                 className="flex-1 font-semibold h-12 border-white/20 text-white hover:bg-white/10 hover:text-white bg-transparent"
               >
                 View My Edge Profile
+              </Button>
+            </div>
+            {/* Download PDF */}
+            <div className="pb-6">
+              <Button
+                onClick={async () => {
+                  setPdfLoading(true);
+                  try {
+                    await generateDiagnosticPdf(result, moduleType, user?.name ?? "Leader");
+                  } catch (e) {
+                    toast.error("PDF generation failed. Please try again.");
+                  } finally {
+                    setPdfLoading(false);
+                  }
+                }}
+                disabled={pdfLoading}
+                variant="outline"
+                className="w-full h-11 font-semibold border-white/20 text-white hover:bg-white/10 hover:text-white bg-transparent"
+              >
+                {pdfLoading ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating PDF…</>
+                ) : (
+                  <><ArrowRight className="w-4 h-4 mr-2 rotate-90" /> Download PDF Report</>
+                )}
               </Button>
             </div>
             {reportSlug && (
