@@ -619,7 +619,7 @@ export default function LeaderPlaybook() {
   }
 
   if (view === "generating") {
-    return <InfinityLoader visible={true} label="Building your Leader Playbook…" />;
+    return <InfinityLoader visible={true} label="Building your Playbook…" />;
   }
 
   // ── Input screen ────────────────────────────────────────────────────────────
@@ -633,7 +633,7 @@ export default function LeaderPlaybook() {
               <BookOpen size={20} className="text-[#F2B705]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#12345A]">Leader Playbook</h1>
+              <h1 className="text-2xl font-bold text-[#12345A]">Playbook</h1>
               <p className="text-gray-500 text-sm">Your AI executive advisor for every leadership moment</p>
             </div>
           </div>

@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Sparkles, Target, TrendingUp, ArrowRight, CheckCircle2, Circle, Loader2, Zap, Flame } from "lucide-react";
+import { Sparkles, Target, TrendingUp, ArrowRight, CheckCircle2, Circle, Loader2, Zap, Flame, BookOpen } from "lucide-react";
 
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
@@ -16,6 +16,66 @@ const MODULE_LABELS: Record<string, string> = {
   STI: "Strategic Thinking",
 };
 
+
+// ── Leader Playbook Card ─────────────────────────────────────────────────────
+function LeaderPlaybookCard() {
+  const [, navigate] = useLocation();
+  const { data: sessions } = trpc.playbook.listSessions.useQuery({ limit: 3 }, { staleTime: 60_000 });
+  const recentCount = sessions?.length ?? 0;
+
+  return (
+    <div
+      className="rounded-2xl p-4 sm:p-5 cursor-pointer card-lift"
+      style={{
+        background: "oklch(from var(--color-ln-navy) 18% 0.03 248.6)",
+        border: "1.5px solid oklch(from var(--color-ln-navy) 30% 0.04 248.6)",
+        boxShadow: "var(--shadow-card)",
+      }}
+      onClick={() => navigate("/playbook")}
+    >
+      <div className="flex items-center gap-4">
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: "oklch(from #7B5EA7 l c h / 0.18)", border: "1.5px solid oklch(from #7B5EA7 l c h / 0.4)" }}
+        >
+          <BookOpen size={18} style={{ color: "#a78bfa" }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-white">Playbook</p>
+          <p className="text-xs mt-0.5" style={{ color: "oklch(70% 0.02 248.6)" }}>
+            Turn any leadership situation into a structured coaching playbook — instantly.
+          </p>
+        </div>
+        <button
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+          style={{ background: "#7B5EA7", color: "white" }}
+          onClick={(e) => { e.stopPropagation(); navigate("/playbook"); }}
+        >
+          Open <ArrowRight size={12} className="ml-0.5" />
+        </button>
+      </div>
+      {recentCount > 0 && (
+        <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid oklch(from white 30% 0 0 / 0.1)" }}>
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{ background: "oklch(from #7B5EA7 l c h / 0.18)" }}
+          >
+            <BookOpen size={11} style={{ color: "#a78bfa" }} />
+            <span className="text-[11px] font-semibold" style={{ color: "#a78bfa" }}>
+              {recentCount} recent playbook{recentCount !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <span className="text-[11px]" style={{ color: "oklch(45% 0.02 248.6)" }}>Tap to continue →</span>
+        </div>
+      )}
+      {recentCount === 0 && (
+        <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid oklch(from white 30% 0 0 / 0.1)" }}>
+          <span className="text-[11px]" style={{ color: "oklch(45% 0.02 248.6)" }}>Describe a situation to get your first playbook →</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Practice Coach Card with weekly stats ────────────────────────────────────
 function PracticeCoachCard() {
@@ -33,7 +93,7 @@ function PracticeCoachCard() {
           <Zap size={18} style={{ color: "var(--color-ln-yellow)" }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white">AI Practice Coach</p>
+          <p className="text-sm font-semibold text-white">Practice</p>
           <p className="text-xs mt-0.5" style={{ color: "oklch(70% 0.02 248.6)" }}>Rehearse real conversations, get instant feedback, and build your leadership muscle.</p>
         </div>
         <Button
@@ -278,6 +338,9 @@ export default function Home() {
 
         {/* AI Practice Coach quick-access */}
         <PracticeCoachCard />
+
+        {/* Leader Playbook quick-access */}
+        <LeaderPlaybookCard />
 
         {/* Quick access to diagnostics */}
         {pendingModules.length > 0 && (

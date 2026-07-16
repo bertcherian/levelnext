@@ -325,7 +325,7 @@ function HomeScreen({
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-[var(--color-ln-gold)]" />
-            <h1 className="text-xl font-bold text-[var(--color-ln-navy)]">AI Practice Coach</h1>
+            <h1 className="text-xl font-bold text-[var(--color-ln-navy)]">Practice</h1>
           </div>
           <button
             onClick={onHistory}
@@ -2577,7 +2577,7 @@ export default function PracticeCoach() {
   }
 
   return (
-    <PlatformLayout title="AI Practice Coach">
+    <PlatformLayout title="Practice">
       {renderScreen()}
     </PlatformLayout>
   );

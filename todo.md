@@ -475,3 +475,13 @@
 - [x] Button navigates to /practice?playbook_issue=...&playbook_persona=...&playbook_context=... with encoded params
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Phase 42 — Playbook Home Card, Admin Stats, Patterns Page (Jul 15)
+- [ ] Add Leader Playbook entry card to Home.tsx dashboard
+- [ ] Add Playbook usage stats to AdminDashboard.tsx (session count per user, top situation types)
+- [ ] Add getPlaybookStats admin procedure to playbookRouter.ts
+- [ ] Build client/src/pages/PlaybookPatterns.tsx — patterns page with recurring situations, avoided situations, competency signals
+- [ ] Register /playbook/patterns route in App.tsx
+- [ ] Add Patterns nav item to PlatformLayout LI sidebar under Leader Playbook
+- [ ] TypeScript clean (zero errors)
+- [ ] Save checkpoint
