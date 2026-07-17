@@ -687,3 +687,9 @@
 - [x] Weekly activation picks: top 3 contacts sorted by composite score with recommended action
 - [x] Wire Relationship Intelligence nav card on CareerAccess home
 - [x] TypeScript check (0 errors) and checkpoint save
+
+## Executive Opportunity System — Phase 2 (Jul 17)
+- [x] Access Path Generator: nav card on Career Access home (gated until Opportunity Universe has approved companies), links to /career/access-paths
+- [x] Relationship → Pipeline link: show matched contacts on each Kanban expanded card ("Your Connections Here" section)
+- [x] Career Access Score Dashboard: computeCareerAccessScore procedure wired to UI, 12-dimension radar chart (recharts), composite score hero, dimension breakdown bars, top priority actions, score history
+- [x] TypeScript check (0 errors) and checkpoint save

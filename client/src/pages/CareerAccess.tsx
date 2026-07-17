@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import {
   Target, Briefcase, Globe, DollarSign, Heart, Star,
   ChevronRight, ChevronLeft, Sparkles, Building2, TrendingUp,
   MapPin, Zap, AlertCircle, CheckCircle2, RefreshCw, Info,
-  BarChart3, Eye, ArrowRight, Lightbulb, Lock,
+  BarChart3, Eye, ArrowRight, Lightbulb, Lock, Route,
   Users, UserPlus, Network, Phone, Mail, Linkedin, Trash2,
   Award, Clock, Activity, Edit3, X, Plus
 } from "lucide-react";
@@ -166,7 +167,7 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-type View = "home" | "intake" | "strategy" | "universe" | "pipeline" | "relationships";
+type View = "home" | "intake" | "strategy" | "universe" | "pipeline" | "relationships" | "score";
 
 export default function CareerAccess() {
   const [view, setView] = useState<View>("home");
@@ -229,6 +230,13 @@ export default function CareerAccess() {
   const generateUniverseMutation = trpc.careerAccess.generateOpportunityUniverse.useMutation();
   const updateStatusMutation = trpc.careerAccess.updateOpportunityStatus.useMutation();
   const clearUniverseMutation = trpc.careerAccess.clearOpportunityUniverse.useMutation();
+
+  // Career Access Score
+  const { data: scoreData, refetch: refetchScore } = trpc.careerAccess.getCareerAccessScore.useQuery();
+  const computeScoreMutation = trpc.careerAccess.computeCareerAccessScore.useMutation({
+    onSuccess: () => { refetchScore(); toast.success("Career Access Score updated!"); },
+    onError: (e) => toast.error(e.message),
+  });
 
   // Relationship mutations
   const { data: relationships, refetch: refetchRelationships } = trpc.careerAccess.getRelationships.useQuery();
@@ -538,6 +546,54 @@ export default function CareerAccess() {
                   <ArrowRight className="w-3.5 h-3.5" /> Map your network
                 </div>
               )}
+            </div>
+
+            {/* Access Path Generator */}
+            <div
+              className={`p-5 rounded-xl border-2 transition-all ${activeOrgs.length > 0 ? "cursor-pointer hover:shadow-md" : "opacity-60"}`}
+              style={{ borderColor: "#e5e7eb" }}
+              onClick={() => { if (activeOrgs.length > 0) window.location.href = "/career/access-paths"; }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center">
+                  <Route className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--color-ln-navy)]">Access Path Generator</div>
+                  <div className="text-xs text-gray-500">How to get into each company</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">AI-generated access strategies: warm intro routes, decision makers, and outreach drafts for each target company.</p>
+              {activeOrgs.length > 0 ? (
+                <div className="flex items-center gap-1 text-[var(--color-ln-gold)] text-xs font-medium">
+                  <ArrowRight className="w-3.5 h-3.5" /> Generate access paths
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-gray-400 text-xs">
+                  <Lock className="w-3.5 h-3.5" /> Map your universe first
+                </div>
+              )}
+            </div>
+
+            {/* Career Access Score */}
+            <div
+              className="p-5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
+              style={{ borderColor: "#e5e7eb" }}
+              onClick={() => setView("score")}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--color-ln-navy)]">Career Access Score™</div>
+                  <div className="text-xs text-gray-500">Your 12-dimension readiness score</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Compute your executive opportunity readiness across 12 strategic dimensions and track your progress over time.</p>
+              <div className="flex items-center gap-1 text-[var(--color-ln-gold)] text-xs font-medium">
+                <ArrowRight className="w-3.5 h-3.5" /> View my score
+              </div>
             </div>
           </div>
 
@@ -936,6 +992,170 @@ export default function CareerAccess() {
     );
   }
 
+  // ── Career Access Score Dashboard ────────────────────────────────────────
+  if (view === "score") {
+    const latest = scoreData?.latest as Record<string, unknown> | null ?? null;
+    const history = (scoreData?.history ?? []) as Record<string, unknown>[];
+
+    const SCORE_DIMS = [
+      { key: "scoreStrategyClarity", label: "Strategy Clarity" },
+      { key: "scorePositioningStrength", label: "Positioning" },
+      { key: "scoreOpportunityPipeline", label: "Opportunity Pipeline" },
+      { key: "scoreRelationshipCapital", label: "Relationship Capital" },
+      { key: "scoreAccessPathQuality", label: "Access Path Quality" },
+      { key: "scoreVisibilityPresence", label: "Visibility & Presence" },
+      { key: "scoreNarrativeReadiness", label: "Narrative Readiness" },
+      { key: "scoreMarketTiming", label: "Market Timing" },
+      { key: "scoreCredentialFit", label: "Credential Fit" },
+      { key: "scoreNetworkDensity", label: "Network Density" },
+      { key: "scoreOutreachMomentum", label: "Outreach Momentum" },
+      { key: "scoreConfidenceReadiness", label: "Confidence Readiness" },
+    ];
+
+    const radarData = SCORE_DIMS.map((d) => ({
+      subject: d.label.split(" ")[0],
+      fullLabel: d.label,
+      value: latest ? (latest[d.key] as number ?? 0) : 0,
+      fullMark: 100,
+    }));
+
+    const composite = latest ? (latest.compositeScore as number ?? 0) : 0;
+    const compositeColor = composite >= 70 ? "#34d399" : composite >= 50 ? "#f59e0b" : "#f87171";
+
+    return (
+      <PlatformLayout>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <button onClick={() => setView("home")} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
+
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="flex items-center gap-2 text-[var(--color-ln-gold)] text-sm font-semibold uppercase tracking-wider mb-1">
+                <BarChart3 className="w-4 h-4" /> Career Access Score™
+              </div>
+              <h1 className="text-2xl font-bold text-[var(--color-ln-navy)]">Your Executive Opportunity Readiness</h1>
+              <p className="text-sm text-gray-500 mt-1">12-dimension AI-computed score based on your profile, strategy, pipeline, and network.</p>
+            </div>
+            <Button
+              onClick={() => computeScoreMutation.mutate()}
+              disabled={computeScoreMutation.isPending}
+              style={{ background: "var(--color-ln-navy)", color: "white" }}
+              className="gap-2"
+            >
+              {computeScoreMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {latest ? "Recompute Score" : "Compute My Score"}
+            </Button>
+          </div>
+
+          {!latest ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center">
+              <BarChart3 className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-[var(--color-ln-navy)] mb-2">No score computed yet</h3>
+              <p className="text-sm text-gray-400 mb-6 max-w-sm mx-auto">
+                Click "Compute My Score" to get your 12-dimension Career Access Score based on everything you've built so far.
+              </p>
+              <Button
+                onClick={() => computeScoreMutation.mutate()}
+                disabled={computeScoreMutation.isPending}
+                style={{ background: "var(--color-ln-navy)", color: "white" }}
+                className="gap-2"
+              >
+                {computeScoreMutation.isPending ? <><RefreshCw className="w-4 h-4 animate-spin" /> Computing...</> : <><BarChart3 className="w-4 h-4" /> Compute My Score</>}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Composite score hero */}
+              <div className="rounded-2xl p-6 flex items-center gap-6" style={{ background: "var(--color-ln-navy)" }}>
+                <div className="w-28 h-28 rounded-full flex items-center justify-center border-4 shrink-0" style={{ borderColor: compositeColor }}>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold" style={{ color: compositeColor }}>{composite}</p>
+                    <p className="text-xs" style={{ color: "oklch(70% 0.02 248.6)" }}>/ 100</p>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-lg font-bold text-white mb-1">Career Access Score™</p>
+                  {Boolean(latest.narrative) && (
+                    <p className="text-sm" style={{ color: "oklch(75% 0.02 248.6)" }}>{String(latest.narrative ?? "")}</p>
+                  )}
+                  <p className="text-xs mt-2" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                    Computed {history.length > 0 ? new Date(latest.createdAt as string).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "just now"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Radar chart + dimension bars */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                  <h3 className="text-sm font-semibold text-[var(--color-ln-navy)] mb-4">Dimension Radar</h3>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <RadarChart data={radarData}>
+                      <PolarGrid stroke="#e5e7eb" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: "#6b7280", fontSize: 10 }} />
+                      <Radar name="Score" dataKey="value" stroke="var(--color-ln-navy)" fill="var(--color-ln-navy)" fillOpacity={0.15} strokeWidth={2} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                  <h3 className="text-sm font-semibold text-[var(--color-ln-navy)] mb-4">Dimension Breakdown</h3>
+                  <div className="space-y-2.5">
+                    {SCORE_DIMS.map((d) => {
+                      const val = latest ? (latest[d.key] as number ?? 0) : 0;
+                      const color = val >= 70 ? "#34d399" : val >= 50 ? "#f59e0b" : "#f87171";
+                      return (
+                        <div key={d.key} className="flex items-center gap-2 text-xs">
+                          <span className="w-36 shrink-0 text-gray-600 truncate">{d.label}</span>
+                          <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                            <div className="h-1.5 rounded-full transition-all" style={{ width: `${val}%`, background: color }} />
+                          </div>
+                          <span className="w-8 text-right font-bold" style={{ color }}>{val}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Top actions */}
+              {Array.isArray(latest.topActions) && (latest.topActions as string[]).length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                  <h3 className="text-sm font-semibold text-[var(--color-ln-navy)] mb-4">Top Priority Actions</h3>
+                  <div className="space-y-2">
+                    {(latest.topActions as string[]).map((action, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: i === 0 ? "var(--color-ln-navy)" : "#f9fafb" }}>
+                        <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)]" : "bg-gray-200 text-gray-600"}`}>{i + 1}</span>
+                        <p className={`text-sm ${i === 0 ? "text-white font-medium" : "text-gray-700"}`}>{action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Score history */}
+              {history.length > 1 && (
+                <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                  <h3 className="text-sm font-semibold text-[var(--color-ln-navy)] mb-4">Score History</h3>
+                  <div className="space-y-2">
+                    {history.slice(0, 5).map((snap, i) => (
+                      <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                        <span className="text-xs text-gray-500">{new Date(snap.createdAt as string).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                        <span className="text-sm font-bold" style={{ color: (snap.compositeScore as number) >= 70 ? "#34d399" : (snap.compositeScore as number) >= 50 ? "#f59e0b" : "#f87171" }}>
+                          {snap.compositeScore as number}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </PlatformLayout>
+    );
+  }
+
   // ── Opportunity Pipeline Kanban view ─────────────────────────────────────
   if (view === "pipeline") {
     const pipelineOrgs = (universe ?? []).filter((o) => o.status !== "removed");
@@ -1064,6 +1284,35 @@ export default function CareerAccess() {
                                       <p className="text-[10px] text-amber-800">{org.hiddenOpportunitySignal}</p>
                                     </div>
                                   )}
+                                  {/* Relationship matches */}
+                                  {(() => {
+                                    const matched = (relationships ?? []).filter((r) =>
+                                      (r.currentCompany as string ?? "").toLowerCase().includes(org.companyName.toLowerCase()) ||
+                                      org.companyName.toLowerCase().includes((r.currentCompany as string ?? "").toLowerCase())
+                                    );
+                                    if (matched.length === 0) return null;
+                                    return (
+                                      <div className="p-2 rounded-lg" style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.08)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.25)" }}>
+                                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--color-ln-gold)" }}>Your Connections Here</p>
+                                        <div className="space-y-1">
+                                          {matched.map((r) => (
+                                            <div key={r.id as number} className="flex items-center gap-1.5">
+                                              <div className="w-5 h-5 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center text-[8px] font-bold text-white shrink-0">
+                                                {(r.name as string).charAt(0).toUpperCase()}
+                                              </div>
+                                              <div className="min-w-0">
+                                                <p className="text-[10px] font-semibold text-[var(--color-ln-navy)] truncate">{r.name as string}</p>
+                                                <p className="text-[9px] text-gray-500 truncate">{r.currentTitle as string}</p>
+                                              </div>
+                                              {r.compositeScore != null && (
+                                                <span className="ml-auto text-[9px] font-bold shrink-0" style={{ color: "var(--color-ln-gold)" }}>{r.compositeScore as number}</span>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
                                   <div>
                                     <label className="text-[9px] font-semibold uppercase tracking-widest block mb-1" style={{ color: "oklch(55% 0.02 248.6)" }}>Notes</label>
                                     <textarea
