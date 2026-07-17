@@ -699,3 +699,9 @@
 - [x] Access Path status tracking: add status toggle (Not Started / In Progress / Activated) to each Access Path card in AccessPaths.tsx
 - [x] Score improvement tips: after computing Career Access Score, show "How to improve your weakest 3 dimensions" panel with specific actionable steps
 - [x] TypeScript check (0 errors) and checkpoint save
+
+## Executive Opportunity System — Phase 4 (Jul 17)
+- [x] Chief of Staff briefing history: getBriefingHistory procedure + collapsible history panel on Career Access home (last 30 days, click to expand each brief)
+- [x] Access Path activation tracker: logAccessPathActivation procedure + activation log modal in AccessPaths.tsx (what you did, action type, notes) — intercepts "Activated" status click
+- [x] Career Access Score gating: getScoreImprovement procedure + green banner on Career Access home when latest score > previous score
+- [x] TypeScript check (0 errors) and checkpoint save

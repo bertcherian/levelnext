@@ -907,6 +907,65 @@ Today's date: ${today}`;
     });
     return briefData;
   }),
+
+  // ── Briefing History ────────────────────────────────────────────────────────
+  getBriefingHistory: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    return db.select().from(careerAccessBriefings)
+      .where(eq(careerAccessBriefings.userId, ctx.user.id))
+      .orderBy(desc(careerAccessBriefings.briefDate))
+      .limit(30);
+  }),
+
+  // ── Access Path Activation Log ───────────────────────────────────────────────
+  logAccessPathActivation: protectedProcedure
+    .input(z.object({
+      accessPathId: z.number(),
+      whatYouDid: z.string().min(1),
+      outcome: z.enum(["sent_message", "had_call", "got_intro", "applied", "other"]),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const [path] = await db.select().from(accessPaths)
+        .where(and(eq(accessPaths.id, input.accessPathId), eq(accessPaths.userId, ctx.user.id)))
+        .limit(1);
+      if (!path) throw new TRPCError({ code: "NOT_FOUND" });
+      const timestamp = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+      const logEntry = `[${timestamp}] ${input.outcome.replace(/_/g, " ").toUpperCase()}: ${input.whatYouDid}${input.notes ? ` — ${input.notes}` : ""}`;
+      const existingNotes = path.userNotes ?? "";
+      const updatedNotes = existingNotes ? `${existingNotes}\n${logEntry}` : logEntry;
+      await db.update(accessPaths)
+        .set({ userNotes: updatedNotes, status: "activated", updatedAt: new Date() })
+        .where(and(eq(accessPaths.id, input.accessPathId), eq(accessPaths.userId, ctx.user.id)));
+      return { success: true };
+    }),
+
+  // ── Score Improvement Check ──────────────────────────────────────────────────
+  getScoreImprovement: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const snapshots = await db.select({
+      id: careerAccessScoreSnapshots.id,
+      compositeScore: careerAccessScoreSnapshots.compositeScore,
+      createdAt: careerAccessScoreSnapshots.createdAt,
+    }).from(careerAccessScoreSnapshots)
+      .where(eq(careerAccessScoreSnapshots.userId, ctx.user.id))
+      .orderBy(desc(careerAccessScoreSnapshots.createdAt))
+      .limit(2);
+    if (snapshots.length < 2) return null;
+    const [latest, previous] = snapshots;
+    const improvement = (latest.compositeScore ?? 0) - (previous.compositeScore ?? 0);
+    if (improvement <= 0) return null;
+    return {
+      latestScore: latest.compositeScore,
+      previousScore: previous.compositeScore,
+      improvement,
+      latestDate: latest.createdAt,
+    };
+  }),
 });
 
 // ── Helper: AI relationship scoring ──────────────────────────────────────────

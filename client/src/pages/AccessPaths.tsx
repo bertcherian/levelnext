@@ -160,6 +160,22 @@ export default function AccessPaths() {
     onError: (e) => toast.error(e.message),
   });
 
+  const logActivationMutation = trpc.careerAccess.logAccessPathActivation.useMutation({
+    onSuccess: () => { refetchPaths(); setActivationModal(null); setActivationForm({ whatYouDid: "", outcome: "sent_message", notes: "" }); toast.success("Activation logged! Path marked as Activated."); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const [activationModal, setActivationModal] = useState<{ pathId: number; companyName: string } | null>(null);
+  const [activationForm, setActivationForm] = useState({ whatYouDid: "", outcome: "sent_message" as "sent_message" | "had_call" | "got_intro" | "applied" | "other", notes: "" });
+
+  function handleStatusClick(opt: { value: string; label: string; color: string }, pathId: number, companyName: string) {
+    if (opt.value === "activated") {
+      setActivationModal({ pathId, companyName });
+    } else {
+      updateStatusMutation.mutate({ id: pathId, status: opt.value });
+    }
+  }
+
   const STATUS_OPTIONS = [
     { value: "not_started", label: "Not Started", color: "bg-gray-100 text-gray-600 border-gray-200" },
     { value: "in_progress", label: "In Progress", color: "bg-blue-100 text-blue-700 border-blue-200" },
@@ -305,7 +321,7 @@ export default function AccessPaths() {
                       {STATUS_OPTIONS.map(opt => (
                         <button
                           key={opt.value}
-                          onClick={() => updateStatusMutation.mutate({ id: selectedPath.id, status: opt.value })}
+                          onClick={() => handleStatusClick(opt, selectedPath.id, selectedOpp.companyName)}
                           className={`text-xs px-3 py-1 rounded-full border font-medium transition-all ${
                             selectedPath.status === opt.value
                               ? opt.color + " ring-2 ring-offset-1 ring-current"
@@ -495,6 +511,78 @@ export default function AccessPaths() {
           </div>
         </div>
       </div>
+      {/* Activation Log Modal */}
+      {activationModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[#0A1628]">Log Your Activation</h3>
+                <p className="text-xs text-gray-500">{activationModal.companyName}</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">You're marking this path as <strong>Activated</strong>. What did you do to activate it?</p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">What did you do?</label>
+                <textarea
+                  value={activationForm.whatYouDid}
+                  onChange={(e) => setActivationForm(f => ({ ...f, whatYouDid: e.target.value }))}
+                  placeholder="e.g. Sent a LinkedIn message to the VP of Engineering, introduced myself through Rahul..."
+                  className="w-full text-sm border border-gray-200 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-2">Type of action</label>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { value: "sent_message", label: "Sent Message" },
+                    { value: "had_call", label: "Had a Call" },
+                    { value: "got_intro", label: "Got an Intro" },
+                    { value: "applied", label: "Applied" },
+                    { value: "other", label: "Other" },
+                  ] as const).map(o => (
+                    <button
+                      key={o.value}
+                      onClick={() => setActivationForm(f => ({ ...f, outcome: o.value }))}
+                      className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                        activationForm.outcome === o.value
+                          ? "bg-emerald-100 text-emerald-700 border-emerald-300 ring-2 ring-emerald-300 ring-offset-1"
+                          : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                      }`}
+                    >{o.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Notes (optional)</label>
+                <textarea
+                  value={activationForm.notes}
+                  onChange={(e) => setActivationForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="Any context, next steps, or follow-up reminders..."
+                  className="w-full text-sm border border-gray-200 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  rows={2}
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setActivationModal(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >Cancel</button>
+              <button
+                onClick={() => logActivationMutation.mutate({ accessPathId: activationModal.pathId, whatYouDid: activationForm.whatYouDid, outcome: activationForm.outcome, notes: activationForm.notes })}
+                disabled={!activationForm.whatYouDid.trim() || logActivationMutation.isPending}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+              >{logActivationMutation.isPending ? "Saving..." : "Log Activation"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </PlatformLayout>
   );
 }

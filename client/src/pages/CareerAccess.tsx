@@ -245,6 +245,18 @@ export default function CareerAccess() {
     onError: (e) => toast.error(e.message),
   });
 
+  // Briefing history, activation log, score improvement
+  const { data: briefingHistory } = trpc.careerAccess.getBriefingHistory.useQuery();
+  const { data: scoreImprovement } = trpc.careerAccess.getScoreImprovement.useQuery();
+  const [briefingHistoryOpen, setBriefingHistoryOpen] = useState(false);
+  const [selectedHistoryBrief, setSelectedHistoryBrief] = useState<Record<string, unknown> | null>(null);
+  const [activationModal, setActivationModal] = useState<{ pathId: number; companyName: string } | null>(null);
+  const [activationForm, setActivationForm] = useState({ whatYouDid: "", outcome: "sent_message" as "sent_message" | "had_call" | "got_intro" | "applied" | "other", notes: "" });
+  const logActivationMutation = trpc.careerAccess.logAccessPathActivation.useMutation({
+    onSuccess: () => { setActivationModal(null); setActivationForm({ whatYouDid: "", outcome: "sent_message", notes: "" }); toast.success("Activation logged!"); },
+    onError: (e) => toast.error(e.message),
+  });
+
   // Relationship mutations
   const { data: relationships, refetch: refetchRelationships } = trpc.careerAccess.getRelationships.useQuery();
   const addRelMutation = trpc.careerAccess.addRelationship.useMutation();
@@ -670,6 +682,68 @@ export default function CareerAccess() {
               </div>
             </div>
           </div>
+
+          {/* Score Improvement Banner */}
+          {scoreImprovement && (
+            <div className="mb-6 p-4 rounded-xl flex items-center gap-4" style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)" }}>
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="text-white font-bold text-sm mb-0.5">🎉 Your Career Access Score improved!</div>
+                <div className="text-white/80 text-xs">
+                  Your score went from <strong className="text-white">{scoreImprovement.previousScore}</strong> to <strong className="text-white">{scoreImprovement.latestScore}</strong> — a <strong className="text-white">+{scoreImprovement.improvement} point</strong> improvement. Keep adding data to keep climbing.
+                </div>
+              </div>
+              <button onClick={() => setView("score")} className="shrink-0 px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition-all">
+                View Score
+              </button>
+            </div>
+          )}
+
+          {/* Briefing History */}
+          {(briefingHistory?.length ?? 0) > 1 && (
+            <div className="mb-6">
+              <button
+                onClick={() => setBriefingHistoryOpen((v) => !v)}
+                className="flex items-center gap-2 text-xs text-gray-500 hover:text-[var(--color-ln-navy)] transition-colors"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                {briefingHistoryOpen ? "Hide" : "View"} briefing history ({briefingHistory!.length} days)
+                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${briefingHistoryOpen ? "rotate-90" : ""}`} />
+              </button>
+              {briefingHistoryOpen && (
+                <div className="mt-3 space-y-2">
+                  {briefingHistory!.map((b) => {
+                    const bData = b.brief as Record<string, unknown> | null;
+                    const isSelected = selectedHistoryBrief === bData;
+                    return (
+                      <div
+                        key={b.id}
+                        className="p-3 rounded-xl border cursor-pointer transition-all hover:border-[var(--color-ln-navy)]/30"
+                        style={{ borderColor: isSelected ? "var(--color-ln-navy)" : "#e5e7eb", background: isSelected ? "var(--color-ln-navy)/3" : "white" }}
+                        onClick={() => setSelectedHistoryBrief(isSelected ? null : bData)}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-[var(--color-ln-navy)]">{b.briefDate}</span>
+                          <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isSelected ? "rotate-90" : ""}`} />
+                        </div>
+                        {bData && <p className="text-xs text-gray-500 line-clamp-1">{String(bData.todaysPriorityAction ?? "")}</p>}
+                        {isSelected && bData && (
+                          <div className="mt-3 space-y-2 border-t pt-3">
+                            {Boolean(bData.greeting) && <p className="text-xs text-gray-700 font-medium">{String(bData.greeting)}</p>}
+                            {Boolean(bData.pipelineHealth) && <p className="text-xs text-gray-600"><span className="font-medium">Pipeline:</span> {String(bData.pipelineHealth)}</p>}
+                            {Boolean(bData.coachingNudge) && <p className="text-xs text-gray-600"><span className="font-medium">Mindset:</span> {String(bData.coachingNudge)}</p>}
+                            {Boolean(bData.weeklyOutlook) && <p className="text-xs text-gray-600"><span className="font-medium">Weekly outlook:</span> {String(bData.weeklyOutlook)}</p>}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Philosophy note */}
           <div className="p-4 rounded-xl bg-[var(--color-ln-navy)]/5 border border-[var(--color-ln-navy)]/10">
