@@ -608,3 +608,7 @@
 - [x] Build Past Playbooks history view in ManagerPlaybook.tsx
 - [x] Add loading indicator on ManagerHome while Daily Brief is being auto-generated
 - [x] Create downloadable A4 Career Intelligence Executive Brief PDF (4 pages, logo, graphics, Career Access AI section) — uploaded and linked on CareerLanding.tsx
+
+## MEP Landing Page (Jul 17)
+- [x] Create ManagerEffectivenessLanding.tsx at /manager-effectiveness route
+- [x] Register route in App.tsx

@@ -44,6 +44,7 @@ import AdminMomentumBrief from "@/pages/AdminMomentumBrief";
 import AdminEscalations from "@/pages/AdminEscalations";
 import CareerHome from "@/pages/CareerHome";
 import AdminProductEnrollments from "@/pages/AdminProductEnrollments";
+import ManagerEffectivenessLanding from "@/pages/ManagerEffectivenessLanding";
 import ManagerHome from "@/pages/mep/ManagerHome";
 import ManagerDiagnostics from "@/pages/mep/ManagerDiagnostics";
 import ManagerGuide from "@/pages/mep/ManagerGuide";
@@ -150,6 +151,7 @@ function Router() {
       <Route path="/manager/team">{() => <MEPLayout><TeamIntelligence /></MEPLayout>}</Route>
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/career-intelligence" component={CareerLanding} />
+      <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />
