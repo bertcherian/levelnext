@@ -479,6 +479,11 @@ export default function ManagerDiagnostics() {
             className="rounded-2xl px-6 py-6 text-center"
             style={{ background: "var(--color-ln-navy)" }}
           >
+            <img
+              src="/manus-storage/LevelNext_logo_transparent_88851f5c.png"
+              alt="LevelNext"
+              className="h-10 w-auto object-contain mx-auto mb-4"
+            />
             <CheckCircle2 size={32} className="mx-auto mb-3" style={{ color: "#34d399" }} />
             <h1 className="text-xl font-bold text-white mb-1">Diagnostic Complete</h1>
             <p className="text-sm mb-4" style={{ color: "oklch(70% 0.02 248.6)" }}>
