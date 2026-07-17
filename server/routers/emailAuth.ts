@@ -14,7 +14,7 @@ import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
-import { magicLinkTokens, platformInvites, users } from "../../drizzle/schema";
+import { magicLinkTokens, platformInvites, userProductEnrollments, users } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -244,8 +244,20 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
         .set({ usedAt: new Date(), userId: existingUser.id })
         .where(eq(magicLinkTokens.token, token));
 
-      // Auto-accept platform invite if present
+      // Auto-accept platform invite if present, and auto-enroll in the specified product
       if (magicLink.inviteToken) {
+        // Fetch the invite to get productId before marking accepted
+        const [invite] = await db
+          .select()
+          .from(platformInvites)
+          .where(
+            and(
+              eq(platformInvites.token, magicLink.inviteToken),
+              eq(platformInvites.status, "pending")
+            )
+          )
+          .limit(1);
+
         await db
           .update(platformInvites)
           .set({ status: "accepted", acceptedAt: new Date() })
@@ -255,6 +267,35 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
               eq(platformInvites.status, "pending")
             )
           );
+
+        // Auto-enroll user in the product specified on the invite
+        if (invite?.productId) {
+          const [existing] = await db
+            .select()
+            .from(userProductEnrollments)
+            .where(
+              and(
+                eq(userProductEnrollments.userId, existingUser.id),
+                eq(userProductEnrollments.productId, invite.productId)
+              )
+            )
+            .limit(1);
+
+          if (existing) {
+            await db
+              .update(userProductEnrollments)
+              .set({ isActive: true, lastActiveAt: new Date() })
+              .where(eq(userProductEnrollments.id, existing.id));
+          } else {
+            await db.insert(userProductEnrollments).values({
+              userId: existingUser.id,
+              productId: invite.productId,
+              enrolledBy: invite.invitedBy ?? null,
+              isActive: true,
+              lastActiveAt: new Date(),
+            });
+          }
+        }
       }
 
       // Update lastSignedIn

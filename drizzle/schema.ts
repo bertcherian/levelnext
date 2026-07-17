@@ -902,6 +902,7 @@ export const platformInvites = mysqlTable("platform_invites", {
   name: varchar("name", { length: 255 }),
   invitedBy: int("invitedBy").references(() => users.id),
   pilotApplicationId: int("pilotApplicationId").references(() => pilotApplications.id),
+  productId: varchar("productId", { length: 50 }).references(() => products.id), // product to auto-enroll on first sign-in
   status: mysqlEnum("status", ["pending", "accepted", "expired"]).default("pending").notNull(),
   expiresAt: timestamp("expiresAt").notNull(),
   acceptedAt: timestamp("acceptedAt"),

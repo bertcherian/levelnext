@@ -1,0 +1,2 @@
+ALTER TABLE `platform_invites` ADD `productId` varchar(50);--> statement-breakpoint
+ALTER TABLE `platform_invites` ADD CONSTRAINT `platform_invites_productId_products_id_fk` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE no action ON UPDATE no action;

@@ -53,6 +53,7 @@ import ManagerPractice from "@/pages/mep/ManagerPractice";
 import ManagerCommitments from "@/pages/mep/ManagerCommitments";
 import TeamIntelligence from "@/pages/mep/TeamIntelligence";
 import CareerLanding from "@/pages/CareerLanding";
+import ManagerEffectivenessLanding from "@/pages/ManagerEffectivenessLanding";
 import JoinPage from "@/pages/JoinPage";
 import JoinProduct from "@/pages/JoinProduct";
 import Login from "./pages/Login";
@@ -149,6 +150,7 @@ function Router() {
       <Route path="/manager/team" component={TeamIntelligence} />
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/career-intelligence" component={CareerLanding} />
+      <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />

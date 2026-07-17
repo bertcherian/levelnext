@@ -5,6 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -75,6 +82,7 @@ export default function AdminManageInvites() {
       setDialogOpen(false);
       setInviteName("");
       setInviteEmail("");
+      setInviteProductId("leadership_intelligence");
       toast.success("Invite sent! The magic link email is on its way.");
     },
     onError: (err: { message: string }) => toast.error(err.message),
@@ -98,6 +106,7 @@ export default function AdminManageInvites() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [inviteProductId, setInviteProductId] = useState<string>("leadership_intelligence");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -190,6 +199,7 @@ export default function AdminManageInvites() {
     createInvite.mutate({
       email: inviteEmail.trim(),
       name: inviteName.trim() || undefined,
+      productId: inviteProductId,
       origin: window.location.origin,
     });
   }
@@ -619,6 +629,20 @@ export default function AdminManageInvites() {
                 onKeyDown={(e) => e.key === "Enter" && handleSendInvite()}
                 autoFocus
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-product">Platform Access</Label>
+              <Select value={inviteProductId} onValueChange={setInviteProductId}>
+                <SelectTrigger id="invite-product">
+                  <SelectValue placeholder="Select platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="leadership_intelligence">Leadership Intelligence</SelectItem>
+                  <SelectItem value="career_intelligence">Career Intelligence</SelectItem>
+                  <SelectItem value="manager_effectiveness">Manager Effectiveness</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">The user will be auto-enrolled in this platform on first sign-in.</p>
             </div>
           </div>
           <DialogFooter className="gap-2">

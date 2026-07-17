@@ -16,6 +16,7 @@ export const platformInvitesRouter = router({
         email: z.string().email(),
         name: z.string().optional(),
         pilotApplicationId: z.number().optional(),
+        productId: z.string().optional(), // product to auto-enroll on first sign-in
         origin: z.string().url(),
       })
     )
@@ -46,14 +47,24 @@ export const platformInvitesRouter = router({
         name: input.name,
         invitedBy: ctx.user.id,
         pilotApplicationId: input.pilotApplicationId,
+        productId: input.productId ?? null,
         expiresAt,
         status: "pending",
       });
 
       const inviteUrl = `${input.origin}/login?invite=${token}`;
 
-      // Send invite email
+      // Product-aware email copy
       const firstName = input.name?.split(" ")[0] || "there";
+      const isMEP = input.productId === "manager_effectiveness";
+      const isCI = input.productId === "career_intelligence";
+      const platformName = isMEP ? "Manager Effectiveness Platform" : isCI ? "Career Intelligence" : "Leadership Intelligence";
+      const platformBenefits = isMEP
+        ? ["10 management effectiveness diagnostics", "AI Manager Guide — your personal coaching advisor", "Manager Playbook for any leadership situation", "Daily Management Brief — your morning OS", "AI Practice Partner for difficult conversations"]
+        : isCI
+        ? ["Career Intelligence diagnostics", "AI Career Guide", "Career Access & Opportunity Universe", "Outreach Engine — LinkedIn & email strategy", "Relationship Graph"]
+        : ["6 precision leadership diagnostics", "Your personalised Leadership Edge score", "AI Practice Coach for real leadership conversations", "Guide — your AI leadership development advisor", "A 90-day personalised growth plan"];
+
       await sendEmail({
         to: input.email,
         subject: firstName !== "there" ? `${firstName}, your LevelNext access is ready` : "Your LevelNext access is ready",
@@ -65,30 +76,18 @@ export const platformInvitesRouter = router({
             <div style="background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e8e6e0;">
               <h1 style="color: #12345A; font-size: 24px; margin: 0 0 16px;">Hi ${firstName},</h1>
               <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6; margin: 0 0 16px;">
-                You've been personally invited to access <strong>LevelNext</strong> — the Leadership Intelligence Platform built for senior leaders who want to know exactly where they stand and close the gap to what's next.
+                You've been personally invited to access <strong>LevelNext — ${platformName}</strong>.
               </p>
-              <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
-                Your invite gives you access to:
-              </p>
+              <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">Your invite gives you access to:</p>
               <ul style="color: #1a1a1a; font-size: 15px; line-height: 1.8; margin: 0 0 32px; padding-left: 20px;">
-                <li>6 precision leadership diagnostics</li>
-                <li>Your personalised Leadership Edge score</li>
-                <li>AI Practice Coach for real leadership conversations</li>
-                <li>Guide — your AI leadership development advisor</li>
-                <li>A 90-day personalised growth plan</li>
+                ${platformBenefits.map((b) => `<li>${b}</li>`).join("\n                ")}
               </ul>
               <div style="text-align: center; margin-bottom: 24px;">
-                <a href="${inviteUrl}" style="display: inline-block; background: #F2B705; color: #12345A; font-weight: 700; font-size: 16px; padding: 16px 40px; border-radius: 8px; text-decoration: none;">
-                  Accept Your Invitation →
-                </a>
+                <a href="${inviteUrl}" style="display: inline-block; background: #F2B705; color: #12345A; font-weight: 700; font-size: 16px; padding: 16px 40px; border-radius: 8px; text-decoration: none;">Accept Your Invitation →</a>
               </div>
-              <p style="color: #555; font-size: 13px; text-align: center; margin: 0;">
-                This invite link expires in 7 days. If you have any questions, reply to this email.
-              </p>
+              <p style="color: #555; font-size: 13px; text-align: center; margin: 0;">This invite link expires in 7 days.</p>
             </div>
-            <p style="color: #888; font-size: 12px; text-align: center; margin-top: 24px;">
-              LevelNext by Meta Results Pvt. Ltd. · Bangalore, India
-            </p>
+            <p style="color: #888; font-size: 12px; text-align: center; margin-top: 24px;">LevelNext by Meta Results Pvt. Ltd. · Bangalore, India</p>
           </div>
         `,
       });
@@ -96,7 +95,7 @@ export const platformInvitesRouter = router({
       // Notify owner
       await notifyOwner({
         title: "Invite Sent",
-        content: `Magic link invite sent to ${input.email}${input.name ? ` (${input.name})` : ""}. Expires in 7 days.`,
+        content: `Magic link invite sent to ${input.email}${input.name ? ` (${input.name})` : ""}${input.productId ? ` for ${platformName}` : ""}. Expires in 7 days.`,
       });
 
       return { success: true, inviteUrl, expiresAt };

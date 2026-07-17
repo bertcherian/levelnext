@@ -539,35 +539,35 @@
 - [x] Save checkpoint
 
 ## Manager Effectiveness Platform — Sprint 1 (Jul 16)
-- [ ] DB schema: mep_diagnostic_results table (10 diagnostics, dimension scores, LLM analysis)
-- [ ] DB schema: manager_guide_sessions + manager_guide_messages tables (AI Guide chat)
-- [ ] DB schema: manager_playbook_sessions table (situation → AI playbook)
-- [ ] DB schema: behaviour_commitments table (commitment tracking + check-ins)
-- [ ] DB schema: mep_daily_briefs table (daily management brief)
-- [ ] DB schema: mep_practice_sessions table (AI practice partner)
-- [ ] Run migration and apply SQL
-- [ ] Backend: mepDiagnostics router (10 diagnostics, submit + get results)
-- [ ] Backend: managerGuide router (AI chat with full manager context)
-- [ ] Backend: managerPlaybook router (situation → structured playbook)
-- [ ] Backend: behaviourEngine router (commitments + check-ins)
-- [ ] Backend: mepDailyBrief router (generate daily management brief)
-- [ ] Backend: mepPractice router (AI practice partner sessions)
-- [ ] Shared: mepData.ts (10 diagnostic question sets + scoring)
-- [ ] Frontend: /manager/home — MEP Home dashboard
-- [ ] Frontend: /manager/diagnostics — Diagnostics hub (10 diagnostics)
-- [ ] Frontend: /manager/guide — AI Manager Guide (chat interface)
-- [ ] Frontend: /manager/playbook — Manager Playbook (situation → AI response)
-- [ ] Frontend: /manager/brief — Daily Management Brief
-- [ ] Frontend: /manager/practice — AI Practice Partner
-- [ ] Frontend: /manager/team — Team Intelligence dashboard
-- [ ] Frontend: /manager/commitments — Behaviour Change Engine
-- [ ] Add manager_effectiveness product to PRODUCT_CONFIG in ProductSwitcher
-- [ ] Add MEP_NAV_ITEMS to PlatformLayout
-- [ ] Register all /manager/* routes in App.tsx
-- [ ] Seed manager_effectiveness product row in DB
-- [ ] Enroll admin user in manager_effectiveness product for testing
-- [ ] TypeScript clean (zero errors)
-- [ ] Save checkpoint
+- [x] DB schema: mep_diagnostic_results table (10 diagnostics, dimension scores, LLM analysis)
+- [x] DB schema: manager_guide_sessions + manager_guide_messages tables (AI Guide chat)
+- [x] DB schema: manager_playbook_sessions table (situation → AI playbook)
+- [x] DB schema: behaviour_commitments table (commitment tracking + check-ins)
+- [x] DB schema: mep_daily_briefs table (daily management brief)
+- [x] DB schema: mep_practice_sessions table (AI practice partner)
+- [x] Run migration and apply SQL
+- [x] Backend: mepDiagnostics router (10 diagnostics, submit + get results)
+- [x] Backend: managerGuide router (AI chat with full manager context)
+- [x] Backend: managerPlaybook router (situation → structured playbook)
+- [x] Backend: behaviourEngine router (commitments + check-ins)
+- [x] Backend: mepDailyBrief router (generate daily management brief)
+- [x] Backend: mepPractice router (AI practice partner sessions)
+- [x] Shared: mepData.ts (10 diagnostic question sets + scoring)
+- [x] Frontend: /manager/home — MEP Home dashboard
+- [x] Frontend: /manager/diagnostics — Diagnostics hub (10 diagnostics)
+- [x] Frontend: /manager/guide — AI Manager Guide (chat interface)
+- [x] Frontend: /manager/playbook — Manager Playbook (situation → AI response)
+- [x] Frontend: /manager/brief — Daily Management Brief
+- [x] Frontend: /manager/practice — AI Practice Partner
+- [x] Frontend: /manager/team — Team Intelligence dashboard
+- [x] Frontend: /manager/commitments — Behaviour Change Engine
+- [x] Add manager_effectiveness product to PRODUCT_CONFIG in ProductSwitcher
+- [x] Add MEP_NAV_ITEMS to PlatformLayout
+- [x] Register all /manager/* routes in App.tsx
+- [x] Seed manager_effectiveness product row in DB
+- [x] Enroll admin user in manager_effectiveness product for testing
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint
 
 ## Manager Effectiveness Platform (MEP) — Sprint 1 (Jul 16)
 - [x] DB schema: mep_diagnostic_results, manager_guide_sessions, manager_guide_messages, manager_playbook_sessions, behaviour_commitments, mep_daily_briefs, mep_practice_sessions, manager_team_members tables
@@ -588,5 +588,27 @@
 - [x] Seed manager_effectiveness product in DB
 - [x] Enroll admin user in manager_effectiveness product
 - [x] Update PostLoginProductActivator to redirect MEP users to /manager
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint
+
+## PDF Download, Admin Invites MEP, MEP Landing Page (Jul 17)
+- [ ] Add Download PDF button to LI diagnostic results (Report page) — client-side jsPDF/html2canvas
+- [ ] Add Download PDF button to MEP diagnostic results (ManagerDiagnostics results view)
+- [ ] Update AdminManageInvites: add product selector (Leadership Intelligence / Career Intelligence / Manager Effectiveness) when sending invites
+- [ ] Update invite backend: pass productId when creating invite so user is auto-enrolled on first sign-in
+- [ ] Build public MEP landing page at /manager-effectiveness (hero, 10 diagnostics, 6 platform features, CTA)
+- [ ] Register /manager-effectiveness route in App.tsx
+- [ ] TypeScript clean (zero errors)
+- [ ] Save checkpoint
+
+## PDF Download, Admin Invite Product Selector, MEP Landing Page (Jul 17)
+- [x] Add Download PDF button to MEP ManagerDiagnostics results view (jsPDF/html2canvas)
+- [x] Add productId column to platform_invites schema + run migration
+- [x] Update platformInvites.generateInvite backend to accept productId and store it
+- [x] Update invite email copy to be product-aware (LI / CI / MEP specific benefits)
+- [x] Auto-enroll user in invite's productId on first magic link sign-in (emailAuth.ts)
+- [x] Add Platform Access selector to AdminManageInvites Send Invite dialog (LI / CI / MEP)
+- [x] Build public MEP landing page at /manager-effectiveness
+- [x] Register /manager-effectiveness route in App.tsx
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint

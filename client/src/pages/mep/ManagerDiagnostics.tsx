@@ -2,7 +2,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, ChevronRight, BarChart3, Clock, Lock } from "lucide-react";
+import { CheckCircle2, ChevronRight, BarChart3, Clock, Lock, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const SCORE_LABELS: Record<number, string> = {
@@ -20,6 +20,165 @@ export default function ManagerDiagnostics() {
   const [submitting, setSubmitting] = useState(false);
   const [latestResult, setLatestResult] = useState<any>(null);
   const [latestDiagCode, setLatestDiagCode] = useState<string | null>(null);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+
+  async function handleDownloadPdf() {
+    if (!latestResult) return;
+    setPdfGenerating(true);
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = 210;
+      const margin = 18;
+      const contentW = pageW - margin * 2;
+      let y = 20;
+      // Header band
+      doc.setFillColor(18, 52, 90);
+      doc.rect(0, 0, pageW, 38, "F");
+      doc.setTextColor(242, 183, 5);
+      doc.setFontSize(17);
+      doc.setFont("helvetica", "bold");
+      doc.text("LevelNext — Manager Effectiveness Platform", margin, 16);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      const diagTitle = diagnostics?.find((d: any) => d.code === latestResult.diagnosticCode)?.title ?? latestResult.diagnosticCode ?? "Diagnostic";
+      doc.text(`${diagTitle} Results`, margin, 28);
+      doc.text(new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }), pageW - margin, 28, { align: "right" });
+      y = 50;
+      // Overall score
+      doc.setTextColor(18, 52, 90);
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text("Overall Score", margin, y);
+      y += 8;
+      doc.setFontSize(28);
+      doc.setTextColor(52, 211, 153);
+      doc.text(`${Math.round(latestResult.overallScore)}/100`, margin, y);
+      y += 12;
+      // Dimension scores
+      if (latestResult.dimensionScores?.length > 0) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(18, 52, 90);
+        doc.text("Dimension Breakdown", margin, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        for (const d of latestResult.dimensionScores) {
+          if (y > 265) { doc.addPage(); y = 20; }
+          doc.setTextColor(40, 40, 40);
+          doc.text(d.dimension, margin, y);
+          const barX = margin + 80;
+          const barW = contentW - 80;
+          doc.setFillColor(230, 230, 230);
+          doc.rect(barX, y - 3.5, barW, 4, "F");
+          doc.setFillColor(52, 211, 153);
+          doc.rect(barX, y - 3.5, (barW * d.score) / 100, 4, "F");
+          doc.setTextColor(18, 52, 90);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${d.score}`, pageW - margin, y, { align: "right" });
+          doc.setFont("helvetica", "normal");
+          y += 8;
+        }
+        y += 4;
+      }
+      // AI Insights
+      if (latestResult.llmAnalysis?.headline) {
+        if (y > 240) { doc.addPage(); y = 20; }
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(18, 52, 90);
+        doc.text("AI Insights", margin, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(40, 40, 40);
+        const lines = doc.splitTextToSize(latestResult.llmAnalysis.headline, contentW);
+        doc.text(lines, margin, y);
+        y += lines.length * 5 + 4;
+      }
+      // Strengths
+      if (latestResult.llmAnalysis?.strengths?.length > 0) {
+        if (y > 240) { doc.addPage(); y = 20; }
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(52, 211, 153);
+        doc.text("Top Strengths", margin, y);
+        y += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        for (const s of latestResult.llmAnalysis.strengths.slice(0, 3)) {
+          if (y > 265) { doc.addPage(); y = 20; }
+          doc.setTextColor(18, 52, 90);
+          doc.setFont("helvetica", "bold");
+          doc.text(`✓ ${s.title}`, margin, y);
+          y += 5;
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(60, 60, 60);
+          const sl = doc.splitTextToSize(s.description, contentW - 4);
+          doc.text(sl, margin + 4, y);
+          y += sl.length * 4.5 + 3;
+        }
+        y += 2;
+      }
+      // Growth areas
+      if (latestResult.llmAnalysis?.risks?.length > 0) {
+        if (y > 240) { doc.addPage(); y = 20; }
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(245, 158, 11);
+        doc.text("Growth Areas", margin, y);
+        y += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        for (const s of latestResult.llmAnalysis.risks.slice(0, 3)) {
+          if (y > 265) { doc.addPage(); y = 20; }
+          doc.setTextColor(18, 52, 90);
+          doc.setFont("helvetica", "bold");
+          doc.text(`→ ${s.title}`, margin, y);
+          y += 5;
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(60, 60, 60);
+          const rl = doc.splitTextToSize(s.description, contentW - 4);
+          doc.text(rl, margin + 4, y);
+          y += rl.length * 4.5 + 3;
+        }
+      }
+      // Coaching question
+      if (latestResult.llmAnalysis?.coachQuestion) {
+        if (y > 250) { doc.addPage(); y = 20; }
+        y += 4;
+        doc.setFillColor(240, 253, 250);
+        doc.roundedRect(margin, y - 4, contentW, 22, 3, 3, "F");
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(52, 211, 153);
+        doc.text("COACHING QUESTION", margin + 4, y + 2);
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(40, 40, 40);
+        const ql = doc.splitTextToSize(`"${latestResult.llmAnalysis.coachQuestion}"`, contentW - 8);
+        doc.text(ql, margin + 4, y + 8);
+      }
+      // Footer on all pages
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text("Generated by LevelNext — levelnext.coach", margin, 290);
+        doc.text(`Page ${i} of ${pageCount}`, pageW - margin, 290, { align: "right" });
+      }
+      const filename = `LevelNext_MEP_${diagTitle.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      doc.save(filename);
+      toast.success("PDF downloaded!");
+    } catch (e) {
+      console.error("PDF error:", e);
+      toast.error("Could not generate PDF. Please try again.");
+    } finally {
+      setPdfGenerating(false);
+    }
+  }
 
   const { data: diagnostics } = trpc.mep.getDiagnostics.useQuery();
   const { data: myResults, refetch: refetchResults } = trpc.mep.getMyResults.useQuery();
@@ -413,6 +572,15 @@ export default function ManagerDiagnostics() {
               onClick={() => setView("hub")}
             >
               Back to Diagnostics
+            </Button>
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 font-semibold"
+              onClick={handleDownloadPdf}
+              disabled={pdfGenerating}
+            >
+              {pdfGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {pdfGenerating ? "Generating…" : "Download PDF"}
             </Button>
           </div>
         </div>
