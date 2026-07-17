@@ -602,3 +602,9 @@
 - [x] Add LevelNext logo to MEP diagnostic report page: logo shown in results header card and reflection modal
 - [x] Auto-generate Daily Brief on first login: ManagerHome silently calls getDailyBrief mutation when todayBrief is null
 - [x] Add post-diagnostic reflection: modal overlay with coachQuestion shown when user clicks Back to Home after completing a diagnostic
+
+## MEP & CI Feature Batch (Jul 17 #3)
+- [x] Add mobile hamburger menu to MEPLayout sidebar (slide-in drawer on mobile)
+- [x] Build Past Playbooks history view in ManagerPlaybook.tsx
+- [x] Add loading indicator on ManagerHome while Daily Brief is being auto-generated
+- [x] Create downloadable A4 Career Intelligence Executive Brief PDF (4 pages, logo, graphics, Career Access AI section) — uploaded and linked on CareerLanding.tsx

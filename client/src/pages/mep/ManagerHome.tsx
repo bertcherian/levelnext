@@ -96,6 +96,7 @@ export default function ManagerHome() {
   const generateBriefMutation = trpc.mep.getDailyBrief.useMutation({
     onSuccess: () => { refetchBrief(); },
   });
+  const briefLoading = generateBriefMutation.isPending;
 
   // Auto-generate the daily brief silently on first visit if not yet generated today
   useEffect(() => {
@@ -189,15 +190,36 @@ export default function ManagerHome() {
             <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#34d399" }}>
               Today's Focus
             </p>
-            <p className="text-sm font-medium leading-relaxed" style={{ color: "#ffffff" }}>
-              {todayBrief?.priorityFocus
-                ? String(todayBrief.priorityFocus)
-                : "Have one meaningful coaching conversation with a team member today."}
-            </p>
-            {todayBrief?.managementChallenge && (
-              <p className="text-xs mt-2 leading-relaxed" style={{ color: "oklch(70% 0.02 248.6)" }}>
-                Challenge: {String(todayBrief.managementChallenge)}
-              </p>
+            {briefLoading ? (
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="inline-block w-1.5 h-1.5 rounded-full"
+                      style={{
+                        background: "#34d399",
+                        opacity: 0.7,
+                        animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs" style={{ color: "oklch(65% 0.02 248.6)" }}>Generating your daily brief…</span>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm font-medium leading-relaxed" style={{ color: "#ffffff" }}>
+                  {todayBrief?.priorityFocus
+                    ? String(todayBrief.priorityFocus)
+                    : "Have one meaningful coaching conversation with a team member today."}
+                </p>
+                {todayBrief?.managementChallenge && (
+                  <p className="text-xs mt-2 leading-relaxed" style={{ color: "oklch(70% 0.02 248.6)" }}>
+                    Challenge: {String(todayBrief.managementChallenge)}
+                  </p>
+                )}
+              </>
             )}
           </div>
           <Link href="/manager/brief" className="flex-shrink-0">

@@ -121,7 +121,7 @@ export default function ManagerPlaybook() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#f59e0b" }}>
-                        {s.category}
+                        {s.situationType ?? "Management"}
                       </span>
                     </div>
                     <p className="text-sm font-medium truncate" style={{ color: "var(--color-ln-navy)" }}>

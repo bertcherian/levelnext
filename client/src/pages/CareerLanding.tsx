@@ -470,7 +470,7 @@ export default function CareerLanding() {
           <p className="text-base text-white/65 mb-8 max-w-lg mx-auto">
             Apply for early access to Career Intelligence. The first diagnostic takes 10 minutes. Your Career Edge Score and personalised report are ready immediately.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
             <a href="/apply?product=career&utm_source=ci_landing&utm_medium=final_cta">
               <Button size="lg" className="h-13 px-8 text-base font-bold rounded-xl shadow-lg w-full sm:w-auto"
                 style={{ background: "#818cf8", color: "white" }}>
@@ -481,6 +481,11 @@ export default function CareerLanding() {
             <a href="https://tidycal.com/metaresults/pilot" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="lg" className="h-13 px-8 text-base font-semibold rounded-xl w-full sm:w-auto border-white/20 text-white/80 hover:text-white hover:bg-white/8">
                 Book a Discovery Call
+              </Button>
+            </a>
+            <a href="/manus-storage/LevelNext_CareerIntelligence_ExecutiveBrief_9ec74bc6.pdf" download="LevelNext_CareerIntelligence_ExecutiveBrief.pdf" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg" className="h-13 px-8 text-base font-semibold rounded-xl w-full sm:w-auto border-white/20 text-white/80 hover:text-white hover:bg-white/8">
+                Download Executive Brief
               </Button>
             </a>
           </div>
