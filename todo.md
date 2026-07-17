@@ -672,3 +672,9 @@
 - [x] Playbook Reflection flow: post-play outcome form (what happened, what worked, outcome: win/partial/loss), LLM reflection insight, show reflection on session view
 - [x] MEP Home: Recent Play widget showing last playbook type, situation, and quick "New Play" CTA
 - [x] Opportunity Pipeline: Kanban board view (Identified → Researching → Targeting → Active → Paused) with click-to-expand cards, move buttons, and notes
+
+## MEP Enhancements (Jul 17 — Batch 3)
+- [x] AI-suggested commitments: "Suggest commitments for me" button on Commitments page, LLM generates 3 personalised suggestions based on MEP diagnostic scores
+- [x] Weekly check-in nudge: widget on MEP Home ("Have you practised your commitments this week?") linking to Commitments page
+- [x] Commitment streak tracker: show streak count on each active CommitmentCard
+- [x] Team Intelligence example: example team member card on empty state showing what a complete member profile looks like

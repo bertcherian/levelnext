@@ -80,24 +80,127 @@ export default function TeamIntelligence() {
           </div>
 
           {members?.length === 0 && (
-            <div
-              className="rounded-2xl px-6 py-10 text-center"
-              style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
-            >
-              <Users size={32} className="mx-auto mb-3" style={{ color: "oklch(70% 0.01 248.6)" }} />
-              <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>
-                No team members yet
-              </h2>
-              <p className="text-xs mb-4" style={{ color: "oklch(55% 0.02 248.6)" }}>
-                Add your team members to get AI-powered coaching insights for each person — strengths, risks, and recommended actions.
-              </p>
-              <Button
-                size="sm"
-                style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
-                onClick={() => setView("add")}
+            <div className="space-y-4">
+
+              {/* What you get */}
+              <div
+                className="rounded-2xl p-5"
+                style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.04)", border: "1.5px solid oklch(from var(--color-ln-navy) l c h / 0.12)" }}
               >
-                Add Your First Team Member
-              </Button>
+                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--color-ln-gold)" }}>
+                  What to add for each team member
+                </p>
+                <div className="grid grid-cols-1 gap-2 text-xs" style={{ color: "oklch(35% 0.02 248.6)" }}>
+                  <div className="flex items-start gap-2">
+                    <span className="font-bold flex-shrink-0" style={{ color: "var(--color-ln-navy)" }}>Name</span>
+                    <span>The person's full name as you know them — this is how the AI will refer to them in insights.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-bold flex-shrink-0" style={{ color: "var(--color-ln-navy)" }}>Role</span>
+                    <span>Their job title or function (e.g. "Senior Engineer", "Product Manager") — helps the AI tailor its coaching lens.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-bold flex-shrink-0" style={{ color: "var(--color-ln-navy)" }}>AI Insight</span>
+                    <span>Once added, generate an AI coaching insight to get their strengths, watch-outs, and 3 recommended actions.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Example member card */}
+              <div
+                className="rounded-2xl p-5"
+                style={{ background: "white", border: "1.5px dashed #60a5fa" }}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                    style={{ background: "oklch(from #60a5fa l c h / 0.12)", color: "#2563eb" }}
+                  >
+                    Example
+                  </span>
+                </div>
+
+                {/* Member header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
+                    style={{ background: "oklch(from #60a5fa l c h / 0.12)", color: "#60a5fa" }}
+                  >
+                    P
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Priya Sharma</p>
+                    <p className="text-xs" style={{ color: "oklch(55% 0.02 248.6)" }}>Senior Product Manager</p>
+                  </div>
+                </div>
+
+                {/* AI Insight preview */}
+                <div
+                  className="rounded-xl p-4 space-y-3"
+                  style={{ background: "oklch(98% 0.01 248.6)", border: "1px solid oklch(92% 0.01 248.6)" }}
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "oklch(50% 0.02 248.6)" }}>AI Coaching Insight</p>
+                  <p className="text-xs leading-relaxed" style={{ color: "oklch(35% 0.02 248.6)" }}>
+                    Priya is a high-ownership contributor who thrives when given clear strategic context. She tends to over-deliver on scope, which can lead to burnout if not managed proactively. Focus on helping her prioritise ruthlessly and delegate execution to junior team members.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#059669" }}>Strengths</p>
+                      {["Strong stakeholder alignment", "Drives clarity in ambiguity", "Ownership mindset"].map((s) => (
+                        <div key={s} className="flex items-start gap-1.5 mb-1">
+                          <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: "#34d399" }} />
+                          <p className="text-[10px]" style={{ color: "oklch(35% 0.02 248.6)" }}>{s}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#f59e0b" }}>Watch-outs</p>
+                      {["Tendency to over-commit", "Struggles to say no upward"].map((w) => (
+                        <div key={w} className="flex items-start gap-1.5 mb-1">
+                          <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: "#f59e0b" }} />
+                          <p className="text-[10px]" style={{ color: "oklch(35% 0.02 248.6)" }}>{w}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#60a5fa" }}>Recommended Actions</p>
+                    {[
+                      "In your next 1-on-1, ask her to rank her top 3 priorities and challenge any item beyond that.",
+                      "Acknowledge her delivery quality publicly in the next team meeting to reinforce the right behaviours.",
+                      "Introduce a \"delegate one task per sprint\" habit to build her team's capability.",
+                    ].map((a, i) => (
+                      <div key={i} className="flex items-start gap-1.5 mb-1">
+                        <span className="text-[9px] font-bold flex-shrink-0 mt-0.5" style={{ color: "#60a5fa" }}>{i + 1}.</span>
+                        <p className="text-[10px]" style={{ color: "oklch(35% 0.02 248.6)" }}>{a}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div
+                className="rounded-2xl px-6 py-8 text-center"
+                style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+              >
+                <Users size={28} className="mx-auto mb-3" style={{ color: "oklch(70% 0.01 248.6)" }} />
+                <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>
+                  No team members yet
+                </h2>
+                <p className="text-xs mb-4" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                  Add your team members to get AI-powered coaching insights for each person — strengths, risks, and recommended actions.
+                </p>
+                <Button
+                  size="sm"
+                  style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
+                  onClick={() => setView("add")}
+                >
+                  Add Your First Team Member
+                </Button>
+              </div>
             </div>
           )}
 

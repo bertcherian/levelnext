@@ -1109,4 +1109,81 @@ Provide a 2-3 sentence coaching response that acknowledges their effort, reinfor
 
       return { insight };
     }),
+
+  suggestCommitments: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Pull latest MEP diagnostic result for context
+    const [latestResult] = await db
+      .select()
+      .from(mepDiagnosticResults)
+      .where(eq(mepDiagnosticResults.userId, ctx.user.id))
+      .orderBy(desc(mepDiagnosticResults.createdAt))
+      .limit(1);
+
+    // Pull existing commitments to avoid duplicates
+    const existing = await db
+      .select({ commitment: behaviourCommitments.commitment })
+      .from(behaviourCommitments)
+      .where(eq(behaviourCommitments.userId, ctx.user.id));
+
+    const existingList = existing.map((e) => e.commitment).join("\n");
+    const diagnosticContext = latestResult
+      ? `The manager's MEP diagnostic scores: ${JSON.stringify(latestResult.dimensionScores ?? {})}.`
+      : "No diagnostic data available yet.";
+
+    const result = await invokeLLM({
+      model: "gpt-5-mini",
+      messages: [{
+        role: "user" as const,
+        content: `You are an expert management coach. Based on the manager's diagnostic data, suggest 3 specific, high-impact behaviour commitments they should adopt.
+
+${diagnosticContext}
+
+Existing commitments (do not repeat these):
+${existingList || "None"}
+
+Return ONLY valid JSON:
+{
+  "suggestions": [
+    {
+      "category": "Feedback",
+      "title": "Give one specific, behaviour-based piece of feedback in every 1-on-1",
+      "why": "Your team needs clearer signals on what to keep doing and what to change. Specific feedback accelerates their growth and reduces guesswork."
+    }
+  ]
+}
+
+Rules:
+- Each commitment must name a specific, observable behaviour (not a mindset)
+- Include when/where/cadence in the title
+- Why must connect to team performance or leadership growth
+- Categories: Communication, Delegation, Feedback, Team Development, Decision Making, Accountability, Wellbeing, Strategic Thinking
+- Return exactly 3 suggestions`,
+      }],
+      maxTokens: 600,
+      responseFormat: { type: "json_object" },
+    });
+
+    let suggestions: Array<{ category: string; title: string; why: string }> = [];
+    try {
+      const raw = extractText(result);
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        suggestions = parsed.suggestions ?? [];
+      }
+    } catch (e) { /* use defaults */ }
+
+    if (suggestions.length === 0) {
+      suggestions = [
+        { category: "Feedback", title: "Give one specific, behaviour-based piece of feedback in every 1-on-1", why: "Specific feedback accelerates your team's growth and reduces guesswork." },
+        { category: "Delegation", title: "Assign one task per week with full ownership — no check-ins unless asked", why: "Building trust through delegation develops your team's autonomy and frees your strategic bandwidth." },
+        { category: "Communication", title: "Open every team meeting with a 2-minute context update on priorities", why: "Alignment at the start prevents wasted effort and keeps the team focused on what matters most." },
+      ];
+    }
+
+    return { suggestions };
+  }),
 });

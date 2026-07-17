@@ -367,6 +367,51 @@ export default function ManagerHome() {
           );
         })()}
 
+        {/* Weekly Commitment Check-in Nudge */}
+        {commitments && commitments.filter((c: any) => c.status === "active").length > 0 && (() => {
+          const activeCommitments = commitments.filter((c: any) => c.status === "active");
+          const now = Date.now();
+          const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+          const needsCheckin = activeCommitments.some((c: any) => {
+            const checkIns = (c.checkIns as any[]) ?? [];
+            if (checkIns.length === 0) return true;
+            const lastCheckin = Math.max(...checkIns.map((ci: any) => new Date(ci.date).getTime()));
+            return lastCheckin < oneWeekAgo;
+          });
+          if (!needsCheckin) return null;
+          return (
+            <div
+              className="rounded-2xl p-4 flex items-center justify-between gap-4"
+              style={{ background: "oklch(from #34d399 l c h / 0.08)", border: "1.5px solid oklch(from #34d399 l c h / 0.25)" }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "oklch(from #34d399 l c h / 0.15)" }}
+                >
+                  <Target size={16} style={{ color: "#059669" }} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+                    Have you practised your commitments this week?
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "oklch(50% 0.02 248.6)" }}>
+                    {activeCommitments.length} active commitment{activeCommitments.length !== 1 ? "s" : ""} — log a check-in to keep your streak going.
+                  </p>
+                </div>
+              </div>
+              <Link href="/manager/commitments">
+                <button
+                  className="flex-shrink-0 text-xs font-bold px-3 py-2 rounded-xl"
+                  style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
+                >
+                  Check In →
+                </button>
+              </Link>
+            </div>
+          );
+        })()}
+
         {/* Module grid */}
         <div>
           <h2 className="text-base font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>

@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, Circle, Plus, Target, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Target, Loader2, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,8 @@ export default function ManagerCommitments() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState(BEHAVIOUR_CATEGORIES[0]);
   const [saving, setSaving] = useState(false);
+  const [suggestions, setSuggestions] = useState<Array<{ category: string; title: string; why: string }>>([]);
+  const [suggesting, setSuggesting] = useState(false);
 
   const { data: commitments, refetch } = trpc.mep.listCommitments.useQuery();
 
@@ -41,6 +43,31 @@ export default function ManagerCommitments() {
       setSaving(false);
     },
   });
+
+  const suggestMutation = trpc.mep.suggestCommitments.useMutation({
+    onSuccess: (data) => {
+      setSuggestions(data.suggestions);
+      setSuggesting(false);
+    },
+    onError: () => {
+      toast.error("Could not generate suggestions.");
+      setSuggesting(false);
+    },
+  });
+
+  const handleSuggest = () => {
+    setSuggesting(true);
+    suggestMutation.mutate();
+  };
+
+  const handleAddSuggestion = async (s: { category: string; title: string; why: string }) => {
+    setSaving(true);
+    await createMutation.mutateAsync({
+      commitment: `[${s.category}] ${s.title} — ${s.why}`,
+    });
+    setSuggestions((prev) => prev.filter((x) => x.title !== s.title));
+    setSaving(false);
+  };
 
   const toggleMutation = trpc.mep.updateCommitmentStatus.useMutation({
     onSuccess: () => refetch(),
@@ -68,15 +95,27 @@ export default function ManagerCommitments() {
               Track the management behaviours you are committed to practising.
             </p>
           </div>
-          <Button
-            size="sm"
-            className="font-semibold text-xs flex-shrink-0"
-            style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
-            onClick={() => setShowForm(!showForm)}
-          >
-            <Plus size={14} className="mr-1.5" />
-            Add Commitment
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="font-semibold text-xs flex-shrink-0"
+              onClick={handleSuggest}
+              disabled={suggesting}
+            >
+              {suggesting ? <Loader2 size={12} className="mr-1.5 animate-spin" /> : <Sparkles size={12} className="mr-1.5" />}
+              {suggesting ? "Generating…" : "Suggest for me"}
+            </Button>
+            <Button
+              size="sm"
+              className="font-semibold text-xs flex-shrink-0"
+              style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
+              onClick={() => setShowForm(!showForm)}
+            >
+              <Plus size={14} className="mr-1.5" />
+              Add Commitment
+            </Button>
+          </div>
         </div>
 
         {/* Progress bar */}
@@ -102,6 +141,53 @@ export default function ManagerCommitments() {
                 }}
               />
             </div>
+          </div>
+        )}
+
+        {/* AI Suggestions */}
+        {suggestions.length > 0 && (
+          <div
+            className="rounded-2xl p-5 space-y-3"
+            style={{ background: "white", border: "1.5px solid oklch(from var(--color-ln-gold) l c h / 0.4)" }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles size={14} style={{ color: "var(--color-ln-gold)" }} />
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--color-ln-gold)" }}>AI Suggestions</p>
+              </div>
+              <button onClick={() => setSuggestions([])} className="text-gray-400 hover:text-gray-600">
+                <X size={14} />
+              </button>
+            </div>
+            {suggestions.map((s, i) => (
+              <div
+                key={i}
+                className="rounded-xl p-4 space-y-2"
+                style={{ background: "oklch(98% 0.01 80)", border: "1px solid oklch(92% 0.02 80)" }}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <span
+                      className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded inline-block mb-1.5"
+                      style={{ background: "oklch(from #34d399 l c h / 0.15)", color: "#059669" }}
+                    >
+                      {s.category}
+                    </span>
+                    <p className="text-xs font-semibold leading-snug" style={{ color: "var(--color-ln-navy)" }}>{s.title}</p>
+                    <p className="text-[11px] mt-1 leading-relaxed" style={{ color: "oklch(50% 0.02 248.6)" }}>{s.why}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="flex-shrink-0 text-[10px] font-bold h-7 px-2.5"
+                    style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
+                    onClick={() => handleAddSuggestion(s)}
+                    disabled={saving}
+                  >
+                    + Add
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -304,8 +390,27 @@ export default function ManagerCommitments() {
   );
 }
 
+function getStreak(checkIns: any[]): number {
+  if (!checkIns || checkIns.length === 0) return 0;
+  // Count consecutive weeks with at least one check-in marked done
+  const doneDates = checkIns
+    .filter((ci) => ci.done)
+    .map((ci) => new Date(ci.date).getTime())
+    .sort((a, b) => b - a);
+  if (doneDates.length === 0) return 0;
+  let streak = 1;
+  for (let i = 1; i < doneDates.length; i++) {
+    const diff = (doneDates[i - 1] - doneDates[i]) / (1000 * 60 * 60 * 24);
+    if (diff <= 14) streak++; // within 2 weeks = consecutive
+    else break;
+  }
+  return streak;
+}
+
 function CommitmentCard({ commitment: c, onToggle }: { commitment: any; onToggle: () => void; onDelete: () => void }) {
   const done = c.status === "completed";
+  const checkIns = (c.checkIns as any[]) ?? [];
+  const streak = getStreak(checkIns);
   return (
     <div
       className={cn("rounded-2xl p-4 border flex items-start gap-3 transition-all", done && "opacity-60")}
@@ -320,11 +425,26 @@ function CommitmentCard({ commitment: c, onToggle }: { commitment: any; onToggle
         <p className={cn("text-sm font-medium", done && "line-through")} style={{ color: "var(--color-ln-navy)" }}>
           {c.commitment}
         </p>
-        {c.targetDate && (
-          <p className="text-xs mt-0.5" style={{ color: "oklch(55% 0.02 248.6)" }}>
-            Target: {new Date(c.targetDate).toLocaleDateString()}
-          </p>
-        )}
+        <div className="flex items-center gap-3 mt-1.5">
+          {streak >= 1 && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"
+              style={{ background: streak >= 3 ? "oklch(from #34d399 l c h / 0.15)" : "oklch(95% 0.01 248.6)", color: streak >= 3 ? "#059669" : "oklch(45% 0.02 248.6)" }}
+            >
+              🔥 {streak}-week streak
+            </span>
+          )}
+          {c.targetDate && (
+            <p className="text-[10px]" style={{ color: "oklch(55% 0.02 248.6)" }}>
+              Target: {new Date(c.targetDate).toLocaleDateString()}
+            </p>
+          )}
+          {checkIns.length > 0 && (
+            <p className="text-[10px]" style={{ color: "oklch(65% 0.01 248.6)" }}>
+              {checkIns.length} check-in{checkIns.length !== 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
