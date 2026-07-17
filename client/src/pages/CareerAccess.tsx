@@ -169,6 +169,60 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
 
 type View = "home" | "intake" | "strategy" | "universe" | "pipeline" | "relationships" | "score";
 
+// ── Weekly Report Section ─────────────────────────────────────────────────────
+function WeeklyReportSection() {
+  const [report, setReport] = useState<{ narrative: string; generatedAt: string; stats: { totalOpps: number; activeOpps: number; activatedPaths: number; highValueContacts: number; scoreChange: number | null } } | null>(null);
+  const generateReport = trpc.careerAccess.generateWeeklyReport.useMutation({
+    onSuccess: (data) => setReport({ ...data, narrative: String(data.narrative ?? "") }),
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="mb-6 p-5 rounded-2xl border border-[var(--color-ln-navy)]/15 bg-gradient-to-br from-[var(--color-ln-navy)]/3 to-transparent">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-[var(--color-ln-navy)]" />
+          <span className="font-bold text-[var(--color-ln-navy)] text-sm">Weekly Executive Opportunity Report</span>
+        </div>
+        <button
+          onClick={() => generateReport.mutate()}
+          disabled={generateReport.isPending}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[var(--color-ln-navy)] text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {generateReport.isPending ? (
+            <><RefreshCw className="w-3 h-3 animate-spin" /> Generating...</>
+          ) : (
+            <><Sparkles className="w-3 h-3" /> Generate Weekly Summary</>
+          )}
+        </button>
+      </div>
+      {!report && !generateReport.isPending && (
+        <p className="text-xs text-gray-500">Get a 5-sentence AI narrative of your week — pipeline moves, paths activated, relationships engaged, and your #1 priority for next week.</p>
+      )}
+      {report && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { label: "Active Opps", value: report.stats.activeOpps, total: report.stats.totalOpps, color: "text-blue-600" },
+              { label: "Paths Activated", value: report.stats.activatedPaths, color: "text-emerald-600" },
+              { label: "High-Value Contacts", value: report.stats.highValueContacts, color: "text-purple-600" },
+              { label: "Score Change", value: report.stats.scoreChange !== null ? (report.stats.scoreChange >= 0 ? `+${report.stats.scoreChange}` : `${report.stats.scoreChange}`) : "N/A", color: (report.stats.scoreChange ?? 0) >= 0 ? "text-emerald-600" : "text-red-500" },
+            ].map((s) => (
+              <div key={s.label} className="text-center p-2 rounded-xl bg-white border border-gray-100">
+                <div className={`text-lg font-bold ${s.color}`}>{s.value}</div>
+                <div className="text-[10px] text-gray-500 leading-tight">{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <p className="text-sm text-gray-700 leading-relaxed">{report.narrative}</p>
+          </div>
+          <p className="text-[10px] text-gray-400 text-right">Generated {new Date(report.generatedAt).toLocaleString()}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CareerAccess() {
   const [view, setView] = useState<View>("home");
   const [step, setStep] = useState(1);
@@ -744,6 +798,9 @@ export default function CareerAccess() {
               )}
             </div>
           )}
+
+          {/* Weekly Executive Opportunity Report */}
+          <WeeklyReportSection />
 
           {/* Philosophy note */}
           <div className="p-4 rounded-xl bg-[var(--color-ln-navy)]/5 border border-[var(--color-ln-navy)]/10">

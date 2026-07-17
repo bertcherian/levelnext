@@ -161,12 +161,21 @@ export default function AccessPaths() {
   });
 
   const logActivationMutation = trpc.careerAccess.logAccessPathActivation.useMutation({
-    onSuccess: () => { refetchPaths(); setActivationModal(null); setActivationForm({ whatYouDid: "", outcome: "sent_message", notes: "" }); toast.success("Activation logged! Path marked as Activated."); },
+    onSuccess: (data) => {
+      refetchPaths();
+      setActivationModal(null);
+      setActivationForm({ whatYouDid: "", outcome: "sent_message", notes: "", followUpDate: "" });
+      if (data.pipelineAutoAdvanced) {
+        toast.success("Activation logged! Pipeline stage auto-advanced to Active.");
+      } else {
+        toast.success("Activation logged! Path marked as Activated.");
+      }
+    },
     onError: (e) => toast.error(e.message),
   });
 
   const [activationModal, setActivationModal] = useState<{ pathId: number; companyName: string } | null>(null);
-  const [activationForm, setActivationForm] = useState({ whatYouDid: "", outcome: "sent_message" as "sent_message" | "had_call" | "got_intro" | "applied" | "other", notes: "" });
+  const [activationForm, setActivationForm] = useState({ whatYouDid: "", outcome: "sent_message" as "sent_message" | "had_call" | "got_intro" | "applied" | "other", notes: "", followUpDate: "" });
 
   function handleStatusClick(opt: { value: string; label: string; color: string }, pathId: number, companyName: string) {
     if (opt.value === "activated") {
@@ -568,6 +577,17 @@ export default function AccessPaths() {
                   rows={2}
                 />
               </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Follow-up date (optional)</label>
+                <input
+                  type="date"
+                  value={activationForm.followUpDate}
+                  onChange={(e) => setActivationForm(f => ({ ...f, followUpDate: e.target.value }))}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Set a reminder — your Chief of Staff will nudge you on this date.</p>
+              </div>
             </div>
             <div className="flex gap-3 mt-5">
               <button
@@ -575,7 +595,7 @@ export default function AccessPaths() {
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
               >Cancel</button>
               <button
-                onClick={() => logActivationMutation.mutate({ accessPathId: activationModal.pathId, whatYouDid: activationForm.whatYouDid, outcome: activationForm.outcome, notes: activationForm.notes })}
+                onClick={() => logActivationMutation.mutate({ accessPathId: activationModal.pathId, whatYouDid: activationForm.whatYouDid, outcome: activationForm.outcome, notes: activationForm.notes, followUpDate: activationForm.followUpDate || undefined })}
                 disabled={!activationForm.whatYouDid.trim() || logActivationMutation.isPending}
                 className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors disabled:opacity-50"
               >{logActivationMutation.isPending ? "Saving..." : "Log Activation"}</button>

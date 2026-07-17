@@ -705,3 +705,9 @@
 - [x] Access Path activation tracker: logAccessPathActivation procedure + activation log modal in AccessPaths.tsx (what you did, action type, notes) — intercepts "Activated" status click
 - [x] Career Access Score gating: getScoreImprovement procedure + green banner on Career Access home when latest score > previous score
 - [x] TypeScript check (0 errors) and checkpoint save
+
+## Executive Opportunity System — Phase 5 (Jul 17)
+- [x] Activation → Pipeline auto-update: logAccessPathActivation now auto-advances matched company to "Active" stage when outcome is had_call/got_intro/applied; toast confirms auto-advance
+- [x] Relationship follow-up date: date picker added to activation modal, stored in activation log entry, Chief of Staff nudge text added
+- [x] Weekly Executive Opportunity Report: generateWeeklyReport server procedure + WeeklyReportSection component on Career Access home — 4-stat grid (Active Opps, Paths Activated, High-Value Contacts, Score Change) + 5-sentence AI narrative
+- [x] TypeScript check (0 errors) and checkpoint save

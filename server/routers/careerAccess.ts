@@ -925,6 +925,7 @@ Today's date: ${today}`;
       whatYouDid: z.string().min(1),
       outcome: z.enum(["sent_message", "had_call", "got_intro", "applied", "other"]),
       notes: z.string().optional(),
+      followUpDate: z.string().optional(), // ISO date string
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -934,14 +935,96 @@ Today's date: ${today}`;
         .limit(1);
       if (!path) throw new TRPCError({ code: "NOT_FOUND" });
       const timestamp = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-      const logEntry = `[${timestamp}] ${input.outcome.replace(/_/g, " ").toUpperCase()}: ${input.whatYouDid}${input.notes ? ` — ${input.notes}` : ""}`;
+      const followUpNote = input.followUpDate
+        ? ` | Follow-up: ${new Date(input.followUpDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}`
+        : "";
+      const logEntry = `[${timestamp}] ${input.outcome.replace(/_/g, " ").toUpperCase()}: ${input.whatYouDid}${input.notes ? ` — ${input.notes}` : ""}${followUpNote}`;
       const existingNotes = path.userNotes ?? "";
       const updatedNotes = existingNotes ? `${existingNotes}\n${logEntry}` : logEntry;
       await db.update(accessPaths)
         .set({ userNotes: updatedNotes, status: "activated", updatedAt: new Date() })
         .where(and(eq(accessPaths.id, input.accessPathId), eq(accessPaths.userId, ctx.user.id)));
-      return { success: true };
+      // Auto-advance pipeline stage for matching company when outcome is high-signal
+      let pipelineAutoAdvanced = false;
+      if (["had_call", "got_intro", "applied"].includes(input.outcome) && path.opportunityId) {
+        const [opp] = await db.select({ id: opportunityUniverse.id, status: opportunityUniverse.status })
+          .from(opportunityUniverse)
+          .where(and(eq(opportunityUniverse.id, path.opportunityId), eq(opportunityUniverse.userId, ctx.user.id)))
+          .limit(1);
+        if (opp && opp.status !== "active" && opp.status !== "removed") {
+          await db.update(opportunityUniverse)
+            .set({ status: "active", updatedAt: new Date() })
+            .where(and(eq(opportunityUniverse.id, path.opportunityId), eq(opportunityUniverse.userId, ctx.user.id)));
+          pipelineAutoAdvanced = true;
+        }
+      }
+      return { success: true, pipelineAutoAdvanced };
     }),
+
+  // ── Weekly Executive Opportunity Report ──────────────────────────────────────
+  generateWeeklyReport: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const opps = await db.select().from(opportunityUniverse)
+      .where(eq(opportunityUniverse.userId, ctx.user.id))
+      .orderBy(desc(opportunityUniverse.updatedAt))
+      .limit(50);
+    const paths = await db.select().from(accessPaths)
+      .where(eq(accessPaths.userId, ctx.user.id))
+      .orderBy(desc(accessPaths.updatedAt))
+      .limit(50);
+    const contacts = await db.select().from(relationshipContacts)
+      .where(eq(relationshipContacts.userId, ctx.user.id))
+      .orderBy(desc(relationshipContacts.updatedAt))
+      .limit(50);
+    const snapshots = await db.select({
+      compositeScore: careerAccessScoreSnapshots.compositeScore,
+      createdAt: careerAccessScoreSnapshots.createdAt,
+    }).from(careerAccessScoreSnapshots)
+      .where(eq(careerAccessScoreSnapshots.userId, ctx.user.id))
+      .orderBy(desc(careerAccessScoreSnapshots.createdAt))
+      .limit(2);
+    const activeOpps = opps.filter(o => o.status === "active");
+    const activatedPaths = paths.filter(p => p.status === "activated");
+    const highScoreContacts = contacts.filter(c => (c.compositeScore ?? 0) >= 70);
+    const scoreChange = snapshots.length >= 2
+      ? ((snapshots[0].compositeScore ?? 0) - (snapshots[1].compositeScore ?? 0))
+      : null;
+    const prompt = `You are an Executive Opportunity Strategist writing a concise weekly progress summary for a senior executive.
+
+Data snapshot:
+- Opportunity pipeline: ${opps.filter(o => o.status !== "removed").length} total, ${activeOpps.length} active
+- Access paths activated: ${activatedPaths.length}
+- High-value relationships (score ≥70): ${highScoreContacts.length} of ${contacts.length} total
+- Career Access Score change: ${scoreChange !== null ? (scoreChange >= 0 ? `+${scoreChange}` : `${scoreChange}`) : "No comparison yet"}
+- Most recently active companies: ${activeOpps.slice(0, 3).map(o => o.companyName).join(", ") || "None yet"}
+
+Write a 5-sentence executive weekly summary covering:
+1. Pipeline momentum (how many orgs are active, any notable moves)
+2. Access path progress (paths activated, what actions were taken)
+3. Relationship capital (high-value contacts, who to engage next)
+4. Score trajectory (improving, stable, or needs attention)
+5. One clear priority action for next week
+
+Tone: direct, confident, strategic. Write as if briefing the executive themselves. No bullet points — flowing narrative.`;
+    const response = await invokeLLM({
+      messages: [{ role: "user", content: prompt }],
+      model: "gpt-4o-mini",
+      maxTokens: 400,
+    });
+    const narrative = response.choices[0]?.message?.content ?? "Unable to generate report.";
+    return {
+      narrative,
+      generatedAt: new Date().toISOString(),
+      stats: {
+        totalOpps: opps.filter(o => o.status !== "removed").length,
+        activeOpps: activeOpps.length,
+        activatedPaths: activatedPaths.length,
+        highValueContacts: highScoreContacts.length,
+        scoreChange,
+      },
+    };
+  }),
 
   // ── Score Improvement Check ──────────────────────────────────────────────────
   getScoreImprovement: protectedProcedure.query(async ({ ctx }) => {
