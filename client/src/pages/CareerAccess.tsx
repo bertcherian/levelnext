@@ -11,7 +11,9 @@ import {
   Target, Briefcase, Globe, DollarSign, Heart, Star,
   ChevronRight, ChevronLeft, Sparkles, Building2, TrendingUp,
   MapPin, Zap, AlertCircle, CheckCircle2, RefreshCw, Info,
-  BarChart3, Eye, ArrowRight, Lightbulb, Lock
+  BarChart3, Eye, ArrowRight, Lightbulb, Lock,
+  Users, UserPlus, Network, Phone, Mail, Linkedin, Trash2,
+  Award, Clock, Activity, Edit3, X, Plus
 } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -164,7 +166,7 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-type View = "home" | "intake" | "strategy" | "universe" | "pipeline";
+type View = "home" | "intake" | "strategy" | "universe" | "pipeline" | "relationships";
 
 export default function CareerAccess() {
   const [view, setView] = useState<View>("home");
@@ -173,6 +175,20 @@ export default function CareerAccess() {
   const [universeFilter, setUniverseFilter] = useState<string>("all");
   const [pipelineExpandedId, setPipelineExpandedId] = useState<number | null>(null);
   const [pipelineNotes, setPipelineNotes] = useState<Record<number, string>>({});
+
+  // Relationship Intelligence state
+  const [relView, setRelView] = useState<"list" | "add" | "edit" | "detail">("list");
+  const [relForm, setRelForm] = useState({
+    name: "", currentTitle: "", currentCompany: "", industry: "",
+    geography: "", linkedinUrl: "", email: "", phone: "",
+    relationshipType: "Former Colleague", howWeKnowEachOther: "",
+    sharedHistory: "", notes: "", isKeyConnector: false,
+  });
+  const [editingRelId, setEditingRelId] = useState<number | null>(null);
+  const [activeRelContact, setActiveRelContact] = useState<Record<string, unknown> | null>(null);
+  const [scoringRelId, setScoringRelId] = useState<number | null>(null);
+  const [relActivationPicks, setRelActivationPicks] = useState<Record<string, unknown>[] | null>(null);
+  const [generatingActivation, setGeneratingActivation] = useState(false);
 
   // Form state
   const [form, setForm] = useState({
@@ -213,6 +229,13 @@ export default function CareerAccess() {
   const generateUniverseMutation = trpc.careerAccess.generateOpportunityUniverse.useMutation();
   const updateStatusMutation = trpc.careerAccess.updateOpportunityStatus.useMutation();
   const clearUniverseMutation = trpc.careerAccess.clearOpportunityUniverse.useMutation();
+
+  // Relationship mutations
+  const { data: relationships, refetch: refetchRelationships } = trpc.careerAccess.getRelationships.useQuery();
+  const addRelMutation = trpc.careerAccess.addRelationship.useMutation();
+  const updateRelMutation = trpc.careerAccess.updateRelationship.useMutation();
+  const deleteRelMutation = trpc.careerAccess.deleteRelationship.useMutation();
+  const scoreRelMutation = trpc.careerAccess.scoreRelationship.useMutation();
 
   // ── Kanban helpers ─────────────────────────────────────────────────────────
   const KANBAN_COLUMNS = [
@@ -367,8 +390,8 @@ export default function CareerAccess() {
             </div>
           )}
 
-          {/* Three pillars */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {/* Modules grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {/* Career Profile */}
             <div
               className="p-5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
@@ -485,6 +508,34 @@ export default function CareerAccess() {
               ) : (
                 <div className="flex items-center gap-1 text-gray-400 text-xs">
                   <Lock className="w-3.5 h-3.5" /> Map your universe first
+                </div>
+              )}
+            </div>
+            {/* Relationship Intelligence */}
+            <div
+              className="p-5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
+              style={{ borderColor: (relationships?.length ?? 0) > 0 ? "var(--color-ln-gold)" : "#e5e7eb" }}
+              onClick={() => setView("relationships")}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center">
+                  <Network className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--color-ln-navy)]">Relationship Intelligence</div>
+                  <div className="text-xs text-gray-500">
+                    {(relationships?.length ?? 0) > 0 ? `${relationships!.length} contacts mapped` : "Your strategic network"}
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Map your network, score each relationship, and get weekly activation picks from your AI Chief of Staff.</p>
+              {(relationships?.length ?? 0) > 0 ? (
+                <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {relationships!.length} contacts · AI-scored
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-[var(--color-ln-gold)] text-xs font-medium">
+                  <ArrowRight className="w-3.5 h-3.5" /> Map your network
                 </div>
               )}
             </div>
@@ -1077,6 +1128,581 @@ export default function CareerAccess() {
                   );
                 })}
               </div>
+            </div>
+          )}
+        </div>
+      </PlatformLayout>
+    );
+  }
+
+  // ── Relationship Intelligence view ────────────────────────────────────────
+
+  if (view === "relationships") {
+    const REL_TYPES = [
+      "Former Colleague", "Current Colleague", "Mentor / Sponsor",
+      "Mentee", "Client", "Investor", "Board Member", "Industry Peer",
+      "Alumni", "Community", "Friend", "Family", "Recruiter",
+    ];
+
+    const SCORE_DIMS = [
+      { key: "scoreTrust", label: "Trust", color: "#60a5fa" },
+      { key: "scoreInfluence", label: "Influence", color: "#a78bfa" },
+      { key: "scoreAccessibility", label: "Accessibility", color: "#34d399" },
+      { key: "scoreRecency", label: "Recency", color: "#f59e0b" },
+      { key: "scoreWarmth", label: "Warmth", color: "#f472b6" },
+      { key: "scoreStrategicValue", label: "Strategic Value", color: "#fb923c" },
+      { key: "scoreLikelihoodToHelp", label: "Likelihood to Help", color: "#4ade80" },
+    ];
+
+    const handleAddContact = async () => {
+      if (!relForm.name.trim()) { toast.error("Name is required."); return; }
+      try {
+        await addRelMutation.mutateAsync({ ...relForm });
+        await refetchRelationships();
+        setRelForm({ name: "", currentTitle: "", currentCompany: "", industry: "", geography: "", linkedinUrl: "", email: "", phone: "", relationshipType: "Former Colleague", howWeKnowEachOther: "", sharedHistory: "", notes: "", isKeyConnector: false });
+        setRelView("list");
+        toast.success("Contact added and AI scoring in progress.");
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : "Failed to add contact.");
+      }
+    };
+
+    const handleUpdateContact = async () => {
+      if (!editingRelId) return;
+      try {
+        await updateRelMutation.mutateAsync({ id: editingRelId, ...relForm });
+        await refetchRelationships();
+        setRelView("list");
+        setEditingRelId(null);
+        toast.success("Contact updated.");
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : "Failed to update contact.");
+      }
+    };
+
+    const handleScoreContact = async (id: number) => {
+      setScoringRelId(id);
+      try {
+        await scoreRelMutation.mutateAsync({ id });
+        await refetchRelationships();
+        toast.success("AI scoring complete.");
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : "Failed to score contact.");
+      } finally {
+        setScoringRelId(null);
+      }
+    };
+
+    const handleDeleteContact = async (id: number) => {
+      try {
+        await deleteRelMutation.mutateAsync({ id });
+        await refetchRelationships();
+        if (activeRelContact?.id === id) { setActiveRelContact(null); setRelView("list"); }
+        toast.success("Contact removed.");
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : "Failed to delete contact.");
+      }
+    };
+
+    const handleGenerateActivationPicks = async () => {
+      setGeneratingActivation(true);
+      try {
+        const contacts = relationships ?? [];
+        if (contacts.length === 0) { toast.error("Add contacts first."); return; }
+        const topContacts = [...contacts]
+          .sort((a, b) => (b.compositeScore ?? 0) - (a.compositeScore ?? 0))
+          .slice(0, 10);
+        const picks = topContacts.slice(0, 3).map((c) => ({
+          id: c.id,
+          name: c.name,
+          title: c.currentTitle ?? "",
+          company: c.currentCompany ?? "",
+          compositeScore: c.compositeScore ?? 0,
+          recommendedAction: c.recommendedAction ?? "Reconnect",
+          recommendedActionReason: c.recommendedActionReason ?? "High strategic value contact worth activating this week.",
+          relationshipType: c.relationshipType,
+        }));
+        setRelActivationPicks(picks as Record<string, unknown>[]);
+        toast.success("Weekly activation picks ready.");
+      } finally {
+        setGeneratingActivation(false);
+      }
+    };
+
+    const contacts = relationships ?? [];
+    const keyConnectors = contacts.filter((c) => c.isKeyConnector);
+    const scoredContacts = contacts.filter((c) => c.compositeScore != null);
+    const avgScore = scoredContacts.length > 0
+      ? Math.round(scoredContacts.reduce((s, c) => s + (c.compositeScore ?? 0), 0) / scoredContacts.length)
+      : null;
+
+    // ── Add / Edit form ──
+    if (relView === "add" || relView === "edit") {
+      return (
+        <PlatformLayout>
+          <div className="max-w-2xl mx-auto px-4 py-8">
+            <button onClick={() => { setRelView("list"); setEditingRelId(null); }} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6">
+              <ChevronLeft className="w-4 h-4" /> Back to Network
+            </button>
+            <div className="flex items-center gap-2 text-[var(--color-ln-gold)] text-sm font-semibold uppercase tracking-wider mb-2">
+              <Network className="w-4 h-4" /> Relationship Intelligence
+            </div>
+            <h1 className="text-2xl font-bold text-[var(--color-ln-navy)] mb-6">
+              {relView === "add" ? "Add Contact" : "Edit Contact"}
+            </h1>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name *</label>
+                  <Input value={relForm.name} onChange={(e) => setRelForm({ ...relForm, name: e.target.value })} placeholder="e.g. Priya Sharma" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Relationship Type *</label>
+                  <select
+                    value={relForm.relationshipType}
+                    onChange={(e) => setRelForm({ ...relForm, relationshipType: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  >
+                    {REL_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Current Title</label>
+                  <Input value={relForm.currentTitle} onChange={(e) => setRelForm({ ...relForm, currentTitle: e.target.value })} placeholder="e.g. VP Engineering" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Current Company</label>
+                  <Input value={relForm.currentCompany} onChange={(e) => setRelForm({ ...relForm, currentCompany: e.target.value })} placeholder="e.g. Razorpay" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Industry</label>
+                  <Input value={relForm.industry} onChange={(e) => setRelForm({ ...relForm, industry: e.target.value })} placeholder="e.g. FinTech" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Geography</label>
+                  <Input value={relForm.geography} onChange={(e) => setRelForm({ ...relForm, geography: e.target.value })} placeholder="e.g. Bangalore" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">LinkedIn URL</label>
+                  <Input value={relForm.linkedinUrl} onChange={(e) => setRelForm({ ...relForm, linkedinUrl: e.target.value })} placeholder="https://linkedin.com/in/..." />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
+                  <Input value={relForm.email} onChange={(e) => setRelForm({ ...relForm, email: e.target.value })} placeholder="email@example.com" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">How We Know Each Other</label>
+                <Textarea value={relForm.howWeKnowEachOther} onChange={(e) => setRelForm({ ...relForm, howWeKnowEachOther: e.target.value })} placeholder="e.g. Worked together at Broadridge 2019-2021, co-led the APAC transformation project." rows={2} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Shared History / Context</label>
+                <Textarea value={relForm.sharedHistory} onChange={(e) => setRelForm({ ...relForm, sharedHistory: e.target.value })} placeholder="e.g. She introduced me to the CTO at Texas Instruments. Strong mutual respect." rows={2} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Notes</label>
+                <Textarea value={relForm.notes} onChange={(e) => setRelForm({ ...relForm, notes: e.target.value })} placeholder="Any other context, last conversation, follow-up needed..." rows={2} />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="keyConnector"
+                  checked={relForm.isKeyConnector}
+                  onChange={(e) => setRelForm({ ...relForm, isKeyConnector: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="keyConnector" className="text-sm text-gray-700">
+                  <span className="font-semibold">Key Connector</span> — this person can open doors to multiple opportunities
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  onClick={relView === "add" ? handleAddContact : handleUpdateContact}
+                  disabled={addRelMutation.isPending || updateRelMutation.isPending}
+                  style={{ background: "var(--color-ln-navy)", color: "white" }}
+                >
+                  {addRelMutation.isPending || updateRelMutation.isPending ? "Saving…" : relView === "add" ? "Add Contact" : "Save Changes"}
+                </Button>
+                <Button variant="outline" onClick={() => { setRelView("list"); setEditingRelId(null); }}>Cancel</Button>
+              </div>
+            </div>
+          </div>
+        </PlatformLayout>
+      );
+    }
+
+    // ── Contact detail view ──
+    if (relView === "detail" && activeRelContact) {
+      const c = activeRelContact;
+      const scored = SCORE_DIMS.filter((d) => c[d.key] != null);
+      return (
+        <PlatformLayout>
+          <div className="max-w-2xl mx-auto px-4 py-8">
+            <button onClick={() => setRelView("list")} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6">
+              <ChevronLeft className="w-4 h-4" /> Back to Network
+            </button>
+
+            {/* Header */}
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold"
+                  style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.1)", color: "var(--color-ln-navy)" }}
+                >
+                  {(c.name as string).charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-[var(--color-ln-navy)]">{c.name as string}</h1>
+                  {!!(c.currentTitle || c.currentCompany) && (
+                    <p className="text-sm text-gray-600">{[c.currentTitle as string, c.currentCompany as string].filter(Boolean).join(" · ")}</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="outline" className="text-[10px]">{c.relationshipType as string}</Badge>
+                    {!!c.isKeyConnector && <Badge className="text-[10px] bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)]">Key Connector</Badge>}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm" variant="outline"
+                  onClick={() => {
+                    setEditingRelId(c.id as number);
+                    setRelForm({
+                      name: c.name as string, currentTitle: (c.currentTitle as string) ?? "",
+                      currentCompany: (c.currentCompany as string) ?? "", industry: (c.industry as string) ?? "",
+                      geography: (c.geography as string) ?? "", linkedinUrl: (c.linkedinUrl as string) ?? "",
+                      email: (c.email as string) ?? "", phone: (c.phone as string) ?? "",
+                      relationshipType: c.relationshipType as string, howWeKnowEachOther: (c.howWeKnowEachOther as string) ?? "",
+                      sharedHistory: (c.sharedHistory as string) ?? "", notes: (c.notes as string) ?? "",
+                      isKeyConnector: (c.isKeyConnector as boolean) ?? false,
+                    });
+                    setRelView("edit");
+                  }}
+                >
+                  <Edit3 className="w-3.5 h-3.5 mr-1" /> Edit
+                </Button>
+                <Button
+                  size="sm" variant="outline"
+                  className="text-red-500 border-red-200 hover:bg-red-50"
+                  onClick={() => handleDeleteContact(c.id as number)}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Contact info */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {!!c.email && (
+                <a href={`mailto:${String(c.email)}`} className="flex items-center gap-2 text-sm text-gray-600 hover:text-[var(--color-ln-navy)]">
+                  <Mail className="w-4 h-4" /> {String(c.email)}
+                </a>
+              )}
+              {!!c.phone && (
+                <a href={`tel:${String(c.phone)}`} className="flex items-center gap-2 text-sm text-gray-600 hover:text-[var(--color-ln-navy)]">
+                  <Phone className="w-4 h-4" /> {String(c.phone)}
+                </a>
+              )}
+              {!!c.linkedinUrl && (
+                <a href={String(c.linkedinUrl)} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
+                  <Linkedin className="w-4 h-4" /> LinkedIn Profile
+                </a>
+              )}
+              {!!c.geography && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <MapPin className="w-4 h-4" /> {String(c.geography)}
+                </div>
+              )}
+            </div>
+
+            {/* Context */}
+            {!!(c.howWeKnowEachOther || c.sharedHistory) && (
+              <div className="space-y-3 mb-6">
+                {!!c.howWeKnowEachOther && (
+                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">How We Know Each Other</p>
+                    <p className="text-sm text-gray-700">{String(c.howWeKnowEachOther)}</p>
+                  </div>
+                )}
+                {!!c.sharedHistory && (
+                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Shared History</p>
+                    <p className="text-sm text-gray-700">{String(c.sharedHistory)}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AI Score */}
+            <div className="p-5 rounded-xl border-2 border-[var(--color-ln-navy)]/20 bg-[var(--color-ln-navy)]/3 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">AI Relationship Score</p>
+                  {c.compositeScore != null ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-3xl font-bold text-[var(--color-ln-navy)]">{c.compositeScore as number}</span>
+                      <span className="text-gray-400 text-sm">/100</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">Not yet scored</p>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleScoreContact(c.id as number)}
+                  disabled={scoringRelId === c.id}
+                  style={{ background: "var(--color-ln-navy)", color: "white" }}
+                >
+                  {scoringRelId === c.id ? <><RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Scoring…</> : <><Sparkles className="w-3.5 h-3.5 mr-1.5" /> {c.compositeScore != null ? "Re-score" : "Score with AI"}</>}
+                </Button>
+              </div>
+
+              {scored.length > 0 && (
+                <div className="space-y-2">
+                  {scored.map((d) => (
+                    <div key={d.key} className="flex items-center gap-3">
+                      <span className="text-[10px] font-semibold text-gray-500 w-28 shrink-0">{d.label}</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                        <div className="h-1.5 rounded-full" style={{ width: `${((c[d.key] as number) / 10) * 100}%`, background: d.color }} />
+                      </div>
+                      <span className="text-[10px] font-bold w-6 text-right" style={{ color: d.color }}>{c[d.key] as number}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!!c.recommendedAction && (
+                <div className="mt-4 p-3 rounded-lg" style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.1)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.3)" }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--color-ln-gold)" }}>Recommended Action</p>
+                  <p className="text-sm font-semibold text-[var(--color-ln-navy)]">{String(c.recommendedAction)}</p>
+                  {!!c.recommendedActionReason && <p className="text-xs text-gray-600 mt-1">{String(c.recommendedActionReason)}</p>}
+                </div>
+              )}
+            </div>
+
+            {!!c.notes && (
+              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Notes</p>
+                <p className="text-sm text-gray-700">{String(c.notes)}</p>
+              </div>
+            )}
+          </div>
+        </PlatformLayout>
+      );
+    }
+
+    // ── Contact list view ──
+    return (
+      <PlatformLayout>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <button onClick={() => setView("home")} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
+
+          {/* Header */}
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <div className="flex items-center gap-2 text-[var(--color-ln-gold)] text-sm font-semibold uppercase tracking-wider mb-1">
+                <Network className="w-4 h-4" /> Relationship Intelligence
+              </div>
+              <h1 className="text-2xl font-bold text-[var(--color-ln-navy)]">
+                {contacts.length > 0 ? `${contacts.length} Strategic Contacts` : "Your Strategic Network"}
+              </h1>
+              <p className="text-gray-500 text-sm mt-1">Map your network, score each relationship, and activate the right people at the right time.</p>
+            </div>
+            <Button
+              onClick={() => { setRelForm({ name: "", currentTitle: "", currentCompany: "", industry: "", geography: "", linkedinUrl: "", email: "", phone: "", relationshipType: "Former Colleague", howWeKnowEachOther: "", sharedHistory: "", notes: "", isKeyConnector: false }); setRelView("add"); }}
+              style={{ background: "var(--color-ln-navy)", color: "white" }}
+            >
+              <UserPlus className="w-4 h-4 mr-2" /> Add Contact
+            </Button>
+          </div>
+
+          {/* Stats bar */}
+          {contacts.length > 0 && (
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="p-4 rounded-xl border border-gray-200 bg-white text-center">
+                <div className="text-2xl font-bold text-[var(--color-ln-navy)]">{contacts.length}</div>
+                <div className="text-xs text-gray-500 mt-0.5">Total Contacts</div>
+              </div>
+              <div className="p-4 rounded-xl border border-gray-200 bg-white text-center">
+                <div className="text-2xl font-bold text-[var(--color-ln-navy)]">{keyConnectors.length}</div>
+                <div className="text-xs text-gray-500 mt-0.5">Key Connectors</div>
+              </div>
+              <div className="p-4 rounded-xl border border-gray-200 bg-white text-center">
+                <div className="text-2xl font-bold text-[var(--color-ln-navy)]">{avgScore ?? "—"}</div>
+                <div className="text-xs text-gray-500 mt-0.5">Avg Network Score</div>
+              </div>
+            </div>
+          )}
+
+          {/* Weekly Activation Picks */}
+          {contacts.length >= 3 && (
+            <div
+              className="p-5 rounded-xl mb-6"
+              style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.04)", border: "1.5px solid oklch(from var(--color-ln-navy) l c h / 0.12)" }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--color-ln-gold)" }}>Weekly Activation Picks</p>
+                  <p className="text-sm text-gray-600 mt-0.5">Your AI Chief of Staff's top 3 contacts to activate this week.</p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleGenerateActivationPicks}
+                  disabled={generatingActivation}
+                  style={{ background: "var(--color-ln-navy)", color: "white" }}
+                >
+                  {generatingActivation ? <><RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Picking…</> : <><Sparkles className="w-3.5 h-3.5 mr-1.5" /> Get This Week's Picks</>}
+                </Button>
+              </div>
+
+              {relActivationPicks && relActivationPicks.length > 0 && (
+                <div className="space-y-3">
+                  {relActivationPicks.map((pick, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white border border-gray-200">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                        style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.15)", color: "var(--color-ln-gold)" }}
+                      >
+                        {i + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-[var(--color-ln-navy)]">{pick.name as string}</p>
+                          {pick.compositeScore != null && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.15)", color: "var(--color-ln-gold)" }}>
+                              Score {pick.compositeScore as number}
+                            </span>
+                          )}
+                        </div>
+                        {!!(pick.title || pick.company) && (
+                          <p className="text-xs text-gray-500">{[pick.title as string, pick.company as string].filter(Boolean).join(" · ")}</p>
+                        )}
+                        <p className="text-xs text-gray-700 mt-1">
+                          <span className="font-semibold text-[var(--color-ln-navy)]">{pick.recommendedAction as string}:</span>{" "}
+                          {pick.recommendedActionReason as string}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!relActivationPicks && (
+                <p className="text-xs text-gray-400 mt-1">Click "Get This Week's Picks" to see who to activate first.</p>
+              )}
+            </div>
+          )}
+
+          {/* Contact list */}
+          {contacts.length === 0 ? (
+            <div className="space-y-4">
+              {/* Guide */}
+              <div className="p-5 rounded-xl" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.04)", border: "1.5px solid oklch(from var(--color-ln-navy) l c h / 0.12)" }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--color-ln-gold)" }}>What to add for each contact</p>
+                <div className="grid grid-cols-1 gap-2 text-xs" style={{ color: "oklch(35% 0.02 248.6)" }}>
+                  <div className="flex items-start gap-2"><span className="font-bold shrink-0 text-[var(--color-ln-navy)]">Name + Role</span><span>Who they are and where they work now.</span></div>
+                  <div className="flex items-start gap-2"><span className="font-bold shrink-0 text-[var(--color-ln-navy)]">Relationship Type</span><span>How you know them — former colleague, mentor, client, alumni, etc.</span></div>
+                  <div className="flex items-start gap-2"><span className="font-bold shrink-0 text-[var(--color-ln-navy)]">Context</span><span>How you met, shared history, and why they matter to your career access strategy.</span></div>
+                  <div className="flex items-start gap-2"><span className="font-bold shrink-0 text-[var(--color-ln-navy)]">AI Score</span><span>After adding, score each contact to get Trust, Influence, Strategic Value, and a recommended action.</span></div>
+                </div>
+              </div>
+
+              {/* Example contact */}
+              <div className="p-5 rounded-xl" style={{ background: "white", border: "1.5px dashed #60a5fa" }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ background: "oklch(from #60a5fa l c h / 0.12)", color: "#2563eb" }}>Example</span>
+                </div>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "oklch(from #60a5fa l c h / 0.12)", color: "#60a5fa" }}>R</div>
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-ln-navy)]">Rahul Mehta</p>
+                    <p className="text-xs text-gray-500">CHRO · Broadridge India</p>
+                    <Badge variant="outline" className="text-[10px] mt-1">Former Colleague</Badge>
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg text-xs space-y-2" style={{ background: "oklch(98% 0.01 248.6)", border: "1px solid oklch(92% 0.01 248.6)" }}>
+                  <p className="text-gray-600"><span className="font-semibold text-[var(--color-ln-navy)]">How we know each other:</span> Worked together at Broadridge 2018–2022. He was my direct stakeholder during the leadership transformation programme. Strong mutual respect.</p>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {[{label:"Trust",val:9,color:"#60a5fa"},{label:"Influence",val:8,color:"#a78bfa"},{label:"Strategic Value",val:9,color:"#fb923c"},{label:"Likelihood to Help",val:8,color:"#4ade80"}].map((d) => (
+                      <div key={d.label} className="flex items-center gap-2">
+                        <span className="text-[9px] font-semibold text-gray-500 w-24 shrink-0">{d.label}</span>
+                        <div className="flex-1 bg-gray-200 rounded-full h-1">
+                          <div className="h-1 rounded-full" style={{ width: `${(d.val/10)*100}%`, background: d.color }} />
+                        </div>
+                        <span className="text-[9px] font-bold" style={{ color: d.color }}>{d.val}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-1 p-2 rounded" style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.1)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.3)" }}>
+                    <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "var(--color-ln-gold)" }}>Recommended Action</p>
+                    <p className="text-[10px] font-semibold text-[var(--color-ln-navy)]">Schedule a coffee catch-up</p>
+                    <p className="text-[10px] text-gray-600">High trust, high influence — ideal for a warm introduction to Broadridge's new APAC MD.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center py-6">
+                <Button
+                  onClick={() => { setRelForm({ name: "", currentTitle: "", currentCompany: "", industry: "", geography: "", linkedinUrl: "", email: "", phone: "", relationshipType: "Former Colleague", howWeKnowEachOther: "", sharedHistory: "", notes: "", isKeyConnector: false }); setRelView("add"); }}
+                  style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" /> Add Your First Contact
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {contacts.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => { setActiveRelContact(c as Record<string, unknown>); setRelView("detail"); }}
+                  className="w-full text-left p-4 rounded-xl border bg-white hover:shadow-sm transition-all"
+                  style={{ borderColor: c.isKeyConnector ? "var(--color-ln-gold)" : "oklch(90% 0.01 248.6)" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                      style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.1)", color: "var(--color-ln-navy)" }}
+                    >
+                      {(c.name as string).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-[var(--color-ln-navy)]">{c.name as string}</p>
+                        {c.isKeyConnector && <Badge className="text-[9px] bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] py-0">Key Connector</Badge>}
+                      </div>
+                      {(c.currentTitle || c.currentCompany) && (
+                        <p className="text-xs text-gray-500">{[c.currentTitle, c.currentCompany].filter(Boolean).join(" · ")}</p>
+                      )}
+                      <p className="text-[10px] text-gray-400 mt-0.5">{c.relationshipType as string}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      {c.compositeScore != null && (
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-[var(--color-ln-navy)]">{c.compositeScore as number}</div>
+                          <div className="text-[9px] text-gray-400">Score</div>
+                        </div>
+                      )}
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
+                  {c.recommendedAction && (
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <Activity className="w-3 h-3 shrink-0" style={{ color: "var(--color-ln-gold)" }} />
+                      <p className="text-[10px] text-gray-600">
+                        <span className="font-semibold">{c.recommendedAction as string}</span>
+                        {c.recommendedActionReason ? ` — ${(c.recommendedActionReason as string).slice(0, 80)}${(c.recommendedActionReason as string).length > 80 ? "…" : ""}` : ""}
+                      </p>
+                    </div>
+                  )}
+                </button>
+              ))}
             </div>
           )}
         </div>

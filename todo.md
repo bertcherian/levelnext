@@ -678,3 +678,12 @@
 - [x] Weekly check-in nudge: widget on MEP Home ("Have you practised your commitments this week?") linking to Commitments page
 - [x] Commitment streak tracker: show streak count on each active CommitmentCard
 - [x] Team Intelligence example: example team member card on empty state showing what a complete member profile looks like
+
+## Executive Opportunity System — Phase 1: Relationship Intelligence (Jul 17)
+- [x] Review relationship_contacts schema and existing server procedures (getRelationships, addRelationship, updateRelationship, deleteRelationship, scoreRelationship)
+- [x] Build RelationshipIntelligence view in CareerAccess: contact list with 7-dimension AI score bars
+- [x] Add/edit contact form: name, company, role, relationship type, how we know each other, shared history, notes, key connector flag
+- [x] AI relationship scoring: scoreRelationship procedure generates 7-dimension scores + composite score + recommended action
+- [x] Weekly activation picks: top 3 contacts sorted by composite score with recommended action
+- [x] Wire Relationship Intelligence nav card on CareerAccess home
+- [x] TypeScript check (0 errors) and checkpoint save
