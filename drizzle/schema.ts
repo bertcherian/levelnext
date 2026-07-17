@@ -1631,3 +1631,38 @@ export const opportunityRadarSignals = mysqlTable("opportunity_radar_signals", {
 export type OpportunityRadarSignal = typeof opportunityRadarSignals.$inferSelect;
 export type InsertOpportunityRadarSignal = typeof opportunityRadarSignals.$inferInsert;
 
+
+// Interview Prep Sessions: AI-generated interview preparation per role/company
+export const interviewPrepSessions = mysqlTable("interview_prep_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  targetRole: varchar("targetRole", { length: 255 }).notNull(),
+  targetCompany: varchar("targetCompany", { length: 255 }).notNull(),
+  interviewType: varchar("interviewType", { length: 50 }).default("behavioral").notNull(),
+  jobDescription: text("jobDescription"),
+  yourBackground: text("yourBackground"),
+  prepData: json("prepData"), // Full AI-generated prep: roleResearch, likelyQuestions, suggestedAnswers, storyBank, keyMessages, questionsToAsk
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type InterviewPrepSession = typeof interviewPrepSessions.$inferSelect;
+export type InsertInterviewPrepSession = typeof interviewPrepSessions.$inferInsert;
+
+// Negotiation Sessions: AI-powered offer analysis and negotiation strategy
+export const negotiationSessions = mysqlTable("negotiation_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  role: varchar("role", { length: 255 }).notNull(),
+  company: varchar("company", { length: 255 }).notNull(),
+  offeredSalary: varchar("offeredSalary", { length: 50 }),
+  offeredBonus: varchar("offeredBonus", { length: 100 }),
+  offeredEquity: varchar("offeredEquity", { length: 100 }),
+  otherBenefits: text("otherBenefits"),
+  currentSalary: varchar("currentSalary", { length: 50 }),
+  targetSalary: varchar("targetSalary", { length: 50 }),
+  marketContext: text("marketContext"),
+  yourLeverage: text("yourLeverage"),
+  strategyData: json("strategyData"), // Full AI-generated strategy: offerAnalysis, strategy, counterOfferScripts, decisionFramework
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type NegotiationSession = typeof negotiationSessions.$inferSelect;
+export type InsertNegotiationSession = typeof negotiationSessions.$inferInsert;

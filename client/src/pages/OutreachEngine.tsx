@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
@@ -733,6 +733,16 @@ function OutreachDraftsTab() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function OutreachEngine() {
+  const [activeTab, setActiveTab] = useState("brand");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab === "outreach" || tab === "brand") {
+      setActiveTab(tab);
+    }
+  }, []);
+
   return (
     <PlatformLayout>
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -746,7 +756,7 @@ export default function OutreachEngine() {
           </div>
           <div>
             <h1 className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
-              Outreach Engine
+              Executive Brand &amp; Outreach Engine
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               AI-powered personal brand strategy, LinkedIn content, outreach drafts, and conversation prep — all grounded in your Career Intelligence data.
@@ -754,7 +764,7 @@ export default function OutreachEngine() {
           </div>
         </div>
 
-        <Tabs defaultValue="brand">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="brand" className="gap-2">
               <Target size={14} /> Brand Strategy

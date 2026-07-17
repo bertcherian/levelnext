@@ -14,7 +14,8 @@ import {
   MapPin, Zap, AlertCircle, CheckCircle2, RefreshCw, Info,
   BarChart3, Eye, ArrowRight, Lightbulb, Lock, Route,
   Users, UserPlus, Network, Phone, Mail, Linkedin, Trash2,
-  Award, Clock, Activity, Edit3, X, Plus
+  Award, Clock, Activity, Edit3, X, Plus, Send,
+  Radio, BookOpen, Scale
 } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -713,6 +714,111 @@ export default function CareerAccess() {
                   <Lock className="w-3.5 h-3.5" /> Map your universe first
                 </div>
               )}
+            </div>
+
+            {/* Executive Brand Engine */}
+            <div
+              className="p-5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
+              style={{ borderColor: "#e5e7eb" }}
+              onClick={() => { window.location.href = "/career/brand"; }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--color-ln-navy)]">Executive Brand Engine</div>
+                  <div className="text-xs text-gray-500">LinkedIn · Thought Leadership · Content</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">AI-generated LinkedIn headline, brand statement, thought leadership pillars, 4-week content calendar, and executive bio.</p>
+              <div className="flex items-center gap-1 text-[var(--color-ln-gold)] text-xs font-medium">
+                <ArrowRight className="w-3.5 h-3.5" /> Build my brand
+              </div>
+            </div>
+
+            {/* Outreach Engine */}
+            <div
+              className="p-5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
+              style={{ borderColor: "#e5e7eb" }}
+              onClick={() => { window.location.href = "/career/brand?tab=outreach"; }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center">
+                  <Send className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--color-ln-navy)]">Outreach Engine</div>
+                  <div className="text-xs text-gray-500">AI-crafted messages per contact</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Generate LinkedIn messages, emails, warm intro requests, follow-ups, and conversation prep for each target contact.</p>
+              <div className="flex items-center gap-1 text-[var(--color-ln-gold)] text-xs font-medium">
+                <ArrowRight className="w-3.5 h-3.5" /> Craft outreach
+              </div>
+            </div>
+
+            {/* Opportunity Radar */}
+            <div
+              className="p-5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
+              style={{ borderColor: "#e5e7eb" }}
+              onClick={() => { window.location.href = "/career/radar"; }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center">
+                  <Radio className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--color-ln-navy)]">Opportunity Radar</div>
+                  <div className="text-xs text-gray-500">Signals from target companies</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">AI scans your target companies for hiring signals, leadership changes, funding rounds, and expansions — then tells you exactly what to do next.</p>
+              <div className="flex items-center gap-1 text-[var(--color-ln-gold)] text-xs font-medium">
+                <ArrowRight className="w-3.5 h-3.5" /> View signals
+              </div>
+            </div>
+
+            {/* Interview Prep */}
+            <div
+              className="p-5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
+              style={{ borderColor: "#e5e7eb" }}
+              onClick={() => { window.location.href = "/career/interview-prep"; }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--color-ln-navy)]">Interview Preparation</div>
+                  <div className="text-xs text-gray-500">Questions · STAR stories · Key messages</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">AI-generated role research, likely interview questions with suggested answers, STAR story bank, and key messages to land.</p>
+              <div className="flex items-center gap-1 text-[var(--color-ln-gold)] text-xs font-medium">
+                <ArrowRight className="w-3.5 h-3.5" /> Prepare now
+              </div>
+            </div>
+
+            {/* Negotiation Intelligence */}
+            <div
+              className="p-5 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md"
+              style={{ borderColor: "#e5e7eb" }}
+              onClick={() => { window.location.href = "/career/negotiation"; }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-ln-navy)] flex items-center justify-center">
+                  <Scale className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--color-ln-navy)]">Negotiation Intelligence</div>
+                  <div className="text-xs text-gray-500">Offer analysis · Counter-offer scripts</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Analyse any offer against market benchmarks, build your negotiation strategy, get counter-offer scripts, and score the decision across 5 dimensions.</p>
+              <div className="flex items-center gap-1 text-[var(--color-ln-gold)] text-xs font-medium">
+                <ArrowRight className="w-3.5 h-3.5" /> Analyse offer
+              </div>
             </div>
 
             {/* Career Access Score */}

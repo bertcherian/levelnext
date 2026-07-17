@@ -711,3 +711,55 @@
 - [x] Relationship follow-up date: date picker added to activation modal, stored in activation log entry, Chief of Staff nudge text added
 - [x] Weekly Executive Opportunity Report: generateWeeklyReport server procedure + WeeklyReportSection component on Career Access home — 4-stat grid (Active Opps, Paths Activated, High-Value Contacts, Score Change) + 5-sentence AI narrative
 - [x] TypeScript check (0 errors) and checkpoint save
+
+## Executive Opportunity System — Priority 1: Executive Brand Engine
+- [x] Server: getBrandStrategy, saveBrandStrategy, generateBrandStrategy (LLM: LinkedIn headline/summary/about, brand statement, UVP, thought leadership pillars, content calendar, elevator pitch, executive bio)
+- [x] UI: Brand Engine nav card on Executive Opportunity System home
+- [x] UI: Brand Profile intake (current LinkedIn, target audience, 3 strengths, tone preference)
+- [x] UI: AI Brand Strategy Generator — one-click generate all brand assets
+- [x] UI: LinkedIn Rewrite section (headline + summary + about with copy button)
+- [x] UI: Thought Leadership Pillars (3 pillars with content ideas and hashtags)
+- [x] UI: 4-week Content Calendar (week, content type, topic, hook, format, CTA)
+- [x] UI: Elevator Pitch + Executive Bio sections
+- [x] TypeScript check and checkpoint save
+
+## Executive Opportunity System — Priority 2: Outreach Engine
+- [x] Server: getOutreachDrafts, generateOutreachDraft (LLM: LinkedIn message, email, warm intro request, follow-up, meeting agenda, talking points, questions to ask, things to avoid)
+- [x] Server: updateOutreachStatus, markResponseReceived
+- [x] UI: Outreach Engine nav card on Executive Opportunity System home
+- [x] UI: Per-contact outreach generator (select contact → generate all message types)
+- [x] UI: Conversation Prep module (meeting agenda, talking points, questions to ask, things to avoid)
+- [x] UI: Follow-up tracker (sent → response received → outcome logged)
+- [x] TypeScript check and checkpoint save
+
+## Executive Opportunity System — Priority 3: Opportunity Radar Signals
+- [x] Server: getRadarSignals, generateRadarSignals (LLM: scan target companies, generate signals by type), dismissSignal
+- [x] Server: getTopSignals for Chief of Staff briefing integration
+- [x] UI: Radar Signals nav card on Executive Opportunity System home
+- [x] UI: Radar Feed view (card-based, sorted by urgency, dismiss actions)
+- [x] UI: Signal type icons and urgency badges
+- [x] TypeScript check and checkpoint save
+
+## Executive Opportunity System — Priority 4: Interview Preparation Module
+- [x] Schema: interview_prep_sessions table (role, company, interview type, job description, background, prepData JSON)
+- [x] Migration applied
+- [x] Server: generatePrep (LLM: role research, likely questions, suggested answers, STAR story bank, key messages, questions to ask)
+- [x] Server: getLatestPrep, listPreps, deletePrep
+- [x] UI: Interview Prep nav card on Executive Opportunity System home
+- [x] UI: Role Research view (company context, likely priorities, interviewer mindset)
+- [x] UI: Likely Questions with expandable suggested answers
+- [x] UI: STAR Story Bank (expandable per story, competency badges)
+- [x] UI: Key Messages and Questions to Ask sections
+- [x] TypeScript check and checkpoint save
+
+## Executive Opportunity System — Priority 5: Negotiation Intelligence
+- [x] Schema: negotiation_sessions table (offer details, market context, leverage, strategyData JSON)
+- [x] Migration applied
+- [x] Server: generateStrategy (LLM: offer analysis, negotiation strategy, counter-offer scripts, decision framework)
+- [x] Server: getLatestSession, listSessions, deleteSession
+- [x] UI: Negotiation Intelligence nav card on Executive Opportunity System home
+- [x] UI: Offer Analysis (compensation score, market position, negotiation room)
+- [x] UI: Negotiation Strategy (what to ask for, what to accept, walk-away points)
+- [x] UI: Counter-offer Scripts (expandable per scenario)
+- [x] UI: Decision Framework (5-dimension scoring with progress bars)
+- [x] TypeScript check and checkpoint save

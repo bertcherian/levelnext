@@ -53,6 +53,9 @@ import ManagerBrief from "@/pages/mep/ManagerBrief";
 import ManagerPractice from "@/pages/mep/ManagerPractice";
 import ManagerCommitments from "@/pages/mep/ManagerCommitments";
 import TeamIntelligence from "@/pages/mep/TeamIntelligence";
+import RadarSignals from "@/pages/RadarSignals";
+import InterviewPrep from "@/pages/InterviewPrep";
+import NegotiationIntelligence from "@/pages/NegotiationIntelligence";
 import MEPLayout from "@/components/MEPLayout";
 import CareerLanding from "@/pages/CareerLanding";
 import JoinPage from "@/pages/JoinPage";
@@ -140,6 +143,9 @@ function Router() {
       <Route path="/career/relationships" component={RelationshipGraph} />
       <Route path="/career/access-paths" component={AccessPaths} />
       <Route path="/career/brand" component={OutreachEngine} />
+      <Route path="/career/radar" component={RadarSignals} />
+      <Route path="/career/interview-prep" component={InterviewPrep} />
+      <Route path="/career/negotiation" component={NegotiationIntelligence} />
       {/* Manager Effectiveness Platform */}
       <Route path="/manager">{() => <MEPLayout><ManagerHome /></MEPLayout>}</Route>
       <Route path="/manager/diagnostics">{() => <MEPLayout><ManagerDiagnostics /></MEPLayout>}</Route>

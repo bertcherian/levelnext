@@ -31,6 +31,9 @@ import { playbookRouter } from "./routers/playbookRouter";
 import { careerAccessRouter } from "./routers/careerAccess";
 import { outreachEngineRouter } from "./routers/outreachEngine";
 import { mepRouter } from "./routers/mep";
+import { radarSignalsRouter } from "./routers/radarSignals";
+import { interviewPrepRouter } from "./routers/interviewPrep";
+import { negotiationRouter } from "./routers/negotiation";
 
 export const appRouter = router({
   system: systemRouter,
@@ -71,6 +74,9 @@ export const appRouter = router({
   careerAccess: careerAccessRouter,
   outreachEngine: outreachEngineRouter,
   mep: mepRouter,
+  radarSignals: radarSignalsRouter,
+  interviewPrep: interviewPrepRouter,
+  negotiation: negotiationRouter,
 });
 
 export type AppRouter = typeof appRouter;
