@@ -108,38 +108,154 @@ Keep responses focused and practical — under 300 words unless a framework requ
 Use bullet points sparingly. Prefer conversational, direct prose.
 `.trim();
 
-// ─── System prompt for the Manager Playbook ──────────────────────────────────
-const MANAGER_PLAYBOOK_SYSTEM_PROMPT = (context: string) => `
-You are an expert management advisor. A manager has described a situation they are facing.
+// ─── Six Playbook Type Prompts ────────────────────────────────────────────────
+const PLAYBOOK_TYPES = [
+  "difficult_conversation",
+  "performance_gap",
+  "delegation_breakdown",
+  "team_conflict",
+  "motivation_engagement",
+  "feedback_resistance",
+] as const;
 
+type PlaybookType = typeof PLAYBOOK_TYPES[number];
+
+const PLAYBOOK_TYPE_LABELS: Record<PlaybookType, string> = {
+  difficult_conversation: "Difficult Conversation",
+  performance_gap: "Performance Gap",
+  delegation_breakdown: "Delegation Breakdown",
+  team_conflict: "Team Conflict",
+  motivation_engagement: "Motivation & Engagement",
+  feedback_resistance: "Feedback Resistance",
+};
+
+const PLAYBOOK_PROMPTS: Record<PlaybookType, (context: string) => string> = {
+  difficult_conversation: (context) => `
+You are an expert in Nonviolent Communication (NVC) and the Crucial Conversations framework.
+You help managers navigate high-stakes conversations they have been avoiding.
 Manager context:
 ${context}
-
-Return a structured JSON playbook for this situation with these exact keys:
+Return a JSON playbook with these exact keys:
 {
-  "situationType": "string (e.g. 'Underperformance', 'Conflict', 'Delegation')",
-  "diagnosis": "string (2-3 sentences diagnosing the root issue)",
-  "possibleCauses": ["string", "string", "string"],
-  "framework": {
-    "name": "string (e.g. 'SBI Feedback Model', 'GROW Coaching')",
-    "steps": ["string", "string", "string", "string"]
-  },
-  "conversationGuide": {
-    "opening": "string (how to open the conversation)",
-    "keyPoints": ["string", "string", "string"],
-    "closing": "string (how to close the conversation)"
-  },
-  "questions": ["string", "string", "string", "string"],
-  "actionPlan": ["string", "string", "string"],
-  "commonMistakes": ["string", "string", "string"],
-  "followUpPlan": "string (what to do in 1 week, 2 weeks, 1 month)",
-  "learningResources": [
-    { "title": "string", "type": "string (book/article/framework)", "why": "string" }
-  ]
+  "playbookType": "difficult_conversation",
+  "headline": "one punchy sentence summarising the play",
+  "diagnosis": "2-3 sentences on the root issue and why this conversation is hard",
+  "immediateActions": [{"action": "string", "detail": "string"}],
+  "conversationScript": {"opening": "string", "keyPoints": ["string"], "closing": "string"},
+  "emotionalPrep": "how to manage your own emotional state before and during the conversation",
+  "safetySignals": "how to know the conversation is going well and the person feels safe",
+  "recoveryScript": "what to say if the conversation goes off track or the person gets defensive",
+  "whatToAvoid": ["string"],
+  "coachingQuestion": "a powerful reflective question for the manager"
 }
-
 Be specific, practical, and grounded in real management science. No generic advice.
-`.trim();
+`.trim(),
+
+  performance_gap: (context) => `
+You are an expert in performance management, OKRs, and coaching for performance improvement.
+You help managers address consistent underperformance with clarity and compassion.
+Manager context:
+${context}
+Return a JSON playbook with these exact keys:
+{
+  "playbookType": "performance_gap",
+  "headline": "one punchy sentence summarising the play",
+  "diagnosis": "2-3 sentences diagnosing the root issue",
+  "immediateActions": [{"action": "string", "detail": "string"}],
+  "conversationScript": {"opening": "string", "keyPoints": ["string"], "closing": "string"},
+  "rootCauseMatrix": {"skill": "string (skill gap assessment)", "will": "string (motivation/attitude assessment)", "context": "string (environment/resource barriers)"},
+  "pipPlan": {"week1": "string", "week2": "string", "month1": "string", "successCriteria": "string"},
+  "checkInCadence": "recommended frequency and format for progress reviews",
+  "whatToAvoid": ["string"],
+  "coachingQuestion": "a powerful reflective question for the manager"
+}
+Be specific, practical, and grounded in real management science. No generic advice.
+`.trim(),
+
+  delegation_breakdown: (context) => `
+You are an expert in delegation frameworks including RACI and the 7 Levels of Delegation.
+You help managers stop doing everything themselves and build genuine team ownership.
+Manager context:
+${context}
+Return a JSON playbook with these exact keys:
+{
+  "playbookType": "delegation_breakdown",
+  "headline": "one punchy sentence summarising the play",
+  "diagnosis": "2-3 sentences on why delegation is breaking down",
+  "immediateActions": [{"action": "string", "detail": "string"}],
+  "conversationScript": {"opening": "string", "keyPoints": ["string"], "closing": "string"},
+  "delegationAudit": [{"task": "string", "currentOwner": "string", "idealOwner": "string", "delegationLevel": "string (1-7)"}],
+  "ownershipTransfer": "step-by-step process for handing over fully without micromanaging",
+  "checkpointPlan": "how to stay informed without taking back control",
+  "whatToAvoid": ["string"],
+  "coachingQuestion": "a powerful reflective question for the manager"
+}
+Be specific, practical, and grounded in real management science. No generic advice.
+`.trim(),
+
+  team_conflict: (context) => `
+You are an expert in conflict resolution, mediation, and building psychological safety in teams.
+You help managers address interpersonal friction before it destroys team performance.
+Manager context:
+${context}
+Return a JSON playbook with these exact keys:
+{
+  "playbookType": "team_conflict",
+  "headline": "one punchy sentence summarising the play",
+  "diagnosis": "2-3 sentences on the nature and root of the conflict",
+  "immediateActions": [{"action": "string", "detail": "string"}],
+  "conversationScript": {"opening": "string", "keyPoints": ["string"], "closing": "string"},
+  "conflictMap": {"party1": "string (their perspective and needs)", "party2": "string (their perspective and needs)", "underlyingTension": "string"},
+  "mediationScript": "script for a three-way conversation to surface and resolve the conflict",
+  "groundRules": ["team agreements to establish after resolution"],
+  "whatToAvoid": ["string"],
+  "coachingQuestion": "a powerful reflective question for the manager"
+}
+Be specific, practical, and grounded in real management science. No generic advice.
+`.trim(),
+
+  motivation_engagement: (context) => `
+You are an expert in Self-Determination Theory, intrinsic motivation, and employee engagement.
+You help managers re-engage team members who are disengaged, quiet quitting, or have lost their spark.
+Manager context:
+${context}
+Return a JSON playbook with these exact keys:
+{
+  "playbookType": "motivation_engagement",
+  "headline": "one punchy sentence summarising the play",
+  "diagnosis": "2-3 sentences on why this person is disengaged",
+  "immediateActions": [{"action": "string", "detail": "string"}],
+  "conversationScript": {"opening": "string", "keyPoints": ["string"], "closing": "string"},
+  "motivationDiagnosis": {"autonomy": "string (gap assessment)", "mastery": "string (gap assessment)", "purpose": "string (gap assessment)"},
+  "reEngagementPlan": {"thisWeek": "string", "thisMonth": "string", "ongoing": "string"},
+  "energisingActions": ["specific things the manager can do to restore energy and meaning"],
+  "whatToAvoid": ["string"],
+  "coachingQuestion": "a powerful reflective question for the manager"
+}
+Be specific, practical, and grounded in real management science. No generic advice.
+`.trim(),
+
+  feedback_resistance: (context) => `
+You are an expert in feedback psychology, growth mindset, and coaching through defensiveness.
+You help managers give feedback that lands even with people who push back, deflect, or shut down.
+Manager context:
+${context}
+Return a JSON playbook with these exact keys:
+{
+  "playbookType": "feedback_resistance",
+  "headline": "one punchy sentence summarising the play",
+  "diagnosis": "2-3 sentences on why this person resists feedback",
+  "immediateActions": [{"action": "string", "detail": "string"}],
+  "conversationScript": {"opening": "string", "keyPoints": ["string"], "closing": "string"},
+  "resistanceType": "defensive / dismissive / deflecting / attacking - identify which and why",
+  "psychologicalSafetyCheck": "assessment of whether the environment is safe enough for honest feedback",
+  "feedbackDeliveryScript": "a specific word-for-word script for delivering the feedback in a way that bypasses resistance",
+  "whatToAvoid": ["string"],
+  "coachingQuestion": "a powerful reflective question for the manager"
+}
+Be specific, practical, and grounded in real management science. No generic advice.
+`.trim(),
+};
 
 export const mepRouter = router({
   // ── LAYER 1: Diagnostics ──────────────────────────────────────────────────
@@ -395,13 +511,17 @@ Return a JSON object with these exact keys:
   // ── LAYER 3: Manager Playbook ─────────────────────────────────────────────
 
   generatePlaybook: protectedProcedure
-    .input(z.object({ situation: z.string().min(10).max(1000) }))
+    .input(z.object({
+      situation: z.string().min(10).max(1000),
+      playbookType: z.enum(PLAYBOOK_TYPES).default("difficult_conversation"),
+    }))
     .mutation(async ({ ctx, input }) => {
       const context = await buildManagerContext(ctx.user.id);
 
       let playbook: Record<string, any> = {};
       try {
-        const systemMsg = { role: "system" as const, content: MANAGER_PLAYBOOK_SYSTEM_PROMPT(context) };
+        const promptFn = PLAYBOOK_PROMPTS[input.playbookType];
+        const systemMsg = { role: "system" as const, content: promptFn(context) };
         const result = await invokeLLM({
           model: "gpt-5-mini",
           messages: [systemMsg, { role: "user" as const, content: `My situation: ${input.situation}` }],
@@ -420,8 +540,8 @@ Return a JSON object with these exact keys:
       const [inserted] = await db.insert(managerPlaybookSessions).values({
         userId: ctx.user.id,
         situation: input.situation,
-        situationType: playbook.situationType ?? null,
-        playbook,
+        situationType: PLAYBOOK_TYPE_LABELS[input.playbookType] ?? (playbook.situationType ?? null),
+        playbook: { ...playbook, playbookType: input.playbookType },
       }).$returningId();
 
       return { id: inserted.id, playbook };

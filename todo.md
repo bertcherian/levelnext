@@ -660,3 +660,9 @@
 ### Integration
 - [ ] TypeScript check (zero errors)
 - [ ] Save checkpoint
+
+## Six MEP Playbook Types (Jul 17)
+- [ ] Design six playbook types: Difficult Conversation, Performance Gap, Delegation Breakdown, Team Conflict, Motivation & Engagement, Feedback Resistance
+- [ ] Update server generatePlaybook with six tailored LLM system prompts (one per type)
+- [ ] Update ManagerPlaybook UI: playbook type selector cards, structured output sections per type
+- [ ] Wire Past Playbooks to show playbook type label and icon
