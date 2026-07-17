@@ -155,6 +155,17 @@ export default function AccessPaths() {
     onError: (e) => { toast.error(e.message); setGeneratingId(null); },
   });
 
+  const updateStatusMutation = trpc.careerAccess.updateAccessPathStatus.useMutation({
+    onSuccess: () => { refetchPaths(); toast.success("Status updated"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const STATUS_OPTIONS = [
+    { value: "not_started", label: "Not Started", color: "bg-gray-100 text-gray-600 border-gray-200" },
+    { value: "in_progress", label: "In Progress", color: "bg-blue-100 text-blue-700 border-blue-200" },
+    { value: "activated", label: "Activated", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  ] as const;
+
   const activeOpps = (opps as Opportunity[]).filter(o => o.status !== "removed");
   const selectedOpp = activeOpps.find(o => o.id === selectedOppId) ?? null;
   const selectedPath = (allPaths as AccessPathRecord[]).find(p => p.opportunityId === selectedOppId) ?? null;
@@ -287,6 +298,25 @@ export default function AccessPaths() {
                       )}
                     </div>
                   </div>
+
+                  {selectedPath && (
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                      <span className="text-xs text-gray-400 font-medium">Status:</span>
+                      {STATUS_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => updateStatusMutation.mutate({ id: selectedPath.id, status: opt.value })}
+                          className={`text-xs px-3 py-1 rounded-full border font-medium transition-all ${
+                            selectedPath.status === opt.value
+                              ? opt.color + " ring-2 ring-offset-1 ring-current"
+                              : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {selectedPath && (
                     <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-100">

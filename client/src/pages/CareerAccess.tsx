@@ -233,6 +233,13 @@ export default function CareerAccess() {
 
   // Career Access Score
   const { data: scoreData, refetch: refetchScore } = trpc.careerAccess.getCareerAccessScore.useQuery();
+
+  // Chief of Staff Daily Briefing
+  const { data: briefingData, refetch: refetchBriefing } = trpc.careerAccess.getTodayChiefOfStaffBriefing.useQuery();
+  const generateBriefingMutation = trpc.careerAccess.generateChiefOfStaffBriefing.useMutation({
+    onSuccess: () => { refetchBriefing(); toast.success("Chief of Staff briefing ready!"); },
+    onError: (e) => toast.error(e.message),
+  });
   const computeScoreMutation = trpc.careerAccess.computeCareerAccessScore.useMutation({
     onSuccess: () => { refetchScore(); toast.success("Career Access Score updated!"); },
     onError: (e) => toast.error(e.message),
@@ -379,6 +386,73 @@ export default function CareerAccess() {
               Elite executives don't chase opportunities. They create them. This is your AI-powered executive opportunity engine.
             </p>
           </div>
+
+          {/* Chief of Staff Daily Briefing */}
+          {(() => {
+            const brief = briefingData?.brief as Record<string, unknown> | null ?? null;
+            const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+            return (
+              <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: "var(--color-ln-navy)" }}>
+                <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b" style={{ borderColor: "oklch(from white l c h / 0.1)" }}>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" style={{ color: "var(--color-ln-gold)" }} />
+                    <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--color-ln-gold)" }}>AI Chief of Staff</span>
+                    <span className="text-xs" style={{ color: "oklch(60% 0.02 248.6)" }}>· {today}</span>
+                  </div>
+                  <button
+                    onClick={() => generateBriefingMutation.mutate()}
+                    disabled={generateBriefingMutation.isPending}
+                    className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-semibold transition-all"
+                    style={{ background: "oklch(from white l c h / 0.1)", color: "white" }}
+                  >
+                    {generateBriefingMutation.isPending ? <RefreshCw className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                    {brief ? "Refresh" : "Generate Briefing"}
+                  </button>
+                </div>
+                {!brief ? (
+                  <div className="px-5 py-6 text-center">
+                    <p className="text-sm" style={{ color: "oklch(65% 0.02 248.6)" }}>Click "Generate Briefing" for your AI Chief of Staff morning brief — pipeline health, follow-ups, and today's priority action.</p>
+                  </div>
+                ) : (
+                  <div className="px-5 py-4 space-y-3">
+                    {Boolean(brief.greeting) && (
+                      <p className="text-white font-medium text-sm">{String(brief.greeting ?? "")}</p>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {Boolean(brief.todaysPriorityAction) && (
+                        <div className="p-3 rounded-xl" style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.12)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.3)" }}>
+                          <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--color-ln-gold)" }}>Today's Priority</p>
+                          <p className="text-xs text-white">{String(brief.todaysPriorityAction ?? "")}</p>
+                        </div>
+                      )}
+                      {Boolean(brief.pipelineHealth) && (
+                        <div className="p-3 rounded-xl" style={{ background: "oklch(from white l c h / 0.06)" }}>
+                          <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "oklch(65% 0.02 248.6)" }}>Pipeline Health</p>
+                          <p className="text-xs" style={{ color: "oklch(80% 0.02 248.6)" }}>{String(brief.pipelineHealth ?? "")}</p>
+                        </div>
+                      )}
+                      {Boolean(brief.coachingNudge) && (
+                        <div className="p-3 rounded-xl" style={{ background: "oklch(from white l c h / 0.06)" }}>
+                          <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "oklch(65% 0.02 248.6)" }}>Mindset</p>
+                          <p className="text-xs" style={{ color: "oklch(80% 0.02 248.6)" }}>{String(brief.coachingNudge ?? "")}</p>
+                        </div>
+                      )}
+                    </div>
+                    {Array.isArray(brief.followUpsDue) && (brief.followUpsDue as Record<string, unknown>[]).length > 0 && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "oklch(55% 0.02 248.6)" }}>Follow-ups due:</span>
+                        {(brief.followUpsDue as Record<string, unknown>[]).slice(0, 3).map((f, i) => (
+                          <span key={i} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "oklch(from #f87171 l c h / 0.15)", color: "#fca5a5" }}>
+                            {String(f.company)} — {String(f.action)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Profile completion */}
           {completion > 0 && (
@@ -1132,6 +1206,66 @@ export default function CareerAccess() {
                   </div>
                 </div>
               )}
+
+              {/* Score Improvement Tips — bottom 3 dimensions */}
+              {latest && (() => {
+                const bottom3 = [...SCORE_DIMS]
+                  .map(d => ({ ...d, val: latest[d.key] as number ?? 0 }))
+                  .sort((a, b) => a.val - b.val)
+                  .slice(0, 3);
+
+                const TIPS: Record<string, { tip: string; action: string }> = {
+                  scoreStrategyClarity: { tip: "Your career strategy needs sharpening.", action: "Go to Career Strategy → generate or refine your strategy statement and value proposition." },
+                  scorePositioningStrength: { tip: "Your executive positioning is unclear.", action: "Revisit your Career Profile → update your target role, key strengths, and differentiated value." },
+                  scoreOpportunityPipeline: { tip: "Your opportunity pipeline is thin.", action: "Go to Opportunity Universe → approve more companies and move them into the Pipeline Kanban." },
+                  scoreRelationshipCapital: { tip: "Your relationship network needs activation.", action: "Go to Relationship Intelligence → add more contacts and score your top 5 connections." },
+                  scoreAccessPathQuality: { tip: "Your access paths are underdeveloped.", action: "Go to Access Path Generator → generate paths for your top 3 target companies." },
+                  scoreVisibilityPresence: { tip: "Your executive visibility is low.", action: "Update your LinkedIn headline and summary to reflect your current positioning. Publish one insight this week." },
+                  scoreNarrativeReadiness: { tip: "Your career narrative needs work.", action: "Go to Career Strategy → generate your career narrative and practise your 90-second story." },
+                  scoreMarketTiming: { tip: "You may be missing market timing signals.", action: "Research your target sector for leadership movement, funding rounds, or restructuring news." },
+                  scoreCredentialFit: { tip: "There may be a credential gap for your target roles.", action: "Identify the top 2 credentials or experiences missing for your target role and plan to close them." },
+                  scoreNetworkDensity: { tip: "Your network density is low for your target market.", action: "Add 5 new contacts to Relationship Intelligence this week — focus on people inside your target companies." },
+                  scoreOutreachMomentum: { tip: "Your outreach momentum is stalled.", action: "Activate one Access Path this week — send the warm intro request or direct outreach draft already generated." },
+                  scoreConfidenceReadiness: { tip: "Your confidence readiness score is low.", action: "Complete a Practice session in LevelNext to rehearse your executive narrative and build readiness." },
+                };
+
+                return (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                    <h3 className="text-sm font-semibold text-[var(--color-ln-navy)] mb-1">How to Improve Your Weakest Dimensions</h3>
+                    <p className="text-xs text-gray-400 mb-4">Focus here first — these 3 dimensions are holding your score back the most.</p>
+                    <div className="space-y-3">
+                      {bottom3.map((d, i) => {
+                        const tip = TIPS[d.key];
+                        const color = d.val >= 70 ? "#34d399" : d.val >= 50 ? "#f59e0b" : "#f87171";
+                        return (
+                          <div key={d.key} className="flex items-start gap-3 p-4 rounded-xl border" style={{ borderColor: color + "33", background: color + "0a" }}>
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold" style={{ background: color + "22", color }}>
+                              {d.val}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-bold text-[var(--color-ln-navy)]">{d.label}</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: color + "22", color }}>
+                                  {i === 0 ? "Lowest" : i === 1 ? "2nd lowest" : "3rd lowest"}
+                                </span>
+                              </div>
+                              {tip && (
+                                <>
+                                  <p className="text-xs text-gray-600 mb-1">{tip.tip}</p>
+                                  <div className="flex items-start gap-1.5">
+                                    <ArrowRight className="w-3 h-3 text-[var(--color-ln-gold)] shrink-0 mt-0.5" />
+                                    <p className="text-xs font-medium" style={{ color: "var(--color-ln-navy)" }}>{tip.action}</p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Score history */}
               {history.length > 1 && (

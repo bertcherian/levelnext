@@ -693,3 +693,9 @@
 - [x] Relationship → Pipeline link: show matched contacts on each Kanban expanded card ("Your Connections Here" section)
 - [x] Career Access Score Dashboard: computeCareerAccessScore procedure wired to UI, 12-dimension radar chart (recharts), composite score hero, dimension breakdown bars, top priority actions, score history
 - [x] TypeScript check (0 errors) and checkpoint save
+
+## Executive Opportunity System — Phase 3 (Jul 17)
+- [x] Chief of Staff Daily Briefing: wire getDailyBriefing to Career Access home — AI morning brief with pipeline follow-ups, relationship nudges, one priority action
+- [x] Access Path status tracking: add status toggle (Not Started / In Progress / Activated) to each Access Path card in AccessPaths.tsx
+- [x] Score improvement tips: after computing Career Access Score, show "How to improve your weakest 3 dimensions" panel with specific actionable steps
+- [x] TypeScript check (0 errors) and checkpoint save
