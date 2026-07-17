@@ -18,6 +18,10 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
+  MessageSquareWarning,
+  GitBranch,
+  ShieldAlert,
+  Plus,
 } from "lucide-react";
 
 const MEP_MODULES = [
@@ -255,6 +259,113 @@ export default function ManagerHome() {
             </button>
           </Link>
         </div>
+
+        {/* Recent Play widget */}
+        {playbookSessions && playbookSessions.length > 0 && (() => {
+          const PLAYBOOK_TYPE_MAP: Record<string, { label: string; color: string; icon: any }> = {
+            difficult_conversation: { label: "Difficult Conversation", color: "#f87171", icon: MessageSquareWarning },
+            performance_gap: { label: "Performance Gap", color: "#f59e0b", icon: TrendingUp },
+            delegation_breakdown: { label: "Delegation Breakdown", color: "#60a5fa", icon: GitBranch },
+            team_conflict: { label: "Team Conflict", color: "#a78bfa", icon: Users },
+            motivation_engagement: { label: "Motivation & Engagement", color: "#34d399", icon: Zap },
+            feedback_resistance: { label: "Feedback Resistance", color: "#fb923c", icon: ShieldAlert },
+          };
+          const lastPlay = playbookSessions[0] as any;
+          const typeCode = lastPlay?.playbook?.playbookType ?? "";
+          const typeInfo = PLAYBOOK_TYPE_MAP[typeCode] ?? { label: "Management Play", color: "#f59e0b", icon: BookOpen };
+          const TypeIcon = typeInfo.icon;
+          const hasReflection = !!(lastPlay?.reflection as any)?.reflectionInsight;
+
+          return (
+            <div
+              className="rounded-2xl p-5"
+              style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <BookOpen size={14} style={{ color: "#f59e0b" }} />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#f59e0b" }}>Recent Play</p>
+                </div>
+                <Link href="/manager/playbook">
+                  <button className="text-[10px] font-semibold" style={{ color: "oklch(55% 0.02 248.6)" }}>View All →</button>
+                </Link>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: `oklch(from ${typeInfo.color} l c h / 0.1)`, border: `1px solid oklch(from ${typeInfo.color} l c h / 0.2)` }}
+                >
+                  <TypeIcon size={15} style={{ color: typeInfo.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className="text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                      style={{ background: `oklch(from ${typeInfo.color} l c h / 0.1)`, color: typeInfo.color }}
+                    >
+                      {typeInfo.label}
+                    </span>
+                    {hasReflection && (
+                      <span
+                        className="text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                        style={{ background: "oklch(from #a78bfa l c h / 0.1)", color: "#a78bfa" }}
+                      >
+                        Reflected
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm font-medium leading-snug mb-1" style={{ color: "var(--color-ln-navy)" }}>
+                    {lastPlay.situation}
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={10} style={{ color: "oklch(60% 0.02 248.6)" }} />
+                    <span className="text-[10px]" style={{ color: "oklch(60% 0.02 248.6)" }}>
+                      {new Date(lastPlay.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </div>
+                </div>
+                <Link href="/manager/playbook">
+                  <button
+                    className="flex-shrink-0 flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg"
+                    style={{ background: `oklch(from ${typeInfo.color} l c h / 0.1)`, color: typeInfo.color }}
+                  >
+                    Open <ChevronRight size={11} />
+                  </button>
+                </Link>
+              </div>
+
+              {!hasReflection && (
+                <div
+                  className="mt-4 rounded-xl px-3 py-2.5 flex items-center justify-between gap-3"
+                  style={{ background: "oklch(from #a78bfa l c h / 0.06)", border: "1px solid oklch(from #a78bfa l c h / 0.15)" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={12} style={{ color: "#a78bfa" }} />
+                    <p className="text-xs" style={{ color: "oklch(40% 0.02 248.6)" }}>Reflect on this play to get a coaching insight</p>
+                  </div>
+                  <Link href="/manager/playbook">
+                    <button
+                      className="text-[10px] font-semibold flex-shrink-0 px-2.5 py-1 rounded-lg"
+                      style={{ background: "#a78bfa", color: "white" }}
+                    >
+                      Reflect
+                    </button>
+                  </Link>
+                </div>
+              )}
+
+              <Link href="/manager/playbook">
+                <button
+                  className="mt-4 w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl border-2 border-dashed transition-all hover:border-solid"
+                  style={{ borderColor: "oklch(85% 0.01 248.6)", color: "oklch(50% 0.02 248.6)" }}
+                >
+                  <Plus size={12} /> New Play
+                </button>
+              </Link>
+            </div>
+          );
+        })()}
 
         {/* Module grid */}
         <div>

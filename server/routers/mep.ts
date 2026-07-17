@@ -574,6 +574,62 @@ Return a JSON object with these exact keys:
       return session;
     }),
 
+  savePlaybookReflection: protectedProcedure
+    .input(z.object({
+      sessionId: z.number(),
+      whatHappened: z.string().optional(),
+      whatWorked: z.string().optional(),
+      whatDidnt: z.string().optional(),
+      outcome: z.enum(["win", "partial", "loss", "unclear"]).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Verify ownership
+      const [session] = await db
+        .select()
+        .from(managerPlaybookSessions)
+        .where(and(
+          eq(managerPlaybookSessions.id, input.sessionId),
+          eq(managerPlaybookSessions.userId, ctx.user.id),
+        ));
+      if (!session) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // Generate LLM reflection insight
+      let reflectionInsight = "";
+      try {
+        const result = await invokeLLM({
+          model: "gpt-5-mini",
+          messages: [{
+            role: "user" as const,
+            content: `You are an executive coach. A manager used a playbook for this situation:\n"${session.situation}"\n\nHere is their reflection:\n- What happened: ${input.whatHappened ?? "not provided"}\n- What worked: ${input.whatWorked ?? "not provided"}\n- What didn't work: ${input.whatDidnt ?? "not provided"}\n- Outcome: ${input.outcome ?? "unclear"}\n\nWrite a 2-3 sentence coaching insight that:\n1. Acknowledges what they did well\n2. Identifies the key learning\n3. Suggests one concrete thing to try differently next time\n\nBe specific, warm, and actionable. No bullet points — write in flowing sentences.`,
+          }],
+          maxTokens: 200,
+        });
+        reflectionInsight = extractText(result).trim();
+      } catch (e) {
+        console.error("[MEP Reflection] LLM failed:", e);
+        reflectionInsight = "Great work taking time to reflect. Every situation you navigate builds your leadership repertoire.";
+      }
+
+      const reflection = {
+        whatHappened: input.whatHappened,
+        whatWorked: input.whatWorked,
+        whatDidnt: input.whatDidnt,
+        outcome: input.outcome ?? "unclear",
+        reflectionInsight,
+        reflectedAt: new Date().toISOString(),
+      };
+
+      await db
+        .update(managerPlaybookSessions)
+        .set({ reflection })
+        .where(eq(managerPlaybookSessions.id, input.sessionId));
+
+      return { reflection };
+    }),
+
   // ── LAYER 4: Daily Management Brief ──────────────────────────────────────
 
   // Returns today's brief if already generated, null otherwise (no LLM call)

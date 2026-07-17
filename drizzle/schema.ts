@@ -1468,6 +1468,8 @@ export const managerPlaybookSessions = mysqlTable("manager_playbook_sessions", {
   situationType: varchar("situationType", { length: 100 }),
   // AI-generated playbook: { diagnosis, possibleCauses, framework, conversationGuide, questions, actionPlan, commonMistakes, followUpPlan, learningResources }
   playbook: json("playbook").$type<Record<string, any>>(),
+  // User reflection after using the play: { whatHappened, whatWorked, whatDidnt, outcome, reflectionInsight }
+  reflection: json("reflection").$type<Record<string, any>>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type ManagerPlaybookSession = typeof managerPlaybookSessions.$inferSelect;

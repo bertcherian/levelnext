@@ -218,6 +218,13 @@
       "when": 1784291658649,
       "tag": "0030_new_randall_flagg",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1784294166001,
+      "tag": "0031_normal_talon",
+      "breakpoints": true
     }
   ]
 }

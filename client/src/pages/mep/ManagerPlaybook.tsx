@@ -14,6 +14,11 @@ import {
   Loader2,
   Clock,
   BookOpen,
+  Sparkles,
+  Trophy,
+  CircleDot,
+  XCircle,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -89,6 +94,9 @@ export default function ManagerPlaybook() {
   const [selectedType, setSelectedType] = useState<PlaybookTypeCode>("difficult_conversation");
   const [generating, setGenerating] = useState(false);
   const [activeSession, setActiveSession] = useState<any>(null);
+  const [showReflectionForm, setShowReflectionForm] = useState(false);
+  const [reflectionData, setReflectionData] = useState({ whatHappened: "", whatWorked: "", whatDidnt: "", outcome: "" as "" | "win" | "partial" | "loss" | "unclear" });
+  const [savingReflection, setSavingReflection] = useState(false);
 
   const { data: sessions, refetch } = trpc.mep.listPlaybookSessions.useQuery();
 
@@ -109,6 +117,32 @@ export default function ManagerPlaybook() {
     { id: activeSession?.id ?? 0 },
     { enabled: !!activeSession?.id && view === "session" }
   );
+
+  const saveReflectionMutation = trpc.mep.savePlaybookReflection.useMutation({
+    onSuccess: (data) => {
+      setActiveSession((prev: any) => prev ? { ...prev, reflection: data.reflection } : prev);
+      setSavingReflection(false);
+      setShowReflectionForm(false);
+      refetch();
+      toast.success("Reflection saved. Coaching insight generated.");
+    },
+    onError: () => {
+      toast.error("Could not save reflection. Please try again.");
+      setSavingReflection(false);
+    },
+  });
+
+  const handleSaveReflection = () => {
+    if (!displaySession?.id) return;
+    setSavingReflection(true);
+    saveReflectionMutation.mutate({
+      sessionId: displaySession.id,
+      whatHappened: reflectionData.whatHappened || undefined,
+      whatWorked: reflectionData.whatWorked || undefined,
+      whatDidnt: reflectionData.whatDidnt || undefined,
+      outcome: (reflectionData.outcome || "unclear") as "win" | "partial" | "loss" | "unclear",
+    });
+  };
 
   const handleGenerate = async () => {
     if (!situation.trim()) { toast.error("Please describe your situation."); return; }
@@ -613,6 +647,134 @@ export default function ManagerPlaybook() {
               <p className="text-sm italic" style={{ color: "oklch(30% 0.02 248.6)" }}>"{play.coachingQuestion}"</p>
             </div>
           )}
+
+          {/* ── Reflection section ──────────────────────────────────────── */}
+          {(() => {
+            const existingReflection = displaySession?.reflection as any;
+            const OUTCOME_OPTIONS = [
+              { value: "win", label: "Win", icon: Trophy, color: "#34d399" },
+              { value: "partial", label: "Partial Win", icon: CircleDot, color: "#f59e0b" },
+              { value: "loss", label: "Didn't Land", icon: XCircle, color: "#f87171" },
+              { value: "unclear", label: "Still Unclear", icon: HelpCircle, color: "oklch(55% 0.02 248.6)" },
+            ];
+
+            if (existingReflection?.reflectionInsight) {
+              // Show saved reflection
+              const outcomeConfig = OUTCOME_OPTIONS.find(o => o.value === existingReflection.outcome);
+              const OutcomeIcon = outcomeConfig?.icon ?? HelpCircle;
+              return (
+                <div className="rounded-2xl p-5 space-y-4" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={14} style={{ color: "#a78bfa" }} />
+                      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#a78bfa" }}>Your Reflection</p>
+                    </div>
+                    {outcomeConfig && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: `oklch(from ${outcomeConfig.color} l c h / 0.1)` }}>
+                        <OutcomeIcon size={11} style={{ color: outcomeConfig.color }} />
+                        <span className="text-[10px] font-semibold" style={{ color: outcomeConfig.color }}>{outcomeConfig.label}</span>
+                      </div>
+                    )}
+                  </div>
+                  {existingReflection.whatHappened && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "oklch(55% 0.02 248.6)" }}>What Happened</p>
+                      <p className="text-sm leading-relaxed" style={{ color: "oklch(35% 0.02 248.6)" }}>{existingReflection.whatHappened}</p>
+                    </div>
+                  )}
+                  <div className="rounded-xl px-4 py-3" style={{ background: "oklch(from #a78bfa l c h / 0.06)", border: "1px solid oklch(from #a78bfa l c h / 0.15)" }}>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#a78bfa" }}>Coaching Insight</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "oklch(30% 0.02 248.6)" }}>{existingReflection.reflectionInsight}</p>
+                  </div>
+                </div>
+              );
+            }
+
+            if (showReflectionForm) {
+              return (
+                <div className="rounded-2xl p-5 space-y-4" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={14} style={{ color: "#a78bfa" }} />
+                    <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#a78bfa" }}>Reflect on This Play</p>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-widest block mb-1.5" style={{ color: "oklch(45% 0.02 248.6)" }}>How did it go?</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {OUTCOME_OPTIONS.map(({ value, label, icon: OIcon, color }) => (
+                        <button
+                          key={value}
+                          onClick={() => setReflectionData(d => ({ ...d, outcome: value as any }))}
+                          className="rounded-xl p-2.5 border-2 text-center transition-all"
+                          style={reflectionData.outcome === value
+                            ? { background: `oklch(from ${color} l c h / 0.1)`, borderColor: color }
+                            : { background: "oklch(97% 0.005 248.6)", borderColor: "oklch(90% 0.01 248.6)" }}
+                        >
+                          <OIcon size={14} className="mx-auto mb-1" style={{ color: reflectionData.outcome === value ? color : "oklch(55% 0.02 248.6)" }} />
+                          <p className="text-[9px] font-semibold leading-tight" style={{ color: reflectionData.outcome === value ? color : "oklch(45% 0.02 248.6)" }}>{label}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-widest block mb-1.5" style={{ color: "oklch(45% 0.02 248.6)" }}>What actually happened?</label>
+                    <Textarea
+                      value={reflectionData.whatHappened}
+                      onChange={e => setReflectionData(d => ({ ...d, whatHappened: e.target.value }))}
+                      placeholder="Describe how the conversation or situation unfolded…"
+                      className="text-sm min-h-[80px] resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-semibold uppercase tracking-widest block mb-1.5" style={{ color: "#34d399" }}>What worked?</label>
+                      <Textarea
+                        value={reflectionData.whatWorked}
+                        onChange={e => setReflectionData(d => ({ ...d, whatWorked: e.target.value }))}
+                        placeholder="What did you do well?"
+                        className="text-sm min-h-[80px] resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold uppercase tracking-widest block mb-1.5" style={{ color: "#f87171" }}>What didn't work?</label>
+                      <Textarea
+                        value={reflectionData.whatDidnt}
+                        onChange={e => setReflectionData(d => ({ ...d, whatDidnt: e.target.value }))}
+                        placeholder="What would you do differently?"
+                        className="text-sm min-h-[80px] resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1 font-semibold text-xs"
+                      onClick={handleSaveReflection}
+                      disabled={savingReflection}
+                      style={{ background: "#a78bfa", color: "white" }}
+                    >
+                      {savingReflection ? <><Loader2 size={13} className="mr-1.5 animate-spin" /> Generating Insight…</> : <><Sparkles size={13} className="mr-1.5" /> Save & Get Coaching Insight</>}
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowReflectionForm(false)}>Cancel</Button>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs font-semibold"
+                onClick={() => setShowReflectionForm(true)}
+                style={{ borderColor: "#a78bfa", color: "#a78bfa" }}
+              >
+                <Sparkles size={12} className="mr-1.5" /> Reflect on This Play
+              </Button>
+            );
+          })()}
 
           <Button
             variant="outline"

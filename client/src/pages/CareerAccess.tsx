@@ -164,13 +164,15 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-type View = "home" | "intake" | "strategy" | "universe";
+type View = "home" | "intake" | "strategy" | "universe" | "pipeline";
 
 export default function CareerAccess() {
   const [view, setView] = useState<View>("home");
   const [step, setStep] = useState(1);
   const [generating, setGenerating] = useState<"strategy" | "universe" | null>(null);
   const [universeFilter, setUniverseFilter] = useState<string>("all");
+  const [pipelineExpandedId, setPipelineExpandedId] = useState<number | null>(null);
+  const [pipelineNotes, setPipelineNotes] = useState<Record<number, string>>({});
 
   // Form state
   const [form, setForm] = useState({
@@ -211,6 +213,26 @@ export default function CareerAccess() {
   const generateUniverseMutation = trpc.careerAccess.generateOpportunityUniverse.useMutation();
   const updateStatusMutation = trpc.careerAccess.updateOpportunityStatus.useMutation();
   const clearUniverseMutation = trpc.careerAccess.clearOpportunityUniverse.useMutation();
+
+  // ── Kanban helpers ─────────────────────────────────────────────────────────
+  const KANBAN_COLUMNS = [
+    { id: "identified", label: "Identified", color: "#60a5fa", bg: "oklch(from #60a5fa l c h / 0.07)" },
+    { id: "researching", label: "Researching", color: "#a78bfa", bg: "oklch(from #a78bfa l c h / 0.07)" },
+    { id: "targeting", label: "Targeting", color: "#f59e0b", bg: "oklch(from #f59e0b l c h / 0.07)" },
+    { id: "active", label: "Active", color: "#34d399", bg: "oklch(from #34d399 l c h / 0.07)" },
+    { id: "paused", label: "Paused", color: "#94a3b8", bg: "oklch(from #94a3b8 l c h / 0.07)" },
+  ] as const;
+
+  const handleKanbanMove = (id: number, newStatus: string) => {
+    updateStatusMutation.mutate({ id, status: newStatus }, { onSuccess: () => refetchUniverse() });
+  };
+
+  const handleKanbanNotesSave = (id: number) => {
+    updateStatusMutation.mutate(
+      { id, status: (universe?.find((o) => o.id === id)?.status ?? "identified"), userNotes: pipelineNotes[id] },
+      { onSuccess: () => { refetchUniverse(); toast.success("Notes saved."); } }
+    );
+  };
 
   // Populate form from existing profile
   useEffect(() => {
@@ -432,6 +454,37 @@ export default function CareerAccess() {
               ) : (
                 <div className="flex items-center gap-1 text-gray-400 text-xs">
                   <Lock className="w-3.5 h-3.5" /> Complete profile first
+                </div>
+              )}
+            </div>
+
+            {/* Opportunity Pipeline Kanban */}
+            <div
+              className={`p-5 rounded-xl border-2 transition-all ${activeOrgs.length > 0 ? "cursor-pointer hover:shadow-md" : "opacity-60"}`}
+              style={{ borderColor: activeOrgs.filter((o) => o.status === "active").length > 0 ? "var(--color-ln-gold)" : "#e5e7eb" }}
+              onClick={() => { if (activeOrgs.length > 0) setView("pipeline"); }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--color-ln-navy)" }}>
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--color-ln-navy)]">Opportunity Pipeline</div>
+                  <div className="text-xs text-gray-500">
+                    {activeOrgs.filter((o) => o.status === "active").length > 0
+                      ? `${activeOrgs.filter((o) => o.status === "active").length} active engagements`
+                      : "Kanban pipeline board"}
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Track organisations across Identified → Researching → Targeting → Active → Paused stages.</p>
+              {activeOrgs.length > 0 ? (
+                <div className="flex items-center gap-1 text-[var(--color-ln-gold)] text-xs font-medium">
+                  <ArrowRight className="w-3.5 h-3.5" /> Open pipeline board
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-gray-400 text-xs">
+                  <Lock className="w-3.5 h-3.5" /> Map your universe first
                 </div>
               )}
             </div>
@@ -832,6 +885,205 @@ export default function CareerAccess() {
     );
   }
 
+  // ── Opportunity Pipeline Kanban view ─────────────────────────────────────
+  if (view === "pipeline") {
+    const pipelineOrgs = (universe ?? []).filter((o) => o.status !== "removed");
+    const KANBAN_COLS = [
+      { id: "identified", label: "Identified", color: "#60a5fa", bg: "oklch(from #60a5fa l c h / 0.07)", border: "oklch(from #60a5fa l c h / 0.2)" },
+      { id: "researching", label: "Researching", color: "#a78bfa", bg: "oklch(from #a78bfa l c h / 0.07)", border: "oklch(from #a78bfa l c h / 0.2)" },
+      { id: "targeting", label: "Targeting", color: "#f59e0b", bg: "oklch(from #f59e0b l c h / 0.07)", border: "oklch(from #f59e0b l c h / 0.2)" },
+      { id: "active", label: "Active", color: "#34d399", bg: "oklch(from #34d399 l c h / 0.07)", border: "oklch(from #34d399 l c h / 0.2)" },
+      { id: "paused", label: "Paused", color: "#94a3b8", bg: "oklch(from #94a3b8 l c h / 0.07)", border: "oklch(from #94a3b8 l c h / 0.2)" },
+    ];
+    const NEXT_STATUS: Record<string, string> = {
+      identified: "researching",
+      researching: "targeting",
+      targeting: "active",
+      active: "paused",
+      paused: "identified",
+    };
+    const PREV_STATUS: Record<string, string> = {
+      researching: "identified",
+      targeting: "researching",
+      active: "targeting",
+      paused: "active",
+      identified: "paused",
+    };
+
+    return (
+      <PlatformLayout>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <button onClick={() => setView("home")} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
+
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="flex items-center gap-2 text-[var(--color-ln-gold)] text-sm font-semibold uppercase tracking-wider mb-1">
+                <Target className="w-4 h-4" /> Opportunity Pipeline
+              </div>
+              <h1 className="text-2xl font-bold text-[var(--color-ln-navy)]">
+                {pipelineOrgs.length > 0 ? `${pipelineOrgs.length} Organisations in Pipeline` : "Your Opportunity Pipeline"}
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setView("universe")}
+                className="text-sm font-medium px-3 py-1.5 rounded-lg border"
+                style={{ borderColor: "oklch(85% 0.01 248.6)", color: "oklch(45% 0.02 248.6)" }}
+              >
+                List View
+              </button>
+            </div>
+          </div>
+
+          {pipelineOrgs.length === 0 ? (
+            <div className="text-center py-16">
+              <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 mb-2">No organisations in your pipeline yet.</p>
+              <p className="text-sm text-gray-400 mb-6">Map your opportunity universe first, then track them here.</p>
+              <Button onClick={() => setView("universe")} style={{ background: "var(--color-ln-navy)", color: "white" }}>
+                <Globe className="w-4 h-4 mr-2" /> Map My Universe
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto pb-4">
+              <div className="flex gap-4" style={{ minWidth: `${KANBAN_COLS.length * 280}px` }}>
+                {KANBAN_COLS.map((col) => {
+                  const colOrgs = pipelineOrgs.filter((o) => o.status === col.id);
+                  return (
+                    <div key={col.id} className="flex-1 min-w-[260px] rounded-2xl p-4" style={{ background: col.bg, border: `1.5px solid ${col.border}` }}>
+                      {/* Column header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ background: col.color }} />
+                          <span className="text-xs font-bold uppercase tracking-widest" style={{ color: col.color }}>{col.label}</span>
+                        </div>
+                        <span
+                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                          style={{ background: `oklch(from ${col.color} l c h / 0.15)`, color: col.color }}
+                        >
+                          {colOrgs.length}
+                        </span>
+                      </div>
+
+                      {/* Cards */}
+                      <div className="space-y-3">
+                        {colOrgs.map((org) => {
+                          const isExpanded = pipelineExpandedId === org.id;
+                          return (
+                            <div
+                              key={org.id}
+                              className="rounded-xl bg-white border p-3.5 cursor-pointer transition-shadow hover:shadow-sm"
+                              style={{ borderColor: "oklch(90% 0.01 248.6)" }}
+                              onClick={() => {
+                                setPipelineExpandedId(isExpanded ? null : org.id);
+                                if (!pipelineNotes[org.id]) {
+                                  setPipelineNotes((prev) => ({ ...prev, [org.id]: org.userNotes ?? "" }));
+                                }
+                              }}
+                            >
+                              {/* Card header */}
+                              <div className="flex items-start justify-between gap-2 mb-1.5">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold truncate" style={{ color: "var(--color-ln-navy)" }}>{org.companyName}</p>
+                                  {org.potentialRole && (
+                                    <p className="text-[10px] truncate" style={{ color: "var(--color-ln-gold)" }}>{org.potentialRole}</p>
+                                  )}
+                                </div>
+                                {org.compositeScore && (
+                                  <span className="text-xs font-bold flex-shrink-0" style={{ color: col.color }}>{org.compositeScore}</span>
+                                )}
+                              </div>
+
+                              {/* Type badge */}
+                              <span className="text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded" style={{ background: `oklch(from ${col.color} l c h / 0.1)`, color: col.color }}>
+                                {org.companyType}
+                              </span>
+
+                              {/* Expanded content */}
+                              {isExpanded && (
+                                <div className="mt-3 space-y-2" onClick={(e) => e.stopPropagation()}>
+                                  {org.whyThisCompany && (
+                                    <p className="text-xs leading-relaxed" style={{ color: "oklch(40% 0.02 248.6)" }}>{org.whyThisCompany}</p>
+                                  )}
+                                  {org.hiddenOpportunitySignal && (
+                                    <div className="flex items-start gap-1.5 p-2 rounded-lg" style={{ background: "oklch(98% 0.015 80)" }}>
+                                      <Zap className="w-3 h-3 text-amber-600 shrink-0 mt-0.5" />
+                                      <p className="text-[10px] text-amber-800">{org.hiddenOpportunitySignal}</p>
+                                    </div>
+                                  )}
+                                  <div>
+                                    <label className="text-[9px] font-semibold uppercase tracking-widest block mb-1" style={{ color: "oklch(55% 0.02 248.6)" }}>Notes</label>
+                                    <textarea
+                                      value={pipelineNotes[org.id] ?? ""}
+                                      onChange={(e) => setPipelineNotes((prev) => ({ ...prev, [org.id]: e.target.value }))}
+                                      placeholder="Add notes about this opportunity…"
+                                      className="w-full text-xs border rounded-lg px-2.5 py-2 resize-none min-h-[60px]"
+                                      style={{ borderColor: "oklch(88% 0.01 248.6)" }}
+                                    />
+                                    <button
+                                      onClick={() => handleKanbanNotesSave(org.id)}
+                                      className="mt-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-lg"
+                                      style={{ background: "var(--color-ln-navy)", color: "white" }}
+                                    >
+                                      Save Notes
+                                    </button>
+                                  </div>
+                                  {/* Move buttons */}
+                                  <div className="flex gap-1.5 pt-1">
+                                    {PREV_STATUS[col.id] && (
+                                      <button
+                                        onClick={() => handleKanbanMove(org.id, PREV_STATUS[col.id])}
+                                        className="flex-1 text-[9px] font-semibold py-1.5 rounded-lg border"
+                                        style={{ borderColor: "oklch(85% 0.01 248.6)", color: "oklch(45% 0.02 248.6)" }}
+                                      >
+                                        ← {PREV_STATUS[col.id].charAt(0).toUpperCase() + PREV_STATUS[col.id].slice(1)}
+                                      </button>
+                                    )}
+                                    {NEXT_STATUS[col.id] && (
+                                      <button
+                                        onClick={() => handleKanbanMove(org.id, NEXT_STATUS[col.id])}
+                                        className="flex-1 text-[9px] font-semibold py-1.5 rounded-lg"
+                                        style={{ background: col.color, color: "var(--color-ln-navy)" }}
+                                      >
+                                        {NEXT_STATUS[col.id].charAt(0).toUpperCase() + NEXT_STATUS[col.id].slice(1)} →
+                                      </button>
+                                    )}
+                                  </div>
+                                  <button
+                                    onClick={() => handleKanbanMove(org.id, "removed")}
+                                    className="w-full text-[9px] font-semibold py-1 rounded-lg"
+                                    style={{ color: "#f87171", background: "oklch(from #f87171 l c h / 0.08)" }}
+                                  >
+                                    Remove from Pipeline
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {colOrgs.length === 0 && (
+                          <div
+                            className="rounded-xl border-2 border-dashed p-4 text-center"
+                            style={{ borderColor: `oklch(from ${col.color} l c h / 0.3)` }}
+                          >
+                            <p className="text-[10px]" style={{ color: `oklch(from ${col.color} l c h / 0.6)` }}>No orgs here yet</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </PlatformLayout>
+    );
+  }
+
   // ── Opportunity Universe view ──────────────────────────────────────────────
 
   const categoryTypes = ["Dream", "Likely", "Emerging", "GCC", "PE", "FamilyBusiness", "Consulting", "Board", "Advisory", "Fractional", "OperatingPartner"];
@@ -984,3 +1236,4 @@ export default function CareerAccess() {
     </PlatformLayout>
   );
 }
+

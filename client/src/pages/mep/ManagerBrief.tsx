@@ -1,16 +1,58 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, RefreshCw, Loader2, CheckCircle2, Target, Zap, MessageSquare } from "lucide-react";
+import {
+  Lightbulb, RefreshCw, Loader2, CheckCircle2, Target,
+  Zap, MessageSquare, Users, BookOpen, AlertTriangle, Star,
+} from "lucide-react";
 import { toast } from "sonner";
+
+// ── Type matching the server response ─────────────────────────────────────────
+interface DailyBrief {
+  greeting?: string;
+  dayTheme?: string;
+  priorityFocus?: string;
+  teamPulseItems?: Array<{ type: string; person: string; note: string }>;
+  managementChallenge?: string;
+  reflectionQuestion?: string;
+  learningRecommendation?: { topic: string; why: string; action: string };
+  commitmentReminder?: string | null;
+  // legacy field names (fallback)
+  openingMessage?: string;
+  focusAreas?: Array<{ area: string; action?: string }>;
+  managementReminders?: string[];
+  energyAndMindset?: string;
+  coachingQuestion?: string;
+  closingAffirmation?: string;
+}
+
+const PULSE_COLORS: Record<string, string> = {
+  attention: "#f87171",
+  risk: "#f59e0b",
+  recognition: "#34d399",
+  checkin: "#60a5fa",
+};
+const PULSE_LABELS: Record<string, string> = {
+  attention: "Needs Attention",
+  risk: "Risk Signal",
+  recognition: "Recognition Due",
+  checkin: "Check-in",
+};
 
 export default function ManagerBrief() {
   const [generating, setGenerating] = useState(false);
-  const [briefData, setBriefData] = useState<any>(null);
+  const [briefData, setBriefData] = useState<DailyBrief | null>(null);
+
+  // Also try to load today's snapshot on mount
+  const { data: snapshot } = trpc.mep.getTodayBriefSnapshot.useQuery();
+
+  useEffect(() => {
+    if (snapshot && !briefData) setBriefData(snapshot as DailyBrief);
+  }, [snapshot]);
 
   const generateMutation = trpc.mep.getDailyBrief.useMutation({
-    onSuccess: (data) => {
-      setBriefData(data);
+    onSuccess: (data: any) => {
+      setBriefData(data as DailyBrief);
       setGenerating(false);
       toast.success("Your daily brief is ready.");
     },
@@ -20,13 +62,31 @@ export default function ManagerBrief() {
     },
   });
 
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
     setGenerating(true);
-    await generateMutation.mutateAsync();
+    generateMutation.mutate();
   };
 
-  const b = briefData?.brief as any;
-  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+  // Normalise: support both old and new field names
+  const b: DailyBrief | null = briefData ?? (snapshot as DailyBrief | null) ?? null;
+
+  // Derive display values from either schema
+  const greeting = b?.greeting ?? b?.openingMessage;
+  const priorityFocus = b?.priorityFocus;
+  const dayTheme = b?.dayTheme;
+  const focusAreas = b?.focusAreas;
+  const teamPulseItems = b?.teamPulseItems;
+  const managementChallenge = b?.managementChallenge;
+  const managementReminders = b?.managementReminders;
+  const reflectionQuestion = b?.reflectionQuestion ?? b?.coachingQuestion;
+  const energyAndMindset = b?.energyAndMindset;
+  const learningRec = b?.learningRecommendation;
+  const commitmentReminder = b?.commitmentReminder;
+  const closingAffirmation = b?.closingAffirmation;
+
+  const hasContent = !!(greeting || priorityFocus || dayTheme || focusAreas?.length || teamPulseItems?.length);
+
+  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
 
   return (
     <div className="min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
@@ -56,7 +116,7 @@ export default function ManagerBrief() {
         </div>
 
         {/* No brief yet */}
-        {!b && (
+        {!hasContent && (
           <div
             className="rounded-2xl px-6 py-10 text-center"
             style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
@@ -79,23 +139,39 @@ export default function ManagerBrief() {
         )}
 
         {/* Brief content */}
-        {b && (
+        {hasContent && (
           <>
-            {/* Opening */}
-            {b.openingMessage && (
-              <div
-                className="rounded-2xl px-5 py-4"
-                style={{ background: "var(--color-ln-navy)" }}
-              >
-                <p className="text-sm font-medium text-white leading-relaxed">{b.openingMessage}</p>
+            {/* Greeting */}
+            {greeting && (
+              <div className="rounded-2xl px-5 py-4" style={{ background: "var(--color-ln-navy)" }}>
+                <p className="text-sm font-medium text-white leading-relaxed">{greeting}</p>
               </div>
             )}
 
-            {/* Focus areas */}
-            {b.focusAreas && b.focusAreas.length > 0 && (
-              <BriefSection title="Today's Focus Areas" icon={Target} color="#a78bfa">
+            {/* Day theme + priority focus */}
+            {(dayTheme || priorityFocus) && (
+              <BriefSection title="Today's Focus" icon={Target} color="#a78bfa">
+                {dayTheme && (
+                  <div className="mb-3">
+                    <span
+                      className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                      style={{ background: "oklch(from #a78bfa l c h / 0.1)", color: "#a78bfa" }}
+                    >
+                      {dayTheme}
+                    </span>
+                  </div>
+                )}
+                {priorityFocus && (
+                  <p className="text-sm leading-relaxed" style={{ color: "oklch(35% 0.02 248.6)" }}>{priorityFocus}</p>
+                )}
+              </BriefSection>
+            )}
+
+            {/* Focus areas (legacy) */}
+            {focusAreas && focusAreas.length > 0 && (
+              <BriefSection title="Focus Areas" icon={Target} color="#a78bfa">
                 <div className="space-y-3">
-                  {b.focusAreas.map((f: any, i: number) => (
+                  {focusAreas.map((f, i) => (
                     <div key={i} className="flex gap-3">
                       <span
                         className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5"
@@ -113,11 +189,50 @@ export default function ManagerBrief() {
               </BriefSection>
             )}
 
-            {/* Management reminders */}
-            {b.managementReminders && b.managementReminders.length > 0 && (
+            {/* Team pulse */}
+            {teamPulseItems && teamPulseItems.length > 0 && (
+              <BriefSection title="Team Pulse" icon={Users} color="#60a5fa">
+                <div className="space-y-3">
+                  {teamPulseItems.map((item, i) => {
+                    const color = PULSE_COLORS[item.type] ?? "#60a5fa";
+                    const label = PULSE_LABELS[item.type] ?? item.type;
+                    return (
+                      <div key={i} className="flex gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
+                          style={{ background: color }}
+                        />
+                        <div>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>{item.person}</p>
+                            <span
+                              className="text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded-full"
+                              style={{ background: `oklch(from ${color} l c h / 0.1)`, color }}
+                            >
+                              {label}
+                            </span>
+                          </div>
+                          <p className="text-xs leading-relaxed" style={{ color: "oklch(45% 0.02 248.6)" }}>{item.note}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </BriefSection>
+            )}
+
+            {/* Management challenge */}
+            {managementChallenge && (
+              <BriefSection title="Today's Management Challenge" icon={Zap} color="#fb923c">
+                <p className="text-sm leading-relaxed" style={{ color: "oklch(35% 0.02 248.6)" }}>{managementChallenge}</p>
+              </BriefSection>
+            )}
+
+            {/* Management reminders (legacy) */}
+            {managementReminders && managementReminders.length > 0 && (
               <BriefSection title="Management Reminders" icon={CheckCircle2} color="#34d399">
                 <ul className="space-y-2">
-                  {b.managementReminders.map((r: string, i: number) => (
+                  {managementReminders.map((r, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "oklch(35% 0.02 248.6)" }}>
                       <CheckCircle2 size={13} className="flex-shrink-0 mt-0.5" style={{ color: "#34d399" }} />
                       {r}
@@ -127,15 +242,41 @@ export default function ManagerBrief() {
               </BriefSection>
             )}
 
-            {/* Energy & mindset */}
-            {b.energyAndMindset && (
+            {/* Energy & mindset (legacy) */}
+            {energyAndMindset && (
               <BriefSection title="Energy & Mindset" icon={Zap} color="#fb923c">
-                <p className="text-sm leading-relaxed" style={{ color: "oklch(35% 0.02 248.6)" }}>{b.energyAndMindset}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "oklch(35% 0.02 248.6)" }}>{energyAndMindset}</p>
               </BriefSection>
             )}
 
-            {/* Coaching question */}
-            {b.coachingQuestion && (
+            {/* Learning recommendation */}
+            {learningRec && (
+              <BriefSection title="Learning Recommendation" icon={BookOpen} color="#34d399">
+                <p className="text-sm font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>{learningRec.topic}</p>
+                <p className="text-xs mb-2" style={{ color: "oklch(50% 0.02 248.6)" }}>{learningRec.why}</p>
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 size={12} className="flex-shrink-0 mt-0.5" style={{ color: "#34d399" }} />
+                  <p className="text-xs" style={{ color: "oklch(35% 0.02 248.6)" }}>{learningRec.action}</p>
+                </div>
+              </BriefSection>
+            )}
+
+            {/* Commitment reminder */}
+            {commitmentReminder && (
+              <div
+                className="rounded-2xl px-5 py-4 flex items-start gap-3"
+                style={{ background: "oklch(from #f59e0b l c h / 0.06)", border: "1px solid oklch(from #f59e0b l c h / 0.2)" }}
+              >
+                <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#f59e0b" }}>Commitment Reminder</p>
+                  <p className="text-sm" style={{ color: "oklch(35% 0.02 248.6)" }}>{commitmentReminder}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Reflection question */}
+            {reflectionQuestion && (
               <div
                 className="rounded-2xl px-5 py-4"
                 style={{ background: "oklch(from #a78bfa l c h / 0.06)", border: "1px solid oklch(from #a78bfa l c h / 0.2)" }}
@@ -146,14 +287,14 @@ export default function ManagerBrief() {
                     Reflect On This Today
                   </p>
                 </div>
-                <p className="text-sm italic" style={{ color: "oklch(30% 0.02 248.6)" }}>"{b.coachingQuestion}"</p>
+                <p className="text-sm italic" style={{ color: "oklch(30% 0.02 248.6)" }}>"{reflectionQuestion}"</p>
               </div>
             )}
 
             {/* Closing */}
-            {b.closingAffirmation && (
+            {closingAffirmation && (
               <p className="text-xs text-center py-2" style={{ color: "oklch(55% 0.02 248.6)" }}>
-                {b.closingAffirmation}
+                {closingAffirmation}
               </p>
             )}
           </>

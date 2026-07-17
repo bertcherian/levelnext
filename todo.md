@@ -666,3 +666,9 @@
 - [x] Update server generatePlaybook with six tailored LLM system prompts (one per type)
 - [x] Update ManagerPlaybook UI: playbook type selector cards, structured output sections per type
 - [x] Wire Past Playbooks to show playbook type label and icon
+
+## Bug Fixes & Features (Jul 17 — Batch 2)
+- [x] Fix Daily Debrief: debrief generates successfully but does not display (query not refetching after mutation)
+- [x] Playbook Reflection flow: post-play outcome form (what happened, what worked, outcome: win/partial/loss), LLM reflection insight, show reflection on session view
+- [x] MEP Home: Recent Play widget showing last playbook type, situation, and quick "New Play" CTA
+- [x] Opportunity Pipeline: Kanban board view (Identified → Researching → Targeting → Active → Paused) with click-to-expand cards, move buttons, and notes
