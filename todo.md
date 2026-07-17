@@ -612,3 +612,7 @@
 ## MEP Landing Page (Jul 17)
 - [x] Create ManagerEffectivenessLanding.tsx at /manager-effectiveness route
 - [x] Register route in App.tsx
+
+## MEP Executive Brief PDF (Jul 17)
+- [x] Generate A4 MEP Executive Brief PDF (4 pages, LevelNext logo, ME Score visual, AI coaching section)
+- [x] Upload to webdev static assets and link on /manager-effectiveness landing page

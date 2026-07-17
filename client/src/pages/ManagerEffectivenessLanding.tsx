@@ -435,6 +435,11 @@ export default function ManagerEffectivenessLanding() {
                 Book a Discovery Call
               </Button>
             </a>
+            <a href="/manus-storage/LevelNext_MEP_ExecutiveBrief_a543f864.pdf" target="_blank" rel="noopener noreferrer" download="LevelNext_MEP_ExecutiveBrief.pdf">
+              <Button variant="outline" size="lg" className="h-13 px-8 text-base font-semibold rounded-xl w-full sm:w-auto border-white/20 text-white/80 hover:text-white hover:bg-white/8">
+                Download Executive Brief
+              </Button>
+            </a>
           </div>
           <p className="text-xs text-white/35 mt-6">Free to start · No credit card · First diagnostic in 10 minutes</p>
         </div>
