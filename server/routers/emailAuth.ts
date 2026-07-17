@@ -12,7 +12,7 @@
 
 import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { magicLinkTokens, platformInvites, userProductEnrollments, users } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
@@ -313,8 +313,31 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Redirect to app — new users go to onboarding, returning users go to home
-      const postLoginPath = isNewUser ? "/onboard" : "/home";
+      // Determine the correct post-login destination:
+      // - New users → /onboard
+      // - Returning users → route to their active product home
+      let postLoginPath = "/home"; // default: Leadership Intelligence
+      if (!isNewUser) {
+        // Look up the user's most recently active enrollment to pick the right home
+        const [activeEnrollment] = await db
+          .select({ productId: userProductEnrollments.productId })
+          .from(userProductEnrollments)
+          .where(
+            and(
+              eq(userProductEnrollments.userId, existingUser.id),
+              eq(userProductEnrollments.isActive, true)
+            )
+          )
+          .orderBy(desc(userProductEnrollments.lastActiveAt))
+          .limit(1);
+        if (activeEnrollment?.productId === "manager_effectiveness") {
+          postLoginPath = "/manager";
+        } else if (activeEnrollment?.productId === "career_intelligence") {
+          postLoginPath = "/career";
+        }
+      } else {
+        postLoginPath = "/onboard";
+      }
       res.redirect(302, `${origin}${postLoginPath}`);
     } catch (error) {
       console.error("[MagicLink] Verify failed:", error);

@@ -94,11 +94,17 @@ export default function Landing() {
     onError: (err) => setLeadError(err.message),
   });
 
+  const { data: activeProduct } = trpc.products.getActiveProduct.useQuery(undefined, {
+    enabled: !loading && isAuthenticated,
+  });
   useEffect(() => {
-    if (!loading && isAuthenticated) {
-      navigate("/home");
+    if (!loading && isAuthenticated && activeProduct !== undefined) {
+      const pid = activeProduct?.productId;
+      if (pid === "manager_effectiveness") navigate("/manager");
+      else if (pid === "career_intelligence") navigate("/career");
+      else navigate("/home");
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, activeProduct, navigate]);
 
   function handlePlay() {
     setPlaying(true);

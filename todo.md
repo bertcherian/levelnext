@@ -619,3 +619,9 @@
 - [x] Update MEP landing page (/manager-effectiveness): all 3 CTA buttons now link to /signup?platform=mep
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Post-Login Redirect Fix (Jul 17)
+- [x] Fix magic link verify endpoint: after sign-in, redirect to correct platform home based on active product enrollment (MEP → /manager, CI → /career, LI → /home) instead of always /home
+- [x] Fix Landing.tsx: authenticated users hitting / are now routed to their active product home (not always /home)
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint
