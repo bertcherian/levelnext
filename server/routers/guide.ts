@@ -311,7 +311,7 @@ export const guideRouter = router({
       // Call the LLM — prepend system prompt as a system message
       const systemMsg = { role: "system" as const, content: systemPromptContent };
       const llmResult = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [systemMsg, ...llmMessages],
         maxTokens: 800,
       });
@@ -442,7 +442,7 @@ Return ONLY a JSON array of 4 strings. No explanation, no markdown, just the arr
 ["Question 1?", "Question 2?", "Question 3?", "Question 4?"]`;
 
       const llmResult = await invokeLLM({
-        model: 'gpt-4o-mini',
+        model: 'gpt-5-mini',
         messages: [{ role: 'user', content: prompt }],
         maxTokens: 400,
       });

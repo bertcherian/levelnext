@@ -52,6 +52,7 @@ import ManagerBrief from "@/pages/mep/ManagerBrief";
 import ManagerPractice from "@/pages/mep/ManagerPractice";
 import ManagerCommitments from "@/pages/mep/ManagerCommitments";
 import TeamIntelligence from "@/pages/mep/TeamIntelligence";
+import MEPLayout from "@/components/MEPLayout";
 import CareerLanding from "@/pages/CareerLanding";
 import JoinPage from "@/pages/JoinPage";
 import JoinProduct from "@/pages/JoinProduct";
@@ -139,14 +140,14 @@ function Router() {
       <Route path="/career/access-paths" component={AccessPaths} />
       <Route path="/career/brand" component={OutreachEngine} />
       {/* Manager Effectiveness Platform */}
-      <Route path="/manager" component={ManagerHome} />
-      <Route path="/manager/diagnostics" component={ManagerDiagnostics} />
-      <Route path="/manager/guide" component={ManagerGuide} />
-      <Route path="/manager/playbook" component={ManagerPlaybook} />
-      <Route path="/manager/brief" component={ManagerBrief} />
-      <Route path="/manager/practice" component={ManagerPractice} />
-      <Route path="/manager/commitments" component={ManagerCommitments} />
-      <Route path="/manager/team" component={TeamIntelligence} />
+      <Route path="/manager">{() => <MEPLayout><ManagerHome /></MEPLayout>}</Route>
+      <Route path="/manager/diagnostics">{() => <MEPLayout><ManagerDiagnostics /></MEPLayout>}</Route>
+      <Route path="/manager/guide">{() => <MEPLayout><ManagerGuide /></MEPLayout>}</Route>
+      <Route path="/manager/playbook">{() => <MEPLayout><ManagerPlaybook /></MEPLayout>}</Route>
+      <Route path="/manager/brief">{() => <MEPLayout><ManagerBrief /></MEPLayout>}</Route>
+      <Route path="/manager/practice">{() => <MEPLayout><ManagerPractice /></MEPLayout>}</Route>
+      <Route path="/manager/commitments">{() => <MEPLayout><ManagerCommitments /></MEPLayout>}</Route>
+      <Route path="/manager/team">{() => <MEPLayout><TeamIntelligence /></MEPLayout>}</Route>
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/progress" component={Progress} />

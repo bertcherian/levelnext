@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -91,7 +92,18 @@ export default function ManagerHome() {
   const { data: playbookSessions } = trpc.mep.listPlaybookSessions.useQuery();
   const { data: commitments } = trpc.mep.listCommitments.useQuery();
   const { data: practiceSessions } = trpc.mep.listPracticeSessions.useQuery();
-  const { data: todayBrief } = trpc.mep.getTodayBriefSnapshot.useQuery();
+  const { data: todayBrief, refetch: refetchBrief } = trpc.mep.getTodayBriefSnapshot.useQuery();
+  const generateBriefMutation = trpc.mep.getDailyBrief.useMutation({
+    onSuccess: () => { refetchBrief(); },
+  });
+
+  // Auto-generate the daily brief silently on first visit if not yet generated today
+  useEffect(() => {
+    if (todayBrief === null) {
+      generateBriefMutation.mutate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayBrief]);
 
   const stats = {
     diagnosticsCompleted: myResults?.length ?? 0,

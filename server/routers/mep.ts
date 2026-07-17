@@ -207,7 +207,7 @@ Return a JSON object with these exact keys:
 `.trim();
 
         const result = await invokeLLM({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",
           messages: [{ role: "user" as const, content: analysisPrompt }],
           maxTokens: 1200,
         });
@@ -348,7 +348,7 @@ Return a JSON object with these exact keys:
       }));
 
       const result = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [systemMsg, ...llmMessages],
         maxTokens: 600,
       });
@@ -383,7 +383,7 @@ Return a JSON object with these exact keys:
       try {
         const systemMsg = { role: "system" as const, content: MANAGER_PLAYBOOK_SYSTEM_PROMPT(context) };
         const result = await invokeLLM({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",
           messages: [systemMsg, { role: "user" as const, content: `My situation: ${input.situation}` }],
           maxTokens: 1500,
         });
@@ -477,7 +477,7 @@ Return a JSON object with these exact keys:
     let brief: Record<string, any> = {};
     try {
       const result = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{
           role: "user" as const,
           content: `
@@ -579,7 +579,7 @@ Return a JSON object with these exact keys:
       let opening = "Hi, you wanted to speak with me?";
       try {
         const result = await invokeLLM({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",
           messages: [{
             role: "user" as const,
             content: `
@@ -649,7 +649,7 @@ Return just the dialogue, no labels or quotes.
       let reply = "I see... let me think about that.";
       try {
         const result = await invokeLLM({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",
           messages: [systemMsg, ...conversationHistory],
           maxTokens: 150,
         });
@@ -687,7 +687,7 @@ Return just the dialogue, no labels or quotes.
       let feedback: Record<string, any> = { overallRating: 3, headline: "Practice session completed.", strengths: [], improvements: [], keyMoment: "", nextPractice: "", coachingInsight: "" };
       try {
         const result = await invokeLLM({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",
           messages: [{
             role: "user" as const,
             content: `
@@ -790,7 +790,7 @@ Return coaching feedback as JSON:
       let aiCoaching = "Keep going — every attempt builds the habit.";
       try {
         const result = await invokeLLM({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",
           messages: [{
             role: "user" as const,
             content: `
@@ -890,7 +890,7 @@ Provide a 2-3 sentence coaching response that acknowledges their effort, reinfor
       const contextLines = await buildManagerContext(ctx.user.id, db);
 
       const result = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{
           role: "user" as const,
           content: `You are an expert management coach. A manager wants coaching insights for one of their team members.\n\nManager context:\n${contextLines}\n\nTeam member: ${member.name}${member.role ? ` (${member.role})` : ""}\n\nGenerate a structured coaching insight. Return ONLY valid JSON:\n{\n  "summary": "2-3 sentence overview of how to manage this person effectively",\n  "strengths": ["strength 1", "strength 2", "strength 3"],\n  "watchOuts": ["risk 1", "risk 2"],\n  "recommendedActions": ["action 1", "action 2", "action 3"]\n}\nBe specific, practical, and grounded in management best practice.`,

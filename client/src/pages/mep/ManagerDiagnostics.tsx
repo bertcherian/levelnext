@@ -6,6 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, ChevronRight, BarChart3, Clock, Lock } from "lucide-react";
 import { toast } from "sonner";
 
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_013311b9.png";
+
 const SCORE_LABELS: Record<number, string> = {
   1: "Strongly Disagree", 2: "Disagree", 3: "Somewhat Disagree",
   4: "Neutral", 5: "Somewhat Agree", 6: "Agree", 7: "Strongly Agree",
@@ -22,6 +24,7 @@ export default function ManagerDiagnostics() {
   const [submitting, setSubmitting] = useState(false);
   const [latestResult, setLatestResult] = useState<any>(null);
   const [latestDiagCode, setLatestDiagCode] = useState<string | null>(null);
+  const [showReflection, setShowReflection] = useState(false);
 
   const { data: diagnostics } = trpc.mep.getDiagnostics.useQuery();
   const { data: myResults, refetch: refetchResults } = trpc.mep.getMyResults.useQuery();
@@ -322,6 +325,7 @@ export default function ManagerDiagnostics() {
             className="rounded-2xl px-6 py-6 text-center"
             style={{ background: "var(--color-ln-navy)" }}
           >
+            <img src={LOGO_URL} alt="LevelNext" style={{ height: "40px", width: "auto", objectFit: "contain", margin: "0 auto 12px" }} />
             <CheckCircle2 size={32} className="mx-auto mb-3" style={{ color: "#34d399" }} />
             <h1 className="text-xl font-bold text-white mb-1">Diagnostic Complete</h1>
             <p className="text-sm mb-4" style={{ color: "oklch(70% 0.02 248.6)" }}>
@@ -412,11 +416,56 @@ export default function ManagerDiagnostics() {
             <Button
               className="flex-1 font-semibold"
               style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
-              onClick={() => navigate("/manager")}
+              onClick={() => {
+                if (latestResult?.llmAnalysis?.coachQuestion) {
+                  setShowReflection(true);
+                } else {
+                  navigate("/manager");
+                }
+              }}
             >
               Back to Home
             </Button>
           </div>
+
+          {/* Reflection modal overlay */}
+          {showReflection && latestResult?.llmAnalysis?.coachQuestion && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center px-4"
+              style={{ background: "oklch(0% 0 0 / 0.6)" }}
+            >
+              <div
+                className="w-full max-w-md rounded-2xl px-8 py-8 text-center"
+                style={{ background: "var(--color-ln-navy)", border: "1px solid oklch(from #34d399 l c h / 0.3)" }}
+              >
+                <img src={LOGO_URL} alt="LevelNext" style={{ height: "36px", width: "auto", objectFit: "contain", margin: "0 auto 16px" }} />
+                <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#34d399" }}>Reflection Moment</p>
+                <p className="text-lg font-semibold text-white leading-relaxed mb-2">
+                  Before you go, sit with this question:
+                </p>
+                <p className="text-base italic leading-relaxed mb-6" style={{ color: "oklch(80% 0.02 248.6)" }}>
+                  "{latestResult.llmAnalysis.coachQuestion}"
+                </p>
+                <p className="text-xs mb-6" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                  Take 60 seconds to reflect before moving on.
+                </p>
+                <Button
+                  className="w-full font-semibold"
+                  style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
+                  onClick={() => { setShowReflection(false); navigate("/manager"); }}
+                >
+                  I've reflected — take me home
+                </Button>
+                <button
+                  className="mt-3 text-xs"
+                  style={{ color: "oklch(50% 0.02 248.6)" }}
+                  onClick={() => { setShowReflection(false); navigate("/manager"); }}
+                >
+                  Skip
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

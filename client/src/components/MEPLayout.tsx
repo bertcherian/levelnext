@@ -1,0 +1,161 @@
+/**
+ * MEP Persistent Sidebar Layout
+ * Wraps all Manager Effectiveness Platform pages with a consistent
+ * left sidebar navigation showing all 6 modules + home.
+ */
+import { Link, useLocation } from "wouter";
+import {
+  LayoutGrid,
+  MessageSquare,
+  BookOpen,
+  Lightbulb,
+  Zap,
+  Activity,
+  Home,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { useState } from "react";
+
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_013311b9.png";
+
+const NAV_ITEMS = [
+  { href: "/manager", label: "Home", icon: Home, exact: true },
+  { href: "/manager/diagnostics", label: "Diagnostics", icon: LayoutGrid },
+  { href: "/manager/guide", label: "Manager Guide", icon: MessageSquare },
+  { href: "/manager/playbook", label: "Playbook", icon: BookOpen },
+  { href: "/manager/brief", label: "Daily Brief", icon: Lightbulb },
+  { href: "/manager/practice", label: "Practice Partner", icon: Zap },
+  { href: "/manager/commitments", label: "Commitments", icon: Activity },
+  { href: "/manager/team", label: "Team Intelligence", icon: Users },
+];
+
+interface MEPLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function MEPLayout({ children }: MEPLayoutProps) {
+  const [location] = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const isActive = (item: typeof NAV_ITEMS[0]) => {
+    if (item.exact) return location === item.href;
+    return location.startsWith(item.href);
+  };
+
+  return (
+    <div className="flex min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
+      {/* Sidebar */}
+      <aside
+        className="flex-shrink-0 flex flex-col transition-all duration-200"
+        style={{
+          width: collapsed ? "64px" : "220px",
+          background: "var(--color-ln-navy)",
+          borderRight: "1px solid oklch(from white 15% 0 0 / 0.08)",
+          position: "sticky",
+          top: 0,
+          height: "100vh",
+          overflowY: "auto",
+          overflowX: "hidden",
+        }}
+      >
+        {/* Logo */}
+        <div
+          className="flex items-center px-4 py-5 flex-shrink-0"
+          style={{ borderBottom: "1px solid oklch(from white 15% 0 0 / 0.08)" }}
+        >
+          {!collapsed && (
+            <img
+              src={LOGO_URL}
+              alt="LevelNext"
+              style={{ height: "32px", width: "auto", objectFit: "contain" }}
+            />
+          )}
+          {collapsed && (
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img
+                src={LOGO_URL}
+                alt="LevelNext"
+                style={{ height: "28px", width: "28px", objectFit: "contain" }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Platform label */}
+        {!collapsed && (
+          <div className="px-4 pt-4 pb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#34d399" }}>
+              Manager Effectiveness
+            </p>
+          </div>
+        )}
+
+        {/* Nav items */}
+        <nav className="flex-1 px-2 py-2 space-y-0.5">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item);
+            return (
+              <Link key={item.href} href={item.href}>
+                <div
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-150"
+                  style={{
+                    background: active
+                      ? "oklch(from #34d399 l c h / 0.15)"
+                      : "transparent",
+                    border: active
+                      ? "1px solid oklch(from #34d399 l c h / 0.3)"
+                      : "1px solid transparent",
+                  }}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <Icon
+                    size={16}
+                    className="flex-shrink-0"
+                    style={{ color: active ? "#34d399" : "oklch(65% 0.02 248.6)" }}
+                  />
+                  {!collapsed && (
+                    <span
+                      className="text-sm font-medium truncate"
+                      style={{ color: active ? "#ffffff" : "oklch(65% 0.02 248.6)" }}
+                    >
+                      {item.label}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Collapse toggle */}
+        <div
+          className="flex-shrink-0 px-3 py-4"
+          style={{ borderTop: "1px solid oklch(from white 15% 0 0 / 0.08)" }}
+        >
+          <button
+            onClick={() => setCollapsed((c) => !c)}
+            className="flex items-center justify-center w-full py-2 rounded-lg transition-colors duration-150"
+            style={{
+              background: "oklch(from white 15% 0 0 / 0.06)",
+              color: "oklch(55% 0.02 248.6)",
+            }}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            {!collapsed && (
+              <span className="text-xs ml-2">Collapse</span>
+            )}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="flex-1 min-w-0 overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  );
+}

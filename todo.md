@@ -595,3 +595,10 @@
 - [x] Fix Manager Guide chat: user message text invisible (dark text on navy bubble) — add explicit color: white to the p inside user message bubble
 - [x] Fix ManagerDiagnostics results screen: "Back to Diagnostics" button renamed to "Back to Home" and navigates to /manager
 - [x] Add Today's Focus card to MEP ManagerHome page — shows priorityFocus from getTodayBriefSnapshot (or default prompt if no brief yet), links to /manager/brief
+
+## MEP Feature Batch (Jul 17 #2)
+- [x] Fix playbook generation error: replaced invalid gpt-4o-mini model name with gpt-5-mini across all server routers
+- [x] Add persistent sidebar nav to MEP pages: created MEPLayout.tsx with collapsible sidebar, wrapped all /manager/* routes
+- [x] Add LevelNext logo to MEP diagnostic report page: logo shown in results header card and reflection modal
+- [x] Auto-generate Daily Brief on first login: ManagerHome silently calls getDailyBrief mutation when todayBrief is null
+- [x] Add post-diagnostic reflection: modal overlay with coachQuestion shown when user clicks Back to Home after completing a diagnostic

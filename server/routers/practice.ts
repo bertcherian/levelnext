@@ -543,7 +543,7 @@ export const practiceRouter = router({
         : COACH_SYSTEM_PROMPT(session.issueText, ctx.user.name ?? "Leader");
       const systemMsg = { role: "system" as const, content: coachPromptContent };
       const llmResult = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [systemMsg, ...llmMessages],
         maxTokens: 600,
       });
@@ -595,7 +595,7 @@ export const practiceRouter = router({
         ? CI_SCENARIO_GENERATOR_PROMPT(session.issueText, ctx.user.name ?? "Professional", input.coachingSummary)
         : SCENARIO_GENERATOR_PROMPT(session.issueText, ctx.user.name ?? "Leader", input.coachingSummary);
       const llmResult = await invokeLLM({
-        model: "gpt-4o",
+        model: "gpt-5",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 600,
       });
@@ -695,7 +695,7 @@ export const practiceRouter = router({
 
       const systemMsg = { role: "system" as const, content: AVATAR_SYSTEM_PROMPT(scenario, attempt.difficulty ?? "Medium") };
       const llmResult = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [systemMsg, ...llmMessages],
         maxTokens: 300,
       });
@@ -739,7 +739,7 @@ export const practiceRouter = router({
 
       const prompt = PAUSE_COACHING_PROMPT(transcript, scenario);
       const llmResult = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 200,
       });
@@ -780,7 +780,7 @@ export const practiceRouter = router({
 
       const prompt = FEEDBACK_PROMPT(transcript, scenario, attempt.attemptNumber);
       const llmResult = await invokeLLM({
-        model: "gpt-4o",
+        model: "gpt-5",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 1400,
       });
@@ -816,7 +816,7 @@ export const practiceRouter = router({
     .mutation(async ({ ctx, input }) => {
       const prompt = COMMITMENT_CREATION_PROMPT(input.situation, input.behaviour, ctx.user.name ?? "Leader");
       const llmResult = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 600,
       });
@@ -856,7 +856,7 @@ export const practiceRouter = router({
         input.developmentPriority
       );
       const llmResult = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 600,
       });
@@ -998,7 +998,7 @@ export const practiceRouter = router({
 
       const systemMsg = { role: "system" as const, content: AVATAR_SYSTEM_PROMPT(scenario, attempt.difficulty ?? "Medium") };
       const llmResult = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [systemMsg, ...llmMessages],
         maxTokens: 300,
       });
@@ -1042,7 +1042,7 @@ export const practiceRouter = router({
 
       const prompt = PAUSE_COACHING_PROMPT(transcript, scenario);
       const llmResult = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 200,
       });
@@ -1083,7 +1083,7 @@ export const practiceRouter = router({
 
       const prompt = FEEDBACK_PROMPT(transcript, scenario, attempt.attemptNumber);
       const llmResult = await invokeLLM({
-        model: "gpt-4o",
+        model: "gpt-5",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 1400,
       });

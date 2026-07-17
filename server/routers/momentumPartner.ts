@@ -251,7 +251,7 @@ Write a warm, direct 2–3 sentence opening for the Momentum Partner to use at t
 Return only the opening script, no labels or preamble.`;
 
       const result = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 150,
       });
