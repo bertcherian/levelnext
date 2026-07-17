@@ -194,7 +194,7 @@ export default function ManagerGuide() {
                   ? { background: "var(--color-ln-navy)", color: "white" }
                   : { background: "white", color: "oklch(25% 0.02 248.6)", border: "1px solid oklch(90% 0.01 248.6)" }}
               >
-                <p className="whitespace-pre-wrap">{msg.content}</p>
+                <p className="whitespace-pre-wrap" style={msg.role === "user" ? { color: "#ffffff" } : {}}>{msg.content}</p>
               </div>
             </div>
           ))}

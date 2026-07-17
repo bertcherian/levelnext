@@ -15,6 +15,8 @@ import {
   TrendingUp,
   CheckCircle2,
   Clock,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 
 const MEP_MODULES = [
@@ -89,6 +91,7 @@ export default function ManagerHome() {
   const { data: playbookSessions } = trpc.mep.listPlaybookSessions.useQuery();
   const { data: commitments } = trpc.mep.listCommitments.useQuery();
   const { data: practiceSessions } = trpc.mep.listPracticeSessions.useQuery();
+  const { data: todayBrief } = trpc.mep.getTodayBriefSnapshot.useQuery();
 
   const stats = {
     diagnosticsCompleted: myResults?.length ?? 0,
@@ -157,6 +160,42 @@ export default function ManagerHome() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Today's Focus / Mission */}
+        <div
+          className="rounded-2xl px-6 py-5 flex items-start gap-4"
+          style={{ background: "var(--color-ln-navy)", border: "1px solid oklch(from #34d399 l c h / 0.25)" }}
+        >
+          <div
+            className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center mt-0.5"
+            style={{ background: "oklch(from #34d399 l c h / 0.15)", border: "1px solid oklch(from #34d399 l c h / 0.3)" }}
+          >
+            <Sparkles size={18} style={{ color: "#34d399" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#34d399" }}>
+              Today's Focus
+            </p>
+            <p className="text-sm font-medium leading-relaxed" style={{ color: "#ffffff" }}>
+              {todayBrief?.priorityFocus
+                ? String(todayBrief.priorityFocus)
+                : "Have one meaningful coaching conversation with a team member today."}
+            </p>
+            {todayBrief?.managementChallenge && (
+              <p className="text-xs mt-2 leading-relaxed" style={{ color: "oklch(70% 0.02 248.6)" }}>
+                Challenge: {String(todayBrief.managementChallenge)}
+              </p>
+            )}
+          </div>
+          <Link href="/manager/brief" className="flex-shrink-0">
+            <button
+              className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg"
+              style={{ background: "oklch(from #34d399 l c h / 0.15)", color: "#34d399", border: "1px solid oklch(from #34d399 l c h / 0.3)" }}
+            >
+              Full Brief <ArrowRight size={12} />
+            </button>
+          </Link>
         </div>
 
         {/* Module grid */}

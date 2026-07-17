@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { getLoginUrl } from "@/const";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_88851f5c.png";
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 
 const CI_DIAGNOSTICS = [
   {

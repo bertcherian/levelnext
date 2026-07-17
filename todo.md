@@ -591,37 +591,7 @@
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
 
-## PDF Download, Admin Invites MEP, MEP Landing Page (Jul 17)
-- [x] Add Download PDF button to LI diagnostic results (Report page) — client-side jsPDF/html2canvas
-- [x] Add Download PDF button to MEP diagnostic results (ManagerDiagnostics results view)
-- [x] Update AdminManageInvites: add product selector (Leadership Intelligence / Career Intelligence / Manager Effectiveness) when sending invites
-- [x] Update invite backend: pass productId when creating invite so user is auto-enrolled on first sign-in
-- [x] Build public MEP landing page at /manager-effectiveness (hero, 10 diagnostics, 6 platform features, CTA)
-- [x] Register /manager-effectiveness route in App.tsx
-- [x] TypeScript clean (zero errors)
-- [x] Save checkpoint
-
-## PDF Download, Admin Invite Product Selector, MEP Landing Page (Jul 17)
-- [x] Add Download PDF button to MEP ManagerDiagnostics results view (jsPDF/html2canvas)
-- [x] Add productId column to platform_invites schema + run migration
-- [x] Update platformInvites.generateInvite backend to accept productId and store it
-- [x] Update invite email copy to be product-aware (LI / CI / MEP specific benefits)
-- [x] Auto-enroll user in invite's productId on first magic link sign-in (emailAuth.ts)
-- [x] Add Platform Access selector to AdminManageInvites Send Invite dialog (LI / CI / MEP)
-- [x] Build public MEP landing page at /manager-effectiveness
-- [x] Register /manager-effectiveness route in App.tsx
-- [x] TypeScript clean (zero errors)
-- [x] Save checkpoint
-
-## Platform-Aware Signup & MEP Landing CTA Fix (Jul 17)
-- [x] Rewrite /signup page to be platform-aware: LI content by default, MEP content when ?platform=mep is in URL
-- [x] Fix headline readability: h1 on /signup now uses explicit #FFFFFF color (was dark-on-dark on navy background)
-- [x] Update MEP landing page (/manager-effectiveness): all 3 CTA buttons now link to /signup?platform=mep
-- [x] TypeScript clean (zero errors)
-- [x] Save checkpoint
-
-## Post-Login Redirect Fix (Jul 17)
-- [x] Fix magic link verify endpoint: after sign-in, redirect to correct platform home based on active product enrollment (MEP → /manager, CI → /career, LI → /home) instead of always /home
-- [x] Fix Landing.tsx: authenticated users hitting / are now routed to their active product home (not always /home)
-- [x] TypeScript clean (zero errors)
-- [x] Save checkpoint
+## MEP UX Bug Fixes (Jul 17)
+- [x] Fix Manager Guide chat: user message text invisible (dark text on navy bubble) — add explicit color: white to the p inside user message bubble
+- [x] Fix ManagerDiagnostics results screen: "Back to Diagnostics" button renamed to "Back to Home" and navigates to /manager
+- [x] Add Today's Focus card to MEP ManagerHome page — shows priorityFocus from getTodayBriefSnapshot (or default prompt if no brief yet), links to /manager/brief

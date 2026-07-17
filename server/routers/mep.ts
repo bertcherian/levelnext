@@ -436,6 +436,22 @@ Return a JSON object with these exact keys:
 
   // ── LAYER 4: Daily Management Brief ──────────────────────────────────────
 
+  // Returns today's brief if already generated, null otherwise (no LLM call)
+  getTodayBriefSnapshot: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const today = new Date().toISOString().split("T")[0];
+    const [existing] = await db
+      .select()
+      .from(mepDailyBriefs)
+      .where(and(
+        eq(mepDailyBriefs.userId, ctx.user.id),
+        eq(mepDailyBriefs.briefDate, today),
+      ))
+      .limit(1);
+    return (existing?.brief as Record<string, any>) ?? null;
+  }),
+
   getDailyBrief: protectedProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

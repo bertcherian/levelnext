@@ -204,13 +204,6 @@
       "when": 1784222483337,
       "tag": "0028_needy_thanos",
       "breakpoints": true
-    },
-    {
-      "idx": 29,
-      "version": "5",
-      "when": 1784251841429,
-      "tag": "0029_rapid_spacker_dave",
-      "breakpoints": true
     }
   ]
 }

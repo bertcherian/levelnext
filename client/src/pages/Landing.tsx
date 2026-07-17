@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield, Download, FileText } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_88851f5c.png";
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 const VIDEO_URL = "/manus-storage/levelnext_explainer_v5_a20a9a42.mp4";
 const POSTER_URL = "/manus-storage/video_poster_9c31f573.jpg";
 
@@ -94,17 +94,11 @@ export default function Landing() {
     onError: (err) => setLeadError(err.message),
   });
 
-  const { data: activeProduct } = trpc.products.getActiveProduct.useQuery(undefined, {
-    enabled: !loading && isAuthenticated,
-  });
   useEffect(() => {
-    if (!loading && isAuthenticated && activeProduct !== undefined) {
-      const pid = activeProduct?.productId;
-      if (pid === "manager_effectiveness") navigate("/manager");
-      else if (pid === "career_intelligence") navigate("/career");
-      else navigate("/home");
+    if (!loading && isAuthenticated) {
+      navigate("/home");
     }
-  }, [isAuthenticated, loading, activeProduct, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   function handlePlay() {
     setPlaying(true);

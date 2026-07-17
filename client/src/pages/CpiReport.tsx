@@ -223,7 +223,11 @@ export default function CpiReport() {
             style={{ color: "white" }}>
             <ArrowLeft size={16} /> Back to Career Intelligence
           </button>
-          <img src="/manus-storage/LevelNext_logo_transparent_88851f5c.png" alt="LevelNext" className="h-8 w-auto object-contain" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: GOLD }}>
+              Career Positioning Intelligence
+            </span>
+          </div>
         </div>
       </div>
 

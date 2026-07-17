@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_88851f5c.png";
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 
 // Product metadata for the welcome screen
 const PRODUCT_META: Record<string, { name: string; tagline: string; destination: string; color: string }> = {

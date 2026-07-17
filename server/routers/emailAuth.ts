@@ -12,9 +12,9 @@
 
 import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
-import { and, desc, eq, gt, isNull } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
-import { magicLinkTokens, platformInvites, userProductEnrollments, users } from "../../drizzle/schema";
+import { magicLinkTokens, platformInvites, users } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -64,7 +64,7 @@ export const emailAuthRouter = router({
         html: `
           <div style="font-family: Inter, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; background: #f9f7f4;">
             <div style="text-align: center; margin-bottom: 32px;">
-              <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663042201754/bTOVEpcgUNmrJVXC.png" alt="LevelNext" style="height: 40px;" />
+              <img src="https://storage.manus.space/public/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" style="height: 40px;" />
             </div>
             <div style="background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e8e6e0;">
               <h1 style="color: #12345A; font-size: 22px; margin: 0 0 8px;">Sign in to LevelNext</h1>
@@ -244,20 +244,8 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
         .set({ usedAt: new Date(), userId: existingUser.id })
         .where(eq(magicLinkTokens.token, token));
 
-      // Auto-accept platform invite if present, and auto-enroll in the specified product
+      // Auto-accept platform invite if present
       if (magicLink.inviteToken) {
-        // Fetch the invite to get productId before marking accepted
-        const [invite] = await db
-          .select()
-          .from(platformInvites)
-          .where(
-            and(
-              eq(platformInvites.token, magicLink.inviteToken),
-              eq(platformInvites.status, "pending")
-            )
-          )
-          .limit(1);
-
         await db
           .update(platformInvites)
           .set({ status: "accepted", acceptedAt: new Date() })
@@ -267,35 +255,6 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
               eq(platformInvites.status, "pending")
             )
           );
-
-        // Auto-enroll user in the product specified on the invite
-        if (invite?.productId) {
-          const [existing] = await db
-            .select()
-            .from(userProductEnrollments)
-            .where(
-              and(
-                eq(userProductEnrollments.userId, existingUser.id),
-                eq(userProductEnrollments.productId, invite.productId)
-              )
-            )
-            .limit(1);
-
-          if (existing) {
-            await db
-              .update(userProductEnrollments)
-              .set({ isActive: true, lastActiveAt: new Date() })
-              .where(eq(userProductEnrollments.id, existing.id));
-          } else {
-            await db.insert(userProductEnrollments).values({
-              userId: existingUser.id,
-              productId: invite.productId,
-              enrolledBy: invite.invitedBy ?? null,
-              isActive: true,
-              lastActiveAt: new Date(),
-            });
-          }
-        }
       }
 
       // Update lastSignedIn
@@ -313,31 +272,8 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Determine the correct post-login destination:
-      // - New users → /onboard
-      // - Returning users → route to their active product home
-      let postLoginPath = "/home"; // default: Leadership Intelligence
-      if (!isNewUser) {
-        // Look up the user's most recently active enrollment to pick the right home
-        const [activeEnrollment] = await db
-          .select({ productId: userProductEnrollments.productId })
-          .from(userProductEnrollments)
-          .where(
-            and(
-              eq(userProductEnrollments.userId, existingUser.id),
-              eq(userProductEnrollments.isActive, true)
-            )
-          )
-          .orderBy(desc(userProductEnrollments.lastActiveAt))
-          .limit(1);
-        if (activeEnrollment?.productId === "manager_effectiveness") {
-          postLoginPath = "/manager";
-        } else if (activeEnrollment?.productId === "career_intelligence") {
-          postLoginPath = "/career";
-        }
-      } else {
-        postLoginPath = "/onboard";
-      }
+      // Redirect to app — new users go to onboarding, returning users go to home
+      const postLoginPath = isNewUser ? "/onboard" : "/home";
       res.redirect(302, `${origin}${postLoginPath}`);
     } catch (error) {
       console.error("[MagicLink] Verify failed:", error);
