@@ -1529,3 +1529,103 @@ export const managerTeamMembers = mysqlTable("manager_team_members", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type ManagerTeamMember = typeof managerTeamMembers.$inferSelect;
+
+// ─── Executive Opportunity System — Career Access Intelligence™ Phase 1 ──────
+
+// Career Access Profile: goals, target roles, industries, resume, LinkedIn, preferences
+export const careerAccessProfiles = mysqlTable("career_access_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // Career goals and aspirations
+  currentRole: varchar("currentRole", { length: 255 }),
+  targetRole: varchar("targetRole", { length: 255 }),
+  targetIndustries: json("targetIndustries").$type<string[]>(),
+  targetCompanySize: varchar("targetCompanySize", { length: 100 }),
+  targetLocation: varchar("targetLocation", { length: 255 }),
+  // Assets
+  resumeUrl: text("resumeUrl"),
+  linkedInUrl: text("linkedInUrl"),
+  // Preferences
+  openToRelocation: boolean("openToRelocation").default(false),
+  timelineMonths: int("timelineMonths"),
+  salaryExpectation: varchar("salaryExpectation", { length: 100 }),
+  // Additional context
+  keyStrengths: json("keyStrengths").$type<string[]>(),
+  notableAchievements: text("notableAchievements"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CareerAccessProfile = typeof careerAccessProfiles.$inferSelect;
+export type InsertCareerAccessProfile = typeof careerAccessProfiles.$inferInsert;
+
+// Career Strategy: AI-generated positioning and narrative
+export const careerStrategies = mysqlTable("career_strategies", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // Core strategy elements
+  strategyStatement: text("strategyStatement"),
+  valueProposition: text("valueProposition"),
+  careerNarrative: text("careerNarrative"),
+  positioningCanvas: json("positioningCanvas").$type<{
+    uniqueStrengths: string[];
+    targetProblem: string;
+    differentiator: string;
+    proofPoints: string[];
+    callToAction: string;
+  }>(),
+  decisionCriteria: json("decisionCriteria").$type<string[]>(),
+  // Generation metadata
+  generatedAt: timestamp("generatedAt"),
+  version: int("version").default(1),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CareerStrategy = typeof careerStrategies.$inferSelect;
+export type InsertCareerStrategy = typeof careerStrategies.$inferInsert;
+
+// Opportunity Pipeline: CRM for target companies and roles
+export const opportunityPipeline = mysqlTable("opportunity_pipeline", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // Company and role
+  company: varchar("company", { length: 255 }).notNull(),
+  role: varchar("role", { length: 255 }),
+  industry: varchar("industry", { length: 100 }),
+  // Pipeline stage
+  stage: mysqlEnum("stage", ["radar", "targeting", "engaging", "interviewing", "offer", "closed_won", "closed_lost"]).default("radar").notNull(),
+  probability: int("probability").default(0), // 0-100
+  // Relationship and access
+  keyContact: varchar("keyContact", { length: 255 }),
+  relationshipStrength: mysqlEnum("relationshipStrength", ["none", "weak", "moderate", "strong"]).default("none"),
+  accessPath: varchar("accessPath", { length: 255 }),
+  // Activity tracking
+  nextAction: text("nextAction"),
+  nextActionDate: timestamp("nextActionDate"),
+  lastActivityDate: timestamp("lastActivityDate"),
+  notes: text("notes"),
+  // AI-generated context
+  whyThisCompany: text("whyThisCompany"),
+  aiSuggested: boolean("aiSuggested").default(false),
+  dismissed: boolean("dismissed").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type OpportunityPipelineItem = typeof opportunityPipeline.$inferSelect;
+export type InsertOpportunityPipelineItem = typeof opportunityPipeline.$inferInsert;
+
+// Opportunity Radar Signals: AI-detected signals about target companies
+export const opportunityRadarSignals = mysqlTable("opportunity_radar_signals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  opportunityId: int("opportunityId").references(() => opportunityPipeline.id),
+  signalType: mysqlEnum("signalType", ["hiring", "expansion", "leadership_change", "funding", "product_launch", "partnership", "award"]).notNull(),
+  company: varchar("company", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  recommendedAction: text("recommendedAction"),
+  urgency: mysqlEnum("urgency", ["low", "medium", "high"]).default("medium"),
+  dismissed: boolean("dismissed").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type OpportunityRadarSignal = typeof opportunityRadarSignals.$inferSelect;
+export type InsertOpportunityRadarSignal = typeof opportunityRadarSignals.$inferInsert;
+

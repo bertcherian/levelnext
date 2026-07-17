@@ -632,37 +632,37 @@
 ## Career Access Intelligence™ — Phase 1 (Jul 17)
 
 ### DB Schema
-- [ ] career_access_profiles table (goals, target roles, industries, resume URL, LinkedIn URL, preferences)
-- [ ] career_strategy table (strategy statement, value proposition, career narrative, positioning canvas, decision criteria)
-- [ ] opportunity_pipeline table (company, stage, probability, notes, next_action, relationships, momentum)
-- [ ] career_access_scores table (12-dimension score snapshots with timestamps)
-- [ ] opportunity_radar_signals table (signal type, company, description, recommended action, dismissed)
-- [ ] relationship_contacts table (name, category, strength, trust, recency, strategic_importance)
-- [ ] Run migration and apply SQL
+- [x] career_access_profiles table (goals, target roles, industries, resume URL, LinkedIn URL, preferences)
+- [x] career_strategy table (strategy statement, value proposition, career narrative, positioning canvas, decision criteria)
+- [x] opportunity_pipeline table (company, stage, probability, notes, next_action, relationships, momentum)
+- [x] career_access_scores table (12-dimension score snapshots with timestamps)
+- [x] opportunity_radar_signals table (signal type, company, description, recommended action, dismissed)
+- [x] relationship_contacts table (name, category, strength, trust, recency, strategic_importance)
+- [x] Run migration and apply SQL
 
 ### Server — tRPC Procedures
-- [ ] careerAccess.getProfile / upsertProfile (pull from CI profile if exists)
-- [ ] careerAccess.generateStrategy (LLM: strategy statement, value prop, narrative, canvas)
-- [ ] careerAccess.getStrategy / saveStrategy
-- [ ] careerAccess.getCRMPipeline / addOpportunity / updateOpportunity / dismissOpportunity
-- [ ] careerAccess.suggestCompanies (LLM: AI suggests 5-10 companies based on profile)
-- [ ] careerAccess.getCareerAccessScore / computeScore (12-dimension scoring)
-- [ ] careerAccess.getDailyBriefing (AI Chief of Staff: pipeline health, follow-ups, today's action)
+- [x] careerAccess.getProfile / upsertProfile (pull from CI profile if exists)
+- [x] careerAccess.generateStrategy (LLM: strategy statement, value prop, narrative, canvas)
+- [x] careerAccess.getStrategy / saveStrategy
+- [x] careerAccess.getCRMPipeline / addOpportunity / updateOpportunity / dismissOpportunity
+- [x] careerAccess.suggestCompanies (LLM: AI suggests 5-10 companies based on profile)
+- [x] careerAccess.getCareerAccessScore / computeScore (12-dimension scoring)
+- [x] careerAccess.getDailyBriefing (AI Chief of Staff: pipeline health, follow-ups, today's action)
 
 ### Client — Pages
-- [ ] /career-access — Home page with AI Chief of Staff daily briefing + Career Access Score ring
-- [ ] /career-access/strategy — Career Strategy Engine (generate + view strategy)
-- [ ] /career-access/pipeline — Opportunity CRM (AI suggestions + approve/dismiss + pipeline board)
-- [ ] /career-access/score — Career Access Score™ (12-dimension breakdown + trend chart)
-- [ ] CareerAccessLayout.tsx — persistent sidebar nav for all /career-access/* pages
-- [ ] Platform switcher: Career Intelligence ↔ Career Access links in both sidebars
+- [x] /career-access — Home page with AI Chief of Staff daily briefing + Career Access Score ring
+- [x] /career-access/strategy — Career Strategy Engine (generate + view strategy)
+- [x] /career-access/pipeline — Opportunity CRM (AI suggestions + approve/dismiss + pipeline board)
+- [x] /career-access/score — Career Access Score™ (12-dimension breakdown + trend chart)
+- [x] CareerAccessLayout.tsx — persistent sidebar nav for all /career-access/* pages
+- [x] Platform switcher: Career Intelligence ↔ Career Access links in both sidebars
 
 ### Integration
-- [ ] TypeScript check (zero errors)
-- [ ] Save checkpoint
+- [x] TypeScript check (zero errors)
+- [x] Save checkpoint
 
 ## Six MEP Playbook Types (Jul 17)
-- [ ] Design six playbook types: Difficult Conversation, Performance Gap, Delegation Breakdown, Team Conflict, Motivation & Engagement, Feedback Resistance
-- [ ] Update server generatePlaybook with six tailored LLM system prompts (one per type)
-- [ ] Update ManagerPlaybook UI: playbook type selector cards, structured output sections per type
-- [ ] Wire Past Playbooks to show playbook type label and icon
+- [x] Design six playbook types: Difficult Conversation, Performance Gap, Delegation Breakdown, Team Conflict, Motivation & Engagement, Feedback Resistance
+- [x] Update server generatePlaybook with six tailored LLM system prompts (one per type)
+- [x] Update ManagerPlaybook UI: playbook type selector cards, structured output sections per type
+- [x] Wire Past Playbooks to show playbook type label and icon
