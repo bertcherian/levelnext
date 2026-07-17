@@ -628,3 +628,35 @@
 - [x] Add tailored LLM system prompts for PST, PFM, CFI, MRW diagnostics in mep router (14 expert personas total)
 - [x] Add 10/10 diagnostic completion progress ring to MEP home page hero (SVG ring, live count)
 - [x] Regenerate MEP Executive Brief PDF with all 10 active diagnostics — uploaded and linked on /manager-effectiveness
+
+## Career Access Intelligence™ — Phase 1 (Jul 17)
+
+### DB Schema
+- [ ] career_access_profiles table (goals, target roles, industries, resume URL, LinkedIn URL, preferences)
+- [ ] career_strategy table (strategy statement, value proposition, career narrative, positioning canvas, decision criteria)
+- [ ] opportunity_pipeline table (company, stage, probability, notes, next_action, relationships, momentum)
+- [ ] career_access_scores table (12-dimension score snapshots with timestamps)
+- [ ] opportunity_radar_signals table (signal type, company, description, recommended action, dismissed)
+- [ ] relationship_contacts table (name, category, strength, trust, recency, strategic_importance)
+- [ ] Run migration and apply SQL
+
+### Server — tRPC Procedures
+- [ ] careerAccess.getProfile / upsertProfile (pull from CI profile if exists)
+- [ ] careerAccess.generateStrategy (LLM: strategy statement, value prop, narrative, canvas)
+- [ ] careerAccess.getStrategy / saveStrategy
+- [ ] careerAccess.getCRMPipeline / addOpportunity / updateOpportunity / dismissOpportunity
+- [ ] careerAccess.suggestCompanies (LLM: AI suggests 5-10 companies based on profile)
+- [ ] careerAccess.getCareerAccessScore / computeScore (12-dimension scoring)
+- [ ] careerAccess.getDailyBriefing (AI Chief of Staff: pipeline health, follow-ups, today's action)
+
+### Client — Pages
+- [ ] /career-access — Home page with AI Chief of Staff daily briefing + Career Access Score ring
+- [ ] /career-access/strategy — Career Strategy Engine (generate + view strategy)
+- [ ] /career-access/pipeline — Opportunity CRM (AI suggestions + approve/dismiss + pipeline board)
+- [ ] /career-access/score — Career Access Score™ (12-dimension breakdown + trend chart)
+- [ ] CareerAccessLayout.tsx — persistent sidebar nav for all /career-access/* pages
+- [ ] Platform switcher: Career Intelligence ↔ Career Access links in both sidebars
+
+### Integration
+- [ ] TypeScript check (zero errors)
+- [ ] Save checkpoint

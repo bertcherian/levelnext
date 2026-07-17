@@ -1364,6 +1364,55 @@ export type OutreachDraft = typeof outreachDrafts.$inferSelect;
 export type InsertOutreachDraft = typeof outreachDrafts.$inferInsert;
 
 
+// ─── Career Access Score Snapshots ──────────────────────────────────────────
+// Tracks the 12-dimension Career Access Score™ over time
+export const careerAccessScoreSnapshots = mysqlTable("career_access_score_snapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // 12 dimensions (0-100 each)
+  scoreStrategyClarity: int("scoreStrategyClarity"),       // How clear and specific is the career strategy
+  scorePositioningStrength: int("scorePositioningStrength"), // Strength of executive positioning
+  scoreOpportunityPipeline: int("scoreOpportunityPipeline"), // Pipeline size and quality
+  scoreRelationshipCapital: int("scoreRelationshipCapital"), // Relationship graph strength
+  scoreAccessPathQuality: int("scoreAccessPathQuality"),   // Quality of access paths to targets
+  scoreVisibilityPresence: int("scoreVisibilityPresence"),  // Brand and online presence
+  scoreNarrativeReadiness: int("scoreNarrativeReadiness"),  // How ready the career narrative is
+  scoreMarketTiming: int("scoreMarketTiming"),              // Market conditions for the target role
+  scoreCredentialFit: int("scoreCredentialFit"),            // How well credentials match targets
+  scoreNetworkDensity: int("scoreNetworkDensity"),          // Network density in target sectors
+  scoreOutreachMomentum: int("scoreOutreachMomentum"),      // Active outreach and follow-up activity
+  scoreConfidenceReadiness: int("scoreConfidenceReadiness"), // Confidence and interview readiness
+  // Composite score (weighted average)
+  compositeScore: int("compositeScore"),
+  // AI-generated narrative for this snapshot
+  narrative: text("narrative"),
+  // Top 3 actions to improve the score
+  topActions: json("topActions").$type<string[]>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CareerAccessScoreSnapshot = typeof careerAccessScoreSnapshots.$inferSelect;
+export type InsertCareerAccessScoreSnapshot = typeof careerAccessScoreSnapshots.$inferInsert;
+
+// ─── Career Access Chief of Staff Briefings ───────────────────────────────────
+export const careerAccessBriefings = mysqlTable("career_access_briefings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  briefDate: varchar("briefDate", { length: 10 }).notNull(), // YYYY-MM-DD
+  // AI-generated briefing content
+  brief: json("brief").$type<{
+    greeting: string;
+    pipelineHealth: string;
+    todaysPriorityAction: string;
+    followUpsDue: Array<{ company: string; action: string; daysOverdue: number }>;
+    momentumSignal: string;
+    weeklyOutlook: string;
+    coachingNudge: string;
+  }>(),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+});
+export type CareerAccessBriefing = typeof careerAccessBriefings.$inferSelect;
+export type InsertCareerAccessBriefing = typeof careerAccessBriefings.$inferInsert;
+
 // ─── Manager Effectiveness Platform ──────────────────────────────────────────
 
 // Stores completed diagnostic results for each MEP diagnostic

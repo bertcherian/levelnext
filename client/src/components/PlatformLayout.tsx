@@ -58,7 +58,7 @@ const CI_NAV_ITEMS = [
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
   { label: "Practice", icon: Zap, href: "/practice" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
-  { label: "Career Access", icon: Globe, href: "/career/access" },
+  { label: "Executive Opportunity System", icon: Globe, href: "/career/access" },
   { label: "Relationship Graph", icon: Users, href: "/career/relationships" },
   { label: "Access Paths", icon: Route, href: "/career/access-paths" },
   { label: "Outreach Engine", icon: Sparkles, href: "/career/brand" },

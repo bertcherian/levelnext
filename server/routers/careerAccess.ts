@@ -13,9 +13,11 @@ import {
   assessmentSessions,
   reports,
   users,
+  careerAccessScoreSnapshots,
+  careerAccessBriefings,
 } from "../../drizzle/schema";
 
-// ─── Career Access Intelligence™ Router ──────────────────────────────────────
+// ─── Executive Opportunity System™ Router ──────────────────────────────────────
 
 // Zod schema for the career profile intake
 const CareerProfileInput = z.object({
@@ -177,7 +179,7 @@ export const careerAccessRouter = router({
     // Build CI diagnostic context
     const diagnosticContext = await buildCareerGraphContext(ctx.user.id);
 
-    const systemPrompt = `You are the LevelNext Career Access Intelligence™ system — the world's most sophisticated AI career strategist for senior leaders.
+    const systemPrompt = `You are the LevelNext Executive Opportunity System™ system — the world's most sophisticated AI career strategist for senior leaders.
 
 You think like the best executive recruiter, board advisor, and career strategist combined.
 
@@ -312,7 +314,7 @@ ${diagnosticContext}`;
 
     const diagnosticContext = await buildCareerGraphContext(ctx.user.id);
 
-    const systemPrompt = `You are the LevelNext Career Access Intelligence™ Opportunity Mapping Engine.
+    const systemPrompt = `You are the LevelNext Executive Opportunity System™ Opportunity Mapping Engine.
 
 Your task: Generate a personalised Opportunity Universe for ${user?.name ?? "this leader"} — a curated list of 15-20 organisations where they could create access to senior leadership opportunities.
 
@@ -613,7 +615,7 @@ Generate 15-20 organisations across all required categories. Be specific and rea
         ? contacts.map(c => `- ${c.name} (${c.currentTitle ?? ""} at ${c.currentCompany ?? ""}, ${c.relationshipType}, score: ${c.compositeScore ?? "unscored"})`).join("\n")
         : "No contacts added yet.";
 
-      const systemPrompt = `You are the LevelNext Career Access Intelligence™ Access Path Engine.
+      const systemPrompt = `You are the LevelNext Executive Opportunity System™ Access Path Engine.
 
 Your task: Generate a comprehensive Access Path Strategy for ${user?.name ?? "this leader"} to create access to ${opp.companyName}.
 
@@ -714,6 +716,197 @@ Generate the most strategic access path for this leader to create access to ${op
         .where(and(eq(accessPaths.id, input.id), eq(accessPaths.userId, ctx.user.id)));
       return { success: true };
     }),
+
+  // ── Career Access Score™ ──────────────────────────────────────────────────────
+
+  getCareerAccessScore: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const snapshots = await db.select().from(careerAccessScoreSnapshots)
+      .where(eq(careerAccessScoreSnapshots.userId, ctx.user.id))
+      .orderBy(desc(careerAccessScoreSnapshots.createdAt))
+      .limit(10);
+    return { latest: snapshots[0] ?? null, history: snapshots };
+  }),
+
+  computeCareerAccessScore: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Gather all data signals
+    const [profile] = await db.select().from(careerProfiles)
+      .where(eq(careerProfiles.userId, ctx.user.id)).limit(1);
+    const [strategy] = await db.select().from(careerStrategyStatements)
+      .where(and(eq(careerStrategyStatements.userId, ctx.user.id), eq(careerStrategyStatements.isActive, true)))
+      .orderBy(desc(careerStrategyStatements.createdAt)).limit(1);
+    const opportunities = await db.select().from(opportunityUniverse)
+      .where(eq(opportunityUniverse.userId, ctx.user.id));
+    const relationships = await db.select().from(relationshipContacts)
+      .where(eq(relationshipContacts.userId, ctx.user.id));
+    const paths = await db.select().from(accessPaths)
+      .where(eq(accessPaths.userId, ctx.user.id));
+
+    const systemPrompt = `You are the Executive Opportunity System™ scoring engine. Compute a 12-dimension Career Access Score for this executive based on their data.
+
+Dimensions (score each 0-100):
+1. strategyClarity - How specific and actionable is their career strategy
+2. positioningStrength - How strong and differentiated is their executive positioning
+3. opportunityPipeline - Quality and quantity of target opportunities
+4. relationshipCapital - Strength and strategic value of their network
+5. accessPathQuality - Quality of access strategies to target organisations
+6. visibilityPresence - Brand and online presence strength
+7. narrativeReadiness - How ready is their career narrative for conversations
+8. marketTiming - How well-timed is their move relative to market conditions
+9. credentialFit - How well credentials match target roles
+10. networkDensity - Density of connections in target sectors
+11. outreachMomentum - Active outreach and follow-up activity
+12. confidenceReadiness - Overall readiness and confidence for the transition
+
+Return ONLY valid JSON:
+{
+  "scoreStrategyClarity": 72,
+  "scorePositioningStrength": 68,
+  "scoreOpportunityPipeline": 55,
+  "scoreRelationshipCapital": 80,
+  "scoreAccessPathQuality": 60,
+  "scoreVisibilityPresence": 45,
+  "scoreNarrativeReadiness": 70,
+  "scoreMarketTiming": 65,
+  "scoreCredentialFit": 85,
+  "scoreNetworkDensity": 75,
+  "scoreOutreachMomentum": 40,
+  "scoreConfidenceReadiness": 72,
+  "compositeScore": 66,
+  "narrative": "2-3 sentence executive summary of their career access readiness",
+  "topActions": ["Action 1", "Action 2", "Action 3"]
+}`;
+
+    const userMessage = `Profile completion: ${profile?.completionPct ?? 0}%
+Target role: ${profile?.targetRole ?? "Not set"}
+Target industries: ${(profile?.targetIndustries as string[] ?? []).join(", ") || "Not set"}
+Career strategy: ${strategy ? "Generated" : "Not yet generated"}
+Strategy headline: ${(strategy?.strategyData as any)?.headline ?? "None"}
+Opportunities in pipeline: ${opportunities.length} (active: ${opportunities.filter(o => o.status === "active").length})
+Relationships mapped: ${relationships.length} (key connectors: ${relationships.filter(r => r.isKeyConnector).length})
+Access paths generated: ${paths.length}
+LinkedIn URL: ${profile?.linkedinUrl ? "Provided" : "Not provided"}
+Resume: ${profile?.resumeUrl ? "Uploaded" : "Not uploaded"}
+Key achievements: ${profile?.keyAchievements ? "Documented" : "Not documented"}`;
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+      model: "gpt-5-mini",
+      maxTokens: 800,
+    });
+
+    const rawText = response.choices[0]?.message?.content;
+    if (!rawText || typeof rawText !== "string") throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Score generation failed." });
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Invalid score response." });
+    const scoreData = JSON.parse(jsonMatch[0]);
+
+    await db.insert(careerAccessScoreSnapshots).values({
+      userId: ctx.user.id,
+      ...scoreData,
+    });
+    return scoreData;
+  }),
+
+  // ── AI Chief of Staff Daily Briefing ─────────────────────────────────────────
+
+  getTodayChiefOfStaffBriefing: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const today = new Date().toISOString().split("T")[0];
+    const [briefing] = await db.select().from(careerAccessBriefings)
+      .where(and(
+        eq(careerAccessBriefings.userId, ctx.user.id),
+        eq(careerAccessBriefings.briefDate, today)
+      ))
+      .limit(1);
+    return briefing ?? null;
+  }),
+
+  generateChiefOfStaffBriefing: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const today = new Date().toISOString().split("T")[0];
+    // Delete any existing briefing for today
+    await db.delete(careerAccessBriefings)
+      .where(and(
+        eq(careerAccessBriefings.userId, ctx.user.id),
+        eq(careerAccessBriefings.briefDate, today)
+      ));
+
+    // Gather pipeline data
+    const [profile] = await db.select().from(careerProfiles)
+      .where(eq(careerProfiles.userId, ctx.user.id)).limit(1);
+    const [strategy] = await db.select().from(careerStrategyStatements)
+      .where(and(eq(careerStrategyStatements.userId, ctx.user.id), eq(careerStrategyStatements.isActive, true)))
+      .orderBy(desc(careerStrategyStatements.createdAt)).limit(1);
+    const opportunities = await db.select().from(opportunityUniverse)
+      .where(eq(opportunityUniverse.userId, ctx.user.id));
+    const activeOpps = opportunities.filter(o => o.status === "active" || o.status === "researching" || o.status === "targeting");
+    const relationships = await db.select().from(relationshipContacts)
+      .where(eq(relationshipContacts.userId, ctx.user.id));
+    // Contacts with follow-up due (nextActionDue in the past)
+    const now = new Date();
+    const overdueContacts = relationships.filter(r =>
+      r.nextActionDue && new Date(r.nextActionDue) < now
+    );
+
+    const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+    const firstName = user?.name?.split(" ")[0] ?? "there";
+
+    const systemPrompt = `You are the AI Chief of Staff for an executive's career transition. Generate a concise, energising daily briefing.
+
+Return ONLY valid JSON:
+{
+  "greeting": "Good morning [name]. One energising sentence about today.",
+  "pipelineHealth": "2-sentence assessment of the opportunity pipeline health and momentum.",
+  "todaysPriorityAction": "The single most important action to take today (specific and actionable).",
+  "followUpsDue": [{"company": "Acme Corp", "action": "Follow up on intro request", "daysOverdue": 3}],
+  "momentumSignal": "One positive signal or momentum indicator from their data.",
+  "weeklyOutlook": "One sentence on what this week should focus on.",
+  "coachingNudge": "One brief coaching insight or mindset reminder for today."
+}`;
+
+    const userMessage = `Executive: ${firstName}
+Target role: ${profile?.targetRole ?? "Not set"}
+Strategy headline: ${(strategy?.strategyData as any)?.headline ?? "Strategy not yet generated"}
+Active opportunities: ${activeOpps.length} companies in pipeline
+Top active targets: ${activeOpps.slice(0, 3).map(o => o.companyName).join(", ") || "None yet"}
+Overdue follow-ups: ${overdueContacts.length} contacts need attention
+Overdue contacts: ${overdueContacts.slice(0, 3).map(r => `${r.name} at ${r.currentCompany ?? "unknown"}`).join(", ") || "None"}
+Total relationships mapped: ${relationships.length}
+Today's date: ${today}`;
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+      model: "gpt-5-mini",
+      maxTokens: 600,
+    });
+
+    const rawText = response.choices[0]?.message?.content;
+    if (!rawText || typeof rawText !== "string") throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Briefing generation failed." });
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Invalid briefing response." });
+    const briefData = JSON.parse(jsonMatch[0]);
+
+    await db.insert(careerAccessBriefings).values({
+      userId: ctx.user.id,
+      briefDate: today,
+      brief: briefData,
+    });
+    return briefData;
+  }),
 });
 
 // ── Helper: AI relationship scoring ──────────────────────────────────────────

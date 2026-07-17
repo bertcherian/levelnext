@@ -317,13 +317,13 @@ export default function CareerAccess() {
           <div className="mb-8">
             <div className="flex items-center gap-2 text-[var(--color-ln-gold)] text-sm font-semibold uppercase tracking-wider mb-2">
               <Zap className="w-4 h-4" />
-              Career Access Intelligence™
+              Executive Opportunity System™
             </div>
             <h1 className="text-3xl font-bold text-[var(--color-ln-navy)] mb-2">
               Build Strategic Access
             </h1>
             <p className="text-gray-600 text-lg max-w-2xl">
-              Elite executives don't chase opportunities. They create them. This is your AI-powered career access engine.
+              Elite executives don't chase opportunities. They create them. This is your AI-powered executive opportunity engine.
             </p>
           </div>
 
@@ -442,7 +442,7 @@ export default function CareerAccess() {
             <div className="flex items-start gap-3">
               <Lightbulb className="w-5 h-5 text-[var(--color-ln-gold)] shrink-0 mt-0.5" />
               <div>
-                <div className="font-semibold text-[var(--color-ln-navy)] text-sm mb-1">The Career Access Philosophy</div>
+                <div className="font-semibold text-[var(--color-ln-navy)] text-sm mb-1">The Executive Opportunity Philosophy</div>
                 <p className="text-sm text-gray-600">
                   Most executives fail because they spend their energy chasing opportunities. Elite executives create them.
                   This platform shifts you from <em>"I need a job"</em> to <em>"I am building strategic access."</em>
@@ -465,7 +465,7 @@ export default function CareerAccess() {
         <div className="max-w-2xl mx-auto px-4 py-8">
           {/* Back */}
           <button onClick={() => setView("home")} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6">
-            <ChevronLeft className="w-4 h-4" /> Back to Career Access
+            <ChevronLeft className="w-4 h-4" /> Back to Executive Opportunity System
           </button>
 
           {/* Step indicator */}
