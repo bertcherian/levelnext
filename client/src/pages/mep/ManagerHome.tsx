@@ -149,11 +149,35 @@ export default function ManagerHome() {
                 Your platform for becoming the manager your team deserves. Diagnose, learn, practise, and commit to lasting behaviour change.
               </p>
             </div>
-            <div
-              className="hidden md:flex items-center justify-center w-14 h-14 rounded-2xl flex-shrink-0"
-              style={{ background: "oklch(from #34d399 l c h / 0.15)", border: "1px solid oklch(from #34d399 l c h / 0.3)" }}
-            >
-              <Users size={26} style={{ color: "#34d399" }} />
+            {/* Diagnostic completion progress ring */}
+            <div className="hidden md:flex flex-col items-center justify-center flex-shrink-0">
+              {(() => {
+                const total = 10;
+                const completed = Math.min(stats.diagnosticsCompleted, total);
+                const pct = completed / total;
+                const r = 22;
+                const circ = 2 * Math.PI * r;
+                const dash = pct * circ;
+                return (
+                  <div className="relative w-16 h-16 flex items-center justify-center">
+                    <svg width="64" height="64" viewBox="0 0 64 64" style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx="32" cy="32" r={r} fill="none" stroke="oklch(from white 15% 0 0 / 0.12)" strokeWidth="4" />
+                      <circle
+                        cx="32" cy="32" r={r} fill="none"
+                        stroke="#34d399" strokeWidth="4"
+                        strokeDasharray={`${dash} ${circ}`}
+                        strokeLinecap="round"
+                        style={{ transition: "stroke-dasharray 0.6s ease" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-sm font-bold text-white leading-none">{completed}/{total}</span>
+                      <span className="text-[9px] mt-0.5" style={{ color: "#34d399" }}>done</span>
+                    </div>
+                  </div>
+                );
+              })()}
+              <p className="text-[9px] mt-1 text-center" style={{ color: "oklch(55% 0.02 248.6)" }}>Diagnostics</p>
             </div>
           </div>
 

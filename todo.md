@@ -623,3 +623,8 @@
 - [x] Build CFI (Cross-functional Influence) diagnostic — 15 questions, 6 dimensions, scoring, LLM analysis, results view
 - [x] Build MRW (Manager Resilience & Wellbeing) diagnostic — 15 questions, 6 dimensions, scoring, LLM analysis, results view
 - [x] Remove 'coming soon' state from all four in ManagerEffectivenessLanding.tsx; ManagerDiagnostics.tsx auto-discovers all diagnostics from server
+
+## MEP Polish Batch (Jul 17)
+- [x] Add tailored LLM system prompts for PST, PFM, CFI, MRW diagnostics in mep router (14 expert personas total)
+- [x] Add 10/10 diagnostic completion progress ring to MEP home page hero (SVG ring, live count)
+- [x] Regenerate MEP Executive Brief PDF with all 10 active diagnostics — uploaded and linked on /manager-effectiveness
