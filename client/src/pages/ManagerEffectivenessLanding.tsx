@@ -54,6 +54,34 @@ const MEP_DIAGNOSTICS = [
     description: "Measures how well you connect day-to-day management to broader organisational goals and think beyond immediate tasks.",
     outcome: "Strategic Clarity Score",
   },
+  {
+    code: "PST",
+    name: "Psychological Safety & Trust",
+    icon: Shield,
+    description: "Measures the psychological safety and trust levels in your team — voice safety, failure tolerance, inclusion, trust building, vulnerability modelling, and challenge safety.",
+    outcome: "Psychological Safety Score",
+  },
+  {
+    code: "PFM",
+    name: "Performance Management",
+    icon: BarChart3,
+    description: "Assesses your performance management effectiveness — goal setting, ongoing feedback, addressing underperformance, recognition, development focus, and fairness.",
+    outcome: "Performance Management Score",
+  },
+  {
+    code: "CFI",
+    name: "Cross-functional Influence",
+    icon: Users,
+    description: "Measures your ability to build relationships, align stakeholders, influence without authority, and collaborate effectively across organisational boundaries.",
+    outcome: "Cross-functional Influence Score",
+  },
+  {
+    code: "MRW",
+    name: "Manager Resilience & Wellbeing",
+    icon: Zap,
+    description: "Measures your resilience and wellbeing as a manager — stress management, recovery, boundary setting, emotional regulation, team wellbeing, and sustainable performance.",
+    outcome: "Resilience & Wellbeing Score",
+  },
 ];
 
 const DIFFERENTIATORS = [
@@ -346,18 +374,7 @@ export default function ManagerEffectivenessLanding() {
                 <p className="text-xs font-medium" style={{ color: "#6ee7b7" }}>→ {outcome}</p>
               </div>
             ))}
-            {["Psychological Safety & Trust", "Performance Management", "Cross-functional Influence", "Manager Resilience & Wellbeing"].map((name) => (
-              <div key={name} className="p-5 rounded-xl border opacity-50" style={{
-                background: "oklch(from var(--color-ln-navy) calc(l + 0.02) c h)",
-                borderColor: "oklch(60% 0.15 160 / 0.1)",
-              }}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: "oklch(60% 0.15 160 / 0.1)", color: "#6ee7b7" }}>COMING</span>
-                </div>
-                <h3 className="text-sm font-semibold text-white/60 mb-1.5">{name}</h3>
-                <p className="text-xs text-white/35">Available in next release</p>
-              </div>
-            ))}
+
           </div>
         </div>
       </section>

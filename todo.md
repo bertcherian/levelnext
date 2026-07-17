@@ -616,3 +616,10 @@
 ## MEP Executive Brief PDF (Jul 17)
 - [x] Generate A4 MEP Executive Brief PDF (4 pages, LevelNext logo, ME Score visual, AI coaching section)
 - [x] Upload to webdev static assets and link on /manager-effectiveness landing page
+
+## Four New MEP Diagnostics (Jul 17)
+- [x] Build PST (Psychological Safety & Trust) diagnostic — 16 questions, 6 dimensions, scoring, LLM analysis, results view
+- [x] Build PFM (Performance Management) diagnostic — 15 questions, 6 dimensions, scoring, LLM analysis, results view
+- [x] Build CFI (Cross-functional Influence) diagnostic — 15 questions, 6 dimensions, scoring, LLM analysis, results view
+- [x] Build MRW (Manager Resilience & Wellbeing) diagnostic — 15 questions, 6 dimensions, scoring, LLM analysis, results view
+- [x] Remove 'coming soon' state from all four in ManagerEffectivenessLanding.tsx; ManagerDiagnostics.tsx auto-discovers all diagnostics from server

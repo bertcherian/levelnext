@@ -337,6 +337,119 @@ const OWI_QUESTIONS: MepQuestion[] = [
   { id: "owi_pb2", text: "I surface risks and opportunities before they become obvious.", dimensionId: "proactive_behaviour" },
 ];
 
+// ─── PST — Psychological Safety & Trust ─────────────────────────────────────
+const PST_DIMENSIONS: MepDimension[] = [
+  { id: "voice_safety", label: "Voice Safety", description: "Team members feel safe speaking up" },
+  { id: "failure_tolerance", label: "Failure Tolerance", description: "Mistakes are treated as learning opportunities" },
+  { id: "inclusion", label: "Inclusion", description: "All perspectives are genuinely valued" },
+  { id: "trust_building", label: "Trust Building", description: "Building interpersonal trust within the team" },
+  { id: "vulnerability_modelling", label: "Vulnerability Modelling", description: "Leader models openness and humility" },
+  { id: "challenge_safety", label: "Challenge Safety", description: "Team feels safe to challenge ideas and decisions" },
+];
+
+const PST_QUESTIONS: MepQuestion[] = [
+  { id: "pst_vs1", text: "My team members speak up freely, even when their view differs from mine.", dimensionId: "voice_safety" },
+  { id: "pst_vs2", text: "People on my team raise concerns without fear of being dismissed or penalised.", dimensionId: "voice_safety" },
+  { id: "pst_vs3", text: "I actively invite dissenting views and unpopular opinions in team discussions.", dimensionId: "voice_safety" },
+  { id: "pst_ft1", text: "When someone on my team makes a mistake, the first conversation is about learning, not blame.", dimensionId: "failure_tolerance" },
+  { id: "pst_ft2", text: "I share my own mistakes openly to normalise learning from failure.", dimensionId: "failure_tolerance" },
+  { id: "pst_ft3", text: "My team takes calculated risks because they trust that failure won't be punished.", dimensionId: "failure_tolerance" },
+  { id: "pst_in1", text: "Every team member's perspective is genuinely considered in decisions, not just acknowledged.", dimensionId: "inclusion" },
+  { id: "pst_in2", text: "I notice when quieter team members are not contributing and create space for them.", dimensionId: "inclusion" },
+  { id: "pst_in3", text: "My team reflects diverse thinking styles and I leverage that diversity intentionally.", dimensionId: "inclusion" },
+  { id: "pst_tb1", text: "My team members trust each other to follow through on commitments.", dimensionId: "trust_building" },
+  { id: "pst_tb2", text: "I follow through on what I say I will do, consistently.", dimensionId: "trust_building" },
+  { id: "pst_tb3", text: "I invest time in building relationships within my team, not just managing tasks.", dimensionId: "trust_building" },
+  { id: "pst_vm1", text: "I openly admit when I don't know something or have made a wrong call.", dimensionId: "vulnerability_modelling" },
+  { id: "pst_vm2", text: "I ask for feedback from my team and act on what I hear.", dimensionId: "vulnerability_modelling" },
+  { id: "pst_cs1", text: "My team challenges my ideas constructively and I welcome it.", dimensionId: "challenge_safety" },
+  { id: "pst_cs2", text: "Disagreement in my team leads to better decisions, not damaged relationships.", dimensionId: "challenge_safety" },
+];
+
+// ─── PFM — Performance Management ────────────────────────────────────────────
+const PFM_DIMENSIONS: MepDimension[] = [
+  { id: "goal_setting", label: "Goal Setting", description: "Setting clear, measurable performance goals" },
+  { id: "ongoing_feedback", label: "Ongoing Feedback", description: "Regular, timely performance feedback" },
+  { id: "underperformance", label: "Underperformance", description: "Addressing underperformance directly and constructively" },
+  { id: "recognition", label: "Recognition", description: "Recognising and rewarding strong performance" },
+  { id: "development_focus", label: "Development Focus", description: "Investing in team members' growth" },
+  { id: "fairness", label: "Fairness & Consistency", description: "Applying standards consistently across the team" },
+];
+
+const PFM_QUESTIONS: MepQuestion[] = [
+  { id: "pfm_gs1", text: "Each team member has clear, measurable performance goals they understand and own.", dimensionId: "goal_setting" },
+  { id: "pfm_gs2", text: "I connect individual performance goals to team and organisational priorities.", dimensionId: "goal_setting" },
+  { id: "pfm_gs3", text: "I revisit and adjust goals when priorities shift, rather than letting them become irrelevant.", dimensionId: "goal_setting" },
+  { id: "pfm_of1", text: "I give performance feedback in the moment — I don't save it all for formal reviews.", dimensionId: "ongoing_feedback" },
+  { id: "pfm_of2", text: "My feedback is specific enough that the person knows exactly what to do differently.", dimensionId: "ongoing_feedback" },
+  { id: "pfm_of3", text: "I balance positive reinforcement with developmental feedback — I don't only give feedback when things go wrong.", dimensionId: "ongoing_feedback" },
+  { id: "pfm_up1", text: "I address underperformance early — I don't let it drift hoping it will self-correct.", dimensionId: "underperformance" },
+  { id: "pfm_up2", text: "When I address underperformance, I focus on behaviour and impact, not personality.", dimensionId: "underperformance" },
+  { id: "pfm_up3", text: "I give underperforming team members a genuine opportunity to improve before escalating.", dimensionId: "underperformance" },
+  { id: "pfm_re1", text: "I recognise strong performance specifically and promptly — not just in formal reviews.", dimensionId: "recognition" },
+  { id: "pfm_re2", text: "I understand what motivates each team member and tailor recognition accordingly.", dimensionId: "recognition" },
+  { id: "pfm_df1", text: "I invest time in understanding each team member's career aspirations.", dimensionId: "development_focus" },
+  { id: "pfm_df2", text: "I create stretch opportunities that develop my team members beyond their current role.", dimensionId: "development_focus" },
+  { id: "pfm_fa1", text: "I apply the same performance standards consistently across all team members.", dimensionId: "fairness" },
+  { id: "pfm_fa2", text: "My team perceives my performance management approach as fair and transparent.", dimensionId: "fairness" },
+];
+
+// ─── CFI — Cross-functional Influence ────────────────────────────────────────
+const CFI_DIMENSIONS: MepDimension[] = [
+  { id: "relationship_building", label: "Relationship Building", description: "Building trust with peers across functions" },
+  { id: "stakeholder_alignment", label: "Stakeholder Alignment", description: "Aligning stakeholders on shared goals" },
+  { id: "influence_without_authority", label: "Influence Without Authority", description: "Getting things done without direct control" },
+  { id: "conflict_navigation", label: "Cross-functional Conflict", description: "Navigating disagreements across team boundaries" },
+  { id: "communication_upward", label: "Upward Communication", description: "Communicating effectively with senior leadership" },
+  { id: "collaboration", label: "Collaboration", description: "Creating genuine cross-functional partnerships" },
+];
+
+const CFI_QUESTIONS: MepQuestion[] = [
+  { id: "cfi_rb1", text: "I invest in building relationships with peers across other functions, not just when I need something.", dimensionId: "relationship_building" },
+  { id: "cfi_rb2", text: "My cross-functional peers see me as a trusted partner, not just a competing priority.", dimensionId: "relationship_building" },
+  { id: "cfi_rb3", text: "I understand the pressures and priorities of the functions I depend on.", dimensionId: "relationship_building" },
+  { id: "cfi_sa1", text: "I proactively align stakeholders on shared goals before starting cross-functional work.", dimensionId: "stakeholder_alignment" },
+  { id: "cfi_sa2", text: "I surface misalignment early and address it directly rather than working around it.", dimensionId: "stakeholder_alignment" },
+  { id: "cfi_sa3", text: "I keep key stakeholders informed of progress and changes without waiting to be asked.", dimensionId: "stakeholder_alignment" },
+  { id: "cfi_iwa1", text: "I can get things done through people I have no authority over.", dimensionId: "influence_without_authority" },
+  { id: "cfi_iwa2", text: "I understand what motivates others and use that to build commitment, not just compliance.", dimensionId: "influence_without_authority" },
+  { id: "cfi_iwa3", text: "I frame requests in terms of shared benefit, not just my team's needs.", dimensionId: "influence_without_authority" },
+  { id: "cfi_cn1", text: "When cross-functional conflicts arise, I address them directly rather than escalating immediately.", dimensionId: "conflict_navigation" },
+  { id: "cfi_cn2", text: "I focus on finding solutions that work for both sides, not just winning the argument.", dimensionId: "conflict_navigation" },
+  { id: "cfi_cu1", text: "I communicate my team's work and impact clearly to senior leadership.", dimensionId: "communication_upward" },
+  { id: "cfi_cu2", text: "I manage up effectively — I give my manager what they need without being told.", dimensionId: "communication_upward" },
+  { id: "cfi_co1", text: "I create genuine partnerships across functions — not just transactional working relationships.", dimensionId: "collaboration" },
+  { id: "cfi_co2", text: "My team collaborates effectively with other teams because I model cross-functional partnership.", dimensionId: "collaboration" },
+];
+
+// ─── MRW — Manager Resilience & Wellbeing ────────────────────────────────────
+const MRW_DIMENSIONS: MepDimension[] = [
+  { id: "stress_management", label: "Stress Management", description: "Managing personal stress effectively" },
+  { id: "recovery", label: "Recovery", description: "Recovering quickly from setbacks" },
+  { id: "boundary_setting", label: "Boundary Setting", description: "Maintaining healthy work-life boundaries" },
+  { id: "emotional_regulation", label: "Emotional Regulation", description: "Managing emotions under pressure" },
+  { id: "team_wellbeing", label: "Team Wellbeing", description: "Actively supporting team members' wellbeing" },
+  { id: "sustainable_performance", label: "Sustainable Performance", description: "Performing at a high level without burning out" },
+];
+
+const MRW_QUESTIONS: MepQuestion[] = [
+  { id: "mrw_sm1", text: "I have effective strategies for managing my stress levels during high-pressure periods.", dimensionId: "stress_management" },
+  { id: "mrw_sm2", text: "I recognise the early signs of stress in myself and take action before it affects my performance.", dimensionId: "stress_management" },
+  { id: "mrw_sm3", text: "I maintain my effectiveness even when under significant pressure.", dimensionId: "stress_management" },
+  { id: "mrw_re1", text: "When things go wrong, I recover quickly and move forward without dwelling on setbacks.", dimensionId: "recovery" },
+  { id: "mrw_re2", text: "I treat failures and disappointments as data, not as reflections of my worth as a manager.", dimensionId: "recovery" },
+  { id: "mrw_bs1", text: "I protect time for recovery and renewal — I don't run on empty indefinitely.", dimensionId: "boundary_setting" },
+  { id: "mrw_bs2", text: "I set clear boundaries around my availability and communicate them to my team.", dimensionId: "boundary_setting" },
+  { id: "mrw_bs3", text: "I model healthy work habits — I don't implicitly pressure my team to overwork.", dimensionId: "boundary_setting" },
+  { id: "mrw_er1", text: "I stay calm and measured under pressure — I don't let my stress become my team's problem.", dimensionId: "emotional_regulation" },
+  { id: "mrw_er2", text: "I can have difficult conversations without letting my emotions take over.", dimensionId: "emotional_regulation" },
+  { id: "mrw_er3", text: "After an emotionally charged interaction, I reflect and reset before my next conversation.", dimensionId: "emotional_regulation" },
+  { id: "mrw_tw1", text: "I actively check in on my team members' wellbeing — not just their task progress.", dimensionId: "team_wellbeing" },
+  { id: "mrw_tw2", text: "I notice when team members are struggling and create space for that conversation.", dimensionId: "team_wellbeing" },
+  { id: "mrw_sp1", text: "I can sustain high performance over time without sacrificing my health or relationships.", dimensionId: "sustainable_performance" },
+  { id: "mrw_sp2", text: "I make deliberate choices about where I invest my energy — I don't try to do everything.", dimensionId: "sustainable_performance" },
+];
+
 // ─── Diagnostic registry ──────────────────────────────────────────────────────
 export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
   {
@@ -447,6 +560,50 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     estimatedMinutes: 8,
     dimensions: OWI_DIMENSIONS,
     questions: OWI_QUESTIONS,
+    zones: STANDARD_ZONES,
+  },
+  {
+    code: "PST",
+    title: "Psychological Safety & Trust",
+    tagline: "Does your team feel safe to speak up, take risks, and be honest?",
+    description: "Measures the psychological safety and trust levels in your team — voice safety, failure tolerance, inclusion, trust building, vulnerability modelling, and challenge safety.",
+    icon: "🛡️",
+    estimatedMinutes: 8,
+    dimensions: PST_DIMENSIONS,
+    questions: PST_QUESTIONS,
+    zones: STANDARD_ZONES,
+  },
+  {
+    code: "PFM",
+    title: "Performance Management",
+    tagline: "How effectively do you set goals, give feedback, and manage performance?",
+    description: "Assesses your performance management effectiveness — goal setting, ongoing feedback, addressing underperformance, recognition, development focus, and fairness.",
+    icon: "📊",
+    estimatedMinutes: 8,
+    dimensions: PFM_DIMENSIONS,
+    questions: PFM_QUESTIONS,
+    zones: STANDARD_ZONES,
+  },
+  {
+    code: "CFI",
+    title: "Cross-functional Influence",
+    tagline: "How effectively do you lead and influence beyond your team?",
+    description: "Measures your ability to build relationships, align stakeholders, influence without authority, and collaborate effectively across organisational boundaries.",
+    icon: "🌐",
+    estimatedMinutes: 8,
+    dimensions: CFI_DIMENSIONS,
+    questions: CFI_QUESTIONS,
+    zones: STANDARD_ZONES,
+  },
+  {
+    code: "MRW",
+    title: "Manager Resilience & Wellbeing",
+    tagline: "How sustainably are you performing as a manager?",
+    description: "Measures your resilience and wellbeing as a manager — stress management, recovery, boundary setting, emotional regulation, team wellbeing, and sustainable performance.",
+    icon: "💚",
+    estimatedMinutes: 8,
+    dimensions: MRW_DIMENSIONS,
+    questions: MRW_QUESTIONS,
     zones: STANDARD_ZONES,
   },
 ];
