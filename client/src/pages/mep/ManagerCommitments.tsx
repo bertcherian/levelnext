@@ -176,24 +176,93 @@ export default function ManagerCommitments() {
 
         {/* Empty state */}
         {commitments?.length === 0 && !showForm && (
-          <div
-            className="rounded-2xl px-6 py-10 text-center"
-            style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
-          >
-            <Target size={32} className="mx-auto mb-3" style={{ color: "oklch(70% 0.01 248.6)" }} />
-            <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>
-              No commitments yet
-            </h2>
-            <p className="text-xs mb-4" style={{ color: "oklch(55% 0.02 248.6)" }}>
-              Add the management behaviours you want to practise consistently. Track your progress over time.
-            </p>
-            <Button
-              size="sm"
-              style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
-              onClick={() => setShowForm(true)}
+          <div className="space-y-4">
+
+            {/* Structure guide */}
+            <div
+              className="rounded-2xl p-5"
+              style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.04)", border: "1.5px solid oklch(from var(--color-ln-navy) l c h / 0.12)" }}
             >
-              Add Your First Commitment
-            </Button>
+              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--color-ln-gold)" }}>
+                How to write a strong commitment
+              </p>
+              <div className="grid grid-cols-1 gap-2 text-xs" style={{ color: "oklch(35% 0.02 248.6)" }}>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold flex-shrink-0" style={{ color: "var(--color-ln-navy)" }}>1. Behaviour</span>
+                  <span>Name the specific action you will take — not a mindset, but a visible behaviour others can observe.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold flex-shrink-0" style={{ color: "var(--color-ln-navy)" }}>2. Context</span>
+                  <span>Specify when and where — in which meetings, with which team, or on which cadence.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold flex-shrink-0" style={{ color: "var(--color-ln-navy)" }}>3. Why it matters</span>
+                  <span>Connect it to your team's performance or your leadership growth — this keeps you accountable.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Example commitment card */}
+            <div
+              className="rounded-2xl p-5"
+              style={{ background: "white", border: "1.5px dashed #34d399" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                  style={{ background: "oklch(from #34d399 l c h / 0.12)", color: "#059669" }}
+                >
+                  Example
+                </span>
+                <span
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: "oklch(95% 0.01 248.6)", color: "oklch(40% 0.02 248.6)" }}
+                >
+                  Feedback
+                </span>
+              </div>
+              <p className="text-sm font-semibold mb-2" style={{ color: "var(--color-ln-navy)" }}>
+                Give one specific, behaviour-based piece of feedback in every weekly 1-on-1
+              </p>
+              <p className="text-xs leading-relaxed" style={{ color: "oklch(50% 0.02 248.6)" }}>
+                My team often doesn't know what they're doing well or what to improve. By naming a specific behaviour — not just "good job" — I build their self-awareness and help them grow faster. I will do this in every 1-on-1, starting this week.
+              </p>
+              <div className="mt-3 pt-3 border-t flex items-center gap-4" style={{ borderColor: "oklch(92% 0.01 248.6)" }}>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#34d399]" />
+                  <span className="text-[10px]" style={{ color: "oklch(50% 0.02 248.6)" }}>Specific behaviour ✓</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#34d399]" />
+                  <span className="text-[10px]" style={{ color: "oklch(50% 0.02 248.6)" }}>Clear context ✓</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#34d399]" />
+                  <span className="text-[10px]" style={{ color: "oklch(50% 0.02 248.6)" }}>Personal why ✓</span>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div
+              className="rounded-2xl px-6 py-8 text-center"
+              style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+            >
+              <Target size={28} className="mx-auto mb-3" style={{ color: "oklch(70% 0.01 248.6)" }} />
+              <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>
+                No commitments yet
+              </h2>
+              <p className="text-xs mb-4" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                Add the management behaviours you want to practise consistently. Track your progress over time.
+              </p>
+              <Button
+                size="sm"
+                style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
+                onClick={() => setShowForm(true)}
+              >
+                Add Your First Commitment
+              </Button>
+            </div>
           </div>
         )}
 
