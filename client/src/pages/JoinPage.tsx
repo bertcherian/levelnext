@@ -5,7 +5,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
-const LOGO_URL = "/manus-storage/image_LevelNext_logo_transparent_1752248891.png";
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_88851f5c.png";
 
 export default function JoinPage() {
   const [, setLocation] = useLocation();

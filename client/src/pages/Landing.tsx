@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield, Download, FileText } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_88851f5c.png";
 const VIDEO_URL = "/manus-storage/levelnext_explainer_v5_a20a9a42.mp4";
 const POSTER_URL = "/manus-storage/video_poster_9c31f573.jpg";
 

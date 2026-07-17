@@ -158,7 +158,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-ivory)" }}>
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-col items-center leading-tight animate-pulse">
-            <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-14 object-contain" />
+            <img src="/manus-storage/LevelNext_logo_transparent_88851f5c.png" alt="LevelNext" className="h-14 object-contain" />
             <span className="text-xs font-medium tracking-wide mt-1" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </div>
           <p className="text-sm text-ln-muted">Loading your platform…</p>
@@ -172,7 +172,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-navy)" }}>
         <div className="flex flex-col items-center gap-8 p-8 max-w-sm w-full">
           <div className="flex flex-col items-center leading-tight">
-            <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-20 object-contain" />
+            <img src="/manus-storage/LevelNext_logo_transparent_88851f5c.png" alt="LevelNext" className="h-20 object-contain" />
             <span className="text-sm font-medium tracking-wide mt-1" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </div>
           <div className="text-center">
@@ -234,7 +234,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         {/* Drawer header */}
         <div className="flex items-center justify-between px-5 py-5 border-b" style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
           <Link href="/home" onClick={() => setSidebarOpen(false)} className="flex flex-col leading-tight cursor-pointer select-none">
-            <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-10 object-contain" />
+            <img src="/manus-storage/LevelNext_logo_transparent_88851f5c.png" alt="LevelNext" className="h-10 object-contain" />
             <span className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </Link>
           <button
@@ -419,7 +419,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-5 border-b" style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
           <Link href="/home" className="flex flex-col leading-tight cursor-pointer select-none">
-            <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-10 object-contain" />
+            <img src="/manus-storage/LevelNext_logo_transparent_88851f5c.png" alt="LevelNext" className="h-10 object-contain" />
             <span className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </Link>
         </div>
@@ -619,7 +619,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               />
             )}
           </button>
-          <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-8 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(17%) sepia(41%) saturate(800%) hue-rotate(190deg) brightness(85%)" }} />
+          <img src="/manus-storage/LevelNext_logo_transparent_88851f5c.png" alt="LevelNext" className="h-8 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(17%) sepia(41%) saturate(800%) hue-rotate(190deg) brightness(85%)" }} />
           <Avatar className="h-8 w-8">
             <AvatarFallback className="text-xs font-semibold" style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
               {initials}

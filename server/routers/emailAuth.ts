@@ -64,7 +64,7 @@ export const emailAuthRouter = router({
         html: `
           <div style="font-family: Inter, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; background: #f9f7f4;">
             <div style="text-align: center; margin-bottom: 32px;">
-              <img src="https://storage.manus.space/public/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" style="height: 40px;" />
+              <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663042201754/bTOVEpcgUNmrJVXC.png" alt="LevelNext" style="height: 40px;" />
             </div>
             <div style="background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e8e6e0;">
               <h1 style="color: #12345A; font-size: 22px; margin: 0 0 8px;">Sign in to LevelNext</h1>

@@ -90,9 +90,7 @@ export default function ManagerEffectivenessLanding() {
       <nav className="sticky top-0 z-50 border-b" style={{ background: "rgba(15,31,61,0.95)", borderColor: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/">
-            <span className="font-bold text-lg tracking-tight" style={{ color: "#F2B705" }}>
-              Level<span style={{ color: "#ffffff" }}>Next</span>
-            </span>
+            <img src="/manus-storage/LevelNext_logo_transparent_88851f5c.png" alt="LevelNext" className="h-10 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/login">

@@ -13,7 +13,7 @@ import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { CheckCircle2, ArrowRight, Brain, Target, Zap, TrendingUp, Shield } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_88851f5c.png";
 
 const BENEFITS = [
   {

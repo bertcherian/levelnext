@@ -553,8 +553,8 @@ export default function Report() {
           </button>
         </Link>
         <div className="text-center">
-          <p className="text-sm font-bold" style={{ color: "var(--color-ln-navy)" }}>LevelNext</p>
-          <p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>The Leadership Intelligence Platform</p>
+          <img src="/manus-storage/LevelNext_logo_transparent_88851f5c.png" alt="LevelNext" className="h-8 w-auto object-contain mx-auto" style={{ filter: "brightness(0) saturate(100%) invert(17%) sepia(41%) saturate(800%) hue-rotate(190deg) brightness(85%)" }} />
+          <p className="text-xs mt-0.5" style={{ color: "var(--color-ln-muted)" }}>The Leadership Intelligence Platform</p>
         </div>
         <PdfButton style={{ background: pdfDone ? "#16a34a" : "var(--color-ln-navy)", color: "white" }} />
       </header>

@@ -592,14 +592,14 @@
 - [x] Save checkpoint
 
 ## PDF Download, Admin Invites MEP, MEP Landing Page (Jul 17)
-- [ ] Add Download PDF button to LI diagnostic results (Report page) — client-side jsPDF/html2canvas
-- [ ] Add Download PDF button to MEP diagnostic results (ManagerDiagnostics results view)
-- [ ] Update AdminManageInvites: add product selector (Leadership Intelligence / Career Intelligence / Manager Effectiveness) when sending invites
-- [ ] Update invite backend: pass productId when creating invite so user is auto-enrolled on first sign-in
-- [ ] Build public MEP landing page at /manager-effectiveness (hero, 10 diagnostics, 6 platform features, CTA)
-- [ ] Register /manager-effectiveness route in App.tsx
-- [ ] TypeScript clean (zero errors)
-- [ ] Save checkpoint
+- [x] Add Download PDF button to LI diagnostic results (Report page) — client-side jsPDF/html2canvas
+- [x] Add Download PDF button to MEP diagnostic results (ManagerDiagnostics results view)
+- [x] Update AdminManageInvites: add product selector (Leadership Intelligence / Career Intelligence / Manager Effectiveness) when sending invites
+- [x] Update invite backend: pass productId when creating invite so user is auto-enrolled on first sign-in
+- [x] Build public MEP landing page at /manager-effectiveness (hero, 10 diagnostics, 6 platform features, CTA)
+- [x] Register /manager-effectiveness route in App.tsx
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint
 
 ## PDF Download, Admin Invite Product Selector, MEP Landing Page (Jul 17)
 - [x] Add Download PDF button to MEP ManagerDiagnostics results view (jsPDF/html2canvas)

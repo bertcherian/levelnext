@@ -100,7 +100,7 @@ export default function Login() {
           {/* Centered logo above the form */}
           <div className="flex flex-col items-center mb-8">
             <img
-              src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png"
+              src="/manus-storage/LevelNext_logo_transparent_88851f5c.png"
               alt="LevelNext"
               className="h-20 object-contain"
               onError={(e) => {

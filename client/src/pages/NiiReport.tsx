@@ -443,9 +443,7 @@ export default function NiiReport() {
               <ArrowLeft size={16} /> Diagnostics
             </button>
           </Link>
-          <span className="text-sm font-bold tracking-wide" style={{ color: IVORY }}>
-            Navigation Intelligence™
-          </span>
+          <img src="/manus-storage/LevelNext_logo_transparent_88851f5c.png" alt="LevelNext" className="h-8 w-auto object-contain" />
           <div className="flex items-center gap-2">
             <Badge style={{ background: GOLD + "22", color: GOLD, border: `1px solid ${GOLD}40` }}>NII</Badge>
             <button
