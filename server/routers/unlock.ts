@@ -8,8 +8,9 @@
  *                          1 Growth Profile commitment set
  *   Layer 3 — Narrative:   Guide surfaces a personalised "you are ready" message
  *
- * Module sequence: ECI → TII → LII → GCC → (future modules)
+ * Module sequence (rationalised): ECI → LII → LDI → STI
  * ECI is always unlocked (it is the entry point).
+ * TII, NII, GCC removed from active sequence (legacy reports preserved).
  */
 
 import { TRPCError } from "@trpc/server";
@@ -37,8 +38,8 @@ const TIME_GATE_DAYS = 21;
 const MISSION_TARGET = 5;
 const GUIDE_SESSION_TARGET = 3;
 
-// Fallback sequence used if DB is unavailable
-const FALLBACK_MODULE_SEQUENCE = ["ECI", "TII", "LII", "GCC", "LDI", "STI", "NII"];
+// Fallback sequence used if DB is unavailable (rationalised to 4 active modules)
+const FALLBACK_MODULE_SEQUENCE = ["ECI", "LII", "LDI", "STI"];
 type ModuleType = string;
 
 // Helper: get the module sequence for a user's active product from the DB

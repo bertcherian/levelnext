@@ -312,14 +312,38 @@ function PrepResults({ prep }: { prep: { prepData: unknown; targetRole: string; 
 export default function InterviewPrep() {
   const utils = trpc.useUtils();
   const [showForm, setShowForm] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const { data: latestPrep, isLoading } = trpc.interviewPrep.getLatestPrep.useQuery();
+  const { data: prepList } = trpc.interviewPrep.listPreps.useQuery();
+
+  const deleteMutation = trpc.interviewPrep.deletePrep.useMutation({
+    onSuccess: () => {
+      utils.interviewPrep.listPreps.invalidate();
+      utils.interviewPrep.getLatestPrep.invalidate();
+      setSelectedId(null);
+      toast.success("Session deleted");
+    },
+  });
+
+  // Determine which prep to display: selected from history, or latest
+  const displayPrep = selectedId
+    ? prepList?.find((p) => p.id === selectedId) ?? latestPrep
+    : latestPrep;
+
+  function handleGenerated() {
+    setShowForm(false);
+    setSelectedId(null);
+    utils.interviewPrep.getLatestPrep.invalidate();
+    utils.interviewPrep.listPreps.invalidate();
+  }
 
   return (
     <PlatformLayout>
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="flex items-start justify-between gap-4 mb-6">
           <div className="flex items-start gap-4">
             <div
               className="rounded-xl p-3 flex-shrink-0"
@@ -336,17 +360,71 @@ export default function InterviewPrep() {
               </p>
             </div>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowForm(!showForm)}
-            className="gap-2 flex-shrink-0"
-          >
-            <Plus size={14} />
-            New Prep
-          </Button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {(prepList?.length ?? 0) > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHistory(!showHistory)}
+                className="gap-2"
+              >
+                <RefreshCw size={14} />
+                History ({prepList?.length})
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setShowForm(!showForm); setSelectedId(null); }}
+              className="gap-2"
+            >
+              <Plus size={14} />
+              New Prep
+            </Button>
+          </div>
         </div>
+
+        {/* History Drawer */}
+        {showHistory && (prepList?.length ?? 0) > 0 && (
+          <div
+            className="rounded-xl border mb-6 overflow-hidden"
+            style={{ background: "var(--color-card)", borderColor: "var(--color-ln-border)" }}
+          >
+            <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: "var(--color-ln-border)" }}>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>Past Sessions</p>
+              <button onClick={() => setShowHistory(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">×</button>
+            </div>
+            <div className="divide-y" style={{ borderColor: "var(--color-ln-border)" }}>
+              {prepList?.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between px-4 py-3 hover:bg-black/4 transition-colors cursor-pointer"
+                  style={{ background: selectedId === p.id ? "oklch(from var(--color-ln-navy) l c h / 0.06)" : undefined }}
+                  onClick={() => { setSelectedId(p.id); setShowForm(false); setShowHistory(false); }}
+                >
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: "var(--color-ln-navy)" }}>
+                      {(p as any).targetRole} @ {(p as any).targetCompany}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date((p as any).createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} · {(p as any).interviewType}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {selectedId === p.id && <Badge variant="outline" className="text-[10px]">Viewing</Badge>}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteMutation.mutate({ id: p.id }); }}
+                      className="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                      title="Delete session"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Form */}
         {(showForm || !latestPrep) && !isLoading && (
@@ -357,7 +435,7 @@ export default function InterviewPrep() {
             <p className="text-sm font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>
               New Interview Prep Session
             </p>
-            <InterviewPrepForm onGenerated={() => { setShowForm(false); utils.interviewPrep.getLatestPrep.invalidate(); }} />
+            <InterviewPrepForm onGenerated={handleGenerated} />
           </div>
         )}
 
@@ -366,20 +444,27 @@ export default function InterviewPrep() {
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
           </div>
-        ) : latestPrep && !showForm ? (
+        ) : displayPrep && !showForm ? (
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
-                  {latestPrep.targetRole} @ {latestPrep.targetCompany}
+                  {(displayPrep as any).targetRole} @ {(displayPrep as any).targetCompany}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(latestPrep.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  {new Date((displayPrep as any).createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                 </p>
               </div>
-              <Badge variant="outline" className="text-xs capitalize">{latestPrep.interviewType}</Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs capitalize">{(displayPrep as any).interviewType}</Badge>
+                {selectedId && (
+                  <Button variant="outline" size="sm" onClick={() => setSelectedId(null)} className="text-xs gap-1">
+                    View Latest
+                  </Button>
+                )}
+              </div>
             </div>
-            <PrepResults prep={latestPrep} />
+            <PrepResults prep={displayPrep as any} />
           </div>
         ) : !showForm ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">

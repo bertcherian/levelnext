@@ -36,34 +36,14 @@ const LI_MODULES = [
     color: "#1e3a5f",
   },
   {
-    id: "TII",
-    route: "tii",
-    label: "Leadership Time Intelligence",
-    shortLabel: "TII",
-    tagline: "Your calendar reveals your leadership system.",
-    description: "Measure your Priority Clarity, Focus & Deep Work, Execution Discipline, Delegation & Letting Go, and Boundary Management — the five dimensions that determine whether you lead time or time leads you.",
-    questions: "30 questions · ~10 minutes",
-    color: "#1a3d5c",
-  },
-  {
     id: "LII",
     route: "lii",
-    label: "Leadership Influence Intelligence",
+    label: "Leadership Influence & Navigation Intelligence",
     shortLabel: "LII",
-    tagline: "How effectively do you lead through influence rather than authority?",
-    description: "Measure your trust capital, stakeholder alignment, political intelligence, coalition building, and your ability to create followership without relying on positional power.",
-    questions: "30 questions · ~10 minutes",
+    tagline: "How effectively do you lead through influence, navigate complexity, and advance important work?",
+    description: "Measure your trust capital, stakeholder alignment, decision influence, coalition building, organizational navigation, political intelligence, decision pathway mastery, strategic timing, and ethical leadership navigation.",
+    questions: "40 questions · ~12 minutes",
     color: "#1a4a7a",
-  },
-  {
-    id: "GCC",
-    route: "gcc",
-    label: "GCC Readiness",
-    shortLabel: "GCC",
-    tagline: "Is your GCC operating as a strategic partner or a delivery arm?",
-    description: "Evaluate your organisation's readiness across Strategic Influence, Operating Excellence, Leadership & Talent, Innovation & AI, and Enterprise Alignment.",
-    questions: "50 questions · ~15 minutes",
-    color: "#0f2d4a",
   },
   {
     id: "LDI",
@@ -86,14 +66,15 @@ const LI_MODULES = [
     color: "#1e3a5f",
   },
   {
-    id: "NII",
-    route: "nii",
-    label: "Navigation Intelligence",
-    shortLabel: "NII",
-    tagline: "How effectively do you navigate complex organizational systems and political landscapes?",
-    description: "Measure your Organizational Awareness, Stakeholder Navigation, Relationship Capital, Political Navigation, Decision Pathway Intelligence, Enterprise Alignment, Coalition Building, Reputation & Credibility, Timing & Strategic Judgment, and Ethical Leadership Navigation.",
-    questions: "30 questions · ~10 minutes",
-    color: "#1a3a5c",
+    id: "GCC",
+    route: "org-intelligence",
+    label: "GCC Readiness",
+    shortLabel: "GCC",
+    tagline: "Is your GCC operating as a strategic partner or a delivery arm?",
+    description: "Evaluate your organisation's readiness across Strategic Influence, Operating Excellence, Leadership & Talent, Innovation & AI, and Enterprise Alignment. Part of the Organisation Intelligence platform.",
+    questions: "Coming soon",
+    color: "#0f2d4a",
+    comingSoon: true,
   },
 ];
 
@@ -110,44 +91,14 @@ const CI_MODULES = [
     color: "#D4AF37",
   },
   {
-    id: "CRS",
-    route: "crs",
-    label: "Career Resilience Intelligence",
-    shortLabel: "CRS",
-    tagline: "Bounce forward, not just back.",
-    description: "Measure your ability to adapt and recover when career plans change. Covers your adaptability under uncertainty, emotional recovery speed, resourcefulness in setbacks, and your capacity to pivot with purpose.",
-    questions: "30 questions · ~10 minutes",
-    color: "#3B82F6",
-  },
-  {
     id: "CMK",
     route: "cmk",
-    label: "Career Marketability Intelligence",
+    label: "Career Marketability & Optionality Intelligence",
     shortLabel: "CMK",
-    tagline: "How visible, valued, and in-demand are you in the market?",
-    description: "Measure how visible and valuable you are to the market. Covers your external visibility, skill relevance, network strength, thought leadership presence, and how recruiters and decision-makers perceive your brand.",
+    tagline: "How visible, valued, and in-demand are you — and how many real options do you have?",
+    description: "Measure your external visibility, skill relevance, network strength, thought leadership presence, cross-functional mobility, entrepreneurial readiness, and the depth of your career safety net.",
     questions: "30 questions · ~10 minutes",
     color: "#22C55E",
-  },
-  {
-    id: "CST",
-    route: "cst",
-    label: "Career Strategy Intelligence",
-    shortLabel: "CST",
-    tagline: "Are you playing the long game — or just reacting?",
-    description: "Measure the clarity and ambition of your 3–5 year career plan. Covers your strategic career vision, goal-setting discipline, decision-making framework, and your ability to navigate career crossroads with intention.",
-    questions: "30 questions · ~10 minutes",
-    color: "#F59E0B",
-  },
-  {
-    id: "CAO",
-    route: "cao",
-    label: "Career Optionality Intelligence",
-    shortLabel: "CAO",
-    tagline: "How many real options do you have beyond your current role?",
-    description: "Measure how many real options you have beyond your current role. Covers your portfolio of opportunities, cross-functional mobility, entrepreneurial readiness, and the depth of your career safety net.",
-    questions: "30 questions · ~10 minutes",
-    color: "#8B5CF6",
   },
   {
     id: "AIR",
@@ -286,11 +237,41 @@ function LiModuleCard({
   const [showGates, setShowGates] = useState(false);
   const [narrativeDismissed, setNarrativeDismissed] = useState(false);
 
+  const isComingSoon = (mod as any).comingSoon === true;
   const done = completedModules.includes(mod.id);
   const state: UnlockState = status?.state ?? (mod.id === "ECI" ? "unlocked" : "not_started");
   const isLocked = state === "locked" || state === "not_started";
   const isUnlocked = state === "unlocked" || state === "completed";
   const narrativeReady = !!(status?.narrativeReady && !narrativeDismissed && !status.narrativeShown);
+
+  // Coming-soon modules (e.g. GCC → Organisation Intelligence)
+  if (isComingSoon) {
+    return (
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ background: "var(--color-ln-ivory)", border: "1px dashed var(--color-ln-border)", opacity: 0.75 }}
+      >
+        <div className="flex">
+          <div className="w-1.5 flex-shrink-0" style={{ background: "var(--color-ln-border)" }} />
+          <div className="flex-1 p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded" style={{ background: "var(--color-ln-border)", color: "var(--color-ln-muted)" }}>{mod.shortLabel}</span>
+              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded" style={{ background: "#0f2d4a18", color: "#0f2d4a" }}>Coming Soon</span>
+            </div>
+            <h2 className="text-lg font-bold mb-1" style={{ color: "var(--color-ln-muted)" }}>{mod.label}</h2>
+            <p className="text-sm font-medium mb-2" style={{ color: "var(--color-ln-muted)" }}>{mod.tagline}</p>
+            <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--color-ln-muted)" }}>{mod.description}</p>
+            <Link href="/org-intelligence">
+              <Button variant="outline" className="font-medium text-sm" style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-navy)" }}>
+                View Organisation Intelligence Platform
+                <ArrowRight size={14} className="ml-1.5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

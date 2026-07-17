@@ -224,7 +224,114 @@ export const LII_DIMENSIONS = [
   },
 ];
 
-// ─── 30 Questions (3 per dimension, in dimension order) ──────────────────────
+// ─── Navigation dimensions (merged from NII — 5 most differentiated) ──────────
+
+const LII_NAVIGATION_DIMENSIONS = [
+  {
+    id: "political_navigation",
+    name: "Political Navigation",
+    shortName: "Political Nav",
+    definition: "The ability to ethically read and navigate organizational politics — managing competing agendas, understanding power, and working across silos without compromising integrity.",
+    whyItMatters: "Every organization has politics. Leaders who ignore them get blindsided. Leaders who master ethical political navigation advance important work while strengthening trust and relationships.",
+    questionIds: [31, 32],
+    scoring: {
+      excellent: "Masterful political navigator. You read competing agendas, understand informal power, and advance important work ethically without creating unnecessary enemies.",
+      good: "Competent political navigator. You generally read organizational dynamics well, though complex multi-stakeholder situations may still catch you off guard.",
+      developing: "Developing political awareness. You may be surprised by organizational resistance or find yourself on the wrong side of informal power dynamics.",
+      atRisk: "Politically blind. You likely ignore organizational politics entirely, which means important initiatives stall or fail for reasons that have nothing to do with their merit.",
+    },
+    development: {
+      strengths: "Reading competing agendas and navigating them with integrity.",
+      blindSpots: "Assuming that good ideas win on merit alone; avoiding all politics rather than navigating them ethically.",
+      practicalActions: "Before your next major initiative, map the competing agendas. Identify who benefits, who loses, and who has informal veto power. Design your engagement strategy accordingly.",
+      coachingQuestion: "Where are you currently letting organizational politics block important work that you could be navigating more skillfully?",
+    },
+  },
+  {
+    id: "decision_pathway",
+    name: "Decision Pathway Intelligence",
+    shortName: "Decision Pathways",
+    definition: "Understanding how decisions actually get made — including formal approvals, informal sign-offs, sequencing, and the role of executive sponsorship.",
+    whyItMatters: "Many smart leaders waste months pursuing the wrong decision pathway. Decision Pathway Intelligence ensures proposals reach the right people in the right order at the right moment.",
+    questionIds: [33, 34],
+    scoring: {
+      excellent: "Expert decision pathway navigator. You map the real decision pathway before investing in a proposal and secure executive sponsorship before formal submission.",
+      good: "Solid decision pathway awareness. You generally understand how decisions get made, though you occasionally miss informal sign-offs or misjudge sequencing.",
+      developing: "Inconsistent decision pathway navigation. You may invest significant effort in proposals that stall because you did not understand the real approval process.",
+      atRisk: "Decision pathway blind spot. Important proposals frequently stall or fail because you are pursuing the wrong pathway or missing key informal approvals.",
+    },
+    development: {
+      strengths: "Mapping real decision pathways and sequencing approvals to build momentum.",
+      blindSpots: "Assuming formal processes reflect how decisions actually get made; skipping informal pre-wiring.",
+      practicalActions: "For your next major proposal, map the actual decision pathway: who has formal authority, who has informal veto power, and what sequence of conversations needs to happen before the formal submission.",
+      coachingQuestion: "Where have you recently invested significant effort in a proposal that stalled — and what did you learn about the real decision pathway?",
+    },
+  },
+  {
+    id: "timing_judgment",
+    name: "Timing & Strategic Judgment",
+    shortName: "Timing & Judgment",
+    definition: "Knowing when to act, when to wait, which battles to choose, and how to sequence initiatives for maximum impact.",
+    whyItMatters: "Timing often determines success more than the quality of the idea itself. Strategic judgment separates leaders who consistently move important work forward from those who are perpetually blocked.",
+    questionIds: [35, 36],
+    scoring: {
+      excellent: "Exceptional strategic timing. You read organizational readiness accurately, choose battles wisely, and sequence initiatives to build momentum rather than create overload.",
+      good: "Good strategic timing. You generally read the room well, though you occasionally push initiatives at the wrong moment or invest political capital in the wrong battles.",
+      developing: "Developing timing awareness. You may push important initiatives forward when the organization is not ready, or hold back when the window is open.",
+      atRisk: "Poor strategic timing. You frequently face more resistance than your ideas deserve because you are launching at the wrong moment or fighting the wrong battles.",
+    },
+    development: {
+      strengths: "Reading organizational readiness and choosing the right moment to act.",
+      blindSpots: "Impatience that pushes initiatives before the organization is ready; or excessive caution that misses open windows.",
+      practicalActions: "Before your next major initiative, assess organizational readiness: Is the leadership team aligned? Is there bandwidth? Is there a recent win or crisis that creates an opening? Time your launch accordingly.",
+      coachingQuestion: "Where are you currently pushing an initiative that the organization is not yet ready for — and what would it take to create the conditions for success first?",
+    },
+  },
+  {
+    id: "org_awareness",
+    name: "Organizational Awareness",
+    shortName: "Org Awareness",
+    definition: "The ability to accurately read how the organization really works — beyond the org chart.",
+    whyItMatters: "Leaders who understand formal structures, informal networks, hidden norms, and decision pathways move initiatives forward faster and with less resistance.",
+    questionIds: [37, 38],
+    scoring: {
+      excellent: "Exceptional organizational reader. You map informal influence networks, understand unwritten rules, and track how decisions actually get made vs. how they should be made.",
+      good: "Strong organizational awareness. You generally read the organization well, though you may occasionally miss subtle informal dynamics or cultural norms.",
+      developing: "Developing organizational awareness. You may be surprised by how decisions get made or find yourself navigating based on the formal org chart rather than the real one.",
+      atRisk: "Limited organizational awareness. You primarily operate based on formal structures and are frequently surprised by how things actually work in practice.",
+    },
+    development: {
+      strengths: "Reading informal influence networks and understanding the unwritten rules of organizational life.",
+      blindSpots: "Assuming the formal org chart reflects how influence actually flows; missing the informal networks that shape decisions.",
+      practicalActions: "Map the informal influence network for your most important current initiative. Who are the real decision-makers, influencers, and gatekeepers — regardless of title?",
+      coachingQuestion: "How well do you really understand the informal organization — and what would you discover if you mapped it honestly?",
+    },
+  },
+  {
+    id: "ethical_navigation",
+    name: "Ethical Leadership Navigation",
+    shortName: "Ethical Nav",
+    definition: "Navigating organizational complexity with integrity, transparency, fairness, and courage — developing others while preserving trust.",
+    whyItMatters: "Long-term organizational success requires leaders who navigate with integrity, not manipulation. This dimension ensures influence capability develops ethical leaders rather than political operators.",
+    questionIds: [39, 40],
+    scoring: {
+      excellent: "Exemplary ethical navigator. You navigate organizational complexity without compromising your values and actively develop others' navigation capabilities.",
+      good: "Strong ethical navigation. You generally maintain integrity under organizational pressure, though you may occasionally rationalize shortcuts that compromise your standards.",
+      developing: "Developing ethical navigation. You may find organizational pressure testing your values in ways that are not always comfortable.",
+      atRisk: "Ethical navigation risk. You may be using organizational knowledge and relationships in ways that benefit your position more than the broader organization.",
+    },
+    development: {
+      strengths: "Navigating organizational dynamics without compromising personal values.",
+      blindSpots: "Rationalizing political behavior as 'just how organizations work'; failing to develop others' navigation capabilities.",
+      practicalActions: "Identify one recent situation where you navigated organizational dynamics in a way you would not be comfortable defending publicly. What would you do differently?",
+      coachingQuestion: "Where is organizational pressure currently testing your values — and how are you choosing to respond?",
+    },
+  },
+];
+
+export const LII_DIMENSIONS_EXTENDED = [...LII_DIMENSIONS, ...LII_NAVIGATION_DIMENSIONS];
+
+// ─── 40 Questions (2 per navigation dimension added; original 30 kept) ─────────
 // questionIds in dimensions array reference these 1-indexed IDs
 
 export const LII_QUESTIONS = [
@@ -259,6 +366,17 @@ export const LII_QUESTIONS = [
   { id: 28, text: "I can hold firm on outcomes while staying constructive with people who disagree.", dimensionId: "conflict_resistance" },
   { id: 29, text: "I notice when my preferred influence style is not working and change approach quickly.", dimensionId: "adaptive_influence" },
   { id: 30, text: "I am seen as someone who increases the quality of decisions and collaboration around me.", dimensionId: "leadership_reputation" },
+  // Navigation dimensions (merged from NII)
+  { id: 31, text: "I can read competing agendas in my organization and navigate them without unnecessarily taking sides or creating enemies.", dimensionId: "political_navigation" },
+  { id: 32, text: "I understand where power actually sits in my organization — including informal power — and work with it ethically to advance important work.", dimensionId: "political_navigation" },
+  { id: 33, text: "Before investing significant effort in a proposal, I map the actual decision pathway — including informal sign-offs and executive sponsorship requirements.", dimensionId: "decision_pathway" },
+  { id: 34, text: "I sequence my approvals strategically to build momentum rather than triggering resistance by going to the wrong person first.", dimensionId: "decision_pathway" },
+  { id: 35, text: "I read organizational readiness before launching major initiatives — I know when the timing is right and when to wait.", dimensionId: "timing_judgment" },
+  { id: 36, text: "I choose my battles carefully — I invest my political capital in the initiatives that matter most and let smaller issues go.", dimensionId: "timing_judgment" },
+  { id: 37, text: "When I join a new team or initiative, I actively map the informal influence networks — not just the reporting lines — before making major moves.", dimensionId: "org_awareness" },
+  { id: 38, text: "I can identify the unwritten rules and cultural norms that shape how decisions are actually made in my organization.", dimensionId: "org_awareness" },
+  { id: 39, text: "I navigate organizational complexity without compromising my values — I find ways to advance important work that I would be comfortable defending publicly.", dimensionId: "ethical_navigation" },
+  { id: 40, text: "I actively develop others' ability to navigate the organization effectively — I share my knowledge of how things work rather than keeping it as a personal advantage.", dimensionId: "ethical_navigation" },
 ];
 
 // ─── Influence Archetypes ─────────────────────────────────────────────────────
@@ -394,6 +512,6 @@ export function getScoreBandColor(score: number): string {
   }[band];
 }
 
-export type LIIDimension = typeof LII_DIMENSIONS[number];
+export type LIIDimension = typeof LII_DIMENSIONS_EXTENDED[number];
 export type LIIQuestion = typeof LII_QUESTIONS[number];
 export type LIIArchetype = typeof LII_ARCHETYPES[number];

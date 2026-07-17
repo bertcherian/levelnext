@@ -515,6 +515,18 @@ export default function CareerAccess() {
                         ))}
                       </div>
                     )}
+                    {Array.isArray(brief.radarAlerts) && (brief.radarAlerts as Record<string, unknown>[]).length > 0 && (
+                      <div className="flex items-start gap-2 flex-wrap">
+                        <span className="text-[9px] font-bold uppercase tracking-widest mt-0.5" style={{ color: "oklch(55% 0.02 248.6)" }}>Radar:</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(brief.radarAlerts as Record<string, unknown>[]).map((r, i) => (
+                            <span key={i} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: String(r.urgency) === "high" ? "oklch(from #f59e0b l c h / 0.2)" : "oklch(from white l c h / 0.1)", color: String(r.urgency) === "high" ? "#fcd34d" : "oklch(75% 0.02 248.6)" }}>
+                              {String(r.company)} — {String(r.signal)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

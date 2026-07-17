@@ -14,13 +14,14 @@ import {
   getEciZone, assignEciArchetype,
 } from "../../shared/modules/eciData";
 import {
-  LII_QUESTIONS, LII_DIMENSIONS, LII_ARCHETYPES,
+  LII_QUESTIONS, LII_DIMENSIONS_EXTENDED as LII_DIMENSIONS, LII_ARCHETYPES,
   getScoreBand,
 } from "../../shared/modules/liiData";
 import {
   GCC_MODULES, computeModuleScore, computeGccReadinessScore,
   getReadinessZone, assignArchetype as assignGccArchetype,
 } from "../../shared/modules/gccData";
+// TII removed in rationalisation — kept import for backward compat with existing reports
 import {
   TII_QUESTIONS, TII_DIMENSIONS,
   scoreTii,
@@ -36,6 +37,7 @@ import {
 import {
   getCiQuestions, getCiDimensions, getCiModule, scoreCiModule,
 } from "../../shared/modules/careerData";
+// NII merged into LII — kept import for backward compat with existing reports
 import {
   NII_QUESTIONS, NII_DIMENSIONS,
   scoreNii,

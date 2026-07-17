@@ -22,8 +22,11 @@ type OrgContext = {
 // ─── Career Strategist system prompt ───────────────────────────────────────
 const CAREER_STRATEGIST_PROMPT = (ciData: Record<string, any> | null, userName: string): string => {
   const moduleLabels: Record<string, string> = {
-    CPI: "Career Positioning", CRS: "Career Resilience", CMK: "Career Marketability",
-    CST: "Career Strategy", CAO: "Career Optionality", AIR: "AI Readiness",
+    CPI: "Career Positioning",
+    CMK: "Career Marketability & Optionality",
+    AIR: "AI Readiness",
+    // Legacy modules kept for backward compat with existing reports
+    CRS: "Career Resilience", CST: "Career Strategy", CAO: "Career Optionality",
   };
   const moduleContext = ciData && Object.keys(ciData).length > 0
     ? Object.entries(ciData).map(([key, mod]: [string, any]) => {
@@ -79,13 +82,14 @@ const GUIDE_SYSTEM_PROMPT = (graph: LeadershipGraph | null, userName: string, or
 
   const moduleContext = Object.keys(modules).length > 0
     ? Object.entries(modules).map(([key, mod]: [string, any]) => {
-        const moduleLabel = key === 'ECI' ? 'Executive Communication'
-        : key === 'LII' ? 'Leadership Influence'
-        : key === 'TII' ? 'Leadership Time Intelligence'
+        const moduleLabel = key === 'ECI' ? 'Executive Communication Intelligence'
+        : key === 'LII' ? 'Leadership Influence & Navigation Intelligence'
         : key === 'LDI' ? 'Leadership Derailment Intelligence'
         : key === 'STI' ? 'Strategic Thinking Intelligence'
-        : key === 'NII' ? 'Navigation Intelligence'
-        : key === 'GCC' ? 'GCC Readiness'
+        // Legacy modules kept for backward compat with existing reports
+        : key === 'TII' ? 'Leadership Time Intelligence'
+        : key === 'NII' ? 'Navigation Intelligence (legacy — now merged into LII)'
+        : key === 'GCC' ? 'GCC Readiness (Organisation Intelligence platform)'
         : key;
         const lines = [
           `[${moduleLabel} Diagnostic]`,

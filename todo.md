@@ -763,3 +763,34 @@
 - [x] UI: Counter-offer Scripts (expandable per scenario)
 - [x] UI: Decision Framework (5-dimension scoring with progress bars)
 - [x] TypeScript check and checkpoint save
+
+## Diagnostic Rationalisation — Pareto Reduction (Jul 18)
+
+### Phase 1: Remove / Hide diagnostics
+- [x] Diagnostics.tsx: Remove TII, CRS, CST from CI_MODULES and LI_MODULES lists
+- [x] Diagnostics.tsx: Move GCC to a "coming soon" locked card with Organisation Intelligence label
+- [x] Guide/Growth Profile: Remove references to removed modules
+
+### Phase 2: Merge LII + NII → Unified LII
+- [x] liiData.ts: Add 5 NII dimensions (Political Navigation, Decision Pathway, Timing & Judgment, Org Awareness, Reputation & Credibility) as new LII dimensions
+- [x] liiData.ts: Add 10 NII questions (2 per new dimension) to LII question set
+- [x] Update LII label to "Leadership Influence & Navigation Intelligence"
+- [x] Update Diagnostics.tsx LII entry with merged description
+- [x] Remove NII from Diagnostics.tsx
+
+### Phase 3: Merge CMK + CAO → Unified CMK
+- [x] Update CMK label to "Career Marketability & Optionality Intelligence"
+- [x] Update Diagnostics.tsx CMK entry with merged description
+- [x] Remove CAO from Diagnostics.tsx
+
+### Phase 4: Organisation Intelligence placeholder
+- [x] Create /org-intelligence placeholder page
+- [x] Add Organisation Intelligence route to App.tsx
+- [x] GCC card links to /org-intelligence with "Coming Soon" state
+
+### Steps 1–3 (Executive Opportunity System)
+- [x] Step 1: History view for Interview Prep (past sessions drawer with delete)
+- [x] Step 1: History view for Negotiation Intelligence (past sessions drawer with delete)
+- [x] Step 2: Radar signal card → "Draft Outreach" button → pre-fills Outreach Engine with company + context banner
+- [x] Step 3: Wire top Radar signals into Chief of Staff daily briefing (radarAlerts section)
+- [x] TypeScript check (0 errors) and checkpoint save

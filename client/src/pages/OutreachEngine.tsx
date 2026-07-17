@@ -29,6 +29,7 @@ import {
   Clock,
   Users,
   Zap,
+  Radio,
 } from "lucide-react";
 
 // ─── Copy Button ─────────────────────────────────────────────────────────────
@@ -339,7 +340,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ─── Outreach Drafts Tab ──────────────────────────────────────────────────────
-function OutreachDraftsTab() {
+function OutreachDraftsTab({ prefillCompany = "" }: { prefillCompany?: string }) {
   const utils = trpc.useUtils();
   const { data: drafts, isLoading } = trpc.outreachEngine.listOutreachDrafts.useQuery();
   const { data: contacts } = trpc.outreachEngine.listContactsForOutreach.useQuery();
@@ -349,12 +350,20 @@ function OutreachDraftsTab() {
   const [form, setForm] = useState({
     contactName: "",
     contactTitle: "",
-    contactCompany: "",
+    contactCompany: prefillCompany,
     outreachGoal: "",
     contactId: undefined as number | undefined,
     howWeKnowEachOther: "",
     sharedHistory: "",
   });
+
+  // Sync prefillCompany into form when arriving from Radar signal
+  useEffect(() => {
+    if (prefillCompany) {
+      setForm((f) => ({ ...f, contactCompany: prefillCompany }));
+      setShowForm(true);
+    }
+  }, [prefillCompany]);
 
   const generateMutation = trpc.outreachEngine.generateOutreachDraft.useMutation({
     onSuccess: (data) => {
@@ -734,13 +743,19 @@ function OutreachDraftsTab() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function OutreachEngine() {
   const [activeTab, setActiveTab] = useState("brand");
+  const [prefillCompany, setPrefillCompany] = useState("");
+  const [prefillContext, setPrefillContext] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
+    const company = params.get("company") ?? "";
+    const context = params.get("context") ?? "";
     if (tab === "outreach" || tab === "brand") {
       setActiveTab(tab);
     }
+    if (company) setPrefillCompany(company);
+    if (context) setPrefillContext(context);
   }, []);
 
   return (
@@ -764,6 +779,22 @@ export default function OutreachEngine() {
           </div>
         </div>
 
+        {/* Radar signal context banner */}
+        {prefillCompany && activeTab === "outreach" && (
+          <div
+            className="rounded-xl p-4 mb-6 flex items-start gap-3"
+            style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.08)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.3)" }}
+          >
+            <Radio size={16} style={{ color: "var(--color-ln-gold)", flexShrink: 0, marginTop: 2 }} />
+            <div className="flex-1">
+              <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Radar Signal: {prefillCompany}</p>
+              {prefillContext && <p className="text-xs text-muted-foreground mt-0.5">{prefillContext}</p>}
+              <p className="text-xs mt-1" style={{ color: "var(--color-ln-muted)" }}>Company pre-filled from Opportunity Radar. Fill in the contact details below to generate your outreach.</p>
+            </div>
+            <button onClick={() => { setPrefillCompany(""); setPrefillContext(""); }} className="text-muted-foreground hover:text-foreground text-lg leading-none">×</button>
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="brand" className="gap-2">
@@ -779,7 +810,7 @@ export default function OutreachEngine() {
           </TabsContent>
 
           <TabsContent value="outreach">
-            <OutreachDraftsTab />
+            <OutreachDraftsTab prefillCompany={prefillCompany} />
           </TabsContent>
         </Tabs>
       </div>

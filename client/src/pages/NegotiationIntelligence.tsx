@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Lightbulb,
+  Trash2,
 } from "lucide-react";
 
 // ─── Copy Button ─────────────────────────────────────────────────────────────
@@ -333,14 +334,37 @@ function StrategyResults({ session }: { session: NegotiationSessionData }) {
 export default function NegotiationIntelligence() {
   const utils = trpc.useUtils();
   const [showForm, setShowForm] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const { data: latestSession, isLoading } = trpc.negotiation.getLatestSession.useQuery();
+  const { data: sessionList } = trpc.negotiation.listSessions.useQuery();
+
+  const deleteMutation = trpc.negotiation.deleteSession.useMutation({
+    onSuccess: () => {
+      utils.negotiation.listSessions.invalidate();
+      utils.negotiation.getLatestSession.invalidate();
+      setSelectedId(null);
+      toast.success("Session deleted");
+    },
+  });
+
+  const displaySession = selectedId
+    ? sessionList?.find((s) => s.id === selectedId) ?? latestSession
+    : latestSession;
+
+  function handleGenerated() {
+    setShowForm(false);
+    setSelectedId(null);
+    utils.negotiation.getLatestSession.invalidate();
+    utils.negotiation.listSessions.invalidate();
+  }
 
   return (
     <PlatformLayout>
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="flex items-start justify-between gap-4 mb-6">
           <div className="flex items-start gap-4">
             <div
               className="rounded-xl p-3 flex-shrink-0"
@@ -357,17 +381,71 @@ export default function NegotiationIntelligence() {
               </p>
             </div>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowForm(!showForm)}
-            className="gap-2 flex-shrink-0"
-          >
-            <Plus size={14} />
-            New Analysis
-          </Button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {(sessionList?.length ?? 0) > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHistory(!showHistory)}
+                className="gap-2"
+              >
+                <RefreshCw size={14} />
+                History ({sessionList?.length})
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setShowForm(!showForm); setSelectedId(null); }}
+              className="gap-2"
+            >
+              <Plus size={14} />
+              New Analysis
+            </Button>
+          </div>
         </div>
+
+        {/* History Drawer */}
+        {showHistory && (sessionList?.length ?? 0) > 0 && (
+          <div
+            className="rounded-xl border mb-6 overflow-hidden"
+            style={{ background: "var(--color-card)", borderColor: "var(--color-ln-border)" }}
+          >
+            <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: "var(--color-ln-border)" }}>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>Past Analyses</p>
+              <button onClick={() => setShowHistory(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">×</button>
+            </div>
+            <div className="divide-y" style={{ borderColor: "var(--color-ln-border)" }}>
+              {sessionList?.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between px-4 py-3 hover:bg-black/4 transition-colors cursor-pointer"
+                  style={{ background: selectedId === s.id ? "oklch(from var(--color-ln-navy) l c h / 0.06)" : undefined }}
+                  onClick={() => { setSelectedId(s.id); setShowForm(false); setShowHistory(false); }}
+                >
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: "var(--color-ln-navy)" }}>
+                      {s.role} @ {s.company}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(s.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} · ₹{s.offeredSalary} LPA
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {selectedId === s.id && <Badge variant="outline" className="text-[10px]">Viewing</Badge>}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteMutation.mutate({ id: s.id }); }}
+                      className="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                      title="Delete session"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Form */}
         {(showForm || !latestSession) && !isLoading && (
@@ -378,7 +456,7 @@ export default function NegotiationIntelligence() {
             <p className="text-sm font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>
               Analyse an Offer
             </p>
-            <NegotiationForm onGenerated={() => { setShowForm(false); utils.negotiation.getLatestSession.invalidate(); }} />
+            <NegotiationForm onGenerated={handleGenerated} />
           </div>
         )}
 
@@ -387,22 +465,29 @@ export default function NegotiationIntelligence() {
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
           </div>
-        ) : latestSession && !showForm ? (
+        ) : displaySession && !showForm ? (
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
-                  {latestSession.role} @ {latestSession.company}
+                  {(displaySession as any).role} @ {(displaySession as any).company}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(latestSession.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  {new Date((displaySession as any).createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                 </p>
               </div>
-              <Badge variant="outline" className="text-xs">
-                ₹{latestSession.offeredSalary} LPA offered
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">
+                  ₹{(displaySession as any).offeredSalary} LPA offered
+                </Badge>
+                {selectedId && (
+                  <Button variant="outline" size="sm" onClick={() => setSelectedId(null)} className="text-xs gap-1">
+                    View Latest
+                  </Button>
+                )}
+              </div>
             </div>
-            <StrategyResults session={latestSession} />
+            <StrategyResults session={displaySession as any} />
           </div>
         ) : !showForm ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">

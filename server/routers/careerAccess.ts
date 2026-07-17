@@ -15,6 +15,7 @@ import {
   users,
   careerAccessScoreSnapshots,
   careerAccessBriefings,
+  opportunityRadarSignals,
 } from "../../drizzle/schema";
 
 // ─── Executive Opportunity System™ Router ──────────────────────────────────────
@@ -859,6 +860,18 @@ Key achievements: ${profile?.keyAchievements ? "Documented" : "Not documented"}`
       r.nextActionDue && new Date(r.nextActionDue) < now
     );
 
+    // Fetch top 3 high/medium urgency radar signals (not dismissed)
+    const radarSignals = await db.select().from(opportunityRadarSignals)
+      .where(and(
+        eq(opportunityRadarSignals.userId, ctx.user.id),
+        eq(opportunityRadarSignals.dismissed, false)
+      ))
+      .orderBy(desc(opportunityRadarSignals.createdAt))
+      .limit(10);
+    const topSignals = radarSignals
+      .filter(s => s.urgency === "high" || s.urgency === "medium")
+      .slice(0, 3);
+
     const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
     const firstName = user?.name?.split(" ")[0] ?? "there";
 
@@ -872,8 +885,13 @@ Return ONLY valid JSON:
   "followUpsDue": [{"company": "Acme Corp", "action": "Follow up on intro request", "daysOverdue": 3}],
   "momentumSignal": "One positive signal or momentum indicator from their data.",
   "weeklyOutlook": "One sentence on what this week should focus on.",
-  "coachingNudge": "One brief coaching insight or mindset reminder for today."
+  "coachingNudge": "One brief coaching insight or mindset reminder for today.",
+  "radarAlerts": [{"company": "Acme Corp", "signal": "Hiring Signal: VP Engineering role posted", "urgency": "high"}]
 }`;
+
+    const radarSummary = topSignals.length > 0
+      ? topSignals.map(s => `${s.company} (${s.urgency} urgency): ${s.signalType} — ${s.description}`).join("\n")
+      : "No active radar signals";
 
     const userMessage = `Executive: ${firstName}
 Target role: ${profile?.targetRole ?? "Not set"}
@@ -883,6 +901,8 @@ Top active targets: ${activeOpps.slice(0, 3).map(o => o.companyName).join(", ") 
 Overdue follow-ups: ${overdueContacts.length} contacts need attention
 Overdue contacts: ${overdueContacts.slice(0, 3).map(r => `${r.name} at ${r.currentCompany ?? "unknown"}`).join(", ") || "None"}
 Total relationships mapped: ${relationships.length}
+Opportunity Radar signals (top ${topSignals.length}):
+${radarSummary}
 Today's date: ${today}`;
 
     const response = await invokeLLM({

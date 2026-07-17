@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 import {
   Radar,
   RefreshCw,
@@ -21,6 +22,7 @@ import {
   ChevronRight,
   Sparkles,
   Radio,
+  Send,
 } from "lucide-react";
 
 // ─── Signal type config ───────────────────────────────────────────────────────
@@ -92,8 +94,19 @@ function SignalCard({
   onDismiss: (id: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [, navigate] = useLocation();
   const cfg = SIGNAL_CONFIG[signal.signalType] ?? SIGNAL_CONFIG.hiring;
   const urgency = URGENCY_CONFIG[signal.urgency ?? "medium"] ?? URGENCY_CONFIG.medium;
+
+  function handleDraftOutreach() {
+    // Deep-link to Outreach Engine with company and signal context pre-filled
+    const params = new URLSearchParams({
+      tab: "outreach",
+      company: signal.company,
+      context: `${cfg.label}: ${signal.description}`,
+    });
+    navigate(`/career/brand?${params.toString()}`);
+  }
 
   return (
     <div
@@ -128,7 +141,7 @@ function SignalCard({
 
           {/* Recommended action (expandable) */}
           {signal.recommendedAction && (
-            <div>
+            <div className="mb-3">
               <button
                 className="flex items-center gap-1.5 text-xs font-semibold transition-colors"
                 style={{ color: "var(--color-ln-navy)" }}
@@ -153,6 +166,16 @@ function SignalCard({
               )}
             </div>
           )}
+
+          {/* Draft Outreach CTA */}
+          <button
+            onClick={handleDraftOutreach}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 active:scale-[0.97]"
+            style={{ background: "var(--color-ln-navy)", color: "white" }}
+          >
+            <Send size={11} />
+            Draft Outreach
+          </button>
         </div>
 
         {/* Dismiss button */}

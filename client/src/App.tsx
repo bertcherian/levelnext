@@ -56,6 +56,7 @@ import TeamIntelligence from "@/pages/mep/TeamIntelligence";
 import RadarSignals from "@/pages/RadarSignals";
 import InterviewPrep from "@/pages/InterviewPrep";
 import NegotiationIntelligence from "@/pages/NegotiationIntelligence";
+import OrgIntelligence from "@/pages/OrgIntelligence";
 import MEPLayout from "@/components/MEPLayout";
 import CareerLanding from "@/pages/CareerLanding";
 import JoinPage from "@/pages/JoinPage";
@@ -146,6 +147,7 @@ function Router() {
       <Route path="/career/radar" component={RadarSignals} />
       <Route path="/career/interview-prep" component={InterviewPrep} />
       <Route path="/career/negotiation" component={NegotiationIntelligence} />
+      <Route path="/org-intelligence" component={OrgIntelligence} />
       {/* Manager Effectiveness Platform */}
       <Route path="/manager">{() => <MEPLayout><ManagerHome /></MEPLayout>}</Route>
       <Route path="/manager/diagnostics">{() => <MEPLayout><ManagerDiagnostics /></MEPLayout>}</Route>
