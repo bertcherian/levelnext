@@ -612,3 +612,10 @@
 - [x] Register /manager-effectiveness route in App.tsx
 - [x] TypeScript clean (zero errors)
 - [x] Save checkpoint
+
+## Platform-Aware Signup & MEP Landing CTA Fix (Jul 17)
+- [x] Rewrite /signup page to be platform-aware: LI content by default, MEP content when ?platform=mep is in URL
+- [x] Fix headline readability: h1 on /signup now uses explicit #FFFFFF color (was dark-on-dark on navy background)
+- [x] Update MEP landing page (/manager-effectiveness): all 3 CTA buttons now link to /signup?platform=mep
+- [x] TypeScript clean (zero errors)
+- [x] Save checkpoint

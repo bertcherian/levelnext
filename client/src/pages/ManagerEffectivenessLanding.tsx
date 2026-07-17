@@ -98,7 +98,7 @@ export default function ManagerEffectivenessLanding() {
                 Sign In
               </Button>
             </Link>
-            <Link href="/signup">
+            <Link href="/signup?platform=mep">
               <Button size="sm" className="font-semibold gap-1.5" style={{ background: "#F2B705", color: "#0f1f3d" }}>
                 Get Started <ArrowRight size={14} />
               </Button>
@@ -124,7 +124,7 @@ export default function ManagerEffectivenessLanding() {
               10 precision diagnostics. An AI coaching advisor. A daily management brief. A practice partner for difficult conversations. Everything a manager needs to go from good to exceptional — in one platform.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link href="/signup">
+              <Link href="/signup?platform=mep">
                 <Button size="lg" className="font-semibold gap-2 px-8" style={{ background: "#F2B705", color: "#0f1f3d" }}>
                   Start Your Assessment <ArrowRight size={16} />
                 </Button>
@@ -263,7 +263,7 @@ export default function ManagerEffectivenessLanding() {
           <p className="text-lg mb-8" style={{ color: "rgba(255,255,255,0.6)" }}>
             Start with your first diagnostic today. In 15 minutes, you'll know exactly where you stand — and what to do next.
           </p>
-          <Link href="/signup">
+          <Link href="/signup?platform=mep">
             <Button size="lg" className="font-semibold gap-2 px-10 py-6 text-base" style={{ background: "#F2B705", color: "#0f1f3d" }}>
               Start Free Assessment <ArrowRight size={18} />
             </Button>
