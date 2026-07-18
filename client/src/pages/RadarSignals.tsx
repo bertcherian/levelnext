@@ -23,6 +23,7 @@ import {
   Sparkles,
   Radio,
   Send,
+  ClipboardList,
 } from "lucide-react";
 
 // ─── Signal type config ───────────────────────────────────────────────────────
@@ -108,6 +109,15 @@ function SignalCard({
     navigate(`/career/brand?${params.toString()}`);
   }
 
+  function handlePrepInterview() {
+    // Deep-link to Interview Prep with company pre-filled
+    const params = new URLSearchParams({
+      company: signal.company,
+      context: signal.description,
+    });
+    navigate(`/career/interview-prep?${params.toString()}`);
+  }
+
   return (
     <div
       className="rounded-xl border p-4 transition-all hover:shadow-sm"
@@ -167,15 +177,27 @@ function SignalCard({
             </div>
           )}
 
-          {/* Draft Outreach CTA */}
-          <button
-            onClick={handleDraftOutreach}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 active:scale-[0.97]"
-            style={{ background: "var(--color-ln-navy)", color: "white" }}
-          >
-            <Send size={11} />
-            Draft Outreach
-          </button>
+          {/* Action CTAs */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleDraftOutreach}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 active:scale-[0.97]"
+              style={{ background: "var(--color-ln-navy)", color: "white" }}
+            >
+              <Send size={11} />
+              Draft Outreach
+            </button>
+            {signal.signalType === "hiring" && (
+              <button
+                onClick={handlePrepInterview}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 active:scale-[0.97]"
+                style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.15)", color: "var(--color-ln-navy)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.3)" }}
+              >
+                <ClipboardList size={11} />
+                Prep for Interview
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Dismiss button */}

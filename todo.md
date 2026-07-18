@@ -794,3 +794,20 @@
 - [x] Step 2: Radar signal card → "Draft Outreach" button → pre-fills Outreach Engine with company + context banner
 - [x] Step 3: Wire top Radar signals into Chief of Staff daily briefing (radarAlerts section)
 - [x] TypeScript check (0 errors) and checkpoint save
+
+## Next Steps (Jul 18 — Session 2)
+
+### Step 1: Unlock Sequence DB Sync
+- [x] Update product_modules table rows for leadership_intelligence product to ECI → LII → LDI → STI (remove TII, GCC, NII rows)
+- [x] Verify unlock.ts DB path returns correct 4-module sequence
+
+### Step 2: Organisation Intelligence Waitlist
+- [x] Schema: org_intelligence_waitlist table (userId, email, name, orgName, role, useCase, createdAt)
+- [x] Migration applied
+- [x] Server: joinWaitlist procedure (upsert by userId), getWaitlistStatus procedure, listWaitlist (admin only)
+- [x] UI: Email capture form on /org-intelligence page with success confirmation state
+
+### Step 3: Radar → Interview Prep Deep-Link
+- [x] RadarSignals.tsx: Add "Prep for Interview" button on hiring signal cards
+- [x] Button deep-links to /career/interview-prep?company=X&context=Y
+- [x] InterviewPrep.tsx: Read company/context query params, auto-opens form, pre-fills targetCompany, shows Radar context banner

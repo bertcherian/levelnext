@@ -1666,3 +1666,17 @@ export const negotiationSessions = mysqlTable("negotiation_sessions", {
 });
 export type NegotiationSession = typeof negotiationSessions.$inferSelect;
 export type InsertNegotiationSession = typeof negotiationSessions.$inferInsert;
+
+// ─── Organisation Intelligence Waitlist ───────────────────────────────────────
+export const orgIntelligenceWaitlist = mysqlTable("org_intelligence_waitlist", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  orgName: varchar("orgName", { length: 255 }),
+  role: varchar("role", { length: 255 }),
+  useCase: text("useCase"), // What they want to use it for
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type OrgIntelligenceWaitlist = typeof orgIntelligenceWaitlist.$inferSelect;
+export type InsertOrgIntelligenceWaitlist = typeof orgIntelligenceWaitlist.$inferInsert;

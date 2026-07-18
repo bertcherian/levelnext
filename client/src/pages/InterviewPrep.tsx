@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
@@ -59,14 +59,29 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
 }
 
 // ─── Interview Prep Form ──────────────────────────────────────────────────────
-function InterviewPrepForm({ onGenerated }: { onGenerated: () => void }) {
+function InterviewPrepForm({
+  onGenerated,
+  prefillCompany = "",
+  radarContext = "",
+}: {
+  onGenerated: () => void;
+  prefillCompany?: string;
+  radarContext?: string;
+}) {
   const [form, setForm] = useState({
     targetRole: "",
-    targetCompany: "",
+    targetCompany: prefillCompany,
     interviewType: "behavioral",
     jobDescription: "",
     yourBackground: "",
   });
+
+  // Sync prefillCompany when arriving from Radar signal
+  useEffect(() => {
+    if (prefillCompany) {
+      setForm((f) => ({ ...f, targetCompany: prefillCompany }));
+    }
+  }, [prefillCompany]);
 
   const generateMutation = trpc.interviewPrep.generatePrep.useMutation({
     onSuccess: () => {
@@ -78,6 +93,19 @@ function InterviewPrepForm({ onGenerated }: { onGenerated: () => void }) {
 
   return (
     <div className="space-y-4">
+      {/* Radar context banner */}
+      {radarContext && (
+        <div
+          className="rounded-lg px-4 py-3 flex items-start gap-3"
+          style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.1)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.3)" }}
+        >
+          <span className="text-xs mt-0.5" style={{ color: "var(--color-ln-navy)" }}>📡</span>
+          <div>
+            <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--color-ln-navy)" }}>From Radar Signal</p>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--color-ln-text)" }}>{radarContext}</p>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label className="text-xs font-semibold">Target Role *</Label>
@@ -315,6 +343,18 @@ export default function InterviewPrep() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Read URL params from Radar deep-link
+  const searchParams = new URLSearchParams(window.location.search);
+  const prefillCompany = searchParams.get("company") ?? "";
+  const radarContext = searchParams.get("context") ?? "";
+
+  // Auto-open form when arriving from Radar
+  useEffect(() => {
+    if (prefillCompany) {
+      setShowForm(true);
+    }
+  }, [prefillCompany]);
+
   const { data: latestPrep, isLoading } = trpc.interviewPrep.getLatestPrep.useQuery();
   const { data: prepList } = trpc.interviewPrep.listPreps.useQuery();
 
@@ -435,7 +475,7 @@ export default function InterviewPrep() {
             <p className="text-sm font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>
               New Interview Prep Session
             </p>
-            <InterviewPrepForm onGenerated={handleGenerated} />
+            <InterviewPrepForm onGenerated={handleGenerated} prefillCompany={prefillCompany} radarContext={radarContext} />
           </div>
         )}
 

@@ -1,6 +1,12 @@
-import { Building2, BarChart3, Users, Cpu, Globe, ArrowLeft, Sparkles, Lock } from "lucide-react";
+import { useState } from "react";
+import { Building2, BarChart3, Users, Cpu, Globe, ArrowLeft, Sparkles, Lock, CheckCircle2, Mail, Briefcase } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 const MODULES = [
   {
@@ -40,6 +46,172 @@ const MODULES = [
     color: "#1a1a4a",
   },
 ];
+
+function WaitlistForm() {
+  const { data: status, isLoading: statusLoading } = trpc.orgIntelligence.getWaitlistStatus.useQuery();
+  const utils = trpc.useUtils();
+
+  const [form, setForm] = useState({
+    email: "",
+    name: "",
+    orgName: "",
+    role: "",
+    useCase: "",
+  });
+
+  const joinMutation = trpc.orgIntelligence.joinWaitlist.useMutation({
+    onSuccess: () => {
+      utils.orgIntelligence.getWaitlistStatus.invalidate();
+      toast.success("You're on the waitlist! We'll be in touch.");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Something went wrong. Please try again.");
+    },
+  });
+
+  if (statusLoading) {
+    return (
+      <div className="rounded-2xl p-6 text-center" style={{ background: "var(--color-ln-navy)", border: "1px solid rgba(212,175,55,0.2)" }}>
+        <div className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin mx-auto" />
+      </div>
+    );
+  }
+
+  if (status?.isOnWaitlist) {
+    return (
+      <div
+        className="rounded-2xl p-8 text-center"
+        style={{ background: "var(--color-ln-navy)", border: "1px solid rgba(212,175,55,0.3)" }}
+      >
+        <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(212,175,55,0.15)" }}>
+          <CheckCircle2 size={28} style={{ color: "var(--color-ln-yellow)" }} />
+        </div>
+        <h3 className="text-xl font-bold text-white mb-2">You're on the waitlist</h3>
+        <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.7)" }}>
+          We'll notify you at <span className="font-semibold text-white">{status.entry?.email}</span> when Organisation Intelligence launches.
+        </p>
+        <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+          In the meantime, continue building your Leadership Edge in the diagnostics above.
+        </p>
+        <Link href="/diagnostics">
+          <Button className="mt-6 font-semibold" style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
+            Return to Diagnostics
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{ background: "var(--color-ln-navy)", border: "1px solid rgba(212,175,55,0.2)" }}
+    >
+      {/* Header */}
+      <div className="px-6 pt-6 pb-4 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(212,175,55,0.15)" }}>
+            <Mail size={20} style={{ color: "var(--color-ln-yellow)" }} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-white">Register Your Interest</h3>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Be first to access Organisation Intelligence</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Form */}
+      <div className="p-6 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.6)" }}>
+              Your Name *
+            </Label>
+            <Input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="Priya Sharma"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[var(--color-ln-yellow)]"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.6)" }}>
+              Work Email *
+            </Label>
+            <Input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              placeholder="priya@company.com"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[var(--color-ln-yellow)]"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.6)" }}>
+              Organisation
+            </Label>
+            <Input
+              value={form.orgName}
+              onChange={(e) => setForm((f) => ({ ...f, orgName: e.target.value }))}
+              placeholder="Broadridge, Volvo, etc."
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[var(--color-ln-yellow)]"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.6)" }}>
+              Your Role
+            </Label>
+            <Input
+              value={form.role}
+              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+              placeholder="CHRO, GCC Head, L&D Director"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[var(--color-ln-yellow)]"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.6)" }}>
+            What would you use it for?
+          </Label>
+          <Textarea
+            value={form.useCase}
+            onChange={(e) => setForm((f) => ({ ...f, useCase: e.target.value }))}
+            placeholder="e.g. GCC readiness assessment for 200-person team, culture diagnostic before transformation programme..."
+            rows={3}
+            className="bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[var(--color-ln-yellow)] resize-none"
+          />
+        </div>
+
+        <Button
+          className="w-full font-semibold"
+          style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+          disabled={!form.name.trim() || !form.email.trim() || joinMutation.isPending}
+          onClick={() => joinMutation.mutate(form)}
+        >
+          {joinMutation.isPending ? (
+            <span className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full border-2 border-[var(--color-ln-navy)]/30 border-t-[var(--color-ln-navy)] animate-spin" />
+              Registering...
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <Briefcase size={16} />
+              Register My Interest
+            </span>
+          )}
+        </Button>
+
+        <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+          No spam. We'll only contact you about Organisation Intelligence access.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function OrgIntelligence() {
   return (
@@ -83,7 +255,7 @@ export default function OrgIntelligence() {
           <div>
             <h2 className="font-bold mb-1" style={{ color: "var(--color-ln-navy)" }}>This platform is under development</h2>
             <p className="text-sm leading-relaxed" style={{ color: "var(--color-ln-text)" }}>
-              Organisation Intelligence is being built as a standalone multi-tenant platform for consulting firms, HR leaders, and GCC transformation teams. The diagnostics below represent the planned module set. If you are interested in early access or a pilot, reach out to the Meta Results team.
+              Organisation Intelligence is being built as a standalone multi-tenant platform for consulting firms, HR leaders, and GCC transformation teams. The diagnostics below represent the planned module set. Register your interest below to be notified at launch and to shape the product roadmap.
             </p>
           </div>
         </div>
@@ -131,22 +303,9 @@ export default function OrgIntelligence() {
         ))}
       </div>
 
-      {/* CTA */}
+      {/* Waitlist Form */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
-        <div
-          className="rounded-2xl p-6 text-center"
-          style={{ background: "var(--color-ln-navy)", border: "1px solid rgba(212,175,55,0.2)" }}
-        >
-          <h3 className="text-lg font-bold text-white mb-2">Interested in Organisation Intelligence?</h3>
-          <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.7)" }}>
-            This platform is designed for CHROs, GCC leaders, and consulting firms running multi-team transformation programmes. Contact Meta Results to discuss a pilot.
-          </p>
-          <Link href="/diagnostics">
-            <Button style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }} className="font-semibold">
-              Return to Leadership Diagnostics
-            </Button>
-          </Link>
-        </div>
+        <WaitlistForm />
       </div>
     </div>
   );
