@@ -811,3 +811,9 @@
 - [x] RadarSignals.tsx: Add "Prep for Interview" button on hiring signal cards
 - [x] Button deep-links to /career/interview-prep?company=X&context=Y
 - [x] InterviewPrep.tsx: Read company/context query params, auto-opens form, pre-fills targetCompany, shows Radar context banner
+
+## Career Intelligence Landing Page Redesign (Jul 18)
+- [x] Rewrite CareerLanding.tsx: EOS-first hero, 5-engine showcase, intelligence loop, rationalised diagnostics section, CTA
+- [x] Update nav links to include Executive Opportunity System anchor
+- [x] Update Executive Brief download link to new PDF (uploaded to CDN)
+- [x] TypeScript check (0 errors) and checkpoint save
