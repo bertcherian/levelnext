@@ -12,7 +12,7 @@ import {
 import { getLoginUrl } from "@/const";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
-const BRIEF_URL = "/manus-storage/Career_Intelligence_Executive_Brief_LevelNext_ef4ebf51.pdf";
+const BRIEF_URL = "/manus-storage/LevelNext_Career_Intelligence_Executive_Brief_5a0cfaae.pdf";
 
 // ── EOS ENGINES ──────────────────────────────────────────────────────────────
 const EOS_ENGINES = [

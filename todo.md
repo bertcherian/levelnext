@@ -817,3 +817,11 @@
 - [x] Update nav links to include Executive Opportunity System anchor
 - [x] Update Executive Brief download link to new PDF (uploaded to CDN)
 - [x] TypeScript check (0 errors) and checkpoint save
+
+## Executive Brief v2 with QR Code (Jul 18)
+- [x] Generate gold-on-navy QR code for levelnext.coach/career-intelligence
+- [x] Embed QR code on cover page bottom-right with "Scan to access" label
+- [x] Recompile Typst brief with QR code
+- [x] Upload final PDF to CDN: /manus-storage/LevelNext_Career_Intelligence_Executive_Brief_5a0cfaae.pdf
+- [x] Update BRIEF_URL in CareerLanding.tsx to new PDF
+- [x] TypeScript check (0 errors) and checkpoint save
