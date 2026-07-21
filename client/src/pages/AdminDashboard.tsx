@@ -391,6 +391,12 @@ export default function AdminDashboard() {
               desc: "Track magic links, revoke or copy",
             },
             {
+              href: "/admin/coaches",
+              icon: <Users size={20} />,
+              label: "Coach Management",
+              desc: "Add coaches, assign clients",
+            },
+            {
               href: "/home",
               icon: <TrendingUp size={20} />,
               label: "Your Dashboard",

@@ -825,3 +825,16 @@
 - [x] Upload final PDF to CDN: /manus-storage/LevelNext_Career_Intelligence_Executive_Brief_5a0cfaae.pdf
 - [x] Update BRIEF_URL in CareerLanding.tsx to new PDF
 - [x] TypeScript check (0 errors) and checkpoint save
+
+### Phase 50: Coach View Portal
+- [ ] Add `coaches` table (id, userId, name, email, bio, specialisation, createdAt)
+- [ ] Add `coach_assignments` table (id, coachId, clientUserId, assignedAt, notes)
+- [ ] Add `coach` role to users.role enum
+- [ ] Run DB migration for coach tables
+- [ ] Server: coachRouter — getMyClients, getClientBrief, generateCoachPrep (LLM)
+- [ ] Server: adminCoachRouter — listCoaches, createCoach, assignClient, removeAssignment
+- [ ] Frontend: /coach route — CoachLayout with coach-specific sidebar
+- [ ] Frontend: /coach/clients — client roster page with activity signals
+- [ ] Frontend: /coach/clients/:userId — pre-call brief page (diagnostics, commitments, activity, AI prep)
+- [ ] Frontend: /admin/coaches — admin page to manage coaches and assignments
+- [ ] Admin sidebar: add "Coaches" link under ADMIN section

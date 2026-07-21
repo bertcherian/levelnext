@@ -58,6 +58,8 @@ import InterviewPrep from "@/pages/InterviewPrep";
 import NegotiationIntelligence from "@/pages/NegotiationIntelligence";
 import OrgIntelligence from "@/pages/OrgIntelligence";
 import MEPLayout from "@/components/MEPLayout";
+import CoachPortal from "@/pages/CoachPortal";
+import AdminCoachManagement from "@/pages/AdminCoachManagement";
 import CareerLanding from "@/pages/CareerLanding";
 import JoinPage from "@/pages/JoinPage";
 import JoinProduct from "@/pages/JoinProduct";
@@ -158,6 +160,8 @@ function Router() {
       <Route path="/manager/commitments">{() => <MEPLayout><ManagerCommitments /></MEPLayout>}</Route>
       <Route path="/manager/team">{() => <MEPLayout><TeamIntelligence /></MEPLayout>}</Route>
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
+      <Route path="/admin/coaches" component={AdminCoachManagement} />
+      <Route path="/coach" component={CoachPortal} />
       <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />

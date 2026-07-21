@@ -1680,3 +1680,32 @@ export const orgIntelligenceWaitlist = mysqlTable("org_intelligence_waitlist", {
 });
 export type OrgIntelligenceWaitlist = typeof orgIntelligenceWaitlist.$inferSelect;
 export type InsertOrgIntelligenceWaitlist = typeof orgIntelligenceWaitlist.$inferInsert;
+
+// ─── Coaches ──────────────────────────────────────────────────────────────────
+// External executive coaches who can view their assigned clients' data
+export const coaches = mysqlTable("coaches", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id).unique(), // linked user account
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  bio: text("bio"),
+  specialisation: varchar("specialisation", { length: 255 }), // e.g. "Executive Leadership, GCC Leaders"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Coach = typeof coaches.$inferSelect;
+export type InsertCoach = typeof coaches.$inferInsert;
+
+// ─── Coach Assignments ────────────────────────────────────────────────────────
+// Maps a coach to their assigned client leaders
+export const coachAssignments = mysqlTable("coach_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  coachId: int("coachId").notNull().references(() => coaches.id),
+  clientUserId: int("clientUserId").notNull().references(() => users.id),
+  notes: text("notes"), // admin notes about this coaching relationship
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+  assignedBy: int("assignedBy").references(() => users.id), // admin who created the assignment
+  isActive: boolean("isActive").default(true).notNull(),
+});
+export type CoachAssignment = typeof coachAssignments.$inferSelect;
+export type InsertCoachAssignment = typeof coachAssignments.$inferInsert;

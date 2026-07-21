@@ -35,6 +35,8 @@ import { radarSignalsRouter } from "./routers/radarSignals";
 import { interviewPrepRouter } from "./routers/interviewPrep";
 import { negotiationRouter } from "./routers/negotiation";
 import { orgIntelligenceRouter } from "./routers/orgIntelligence";
+import { coachRouter } from "./routers/coach";
+import { adminCoachRouter } from "./routers/adminCoach";
 
 export const appRouter = router({
   system: systemRouter,
@@ -79,6 +81,8 @@ export const appRouter = router({
   interviewPrep: interviewPrepRouter,
   negotiation: negotiationRouter,
   orgIntelligence: orgIntelligenceRouter,
+  coach: coachRouter,
+  adminCoach: adminCoachRouter,
 });
 
 export type AppRouter = typeof appRouter;
