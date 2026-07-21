@@ -88,13 +88,15 @@ export const priorAssessmentImportRouter = router({
       // Decode base64 PDF and extract text
       const pdfBuffer = Buffer.from(input.fileBase64, "base64");
 
-      // Use pdf-parse to extract text
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const pdfParse = require("pdf-parse");
+      // Use pdf-parse v2 class-based API to extract text
       let pdfText = "";
       try {
-        const parsed = await pdfParse(pdfBuffer);
-        pdfText = parsed.text ?? "";
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { PDFParse } = require("pdf-parse");
+        const parser = new PDFParse({ data: pdfBuffer, verbosity: 0 });
+        const result = await parser.getText();
+        pdfText = result.text ?? "";
+        await parser.destroy();
       } catch {
         throw new Error("Could not read the PDF. Please ensure it is a valid, text-based PDF.");
       }

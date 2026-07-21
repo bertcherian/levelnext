@@ -153,6 +153,13 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
     guide: pendingUnlockCount,
   };
 
+  // Tenant role — used to gate the Organisation nav item
+  const { data: tenantData } = trpc.tenant.myTenant.useQuery(undefined, {
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+  });
+  const isTenantAdmin = tenantData?.role === "owner" || tenantData?.role === "admin";
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-ivory)" }}>
@@ -212,6 +219,11 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
   const bottomTabPaths = BOTTOM_TABS.filter((t) => t.href).map((t) => t.href as string);
   const isMoreActive = !bottomTabPaths.some((p) => location === p || location.startsWith(p + "/"));
 
+  // Filter Organisation tab — only visible to tenant owners and admins
+  const filteredNavItems = NAV_ITEMS.filter(
+    (item) => item.href !== "/organisation" || isTenantAdmin
+  );
+
   return (
     <div className="min-h-screen flex" style={{ background: "var(--color-ln-ivory)" }}>
 
@@ -248,7 +260,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         {/* Drawer nav */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-0.5">
-            {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : NAV_ITEMS).map((item) => {
+            {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : filteredNavItems).map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
@@ -429,7 +441,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         {/* Desktop nav */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-0.5">
-            {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : NAV_ITEMS).map((item) => {
+            {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : filteredNavItems).map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
