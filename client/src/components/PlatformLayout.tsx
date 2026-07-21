@@ -38,6 +38,7 @@ import ProductSwitcher from "@/components/ProductSwitcher";
 
 // Full sidebar nav items
 const NAV_ITEMS = [
+  { label: "Next Chapter", icon: Sparkles, href: "/next-chapter" },
   { label: "Home", icon: Home, href: "/home" },
   { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },

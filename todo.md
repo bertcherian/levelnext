@@ -838,3 +838,23 @@
 - [ ] Frontend: /coach/clients/:userId — pre-call brief page (diagnostics, commitments, activity, AI prep)
 - [ ] Frontend: /admin/coaches — admin page to manage coaches and assignments
 - [ ] Admin sidebar: add "Coaches" link under ADMIN section
+
+## Next Chapter — Identity & Leadership OS (Phase 1, Jul 22)
+- [x] Schema: next_chapter_profiles table (userId, currentStage, currentModule, completedModules JSON, startedAt, lastActiveAt)
+- [x] Schema: next_chapter_deliverables table (userId, moduleNumber, deliverableType, content JSON, generatedAt, version)
+- [x] Schema: next_chapter_messages table (userId, sessionId, moduleNumber, role, content, createdAt)
+- [x] Schema: identity_experiments table (userId, moduleNumber, experiment, reflection, completedAt)
+- [x] Run drizzle-kit generate and apply migration SQL
+- [x] Server: nextChapterRouter — startSession, sendMessage (streaming AI with Next Chapter persona), completeModule, saveDeliverable, getProfile, getPortfolio, getMessages
+- [x] Server: inject Next Chapter mega prompt as AI persona system prompt
+- [x] Frontend: /next-chapter route — NextChapter page with chat UI + 6-stage / 16-module progress bar
+- [x] Frontend: Stage/module progress sidebar (Discover, Design, Build, Practice, Lead, Reflect)
+- [x] Frontend: Module 1 (Understanding Today) — conversation flow with deliverable generation
+- [x] Frontend: Module 2 (Enterprise Context) — conversation flow with deliverable generation
+- [x] Frontend: Deliverable cards — Current Identity Profile, Future Leadership Context Map
+- [x] Frontend: Portfolio view at /next-chapter/portfolio — list of all completed deliverables
+- [ ] Onboarding gate: redirect new users to /next-chapter before /home (first-time only) [deferred to Phase 2]
+- [x] Coach View: expose Next Chapter portfolio in pre-call brief for assigned coaches
+- [x] Add Next Chapter nav item to PlatformLayout sidebar (Leadership Intelligence product)
+- [x] TypeScript check (zero errors)
+- [x] Save checkpoint

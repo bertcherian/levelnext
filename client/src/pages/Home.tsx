@@ -132,6 +132,66 @@ function PracticeCoachCard() {
   );
 }
 
+// ── Next Chapter Hero Card ─────────────────────────────────────────────────
+function NextChapterCard() {
+  const [, navigate] = useLocation();
+  const { data: ncProfile } = trpc.nextChapter.getProfile.useQuery(undefined, { staleTime: 60_000 });
+
+  const completedCount = (ncProfile?.completedModules as number[] | null)?.length ?? 0;
+  const currentModule = ncProfile?.currentModule ?? 1;
+  const isNew = !ncProfile;
+
+  return (
+    <div
+      className="rounded-2xl p-4 sm:p-5 cursor-pointer card-lift"
+      style={{
+        background: "linear-gradient(135deg, var(--color-ln-navy) 0%, oklch(from var(--color-ln-navy) 20% 0.05 248.6) 100%)",
+        border: "1.5px solid var(--color-ln-yellow)",
+        boxShadow: "0 0 0 1px oklch(from var(--color-ln-yellow) l c h / 0.15), var(--shadow-card)",
+      }}
+      onClick={() => navigate("/next-chapter")}
+    >
+      <div className="flex items-center gap-4">
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)", border: "1.5px solid var(--color-ln-yellow)" }}
+        >
+          <Sparkles size={18} style={{ color: "var(--color-ln-yellow)" }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-white">Next Chapter</p>
+          <p className="text-xs mt-0.5" style={{ color: "oklch(70% 0.02 248.6)" }}>
+            {isNew
+              ? "Begin your identity transformation journey — 6 stages, 16 modules."
+              : `Stage ${ncProfile?.currentStage ?? 1} · Module ${currentModule} · ${completedCount}/16 complete`}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          className="flex-shrink-0 font-semibold text-xs"
+          style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+          onClick={(e) => { e.stopPropagation(); navigate("/next-chapter"); }}
+        >
+          {isNew ? "Begin" : "Continue"} <ArrowRight size={13} className="ml-1" />
+        </Button>
+      </div>
+      <div className="mt-3 pt-3" style={{ borderTop: "1px solid oklch(from white 30% 0 0 / 0.12)" }}>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1.5 rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${(completedCount / 16) * 100}%`, background: "var(--color-ln-yellow)" }}
+            />
+          </div>
+          <span className="text-[11px] font-semibold" style={{ color: "var(--color-ln-yellow)" }}>
+            {completedCount}/16 modules
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
@@ -335,6 +395,9 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* ── Next Chapter Hero Card ── */}
+        <NextChapterCard />
 
         {/* AI Practice Coach quick-access */}
         <PracticeCoachCard />

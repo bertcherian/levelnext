@@ -1709,3 +1709,69 @@ export const coachAssignments = mysqlTable("coach_assignments", {
 });
 export type CoachAssignment = typeof coachAssignments.$inferSelect;
 export type InsertCoachAssignment = typeof coachAssignments.$inferInsert;
+
+// ─── Next Chapter — Identity & Leadership OS ──────────────────────────────────
+
+// next_chapter_profiles: tracks each user's progress through the 6-stage / 16-module journey
+export const nextChapterProfiles = mysqlTable("next_chapter_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id).unique(),
+  // Current position in the journey
+  currentStage: int("currentStage").default(1).notNull(), // 1–6 (Discover, Design, Build, Practice, Lead, Reflect)
+  currentModule: int("currentModule").default(1).notNull(), // 1–16
+  // JSON array of completed module numbers, e.g. [1, 2, 3]
+  completedModules: json("completedModules").$type<number[]>().default([]),
+  // Whether the user has completed the full journey at least once
+  journeyCompleted: boolean("journeyCompleted").default(false).notNull(),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  lastActiveAt: timestamp("lastActiveAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NextChapterProfile = typeof nextChapterProfiles.$inferSelect;
+export type InsertNextChapterProfile = typeof nextChapterProfiles.$inferInsert;
+
+// next_chapter_deliverables: one row per generated deliverable per module
+export const nextChapterDeliverables = mysqlTable("next_chapter_deliverables", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  moduleNumber: int("moduleNumber").notNull(), // 1–16
+  // Deliverable type label, e.g. "Current Identity Profile", "Future Leadership Context Map"
+  deliverableType: varchar("deliverableType", { length: 100 }).notNull(),
+  // Full structured content as JSON (flexible per module)
+  content: json("content").$type<Record<string, any>>().notNull(),
+  // Version counter — incremented when a module is revisited and regenerated
+  version: int("version").default(1).notNull(),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+});
+export type NextChapterDeliverable = typeof nextChapterDeliverables.$inferSelect;
+export type InsertNextChapterDeliverable = typeof nextChapterDeliverables.$inferInsert;
+
+// next_chapter_messages: individual chat messages per user session
+export const nextChapterMessages = mysqlTable("next_chapter_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // Session identifier — a new UUID is created each time the user starts a fresh conversation
+  sessionId: varchar("sessionId", { length: 64 }).notNull(),
+  // Which module this message belongs to (1–16)
+  moduleNumber: int("moduleNumber").notNull(),
+  role: mysqlEnum("role", ["user", "assistant"]).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type NextChapterMessage = typeof nextChapterMessages.$inferSelect;
+export type InsertNextChapterMessage = typeof nextChapterMessages.$inferInsert;
+
+// identity_experiments: weekly behavioural experiments generated at each stage
+export const identityExperiments = mysqlTable("identity_experiments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  moduleNumber: int("moduleNumber").notNull(), // module that generated this experiment
+  // The experiment description
+  experiment: text("experiment").notNull(),
+  // User's reflection after completing the experiment
+  reflection: text("reflection"),
+  // Whether the user has marked this experiment as done
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IdentityExperiment = typeof identityExperiments.$inferSelect;
+export type InsertIdentityExperiment = typeof identityExperiments.$inferInsert;

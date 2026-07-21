@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ArrowLeft, Sparkles, User, BookOpen, Target, Activity, Brain, Calendar, ChevronRight, Clock } from "lucide-react";
+import { ArrowLeft, Sparkles, User, BookOpen, Target, Activity, Brain, Calendar, ChevronRight, Clock, FileText, CheckCircle2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -92,6 +92,15 @@ function ClientBriefView({ client, onBack }: { client: Client; onBack: () => voi
   const practice = brief?.activitySignals.practiceSessions ?? [];
   const guide = brief?.activitySignals.guideSessions ?? [];
   const memory = brief?.leadershipMemory;
+
+  // Next Chapter portfolio
+  const { data: ncPortfolio } = trpc.nextChapter.getPortfolioForCoach.useQuery(
+    { clientUserId: client.clientId },
+    { staleTime: 5 * 60 * 1000 }
+  );
+  const ncDeliverables = ncPortfolio?.deliverables ?? [];
+  const ncProfile = ncPortfolio?.profile;
+  const ncCompletedCount = (ncProfile?.completedModules as number[] | null)?.length ?? 0;
 
   return (
     <div className="min-h-screen bg-[#F5F4F0]">
@@ -245,6 +254,59 @@ function ClientBriefView({ client, onBack }: { client: Client; onBack: () => voi
               <span className="text-xs text-slate-400 ml-auto">Updated {formatDate(memory.updatedAt)}</span>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed">{memory.aiSummary}</p>
+          </Card>
+        )}
+
+        {/* Next Chapter Portfolio */}
+        {ncDeliverables.length > 0 && (
+          <Card className="bg-white p-5 rounded-xl shadow-sm border-[#D4AF37]/30 border">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+              <h2 className="font-semibold text-[#0F1F3D]">Next Chapter Portfolio</h2>
+              <span className="ml-auto text-xs text-slate-400">{ncCompletedCount}/16 modules</span>
+            </div>
+            {/* Journey progress bar */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 h-1.5 rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${(ncCompletedCount / 16) * 100}%`, background: "#D4AF37" }}
+                />
+              </div>
+              <span className="text-xs text-slate-500">Stage {ncProfile?.currentStage ?? 1} of 6</span>
+            </div>
+            {/* Latest deliverables */}
+            <div className="space-y-3">
+              {ncDeliverables.slice(0, 4).map((d) => {
+                const content = d.content as Record<string, any>;
+                return (
+                  <div key={d.id} className="border border-slate-100 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <FileText className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      <span className="text-xs font-semibold text-[#0F1F3D]">{d.deliverableType}</span>
+                      <span className="ml-auto text-[10px] text-slate-400">Module {d.moduleNumber}</span>
+                    </div>
+                    {content.summary && (
+                      <p className="text-xs text-slate-600 leading-relaxed">{content.summary}</p>
+                    )}
+                    {content.identityStatement && (
+                      <p className="text-xs text-slate-500 italic mt-1">"{content.identityStatement}"</p>
+                    )}
+                    {content.vision && (
+                      <p className="text-xs text-slate-500 italic mt-1">"{content.vision}"</p>
+                    )}
+                    {content.purpose && (
+                      <p className="text-xs text-slate-500 italic mt-1">"{content.purpose}"</p>
+                    )}
+                  </div>
+                );
+              })}
+              {ncDeliverables.length > 4 && (
+                <p className="text-xs text-slate-400 text-center">
+                  +{ncDeliverables.length - 4} more deliverables in portfolio
+                </p>
+              )}
+            </div>
           </Card>
         )}
 

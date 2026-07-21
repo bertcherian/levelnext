@@ -37,6 +37,7 @@ import { negotiationRouter } from "./routers/negotiation";
 import { orgIntelligenceRouter } from "./routers/orgIntelligence";
 import { coachRouter } from "./routers/coach";
 import { adminCoachRouter } from "./routers/adminCoach";
+import { nextChapterRouter } from "./routers/nextChapter";
 
 export const appRouter = router({
   system: systemRouter,
@@ -83,6 +84,7 @@ export const appRouter = router({
   orgIntelligence: orgIntelligenceRouter,
   coach: coachRouter,
   adminCoach: adminCoachRouter,
+  nextChapter: nextChapterRouter,
 });
 
 export type AppRouter = typeof appRouter;

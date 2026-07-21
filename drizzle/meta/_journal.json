@@ -246,6 +246,13 @@
       "when": 1784626338843,
       "tag": "0034_aromatic_slayback",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "5",
+      "when": 1784677104313,
+      "tag": "0035_clever_arclight",
+      "breakpoints": true
     }
   ]
 }
