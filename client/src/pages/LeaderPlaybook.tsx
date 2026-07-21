@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import InfinityLoader from "@/components/InfinityLoader";
+import PlatformLayout from "@/components/PlatformLayout";
 import {
   ChevronDown, ChevronRight, CheckSquare, Square, BookOpen,
   MessageSquare, Lightbulb, Target, Users, AlertTriangle,
@@ -833,16 +834,17 @@ export default function LeaderPlaybook() {
 
   // ── Loading states ──────────────────────────────────────────────────────────
   if (view === "classifying") {
-    return <InfinityLoader visible={true} label="Analysing your situation…" />;
+    return <PlatformLayout title="Playbook"><InfinityLoader visible={true} label="Analysing your situation…" /></PlatformLayout>;
   }
 
   if (view === "generating") {
-    return <InfinityLoader visible={true} label="Building your Playbook…" />;
+    return <PlatformLayout title="Playbook"><InfinityLoader visible={true} label="Building your Playbook…" /></PlatformLayout>;
   }
 
   // ── Input screen ────────────────────────────────────────────────────────────
   if (view === "input") {
     return (
+      <PlatformLayout title="Playbook">
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -919,12 +921,14 @@ export default function LeaderPlaybook() {
           </div>
         )}
       </div>
+      </PlatformLayout>
     );
   }
 
   // ── Classification preview ──────────────────────────────────────────────────
   if (view === "classified" && classification) {
     return (
+      <PlatformLayout title="Playbook">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <button onClick={() => setView("input")} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#12345A] mb-6 transition-colors">
           <ArrowLeft size={14} /> Back
@@ -991,6 +995,7 @@ export default function LeaderPlaybook() {
         </Button>
         <p className="text-center text-xs text-gray-400 mt-3">Personalised to your Leadership Edge profile · ~20 seconds</p>
       </div>
+      </PlatformLayout>
     );
   }
 
@@ -998,6 +1003,7 @@ export default function LeaderPlaybook() {
   if (view === "session" && playbookContent) {
     const pc = playbookContent;
     return (
+      <PlatformLayout title="Playbook">
       <SessionView
         pc={pc}
         classification={classification}
@@ -1010,6 +1016,7 @@ export default function LeaderPlaybook() {
         onNewPlaybook={() => setView("input")}
         onSelectHistory={handleSelectHistory}
       />
+      </PlatformLayout>
     );
   }
 
