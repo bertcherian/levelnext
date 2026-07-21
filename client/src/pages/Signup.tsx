@@ -108,7 +108,7 @@ export default function Signup() {
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
           {/* Left: Value proposition */}
-          <div className="text-white">
+          <div style={{ color: '#ffffff' }}>
             <div
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-6"
               style={{ background: "rgba(242,183,5,0.15)", color: "#F2B705", border: "1px solid rgba(242,183,5,0.3)" }}
@@ -116,7 +116,7 @@ export default function Signup() {
               <Shield size={12} /> Free to join · No credit card required
             </div>
 
-            <h1 className="text-4xl font-bold leading-tight mb-4">
+            <h1 className="text-4xl font-bold leading-tight mb-4" style={{ color: '#ffffff' }}>
               Know exactly where<br />
               your leadership stands.
             </h1>
@@ -134,7 +134,7 @@ export default function Signup() {
                     <b.icon size={16} style={{ color: "#F2B705" }} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{b.title}</p>
+                    <p className="text-sm font-semibold" style={{ color: '#ffffff' }}>{b.title}</p>
                     <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>{b.desc}</p>
                   </div>
                 </div>
