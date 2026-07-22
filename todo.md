@@ -858,3 +858,34 @@
 - [x] Add Next Chapter nav item to PlatformLayout sidebar (Leadership Intelligence product)
 - [x] TypeScript check (zero errors)
 - [x] Save checkpoint
+
+## Next Chapter — Expert Panel Implementation
+
+### Phase 1 — Fix the Action Loop
+- [x] Update AI system prompt: surface module experiment as commitment prompt after 3+ exchanges
+- [x] Add AI follow-up on previous module's experiment at start of each new session (in startSession)
+- [x] Schema: next_chapter_experiment_commitments table (userId, moduleNumber, experiment, acknowledgedAt, reflectionNote)
+- [x] Apply migration for experiment_commitments table
+- [x] Experiment commitment card in Next Chapter chat UI (appears after 3 user messages, "I'll do it" CTA)
+- [x] acknowledgeExperiment, submitExperimentReflection, getExperimentCommitment tRPC procedures
+- [ ] Heartbeat: weekly email nudge (5 days after last session) with direct link to current module [deferred]
+- [ ] Stage completion celebration modal in Next Chapter UI [deferred]
+- [ ] Coach view notification trigger when coach accesses Coach Portal client brief [deferred]
+
+### Phase 2 — Build the Measurement Story
+- [x] Schema: identity_assessments table (userId, assessmentType, stageNumber, scores JSON, completedAt)
+- [x] Apply migration for identity_assessments table
+- [x] Build Identity Clarity Assessment UI (15-item Likert, 5 dimensions) at /next-chapter/identity-assessment
+- [x] submitIdentityAssessment and getIdentityAssessments tRPC procedures
+- [ ] Wire ICA to appear before Module 1 and after each stage boundary [deferred]
+- [ ] Calculate Identity Shift Score (delta: baseline vs current across 5 dimensions) [deferred]
+- [ ] Add radar chart to Portfolio page (baseline vs current ICA scores) [deferred]
+- [ ] Coach Portal: cohort-level aggregate view (avg shift scores, completion rates) [deferred]
+- [ ] Impact Report: PDF-generatable per-leader report combining platform data + identity shift [deferred]
+
+### Phase 3 — Pilot Cohort Infrastructure
+- [ ] Schema: pilot_cohort_members table (userId, cohortId, enrolledAt, status)
+- [ ] Admin: tag users as pilot participants
+- [ ] Instrumentation dashboard (admin): per-participant module completion, experiment rate, ICA scores
+- [ ] Case study export: generate anonymised case study doc per participant
+- [ ] Aggregate pilot report page (admin only)

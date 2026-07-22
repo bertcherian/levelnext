@@ -25,6 +25,7 @@ import {
   RefreshCw,
   BookOpen,
   ArrowRight,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -344,6 +345,9 @@ export default function NextChapter() {
   const [showDeliverable, setShowDeliverable] = useState(false);
   const [isGeneratingDeliverable, setIsGeneratingDeliverable] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [currentExperiment, setCurrentExperiment] = useState<string | null>(null);
+  const [experimentAcknowledged, setExperimentAcknowledged] = useState(false);
+  const [showExperimentCard, setShowExperimentCard] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -357,6 +361,7 @@ export default function NextChapter() {
   const sendMessageMutation = trpc.nextChapter.sendMessage.useMutation();
   const generateDeliverableMutation = trpc.nextChapter.generateDeliverable.useMutation();
   const completeModuleMutation = trpc.nextChapter.completeModule.useMutation();
+  const acknowledgeExperimentMutation = trpc.nextChapter.acknowledgeExperiment.useMutation();
 
   // ── Load profile and initialise ─────────────────────────────────────────────
   useEffect(() => {
@@ -368,6 +373,12 @@ export default function NextChapter() {
           setCurrentModule(data.moduleNumber);
           setCompletedModules((data.profile?.completedModules as number[] | null) ?? []);
           setProfileLoaded(true);
+          // Store experiment for this module
+          if (data.experiment) {
+            setCurrentExperiment(data.experiment);
+            setExperimentAcknowledged(false);
+            setShowExperimentCard(false);
+          }
           // Show opening prompt as first assistant message
           if (messages.length === 0) {
             setMessages([
@@ -400,6 +411,11 @@ export default function NextChapter() {
         { moduleNumber: modNum },
         {
           onSuccess: (data) => {
+            if (data.experiment) {
+              setCurrentExperiment(data.experiment);
+              setExperimentAcknowledged(false);
+              setShowExperimentCard(false);
+            }
             setMessages([{ role: "assistant", content: data.openingPrompt }]);
           },
         }
@@ -423,6 +439,11 @@ export default function NextChapter() {
         onSuccess: (data) => {
           setIsTyping(false);
           setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+          // After 3 user messages, surface the experiment card if not yet acknowledged
+          const userMsgCount = messages.filter((m) => m.role === "user").length + 1;
+          if (userMsgCount >= 3 && currentExperiment && !experimentAcknowledged) {
+            setShowExperimentCard(true);
+          }
         },
         onError: () => {
           setIsTyping(false);
@@ -664,6 +685,38 @@ export default function NextChapter() {
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Experiment Commitment Card */}
+            {showExperimentCard && currentExperiment && !experimentAcknowledged && (
+              <div
+                className="rounded-2xl border p-5 my-2"
+                style={{ background: "var(--color-ln-navy)", borderColor: (stage?.color ?? "#D4AF37") + "40" }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <FlaskConical className="h-4 w-4" style={{ color: stage?.color ?? "#D4AF37" }} />
+                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: stage?.color ?? "#D4AF37" }}>
+                    Identity Experiment
+                  </span>
+                </div>
+                <p className="text-sm text-white/80 leading-relaxed mb-4">{currentExperiment}</p>
+                <p className="text-xs text-white/40 mb-4">
+                  This is not homework — it is an identity test. Come back next session and tell me what happened.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setExperimentAcknowledged(true);
+                    setShowExperimentCard(false);
+                    acknowledgeExperimentMutation.mutate({ moduleNumber: currentModule });
+                  }}
+                  className="h-8 text-xs font-semibold"
+                  style={{ background: stage?.color ?? "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+                >
+                  I'll do it
+                  <CheckCircle2 className="ml-1.5 h-3 w-3" />
+                </Button>
               </div>
             )}
 

@@ -1775,3 +1775,43 @@ export const identityExperiments = mysqlTable("identity_experiments", {
 });
 export type IdentityExperiment = typeof identityExperiments.$inferSelect;
 export type InsertIdentityExperiment = typeof identityExperiments.$inferInsert;
+
+// ─── Next Chapter — Experiment Commitments (Phase 1) ─────────────────────────
+// Tracks when a user acknowledges a module's micro-experiment and their reflection
+export const nextChapterExperimentCommitments = mysqlTable("next_chapter_experiment_commitments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  moduleNumber: int("moduleNumber").notNull(),
+  experiment: text("experiment").notNull(),
+  // When the user acknowledged the experiment ("I'll do it")
+  acknowledgedAt: timestamp("acknowledgedAt").defaultNow().notNull(),
+  // User's reflection note after running the experiment
+  reflectionNote: text("reflectionNote"),
+  // Whether the user has submitted a reflection
+  reflectedAt: timestamp("reflectedAt"),
+});
+export type NextChapterExperimentCommitment = typeof nextChapterExperimentCommitments.$inferSelect;
+export type InsertNextChapterExperimentCommitment = typeof nextChapterExperimentCommitments.$inferInsert;
+
+// ─── Next Chapter — Identity Clarity Assessments (Phase 2) ───────────────────
+// Pre/post identity assessment measuring 5 dimensions at baseline and after each stage
+export const identityAssessments = mysqlTable("identity_assessments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  // "baseline" (before Module 1) or "stage_end" (after completing a stage)
+  assessmentType: mysqlEnum("assessmentType", ["baseline", "stage_end"]).notNull(),
+  // Stage number for stage_end assessments (1–6); null for baseline
+  stageNumber: int("stageNumber"),
+  // JSON object with 5 dimension scores (1–10 each)
+  // { leadershipIdentityClarity, futureSelfVividness, narrativeCoherence, identityBehaviourAlignment, transitionReadiness }
+  scores: json("scores").$type<{
+    leadershipIdentityClarity: number;
+    futureSelfVividness: number;
+    narrativeCoherence: number;
+    identityBehaviourAlignment: number;
+    transitionReadiness: number;
+  }>().notNull(),
+  completedAt: timestamp("completedAt").defaultNow().notNull(),
+});
+export type IdentityAssessment = typeof identityAssessments.$inferSelect;
+export type InsertIdentityAssessment = typeof identityAssessments.$inferInsert;

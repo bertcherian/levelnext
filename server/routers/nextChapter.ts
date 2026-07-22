@@ -22,7 +22,9 @@ import {
   nextChapterProfiles,
   nextChapterDeliverables,
   nextChapterMessages,
+  nextChapterExperimentCommitments,
   identityExperiments,
+  identityAssessments,
   users,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
@@ -286,7 +288,12 @@ LANGUAGE RULES:
 - Use markdown sparingly — bold for key questions or insights only
 
 DELIVERABLE GENERATION:
-When the user has shared enough for the deliverable, say something like: "I have enough to generate your [Deliverable Name]. Shall I create it now?" Then wait for confirmation before generating.`;
+When the user has shared enough for the deliverable, say something like: "I have enough to generate your [Deliverable Name]. Shall I create it now?" Then wait for confirmation before generating.
+
+EXPERIMENT COMMITMENT:
+After 3 or more user messages in this module, surface the module's experiment as a commitment prompt once (and only once). Say something like:
+"Before our next conversation, here is your experiment for this module: **[experiment]**. This is not homework — it is an identity test. Come back and tell me what happened."
+The experiment for this module is: ${mod?.experiment ?? ""}`;
 }
 
 // ─── Build profile context string from previous deliverables ─────────────────
@@ -571,13 +578,41 @@ export const nextChapterRouter = router({
       const mod = MODULES[targetModule];
       if (!mod) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid module number" });
 
+      // Check if there is a previous module's experiment to follow up on
+      let experimentFollowUp: string | null = null;
+      const completedModules = Array.isArray(profile.completedModules) ? profile.completedModules as number[] : [];
+      const previousModule = targetModule > 1 ? targetModule - 1 : null;
+      if (previousModule && completedModules.includes(previousModule)) {
+        const prevMod = MODULES[previousModule];
+        // Check if the user has acknowledged but not yet reflected on the previous experiment
+        const [existingCommitment] = await db
+          .select()
+          .from(nextChapterExperimentCommitments)
+          .where(and(
+            eq(nextChapterExperimentCommitments.userId, ctx.user.id),
+            eq(nextChapterExperimentCommitments.moduleNumber, previousModule),
+          ))
+          .limit(1);
+        if (existingCommitment && !existingCommitment.reflectedAt && prevMod?.experiment) {
+          experimentFollowUp = prevMod.experiment;
+        }
+      }
+
+      // Build the opening prompt — prepend experiment follow-up if applicable
+      let openingPrompt = mod.openingPrompt;
+      if (experimentFollowUp) {
+        openingPrompt = `Before we dive into ${mod.name}, I want to check in on your experiment from last time.\n\nYour experiment was: **"${experimentFollowUp}"**\n\n**What happened? What did you notice about yourself?**`;
+      }
+
       return {
         profile,
         moduleNumber: targetModule,
         moduleName: mod.name,
         stage: STAGES.find((s) => s.modules.includes(targetModule)),
-        openingPrompt: mod.openingPrompt,
+        openingPrompt,
         deliverableType: mod.deliverableType,
+        experiment: mod.experiment,
+        experimentFollowUp,
         stages: STAGES,
         modules: Object.entries(MODULES).map(([num, m]) => ({
           number: parseInt(num),
@@ -854,5 +889,133 @@ export const nextChapterRouter = router({
         ));
 
       return { success: true };
+    }),
+
+  // Acknowledge a module's experiment (user commits to running it)
+  acknowledgeExperiment: protectedProcedure
+    .input(z.object({
+      moduleNumber: z.number().min(1).max(16),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const mod = MODULES[input.moduleNumber];
+      if (!mod?.experiment) throw new TRPCError({ code: "BAD_REQUEST" });
+
+      // Upsert — only one commitment per module
+      const [existing] = await db
+        .select()
+        .from(nextChapterExperimentCommitments)
+        .where(and(
+          eq(nextChapterExperimentCommitments.userId, ctx.user.id),
+          eq(nextChapterExperimentCommitments.moduleNumber, input.moduleNumber),
+        ))
+        .limit(1);
+
+      if (!existing) {
+        await db.insert(nextChapterExperimentCommitments).values({
+          userId: ctx.user.id,
+          moduleNumber: input.moduleNumber,
+          experiment: mod.experiment,
+        });
+      }
+
+      return { acknowledged: true, experiment: mod.experiment };
+    }),
+
+  // Submit a reflection on a completed experiment
+  submitExperimentReflection: protectedProcedure
+    .input(z.object({
+      moduleNumber: z.number().min(1).max(16),
+      reflectionNote: z.string().min(1).max(2000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await db
+        .update(nextChapterExperimentCommitments)
+        .set({
+          reflectionNote: input.reflectionNote,
+          reflectedAt: new Date(),
+        })
+        .where(and(
+          eq(nextChapterExperimentCommitments.userId, ctx.user.id),
+          eq(nextChapterExperimentCommitments.moduleNumber, input.moduleNumber),
+        ));
+
+      // Also update the identity_experiments table reflection
+      await db
+        .update(identityExperiments)
+        .set({
+          reflection: input.reflectionNote,
+          completedAt: new Date(),
+        })
+        .where(and(
+          eq(identityExperiments.userId, ctx.user.id),
+          eq(identityExperiments.moduleNumber, input.moduleNumber),
+        ));
+
+      return { submitted: true };
+    }),
+
+  // Get the current experiment commitment for a module
+  getExperimentCommitment: protectedProcedure
+    .input(z.object({ moduleNumber: z.number().min(1).max(16) }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [commitment] = await db
+        .select()
+        .from(nextChapterExperimentCommitments)
+        .where(and(
+          eq(nextChapterExperimentCommitments.userId, ctx.user.id),
+          eq(nextChapterExperimentCommitments.moduleNumber, input.moduleNumber),
+        ))
+        .limit(1);
+
+      return commitment ?? null;
+    }),
+
+  // Submit an Identity Clarity Assessment (baseline or stage-end)
+  submitIdentityAssessment: protectedProcedure
+    .input(z.object({
+      assessmentType: z.enum(["baseline", "stage_end"]),
+      stageNumber: z.number().min(1).max(6).optional(),
+      scores: z.object({
+        leadershipIdentityClarity: z.number().min(1).max(10),
+        futureSelfVividness: z.number().min(1).max(10),
+        narrativeCoherence: z.number().min(1).max(10),
+        identityBehaviourAlignment: z.number().min(1).max(10),
+        transitionReadiness: z.number().min(1).max(10),
+      }),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [inserted] = await db.insert(identityAssessments).values({
+        userId: ctx.user.id,
+        assessmentType: input.assessmentType,
+        stageNumber: input.stageNumber ?? null,
+        scores: input.scores,
+      }).$returningId();
+
+      return { id: inserted.id, scores: input.scores };
+    }),
+
+  // Get all identity assessments for the user (for portfolio radar chart)
+  getIdentityAssessments: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      return db
+        .select()
+        .from(identityAssessments)
+        .where(eq(identityAssessments.userId, ctx.user.id))
+        .orderBy(asc(identityAssessments.completedAt));
     }),
 });
