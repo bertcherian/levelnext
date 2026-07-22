@@ -20,8 +20,18 @@ import {
   ChevronDown,
   ChevronRight,
   BookOpen,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  Radar,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from "recharts";
 
 // ─── Stage / Module definitions ───────────────────────────────────────────────
 const STAGES = [
@@ -51,6 +61,129 @@ const MODULE_NAMES: Record<number, string> = {
   15: "Transformation Dashboard",
   16: "Reflection Cycle",
 };
+
+// ─── Dimension labels ──────────────────────────────────────────────────────────────
+const DIMENSION_LABELS: Record<string, string> = {
+  leadershipIdentityClarity: "Identity Clarity",
+  futureSelfVividness: "Future Self",
+  narrativeCoherence: "Narrative",
+  identityBehaviourAlignment: "Alignment",
+  transitionReadiness: "Readiness",
+};
+
+// ─── Identity Shift Radar Chart ───────────────────────────────────────────────────────────
+function IdentityShiftChart({
+  assessments,
+}: {
+  assessments: Array<{ assessmentType: string; scores: unknown; completedAt: Date | string }>;
+}) {
+  const baseline = assessments.find((a) => a.assessmentType === "baseline");
+  const latest = assessments.filter((a) => a.assessmentType !== "baseline").at(-1);
+
+  if (!baseline) return null;
+
+  const baselineScores = baseline.scores as Record<string, number>;
+  const latestScores = latest ? (latest.scores as Record<string, number>) : null;
+
+  const radarData = Object.keys(DIMENSION_LABELS).map((key) => ({
+    dimension: DIMENSION_LABELS[key],
+    Baseline: baselineScores[key] ?? 0,
+    ...(latestScores ? { Current: latestScores[key] ?? 0 } : {}),
+  }));
+
+  const baselineAvg = Object.values(baselineScores).reduce((a, b) => a + b, 0) / 5;
+  const latestAvg = latestScores
+    ? Object.values(latestScores).reduce((a, b) => a + b, 0) / 5
+    : null;
+  const shift = latestAvg !== null ? latestAvg - baselineAvg : null;
+
+  return (
+    <div
+      className="rounded-2xl p-6 mb-8"
+      style={{ background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+    >
+      <div className="flex items-center gap-3 mb-2">
+        <TrendingUp className="h-5 w-5" style={{ color: "var(--color-ln-yellow)" }} />
+        <h2 className="text-base font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+          Identity Shift Score
+        </h2>
+        {shift !== null && (
+          <span
+            className="ml-auto text-sm font-bold px-3 py-1 rounded-full"
+            style={{
+              background: shift >= 0 ? "rgba(91,168,90,0.12)" : "rgba(231,76,60,0.12)",
+              color: shift >= 0 ? "#5BA85A" : "#E74C3C",
+            }}
+          >
+            {shift >= 0 ? "+" : ""}{shift.toFixed(1)} shift
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-gray-400 mb-5">
+        {latestScores
+          ? "Comparing your baseline identity clarity to your most recent assessment."
+          : "Baseline captured. Complete more modules to see your identity shift over time."}
+      </p>
+
+      <div style={{ height: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={radarData} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+            <PolarGrid stroke="rgba(0,0,0,0.08)" />
+            <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 11, fill: "#6B7280" }} />
+            <Radar
+              name="Baseline"
+              dataKey="Baseline"
+              stroke="rgba(212,175,55,0.8)"
+              fill="rgba(212,175,55,0.15)"
+              strokeWidth={2}
+              dot={false}
+            />
+            {latestScores && (
+              <Radar
+                name="Current"
+                dataKey="Current"
+                stroke="#12345A"
+                fill="rgba(18,52,90,0.15)"
+                strokeWidth={2}
+                dot={false}
+              />
+            )}
+            <Tooltip
+              contentStyle={{ fontSize: 12, borderRadius: 8, border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}
+              formatter={(value: number) => [`${value}/10`]}
+            />
+            {latestScores && <Legend wrapperStyle={{ fontSize: 12 }} />}
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="grid grid-cols-5 gap-2 mt-4">
+        {Object.keys(DIMENSION_LABELS).map((key) => {
+          const b = baselineScores[key] ?? 0;
+          const c = latestScores?.[key] ?? null;
+          const delta = c !== null ? c - b : null;
+          return (
+            <div key={key} className="text-center">
+              <div className="text-[10px] text-gray-400 mb-1 leading-tight">{DIMENSION_LABELS[key]}</div>
+              <div className="text-lg font-bold" style={{ color: "var(--color-ln-navy)" }}>
+                {c ?? b}
+                <span className="text-xs text-gray-300 font-normal">/10</span>
+              </div>
+              {delta !== null && (
+                <div
+                  className="text-[10px] font-semibold"
+                  style={{ color: delta >= 0 ? "#5BA85A" : "#E74C3C" }}
+                >
+                  {delta >= 0 ? "+" : ""}{delta}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // ─── Deliverable display component ───────────────────────────────────────────
 function DeliverableView({
@@ -185,6 +318,7 @@ function DeliverableView({
 export default function NextChapterPortfolio() {
   const [, navigate] = useLocation();
   const { data, isLoading } = trpc.nextChapter.getPortfolio.useQuery();
+  const { data: assessments } = trpc.nextChapter.getIdentityAssessments.useQuery();
 
   const completedModules = (data?.profile?.completedModules as number[]) ?? [];
   const totalDeliverables = data?.deliverables?.length ?? 0;
@@ -269,6 +403,11 @@ export default function NextChapterPortfolio() {
               })}
             </div>
           </div>
+
+          {/* Identity Shift Radar Chart */}
+          {assessments && assessments.length > 0 && (
+            <IdentityShiftChart assessments={assessments} />
+          )}
 
           {/* Deliverables by stage */}
           {isLoading ? (

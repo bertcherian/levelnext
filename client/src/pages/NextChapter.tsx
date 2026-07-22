@@ -357,15 +357,31 @@ export default function NextChapter() {
     staleTime: 0,
   });
 
+  // Check if baseline ICA has been completed
+  const { data: assessments, isLoading: assessmentsLoading } = trpc.nextChapter.getIdentityAssessments.useQuery(undefined, {
+    staleTime: 0,
+  });
+
   const startSessionMutation = trpc.nextChapter.startSession.useMutation();
   const sendMessageMutation = trpc.nextChapter.sendMessage.useMutation();
   const generateDeliverableMutation = trpc.nextChapter.generateDeliverable.useMutation();
   const completeModuleMutation = trpc.nextChapter.completeModule.useMutation();
   const acknowledgeExperimentMutation = trpc.nextChapter.acknowledgeExperiment.useMutation();
 
+  // ── ICA gate: redirect to assessment if no baseline found ───────────────────
+  useEffect(() => {
+    if (assessmentsLoading) return;
+    if (!assessments) return;
+    const hasBaseline = assessments.some((a) => a.assessmentType === "baseline");
+    if (!hasBaseline) {
+      navigate("/next-chapter/identity-assessment");
+    }
+  }, [assessments, assessmentsLoading]);
+
   // ── Load profile and initialise ─────────────────────────────────────────────
   useEffect(() => {
     if (profileLoaded) return;
+    if (assessmentsLoading) return; // wait for ICA gate check first
     startSessionMutation.mutate(
       { moduleNumber: undefined },
       {

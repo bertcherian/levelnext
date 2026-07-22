@@ -889,3 +889,13 @@
 - [ ] Instrumentation dashboard (admin): per-participant module completion, experiment rate, ICA scores
 - [ ] Case study export: generate anonymised case study doc per participant
 - [ ] Aggregate pilot report page (admin only)
+
+### Phase 2 — UX Improvements (Jul 22)
+- [x] Wire ICA auto-trigger: NextChapter page checks for baseline assessment on mount, redirects to /next-chapter/identity-assessment if none found
+- [x] ICA completion: after submitting, redirect back to /next-chapter to start Module 1
+- [x] Portfolio page: Identity Shift Score radar chart (baseline vs latest ICA scores across 5 dimensions)
+- [x] ICA UX: animated progress bar with stage label transitions
+- [x] ICA UX: smooth slide-in/slide-out transitions between questions (CSS transform)
+- [x] ICA UX: completion celebration screen with confetti-style animation
+- [x] TypeScript check (zero errors)
+- [ ] Save checkpoint
