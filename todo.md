@@ -898,4 +898,10 @@
 - [x] ICA UX: smooth slide-in/slide-out transitions between questions (CSS transform)
 - [x] ICA UX: completion celebration screen with confetti-style animation
 - [x] TypeScript check (zero errors)
+- [x] Save checkpoint
+
+### Phase 3 — Radar Chart Enhancements (Jul 22)
+- [x] Portfolio: custom recharts tooltip on radar chart showing dimension name, description, baseline score, current score, and delta
+- [x] Portfolio: personalised recommendations section below radar chart — 3 action items for the lowest-scoring dimension, with module links
+- [x] TypeScript check (zero errors)
 - [ ] Save checkpoint

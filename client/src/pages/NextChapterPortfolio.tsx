@@ -63,19 +63,304 @@ const MODULE_NAMES: Record<number, string> = {
 };
 
 // ─── Dimension labels ──────────────────────────────────────────────────────────────
-const DIMENSION_LABELS: Record<string, string> = {
-  leadershipIdentityClarity: "Identity Clarity",
-  futureSelfVividness: "Future Self",
-  narrativeCoherence: "Narrative",
-  identityBehaviourAlignment: "Alignment",
-  transitionReadiness: "Readiness",
+// ─── Dimension metadata ──────────────────────────────────────────────────────────────
+const DIMENSION_META: Record<string, {
+  label: string;
+  shortLabel: string;
+  color: string;
+  icon: string;
+  description: string;
+  lowDescription: string;
+  highDescription: string;
+  actions: { title: string; detail: string; module?: number }[];
+}> = {
+  leadershipIdentityClarity: {
+    label: "Leadership Identity Clarity",
+    shortLabel: "Identity Clarity",
+    color: "#D4AF37",
+    icon: "🧭",
+    description: "How clearly and specifically you understand who you are as a leader — your values, strengths, and the unique contribution you make.",
+    lowDescription: "Your leadership identity feels unclear or undefined. You may struggle to articulate who you are as a leader or what makes you distinct.",
+    highDescription: "You have a sharp, well-defined sense of your leadership identity. You can articulate your values, strengths, and contribution with confidence.",
+    actions: [
+      { title: "Write your Leadership Identity Statement", detail: "Draft a single sentence that captures who you are, what you stand for, and the impact you create. Refine it until it feels both true and aspirational.", module: 1 },
+      { title: "Map your core values", detail: "List your top 5 leadership values. For each, write one specific behaviour that demonstrates it and one that contradicts it. Use the gap as your development focus.", module: 1 },
+      { title: "Ask for a 360° identity mirror", detail: "Ask 3 trusted colleagues: \u2018How would you describe my leadership in one sentence?\u2019 Compare their answers to your own self-description. The gap is your identity clarity work.", module: 2 },
+    ],
+  },
+  futureSelfVividness: {
+    label: "Future Self Vividness",
+    shortLabel: "Future Self",
+    color: "#4A90D9",
+    icon: "🔭",
+    description: "How vivid and specific your picture of your future leadership self is — the role, impact, and influence you want to have in your next chapter.",
+    lowDescription: "Your future self feels vague or distant. You may have a general sense of wanting to grow, but lack a specific, motivating picture of where you are heading.",
+    highDescription: "You have a clear, detailed, and motivating picture of the leader you are becoming. Your future self feels real and pulls you forward.",
+    actions: [
+      { title: "Write a \u2018Future Self Letter\u2019", detail: "Write a letter from yourself 3 years from now, describing the role you hold, the impact you are making, and how you feel about your leadership. Be as specific as possible.", module: 4 },
+      { title: "Define your \u2018Next Chapter\u2019 in one paragraph", detail: "Describe your next chapter in terms of: the type of leader you will be, the problems you will solve, the people you will lead, and the legacy you will begin building.", module: 3 },
+      { title: "Create a Future Self Vision Board", detail: "Identify 5 specific leaders (real or fictional) who embody aspects of your future self. For each, name the one quality you want to develop. This becomes your growth blueprint.", module: 4 },
+    ],
+  },
+  narrativeCoherence: {
+    label: "Narrative Coherence",
+    shortLabel: "Narrative",
+    color: "#5BA85A",
+    icon: "📖",
+    description: "How well your career story hangs together — whether you can see a clear thread connecting your past experiences to your present identity and future direction.",
+    lowDescription: "Your career story feels fragmented or hard to explain. You may struggle to connect the dots between your experiences or to tell a compelling story about where you are heading.",
+    highDescription: "Your career story is coherent and compelling. You can draw a clear line from your past through your present to your future, and others find it credible and inspiring.",
+    actions: [
+      { title: "Build your Leadership Timeline", detail: "Map your 5 most formative leadership experiences on a timeline. For each, identify: what happened, what you learned, and how it shaped the leader you are today. Look for the thread.", module: 5 },
+      { title: "Craft your \u2018Origin Story\u2019", detail: "Write a 2-minute story that explains why you became the kind of leader you are. It should start with a formative moment, not a job title. Practice telling it until it feels natural.", module: 5 },
+      { title: "Identify your \u2018Red Thread\u2019", detail: "Ask yourself: what is the one consistent theme across every role I have held? This is your red thread. Name it, and use it as the spine of your leadership narrative.", module: 7 },
+    ],
+  },
+  identityBehaviourAlignment: {
+    label: "Identity\u2013Behaviour Alignment",
+    shortLabel: "Alignment",
+    color: "#E07B39",
+    icon: "⚡",
+    description: "How consistently your daily behaviours reflect the leader you believe yourself to be — whether your actions match your identity.",
+    lowDescription: "There is a gap between who you believe yourself to be as a leader and how you actually show up day-to-day. Others may experience you differently from how you see yourself.",
+    highDescription: "Your behaviours consistently reflect your leadership identity. Others would describe you in a way that closely matches your own self-perception.",
+    actions: [
+      { title: "Run a \u2018Behaviour Audit\u2019", detail: "For each of your top 3 leadership values, identify one specific behaviour from the last week that demonstrated it and one that contradicted it. The contradictions are your alignment gaps.", module: 10 },
+      { title: "Create a \u2018Leadership Operating Principles\u2019 list", detail: "Write 5 specific, observable behaviours that you commit to as expressions of your leadership identity. Share them with your team and ask for monthly feedback on how well you are living them.", module: 10 },
+      { title: "Design a \u2018Morning Identity Anchor\u2019", detail: "Each morning, read your Leadership Identity Statement and ask: what is one thing I will do today that expresses this identity? This daily practice closes the gap between who you are and how you show up.", module: 11 },
+    ],
+  },
+  transitionReadiness: {
+    label: "Transition Readiness",
+    shortLabel: "Readiness",
+    color: "#9B59B6",
+    icon: "🚀",
+    description: "How prepared you feel to step into your next chapter — whether you have the clarity, capability, and plan to make the transition successfully.",
+    lowDescription: "You feel uncertain or unprepared for your next leadership transition. You may lack a clear plan, the right relationships, or confidence in your readiness.",
+    highDescription: "You feel genuinely ready for your next chapter. You have a clear development plan, the right relationships, and the confidence to step into a bigger role.",
+    actions: [
+      { title: "Map your \u2018Transition Gaps\u2019", detail: "Identify the 3 capabilities, relationships, or experiences that your next chapter requires but you do not yet have. For each, write one specific action you will take in the next 30 days.", module: 8 },
+      { title: "Build your \u2018Transition Network\u2019", detail: "Identify 5 people who are already operating at the level you want to reach. For each, define what you want to learn from them and schedule a conversation in the next 60 days.", module: 9 },
+      { title: "Write your \u201290-Day Transition Plan\u2019", detail: "Define what success looks like in your first 90 days in your next role. Break it into three 30-day phases: Learn, Contribute, Lead. This plan makes your readiness concrete.", module: 8 },
+    ],
+  },
 };
+
+const DIMENSION_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(DIMENSION_META).map(([k, v]) => [k, v.shortLabel])
+);
+
+// ─── Custom Radar Tooltip ──────────────────────────────────────────────────────────────
+function CustomRadarTooltip({
+  active,
+  payload,
+  baselineScores,
+  latestScores,
+}: {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; dataKey: string; payload: { dimension: string } }>;
+  baselineScores: Record<string, number>;
+  latestScores: Record<string, number> | null;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  // Find the dimension key from the short label
+  const shortLabel = payload[0]?.payload?.dimension;
+  const dimKey = Object.keys(DIMENSION_META).find(
+    (k) => DIMENSION_META[k].shortLabel === shortLabel
+  );
+  if (!dimKey) return null;
+
+  const meta = DIMENSION_META[dimKey];
+  const baselineVal = baselineScores[dimKey] ?? 0;
+  const currentVal = latestScores?.[dimKey] ?? null;
+  const delta = currentVal !== null ? currentVal - baselineVal : null;
+
+  return (
+    <div
+      className="rounded-xl p-4 shadow-lg max-w-xs"
+      style={{
+        background: "white",
+        border: `2px solid ${meta.color}`,
+        boxShadow: `0 4px 20px rgba(0,0,0,0.12)`,
+        zIndex: 50,
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">{meta.icon}</span>
+        <span className="text-sm font-bold" style={{ color: meta.color }}>
+          {meta.label}
+        </span>
+      </div>
+
+      {/* Description */}
+      <p className="text-xs text-gray-500 leading-relaxed mb-3">
+        {meta.description}
+      </p>
+
+      {/* Scores */}
+      <div className="flex items-center gap-3">
+        <div className="text-center">
+          <div className="text-[10px] text-gray-400 uppercase tracking-wider">Baseline</div>
+          <div className="text-xl font-black" style={{ color: meta.color }}>
+            {baselineVal}<span className="text-xs text-gray-300 font-normal">/10</span>
+          </div>
+        </div>
+        {currentVal !== null && (
+          <>
+            <div className="text-gray-200">→</div>
+            <div className="text-center">
+              <div className="text-[10px] text-gray-400 uppercase tracking-wider">Current</div>
+              <div className="text-xl font-black" style={{ color: "var(--color-ln-navy)" }}>
+                {currentVal}<span className="text-xs text-gray-300 font-normal">/10</span>
+              </div>
+            </div>
+            {delta !== null && (
+              <div
+                className="ml-auto text-sm font-bold px-2 py-0.5 rounded-full"
+                style={{
+                  background: delta >= 0 ? "rgba(91,168,90,0.12)" : "rgba(231,76,60,0.12)",
+                  color: delta >= 0 ? "#5BA85A" : "#E74C3C",
+                }}
+              >
+                {delta >= 0 ? "+" : ""}{delta}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Contextual description */}
+      <div
+        className="mt-3 pt-3 border-t text-xs text-gray-500 leading-relaxed italic"
+        style={{ borderColor: meta.color + "30" }}
+      >
+        {baselineVal <= 5 ? meta.lowDescription : meta.highDescription}
+      </div>
+    </div>
+  );
+}
+
+// ─── Personalised Recommendations ───────────────────────────────────────────────────────────
+function PersonalisedRecommendations({
+  baselineScores,
+  latestScores,
+  onNavigate,
+}: {
+  baselineScores: Record<string, number>;
+  latestScores: Record<string, number> | null;
+  onNavigate: (path: string) => void;
+}) {
+  // Use current scores if available, otherwise baseline
+  const activeScores = latestScores ?? baselineScores;
+
+  // Find the lowest-scoring dimension
+  const lowestKey = Object.keys(activeScores).reduce((a, b) =>
+    (activeScores[a] ?? 10) <= (activeScores[b] ?? 10) ? a : b
+  );
+  const meta = DIMENSION_META[lowestKey];
+  if (!meta) return null;
+
+  const score = activeScores[lowestKey] ?? 0;
+
+  return (
+    <div
+      className="rounded-2xl p-6 mb-8"
+      style={{ background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-1">
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0"
+          style={{ background: meta.color + "18", border: `1.5px solid ${meta.color}` }}
+        >
+          {meta.icon}
+        </div>
+        <div>
+          <h2 className="text-base font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+            Your Growth Focus: {meta.label}
+          </h2>
+          <p className="text-xs text-gray-400">
+            Lowest-scoring dimension — score {score}/10
+          </p>
+        </div>
+        <div
+          className="ml-auto px-3 py-1 rounded-full text-xs font-bold"
+          style={{ background: meta.color + "18", color: meta.color }}
+        >
+          Priority
+        </div>
+      </div>
+
+      {/* Context */}
+      <div
+        className="rounded-xl p-4 mb-5 mt-3"
+        style={{ background: meta.color + "0D", borderLeft: `3px solid ${meta.color}` }}
+      >
+        <p className="text-sm text-gray-700 leading-relaxed">
+          {score <= 5 ? meta.lowDescription : meta.highDescription}
+        </p>
+      </div>
+
+      {/* Action items */}
+      <div className="space-y-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+          3 Actions to Build This Dimension
+        </div>
+        {meta.actions.map((action, idx) => (
+          <div
+            key={idx}
+            className="rounded-xl p-4"
+            style={{ background: "#F8F5F0", border: "1px solid rgba(0,0,0,0.04)" }}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
+                style={{ background: meta.color, color: "white" }}
+              >
+                {idx + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>
+                  {action.title}
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  {action.detail}
+                </p>
+                {action.module && (
+                  <button
+                    onClick={() => onNavigate("/next-chapter")}
+                    className="mt-2 text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-70"
+                    style={{ color: meta.color }}
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                    Module {action.module}: {MODULE_NAMES[action.module]}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <div className="mt-5 pt-4 border-t border-gray-100">
+        <p className="text-xs text-gray-400 text-center">
+          These actions are drawn from your Next Chapter journey modules. Start the conversation in your next session.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 // ─── Identity Shift Radar Chart ───────────────────────────────────────────────────────────
 function IdentityShiftChart({
   assessments,
+  onNavigate,
 }: {
   assessments: Array<{ assessmentType: string; scores: unknown; completedAt: Date | string }>;
+  onNavigate: (path: string) => void;
 }) {
   const baseline = assessments.find((a) => a.assessmentType === "baseline");
   const latest = assessments.filter((a) => a.assessmentType !== "baseline").at(-1);
@@ -85,8 +370,8 @@ function IdentityShiftChart({
   const baselineScores = baseline.scores as Record<string, number>;
   const latestScores = latest ? (latest.scores as Record<string, number>) : null;
 
-  const radarData = Object.keys(DIMENSION_LABELS).map((key) => ({
-    dimension: DIMENSION_LABELS[key],
+  const radarData = Object.keys(DIMENSION_META).map((key) => ({
+    dimension: DIMENSION_META[key].shortLabel,
     Baseline: baselineScores[key] ?? 0,
     ...(latestScores ? { Current: latestScores[key] ?? 0 } : {}),
   }));
@@ -98,90 +383,121 @@ function IdentityShiftChart({
   const shift = latestAvg !== null ? latestAvg - baselineAvg : null;
 
   return (
-    <div
-      className="rounded-2xl p-6 mb-8"
-      style={{ background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
-    >
-      <div className="flex items-center gap-3 mb-2">
-        <TrendingUp className="h-5 w-5" style={{ color: "var(--color-ln-yellow)" }} />
-        <h2 className="text-base font-semibold" style={{ color: "var(--color-ln-navy)" }}>
-          Identity Shift Score
-        </h2>
-        {shift !== null && (
-          <span
-            className="ml-auto text-sm font-bold px-3 py-1 rounded-full"
-            style={{
-              background: shift >= 0 ? "rgba(91,168,90,0.12)" : "rgba(231,76,60,0.12)",
-              color: shift >= 0 ? "#5BA85A" : "#E74C3C",
-            }}
-          >
-            {shift >= 0 ? "+" : ""}{shift.toFixed(1)} shift
-          </span>
-        )}
-      </div>
-      <p className="text-xs text-gray-400 mb-5">
-        {latestScores
-          ? "Comparing your baseline identity clarity to your most recent assessment."
-          : "Baseline captured. Complete more modules to see your identity shift over time."}
-      </p>
+    <>
+      <div
+        className="rounded-2xl p-6 mb-4"
+        style={{ background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+      >
+        <div className="flex items-center gap-3 mb-2">
+          <TrendingUp className="h-5 w-5" style={{ color: "var(--color-ln-yellow)" }} />
+          <h2 className="text-base font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+            Identity Shift Score
+          </h2>
+          {shift !== null && (
+            <span
+              className="ml-auto text-sm font-bold px-3 py-1 rounded-full"
+              style={{
+                background: shift >= 0 ? "rgba(91,168,90,0.12)" : "rgba(231,76,60,0.12)",
+                color: shift >= 0 ? "#5BA85A" : "#E74C3C",
+              }}
+            >
+              {shift >= 0 ? "+" : ""}{shift.toFixed(1)} shift
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-400 mb-1">
+          {latestScores
+            ? "Comparing your baseline identity clarity to your most recent assessment. Hover over each axis for details."
+            : "Baseline captured. Hover over each axis to explore your dimensions. Complete more modules to see your shift over time."}
+        </p>
 
-      <div style={{ height: 280 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={radarData} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
-            <PolarGrid stroke="rgba(0,0,0,0.08)" />
-            <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 11, fill: "#6B7280" }} />
-            <Radar
-              name="Baseline"
-              dataKey="Baseline"
-              stroke="rgba(212,175,55,0.8)"
-              fill="rgba(212,175,55,0.15)"
-              strokeWidth={2}
-              dot={false}
-            />
-            {latestScores && (
-              <Radar
-                name="Current"
-                dataKey="Current"
-                stroke="#12345A"
-                fill="rgba(18,52,90,0.15)"
-                strokeWidth={2}
-                dot={false}
+        <div style={{ height: 300 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={radarData} margin={{ top: 16, right: 24, bottom: 16, left: 24 }}>
+              <PolarGrid stroke="rgba(0,0,0,0.07)" />
+              <PolarAngleAxis
+                dataKey="dimension"
+                tick={({ x, y, payload }: { x: number; y: number; payload: { value: string } }) => {
+                  const dimKey = Object.keys(DIMENSION_META).find(
+                    (k) => DIMENSION_META[k].shortLabel === payload.value
+                  );
+                  const color = dimKey ? DIMENSION_META[dimKey].color : "#6B7280";
+                  return (
+                    <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600} fill={color}>
+                      {payload.value}
+                    </text>
+                  );
+                }}
               />
-            )}
-            <Tooltip
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}
-              formatter={(value: number) => [`${value}/10`]}
-            />
-            {latestScores && <Legend wrapperStyle={{ fontSize: 12 }} />}
-          </RadarChart>
-        </ResponsiveContainer>
+              <Radar
+                name="Baseline"
+                dataKey="Baseline"
+                stroke="rgba(212,175,55,0.8)"
+                fill="rgba(212,175,55,0.15)"
+                strokeWidth={2}
+                dot={{ r: 4, fill: "#D4AF37", strokeWidth: 0 }}
+                activeDot={{ r: 6, fill: "#D4AF37", strokeWidth: 2, stroke: "white" }}
+              />
+              {latestScores && (
+                <Radar
+                  name="Current"
+                  dataKey="Current"
+                  stroke="#12345A"
+                  fill="rgba(18,52,90,0.12)"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#12345A", strokeWidth: 0 }}
+                  activeDot={{ r: 6, fill: "#12345A", strokeWidth: 2, stroke: "white" }}
+                />
+              )}
+              <Tooltip
+                content={
+                  <CustomRadarTooltip
+                    baselineScores={baselineScores}
+                    latestScores={latestScores}
+                  />
+                }
+              />
+              {latestScores && <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />}
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Dimension breakdown grid */}
+        <div className="grid grid-cols-5 gap-2 mt-2">
+          {Object.keys(DIMENSION_META).map((key) => {
+            const meta = DIMENSION_META[key];
+            const b = baselineScores[key] ?? 0;
+            const c = latestScores?.[key] ?? null;
+            const delta = c !== null ? c - b : null;
+            return (
+              <div key={key} className="text-center">
+                <div className="text-base mb-0.5">{meta.icon}</div>
+                <div className="text-[10px] text-gray-400 mb-1 leading-tight">{meta.shortLabel}</div>
+                <div className="text-lg font-bold" style={{ color: meta.color }}>
+                  {c ?? b}
+                  <span className="text-xs text-gray-300 font-normal">/10</span>
+                </div>
+                {delta !== null && (
+                  <div
+                    className="text-[10px] font-semibold"
+                    style={{ color: delta >= 0 ? "#5BA85A" : "#E74C3C" }}
+                  >
+                    {delta >= 0 ? "+" : ""}{delta}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-2 mt-4">
-        {Object.keys(DIMENSION_LABELS).map((key) => {
-          const b = baselineScores[key] ?? 0;
-          const c = latestScores?.[key] ?? null;
-          const delta = c !== null ? c - b : null;
-          return (
-            <div key={key} className="text-center">
-              <div className="text-[10px] text-gray-400 mb-1 leading-tight">{DIMENSION_LABELS[key]}</div>
-              <div className="text-lg font-bold" style={{ color: "var(--color-ln-navy)" }}>
-                {c ?? b}
-                <span className="text-xs text-gray-300 font-normal">/10</span>
-              </div>
-              {delta !== null && (
-                <div
-                  className="text-[10px] font-semibold"
-                  style={{ color: delta >= 0 ? "#5BA85A" : "#E74C3C" }}
-                >
-                  {delta >= 0 ? "+" : ""}{delta}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+      {/* Personalised recommendations */}
+      <PersonalisedRecommendations
+        baselineScores={baselineScores}
+        latestScores={latestScores}
+        onNavigate={onNavigate}
+      />
+    </>
   );
 }
 
@@ -406,7 +722,7 @@ export default function NextChapterPortfolio() {
 
           {/* Identity Shift Radar Chart */}
           {assessments && assessments.length > 0 && (
-            <IdentityShiftChart assessments={assessments} />
+            <IdentityShiftChart assessments={assessments} onNavigate={navigate} />
           )}
 
           {/* Deliverables by stage */}
