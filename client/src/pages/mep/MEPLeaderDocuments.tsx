@@ -3,41 +3,71 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Upload, FileText, Trash2, Target, BookOpen, BarChart2, FolderOpen, ExternalLink, Loader2,
+  Upload, FileText, Trash2, Target, BookOpen, BarChart2, FolderOpen,
+  ExternalLink, Loader2, Sparkles, ChevronDown, ChevronUp, CheckCircle2,
 } from "lucide-react";
 
 type DocType = "work_goals" | "idp" | "prior_assessment" | "other";
 
-const TAB_CONFIG: { key: DocType; label: string; icon: React.ReactNode; description: string }[] = [
+interface Objective {
+  objective: string;
+  category: string;
+  priority: "high" | "medium" | "low";
+}
+
+const TAB_CONFIG: { key: DocType; label: string; icon: React.ReactNode; description: string; canExtract: boolean }[] = [
   {
     key: "work_goals",
     label: "Work Goals",
     icon: <Target size={14} />,
-    description: "Upload your current work goals, OKRs, or performance targets.",
+    description: "Upload your current work goals, OKRs, or performance targets. AI can extract key objectives automatically.",
+    canExtract: true,
   },
   {
     key: "idp",
     label: "Development Plan",
     icon: <BookOpen size={14} />,
-    description: "Upload your Individual Development Plan (IDP) or learning plan.",
+    description: "Upload your Individual Development Plan (IDP) or learning plan. AI can extract development priorities.",
+    canExtract: true,
   },
   {
     key: "prior_assessment",
     label: "Other Assessments",
     icon: <BarChart2 size={14} />,
     description: "Upload prior assessments — MBTI, DISC, Hogan, 360 feedback, or any other.",
+    canExtract: false,
   },
   {
     key: "other",
     label: "Other Documents",
     icon: <FolderOpen size={14} />,
     description: "Upload any other relevant documents for your coaching journey.",
+    canExtract: false,
   },
 ];
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const PRIORITY_COLORS: Record<string, string> = {
+  high: "oklch(40% 0.2 25)",
+  medium: "oklch(50% 0.18 60)",
+  low: "oklch(45% 0.1 248.6)",
+};
+const PRIORITY_BG: Record<string, string> = {
+  high: "oklch(97% 0.04 25)",
+  medium: "oklch(98% 0.03 60)",
+  low: "oklch(96% 0.01 248.6)",
+};
+const CATEGORY_LABELS: Record<string, string> = {
+  performance: "Performance",
+  development: "Development",
+  leadership: "Leadership",
+  business: "Business",
+  personal: "Personal",
+};
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/msword",
@@ -64,12 +94,77 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function ObjectivesPanel({ objectives, extractedAt }: { objectives: Objective[]; extractedAt?: string | null }) {
+  const [expanded, setExpanded] = useState(true);
+  const byPriority = {
+    high: objectives.filter((o) => o.priority === "high"),
+    medium: objectives.filter((o) => o.priority === "medium"),
+    low: objectives.filter((o) => o.priority === "low"),
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border" style={{ borderColor: "oklch(88% 0.04 248.6)", background: "oklch(98% 0.01 248.6)" }}>
+      <button
+        className="w-full flex items-center justify-between px-4 py-3 text-left"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <div className="flex items-center gap-2">
+          <Sparkles size={14} style={{ color: "var(--color-ln-yellow)" }} />
+          <span className="text-xs font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+            AI-Extracted Objectives ({objectives.length})
+          </span>
+          {extractedAt && (
+            <span className="text-[10px]" style={{ color: "oklch(55% 0.02 248.6)" }}>
+              · {new Date(extractedAt).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+        {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 space-y-2">
+          {(["high", "medium", "low"] as const).map((priority) =>
+            byPriority[priority].length > 0 ? (
+              <div key={priority}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: PRIORITY_COLORS[priority] }}>
+                  {priority === "high" ? "High Priority" : priority === "medium" ? "Medium Priority" : "Lower Priority"}
+                </p>
+                <div className="space-y-1.5">
+                  {byPriority[priority].map((obj, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 rounded-lg px-3 py-2"
+                      style={{ background: PRIORITY_BG[priority] }}
+                    >
+                      <CheckCircle2 size={13} className="mt-0.5 shrink-0" style={{ color: PRIORITY_COLORS[priority] }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs leading-snug" style={{ color: "oklch(25% 0.02 248.6)" }}>
+                          {obj.objective}
+                        </p>
+                        <span className="text-[10px] mt-0.5 inline-block" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                          {CATEGORY_LABELS[obj.category] ?? obj.category}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MEPLeaderDocuments() {
   const [activeTab, setActiveTab] = useState<DocType>("work_goals");
   const [uploading, setUploading] = useState(false);
   const [editingNotes, setEditingNotes] = useState<number | null>(null);
   const [notesText, setNotesText] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [extractingId, setExtractingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: docs, refetch } = trpc.mepDocuments.listDocuments.useQuery({});
@@ -84,6 +179,14 @@ export default function MEPLeaderDocuments() {
   const updateNotesMutation = trpc.mepDocuments.updateNotes.useMutation({
     onSuccess: () => { refetch(); setEditingNotes(null); toast.success("Notes saved."); },
     onError: () => toast.error("Could not save notes."),
+  });
+  const extractMutation = trpc.mepDocuments.extractObjectives.useMutation({
+    onSuccess: (data) => {
+      refetch();
+      toast.success(`Extracted ${data.count} objective${data.count !== 1 ? "s" : ""} from your document.`);
+    },
+    onError: (e) => toast.error(`Extraction failed: ${e.message}`),
+    onSettled: () => setExtractingId(null),
   });
 
   const handleFileUpload = async (file: File, docType: DocType) => {
@@ -117,7 +220,13 @@ export default function MEPLeaderDocuments() {
     if (file) handleFileUpload(file, docType);
   };
 
+  const handleExtract = (docId: number) => {
+    setExtractingId(docId);
+    extractMutation.mutate({ id: docId });
+  };
+
   const docsForTab = (tab: DocType) => docs?.filter((d: any) => d.docType === tab) ?? [];
+  const currentTabConfig = TAB_CONFIG.find((t) => t.key === activeTab)!;
 
   return (
     <div className="min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
@@ -127,7 +236,7 @@ export default function MEPLeaderDocuments() {
             My Documents
           </h1>
           <p className="text-sm" style={{ color: "oklch(45% 0.02 248.6)" }}>
-            Upload your work goals, development plans, and prior assessments to give your coach and AI Guide richer context.
+            Upload your work goals, development plans, and prior assessments. AI can extract key objectives from Work Goals and IDPs to enrich your coaching context.
           </p>
         </div>
 
@@ -142,6 +251,9 @@ export default function MEPLeaderDocuments() {
               >
                 {tab.icon}
                 <span className="hidden sm:inline">{tab.label}</span>
+                {tab.canExtract && (
+                  <Sparkles size={10} className="hidden sm:inline" style={{ color: "var(--color-ln-yellow)" }} />
+                )}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -150,7 +262,18 @@ export default function MEPLeaderDocuments() {
             const tabDocs = docsForTab(tab.key);
             return (
               <TabsContent key={tab.key} value={tab.key} className="mt-4 space-y-4">
-                <p className="text-sm" style={{ color: "oklch(45% 0.02 248.6)" }}>{tab.description}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm" style={{ color: "oklch(45% 0.02 248.6)" }}>{tab.description}</p>
+                  {tab.canExtract && (
+                    <Badge
+                      className="shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium"
+                      style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)", color: "oklch(40% 0.15 80)", border: "none" }}
+                    >
+                      <Sparkles size={9} className="mr-1" />
+                      AI Extraction
+                    </Badge>
+                  )}
+                </div>
 
                 {/* Drop zone */}
                 <div
@@ -198,7 +321,7 @@ export default function MEPLeaderDocuments() {
                     <p className="text-sm">No documents uploaded yet.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {tabDocs.map((doc: any) => (
                       <div
                         key={doc.id}
@@ -253,6 +376,27 @@ export default function MEPLeaderDocuments() {
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
+                            {/* AI Extract button — only for work_goals and idp */}
+                            {tab.canExtract && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 gap-1 text-xs font-medium"
+                                title="Extract objectives with AI"
+                                disabled={extractingId === doc.id}
+                                onClick={() => handleExtract(doc.id)}
+                                style={{ color: "oklch(50% 0.15 80)" }}
+                              >
+                                {extractingId === doc.id ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  <Sparkles size={12} />
+                                )}
+                                <span className="hidden sm:inline">
+                                  {extractingId === doc.id ? "Extracting…" : doc.extractedObjectives?.length ? "Re-extract" : "Extract"}
+                                </span>
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -293,6 +437,28 @@ export default function MEPLeaderDocuments() {
                             </Button>
                           </div>
                         </div>
+
+                        {/* Extracted objectives panel */}
+                        {doc.extractedObjectives && doc.extractedObjectives.length > 0 && (
+                          <ObjectivesPanel
+                            objectives={doc.extractedObjectives}
+                            extractedAt={doc.extractedAt}
+                          />
+                        )}
+
+                        {/* Extraction prompt for eligible docs without extraction yet */}
+                        {tab.canExtract && (!doc.extractedObjectives || doc.extractedObjectives.length === 0) && extractingId !== doc.id && (
+                          <div
+                            className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2 cursor-pointer"
+                            style={{ background: "oklch(98% 0.02 80)", border: "1px dashed oklch(85% 0.08 80)" }}
+                            onClick={() => handleExtract(doc.id)}
+                          >
+                            <Sparkles size={13} style={{ color: "var(--color-ln-yellow)" }} />
+                            <p className="text-xs" style={{ color: "oklch(45% 0.1 80)" }}>
+                              Click to extract key objectives with AI — takes about 10 seconds
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

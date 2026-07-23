@@ -1035,3 +1035,23 @@
 - [x] Add "Import Participants" nav item to admin sidebar (mobile + desktop)
 - [x] DB schema: mep_leader_documents and org_context tables migrated
 - [x] TypeScript check: 0 errors | Vitest: 3/3 passed
+
+## AI Enhancements — Document Extraction, Org Context Coaching, Radar Charts (Jul 23)
+
+### Phase A — AI Document Extraction
+- [x] DB schema: extracted_objectives column (JSON) on mep_leader_documents table
+- [x] server/routers/mepDocuments.ts: extractObjectives procedure — download file from S3, extract text, LLM parse key objectives/goals, save to DB
+- [x] MEPLeaderDocuments page: "Extract Objectives" button per document (Work Goals / IDP tabs only)
+- [x] MEPLeaderDocuments page: Extracted Objectives panel showing parsed goals with edit/delete per item
+
+### Phase B — Org Context in AI Coaching
+- [x] server/routers/guide.ts: fetch org_context for user's tenant and inject into system prompt
+- [x] server/routers/mep.ts (Manager Guide): fetch org_context and inject into MEP coaching persona prompt
+- [x] Org context injection: include companyName, mission, vision, northStar, strategicGoals in prompt preamble
+
+### Phase C — Radar Charts on Diagnostic Results
+- [x] MEP diagnostic results page: add Chart.js radar chart showing all 5 dimension scores
+- [x] Leader Intelligence (LI) report page: add radar chart for dimension scores
+- [x] DiagnosticRadarChart reusable component created (chart.js + react-chartjs-2)
+- [x] TypeScript check (zero errors) | Vitest: 3/3 passed
+- [x] Save checkpoint

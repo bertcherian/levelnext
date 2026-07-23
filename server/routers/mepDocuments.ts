@@ -12,6 +12,7 @@ import { getDb } from "../db";
 import { mepLeaderDocuments, tenantUsers } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { ENV } from "../_core/env";
+import { invokeLLM } from "../_core/llm";
 
 export const mepDocumentsRouter = router({
   /** Upload a new document (base64 encoded) */
@@ -102,6 +103,92 @@ export const mepDocumentsRouter = router({
         .where(eq(mepLeaderDocuments.id, input.id));
 
       return { success: true };
+    }),
+
+  /** Extract key objectives from a Work Goals or IDP document using AI */
+  extractObjectives: protectedProcedure
+    .input(z.object({ id: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [doc] = await db
+        .select()
+        .from(mepLeaderDocuments)
+        .where(and(eq(mepLeaderDocuments.id, input.id), eq(mepLeaderDocuments.userId, ctx.user.id)));
+
+      if (!doc) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!doc.docType || !(["work_goals", "idp"] as string[]).includes(doc.docType)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Extraction is only available for Work Goals and IDP documents." });
+      }
+
+      // Get a presigned URL for the file so the LLM can access it
+      const forgeUrl = ENV.forgeApiUrl?.replace(/\/+$/, "");
+      const forgeKey = ENV.forgeApiKey;
+      if (!forgeUrl || !forgeKey) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Storage not configured" });
+
+      // Fetch the file bytes from S3 via presigned URL and convert to base64 for LLM
+      let fileContent: string;
+      let mimeType = doc.mimeType ?? "application/octet-stream";
+      try {
+        const presignRes = await fetch(`${forgeUrl}/v1/storage/presign?path=${encodeURIComponent(doc.fileKey)}&expires=300`, {
+          headers: { Authorization: `Bearer ${forgeKey}` },
+        });
+        const { url: presignedUrl } = await presignRes.json() as { url: string };
+        const fileRes = await fetch(presignedUrl);
+        const arrayBuf = await fileRes.arrayBuffer();
+        fileContent = Buffer.from(arrayBuf).toString("base64");
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not retrieve document for analysis." });
+      }
+
+      const docLabel = doc.docType === "work_goals" ? "Work Goals document" : "Individual Development Plan (IDP)";
+      const systemPrompt = `You are an expert leadership coach and talent development specialist. Your task is to analyse a leader's ${docLabel} and extract the key objectives, goals, and development priorities.
+
+Return a JSON array of objectives. Each objective must have:
+- "objective": a concise, action-oriented statement of the goal (max 120 chars)
+- "category": one of: "performance", "development", "leadership", "business", "personal"
+- "priority": one of: "high", "medium", "low" (infer from language like "critical", "must", "key", "primary" = high; "should", "aim" = medium; "nice to have", "explore" = low)
+
+Return ONLY valid JSON array, no markdown, no explanation. Example:
+[{"objective": "Lead the Q3 product launch across 3 markets", "category": "business", "priority": "high"}]`;
+
+      let extracted: { objective: string; category: string; priority: "high" | "medium" | "low" }[] = [];
+      try {
+        const isPdf = mimeType === "application/pdf";
+        const messages: Parameters<typeof invokeLLM>[0]["messages"] = isPdf
+          ? [
+              { role: "system", content: systemPrompt },
+              {
+                role: "user",
+                content: [
+                  { type: "file_url" as const, file_url: { url: `data:application/pdf;base64,${fileContent}`, mime_type: "application/pdf" as const } },
+                  { type: "text" as const, text: `Please extract the key objectives from this ${docLabel}.` },
+                ],
+              },
+            ]
+          : [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: `The following is the text content of a ${docLabel}. Please extract the key objectives:\n\n${Buffer.from(fileContent, "base64").toString("utf-8").slice(0, 8000)}` },
+            ];
+
+        const llmResponse = await invokeLLM({ messages });
+        const rawContent = llmResponse.choices?.[0]?.message?.content;
+        const raw = typeof rawContent === "string" ? rawContent : "[]";
+        const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        extracted = JSON.parse(cleaned);
+        if (!Array.isArray(extracted)) extracted = [];
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI extraction failed. Please try again." });
+      }
+
+      // Save extracted objectives to DB
+      await db
+        .update(mepLeaderDocuments)
+        .set({ extractedObjectives: extracted, extractedAt: new Date() })
+        .where(eq(mepLeaderDocuments.id, input.id));
+
+      return { objectives: extracted, count: extracted.length };
     }),
 
   /** Delete a document (removes from S3 and DB) */

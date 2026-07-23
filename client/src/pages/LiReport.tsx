@@ -12,7 +12,7 @@ import {
   Navigation, Compass
 } from "lucide-react";
 import { toast } from "sonner";
-
+import DiagnosticRadarChart from "@/components/DiagnosticRadarChart";
 // ─── Module Metadata ──────────────────────────────────────────────────────────
 
 const LI_MODULE_META: Record<string, {
@@ -582,6 +582,18 @@ export default function LiReport() {
         {/* ── Dimension Scores (shown before analysis is generated) ── */}
         {Object.keys(displayDimScores).length > 0 && !displayAnalysis && (
           <Section title={meta.scoreLabel + " — Dimension Breakdown"} icon={<Target size={18} />} accent={accent}>
+            {/* Radar chart overview */}
+            <div className="mb-6">
+              <DiagnosticRadarChart
+                dimensions={Object.entries(displayDimScores).map(([k, v]) => ({
+                  dimension: k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                  score: v as number,
+                }))}
+                fillColor={`${accent}1A`}
+                borderColor={accent}
+                height={260}
+              />
+            </div>
             {Object.entries(displayDimScores).map(([dimId, score]) => {
               const band = isLdi
                 ? (score <= 30 ? "gap" : score <= 55 ? "developing" : "strength")

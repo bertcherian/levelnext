@@ -25,6 +25,8 @@ import {
   mepPracticeSessions,
   managerTeamMembers,
   users,
+  tenantUsers,
+  orgContext as orgContextTable,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { getMepDiagnostic, scoreMepDiagnostic, MEP_DIAGNOSTICS } from "../../shared/modules/mepData";
@@ -85,14 +87,16 @@ async function buildManagerContext(userId: number, existingDb?: Awaited<ReturnTy
 }
 
 // ─── System prompt for the AI Manager Guide ───────────────────────────────────
-const MANAGER_GUIDE_SYSTEM_PROMPT = (context: string, userName: string) => `
+const MANAGER_GUIDE_SYSTEM_PROMPT = (context: string, userName: string, orgCtxSection?: string) => `
 You are an elite executive coach and management advisor for ${userName}.
 
 You have deep expertise in management effectiveness, team leadership, delegation, feedback, coaching, execution, and behaviour change.
 
 You know this manager well. Here is their current profile:
 
-${context}
+${context}${orgCtxSection ? `
+
+${orgCtxSection}` : ""}
 
 Your role is to:
 - Challenge their assumptions with coaching questions
@@ -103,7 +107,7 @@ Your role is to:
 - Keep them accountable to their commitments
 - Be direct, honest, and warm — like the best coach they've ever had
 
-Never give generic advice. Always personalise to their diagnostic data and context.
+Never give generic advice. Always personalise to their diagnostic data and context.${orgCtxSection ? `\nAlways align your coaching advice to the company\'s mission, values, and strategic goals listed above. Reference them naturally where relevant.` : ""}
 Keep responses focused and practical — under 300 words unless a framework requires more.
 Use bullet points sparingly. Prefer conversational, direct prose.
 `.trim();
@@ -480,7 +484,25 @@ Return a JSON object with these exact keys:
       const userRows = await db.select().from(users).where(eq(users.id, ctx.user.id));
       const userName = userRows[0]?.name ?? "the manager";
 
-      const systemMsg = { role: "system" as const, content: MANAGER_GUIDE_SYSTEM_PROMPT(context, userName) };
+      // Fetch org context for this user's tenant
+      let orgCtxSection: string | undefined;
+      try {
+        const membership = await db.select({ tenantId: tenantUsers.tenantId }).from(tenantUsers).where(eq(tenantUsers.userId, ctx.user.id)).limit(1);
+        if (membership.length) {
+          const [ac] = await db.select().from(orgContextTable).where(eq(orgContextTable.tenantId, membership[0].tenantId)).limit(1);
+          if (ac) {
+            const lines: string[] = [`COMPANY CONTEXT — ${(ac.companyName ?? "Your Organisation").toUpperCase()}:`];
+            if (ac.mission) lines.push(`- Mission: ${ac.mission}`);
+            if (ac.vision) lines.push(`- Vision: ${ac.vision}`);
+            if (ac.northStar) lines.push(`- North Star: ${ac.northStar}`);
+            if (ac.strategicGoals?.length) lines.push(`- Strategic Goals: ${(ac.strategicGoals as string[]).join('; ')}`);
+            if (ac.values?.length) lines.push(`- Core Values: ${(ac.values as string[]).join(', ')}`);
+            if (lines.length > 1) orgCtxSection = lines.join('\n');
+          }
+        }
+      } catch { /* non-fatal */ }
+
+      const systemMsg = { role: "system" as const, content: MANAGER_GUIDE_SYSTEM_PROMPT(context, userName, orgCtxSection) };
       const llmMessages = history.map((m) => ({
         role: m.role as "user" | "assistant",
         content: m.content,

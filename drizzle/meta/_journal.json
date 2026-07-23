@@ -288,6 +288,13 @@
       "when": 1784806638116,
       "tag": "0040_gigantic_thunderbolts",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1784808582852,
+      "tag": "0041_goofy_boomer",
+      "breakpoints": true
     }
   ]
 }

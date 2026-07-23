@@ -3,7 +3,7 @@ import { eq, desc, gte, and } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { guideConversations, guideSessions, users, tenantUsers, organisations, commitments, userProductEnrollments, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
+import { guideConversations, guideSessions, users, tenantUsers, organisations, commitments, userProductEnrollments, orgContext as orgContextTable, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
 type OrgContext = {
@@ -226,6 +226,7 @@ export const guideRouter = router({
             .from(organisations)
             .where(eq(organisations.tenantId, membership[0].tenantId))
             .limit(1);
+          // Fetch from organisations table (existing rich context)
           if (orgResult.length && orgResult[0].contextActivated) {
             const o = orgResult[0];
             orgContext = {
@@ -240,6 +241,42 @@ export const guideRouter = router({
               branding: o.branding,
               industry: o.industry,
             };
+          }
+
+          // Also fetch from the new org_context table (admin-set mission/vision/goals)
+          const adminCtxResult = await db
+            .select()
+            .from(orgContextTable)
+            .where(eq(orgContextTable.tenantId, membership[0].tenantId))
+            .limit(1);
+          if (adminCtxResult.length) {
+            const ac = adminCtxResult[0];
+            if (!orgContext) {
+              // No organisations record — build from admin context alone
+              orgContext = {
+                legalName: ac.companyName ?? "Your Organisation",
+                displayName: ac.companyName,
+                missionStatement: ac.mission,
+                visionStatement: ac.vision,
+                purposeStatement: ac.northStar,
+                values: (ac.values ?? []).map((v: string) => ({ name: v })),
+                strategicPriorities: (ac.strategicGoals ?? []).map((g: string) => ({ title: g })),
+                competencies: [],
+                branding: null,
+                industry: null,
+              };
+            } else {
+              // Merge: admin context fills gaps in the organisations record
+              if (!orgContext.missionStatement && ac.mission) orgContext.missionStatement = ac.mission;
+              if (!orgContext.visionStatement && ac.vision) orgContext.visionStatement = ac.vision;
+              if (!orgContext.purposeStatement && ac.northStar) orgContext.purposeStatement = ac.northStar;
+              if ((!orgContext.strategicPriorities || orgContext.strategicPriorities.length === 0) && ac.strategicGoals?.length) {
+                orgContext.strategicPriorities = (ac.strategicGoals ?? []).map((g: string) => ({ title: g }));
+              }
+              if ((!orgContext.values || orgContext.values.length === 0) && ac.values?.length) {
+                orgContext.values = (ac.values ?? []).map((v: string) => ({ name: v }));
+              }
+            }
           }
         }
       } catch {

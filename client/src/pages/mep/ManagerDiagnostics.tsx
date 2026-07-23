@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, ChevronRight, BarChart3, Clock, Lock } from "lucide-react";
 import { toast } from "sonner";
+import DiagnosticRadarChart from "@/components/DiagnosticRadarChart";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_013311b9.png";
 
@@ -340,7 +341,7 @@ export default function ManagerDiagnostics() {
             </p>
           </div>
 
-          {/* Dimension scores */}
+          {/* Dimension scores — radar chart + bar breakdown */}
           {latestResult.dimensionScores && latestResult.dimensionScores.length > 0 && (
             <div
               className="rounded-2xl p-5"
@@ -349,6 +350,16 @@ export default function ManagerDiagnostics() {
               <h2 className="text-sm font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>
                 Dimension Breakdown
               </h2>
+
+              {/* Radar chart */}
+              <div className="mb-6">
+                <DiagnosticRadarChart
+                  dimensions={latestResult.dimensionScores}
+                  height={260}
+                />
+              </div>
+
+              {/* Bar breakdown */}
               <div className="space-y-3">
                 {latestResult.dimensionScores.map((d: any) => (
                   <div key={d.dimension}>

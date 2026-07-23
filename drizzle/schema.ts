@@ -1896,6 +1896,8 @@ export const mepLeaderDocuments = mysqlTable("mep_leader_documents", {
   fileSizeBytes: int("fileSizeBytes"),
   mimeType: varchar("mimeType", { length: 100 }),
   notes: text("notes"),
+  extractedObjectives: json("extractedObjectives").$type<{ objective: string; category: string; priority: "high" | "medium" | "low" }[]>(),
+  extractedAt: timestamp("extractedAt"),
   uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
