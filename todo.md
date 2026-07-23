@@ -993,3 +993,14 @@
 ### Phase 5 — Quality
 - [x] TypeScript check (zero errors)
 - [x] Save checkpoint
+
+## SP UI Enhancements (Jul 23)
+
+- [x] AdminSuccessPartners: search bar to filter SPs by name/email
+- [x] AdminSuccessPartners: filter chips (All / Has Leaders / No Leaders)
+- [x] AdminSuccessPartners: search assigned leaders across all SP rows
+- [x] AdminSuccessPartnerQueue (Call Queue): priority badges (Critical / Overdue / Due Soon / Upcoming)
+- [x] AdminSuccessPartnerQueue: color-coded row borders/backgrounds by urgency
+- [x] AdminSuccessPartnerQueue: urgency filter chips (All / Overdue / Due Soon)
+- [x] LSOSWorkspace: cohort health summary dashboard (LHS avg, at-risk count, exceptional count, engagement rate)
+- [x] LSOSWorkspace: zone distribution stacked bar in summary

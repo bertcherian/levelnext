@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Mission = {
@@ -201,6 +202,179 @@ function ManagerHealthCard({ mh, onClick }: { mh: ManagerHealth; onClick: () => 
   );
 }
 
+// ─── Cohort Health Dashboard ─────────────────────────────────────────────────
+function CohortHealthDashboard({
+  cohortSummary,
+  managerHealth,
+  pendingMissions,
+}: {
+  cohortSummary: { totalManagers: number; avgLHS: number; atRisk: number; exceptional: number };
+  managerHealth: ManagerHealth[];
+  pendingMissions: unknown[];
+}) {
+  // Compute derived metrics from managerHealth
+  const engagementRate = useMemo(() => {
+    if (!managerHealth.length) return 0;
+    const active = managerHealth.filter(
+      (m) => m.activityLast30Days.practiceSessions > 0 || m.activityLast30Days.guideConversations > 0
+    ).length;
+    return Math.round((active / managerHealth.length) * 100);
+  }, [managerHealth]);
+
+  const zoneDistribution = useMemo(() => {
+    const zones = [
+      { label: "Critical", color: "#ef4444", min: 0, max: 34 },
+      { label: "At Risk", color: "#f97316", min: 35, max: 49 },
+      { label: "Developing", color: "#f59e0b", min: 50, max: 64 },
+      { label: "Strong", color: "#84cc16", min: 65, max: 79 },
+      { label: "Exceptional", color: "#22c55e", min: 80, max: 100 },
+    ];
+    return zones.map((z) => ({
+      ...z,
+      count: managerHealth.filter((m) => m.lhs.total >= z.min && m.lhs.total <= z.max).length,
+      pct: managerHealth.length
+        ? Math.round((managerHealth.filter((m) => m.lhs.total >= z.min && m.lhs.total <= z.max).length / managerHealth.length) * 100)
+        : 0,
+    }));
+  }, [managerHealth]);
+
+  const inactiveCount = managerHealth.filter((m) => m.daysSinceActive > 7).length;
+
+  // LHS health color
+  const lhsColor =
+    cohortSummary.avgLHS >= 80 ? "#22c55e"
+    : cohortSummary.avgLHS >= 65 ? "#84cc16"
+    : cohortSummary.avgLHS >= 50 ? "#f59e0b"
+    : cohortSummary.avgLHS >= 35 ? "#f97316"
+    : "#ef4444";
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 pb-4">
+      {/* Top KPI row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+        {/* Avg LHS */}
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-3">
+          <LHSRing score={cohortSummary.avgLHS} color={lhsColor} size={48} />
+          <div>
+            <p className="text-xs text-slate-500 font-medium">Avg LHS</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {cohortSummary.avgLHS >= 80 ? "Exceptional"
+                : cohortSummary.avgLHS >= 65 ? "Strong"
+                : cohortSummary.avgLHS >= 50 ? "Developing"
+                : cohortSummary.avgLHS >= 35 ? "At Risk"
+                : "Critical"}
+            </p>
+          </div>
+        </div>
+
+        {/* At Risk */}
+        <div className={cn(
+          "rounded-xl border shadow-sm p-4 flex items-center gap-3",
+          cohortSummary.atRisk > 0 ? "bg-orange-50 border-orange-200" : "bg-white border-slate-100"
+        )}>
+          <div className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0",
+            cohortSummary.atRisk > 0 ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500"
+          )}>
+            {cohortSummary.atRisk}
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-700">At Risk</p>
+            <p className="text-xs text-slate-400 mt-0.5">LHS &lt; 50</p>
+          </div>
+        </div>
+
+        {/* Exceptional */}
+        <div className={cn(
+          "rounded-xl border shadow-sm p-4 flex items-center gap-3",
+          cohortSummary.exceptional > 0 ? "bg-green-50 border-green-200" : "bg-white border-slate-100"
+        )}>
+          <div className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0",
+            cohortSummary.exceptional > 0 ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+          )}>
+            {cohortSummary.exceptional}
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-700">Exceptional</p>
+            <p className="text-xs text-slate-400 mt-0.5">LHS ≥ 80</p>
+          </div>
+        </div>
+
+        {/* Engagement */}
+        <div className={cn(
+          "rounded-xl border shadow-sm p-4 flex items-center gap-3",
+          engagementRate < 50 ? "bg-amber-50 border-amber-200" : "bg-white border-slate-100"
+        )}>
+          <div className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0",
+            engagementRate >= 70 ? "bg-emerald-100 text-emerald-700"
+            : engagementRate >= 50 ? "bg-blue-100 text-blue-700"
+            : "bg-amber-100 text-amber-700"
+          )}>
+            {engagementRate}%
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-700">Engagement</p>
+            <p className="text-xs text-slate-400 mt-0.5">Active last 30d</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Zone distribution bar */}
+      {managerHealth.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Cohort Zone Distribution</p>
+            <div className="flex items-center gap-3">
+              {inactiveCount > 0 && (
+                <span className="text-xs text-orange-600 font-medium">
+                  ⚠ {inactiveCount} inactive &gt;7d
+                </span>
+              )}
+              <span className="text-xs text-slate-400">{cohortSummary.totalManagers} leaders</span>
+            </div>
+          </div>
+
+          {/* Stacked bar */}
+          <div className="flex rounded-full overflow-hidden h-3 mb-3">
+            {zoneDistribution.filter((z) => z.count > 0).map((z) => (
+              <div
+                key={z.label}
+                className="h-full transition-all"
+                style={{ width: `${z.pct}%`, backgroundColor: z.color }}
+                title={`${z.label}: ${z.count} (${z.pct}%)`}
+              />
+            ))}
+          </div>
+
+          {/* Zone legend with counts */}
+          <div className="flex flex-wrap gap-3">
+            {zoneDistribution.map((z) => (
+              <div key={z.label} className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: z.color }} />
+                <span className="text-xs text-slate-600">{z.label}</span>
+                <span className={cn(
+                  "text-xs font-semibold",
+                  z.count > 0 ? "text-slate-800" : "text-slate-300"
+                )}>{z.count}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Pending missions note */}
+          {pendingMissions.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+              <span className="text-xs text-indigo-600 font-medium">⚡ {pendingMissions.length} mission{pendingMissions.length !== 1 ? "s" : ""} pending today</span>
+              <span className="text-xs text-slate-400">— click Missions tab to action them</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Workspace ───────────────────────────────────────────────────────────
 export default function LSOSWorkspace() {
   const [, navigate] = useLocation();
@@ -280,34 +454,13 @@ export default function LSOSWorkspace() {
           </div>
         </div>
 
-        {/* Cohort Summary Bar */}
+        {/* Cohort Health Dashboard */}
         {cohortSummary && (
-          <div className="max-w-6xl mx-auto px-4 pb-3 flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                <span className="text-xs font-bold text-indigo-700">{cohortSummary.totalManagers}</span>
-              </div>
-              <span className="text-xs text-slate-500">Total managers</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <span className="text-xs font-bold text-green-700">{cohortSummary.avgLHS}</span>
-              </div>
-              <span className="text-xs text-slate-500">Avg LHS</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-                <span className="text-xs font-bold text-orange-700">{cohortSummary.atRisk}</span>
-              </div>
-              <span className="text-xs text-slate-500">At risk</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                <span className="text-xs font-bold text-yellow-700">{cohortSummary.exceptional}</span>
-              </div>
-              <span className="text-xs text-slate-500">Exceptional</span>
-            </div>
-          </div>
+          <CohortHealthDashboard
+            cohortSummary={cohortSummary}
+            managerHealth={managerHealth}
+            pendingMissions={pendingMissions}
+          />
         )}
 
         {/* Tabs */}
