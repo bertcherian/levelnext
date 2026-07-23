@@ -935,4 +935,11 @@
 
 ### Step 4 — Quality
 - [x] TypeScript check (zero errors)
+- [x] Save checkpoint
+
+## Bug Fix — Magic Link Double Sign-In (Jul 23)
+- [x] Diagnose: read OAuth callback handler, Home page auth redirect, and login URL generation
+- [x] Fix: OAuth callback now redirects to /home instead of / (avoids auth-state race condition)
+- [x] Fix: Landing page now shows "Signing you in…" loading screen while auth resolves (prevents flash)
+- [x] TypeScript check (zero errors)
 - [ ] Save checkpoint

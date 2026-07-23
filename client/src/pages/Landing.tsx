@@ -100,17 +100,24 @@ export default function Landing() {
     }
   }, [isAuthenticated, loading, navigate]);
 
-  function handlePlay() {
-    setPlaying(true);
-    videoRef.current?.play();
-  }
-
+  // While auth is resolving (e.g. immediately after clicking a magic link),
+  // show a minimal loading screen instead of flashing the marketing landing page.
+  // This prevents the double-sign-in UX where the user clicks the magic link,
+  // lands on the landing page, and thinks they need to sign in again.
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-navy)" }}>
-        <img src={LOGO_URL} alt="LevelNext" className="h-12 w-auto animate-pulse" />
+        <div className="flex flex-col items-center gap-4">
+          <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-14 object-contain animate-pulse" />
+          <p className="text-sm" style={{ color: "oklch(65% 0.02 248.6)" }}>Signing you in…</p>
+        </div>
       </div>
     );
+  }
+
+  function handlePlay() {
+    setPlaying(true);
+    videoRef.current?.play();
   }
 
   return (

@@ -44,7 +44,10 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      res.redirect(302, "/");
+      // Redirect directly to /home — avoids the landing page auth-state race condition
+      // where the session cookie is set but useAuth hasn't resolved yet, causing a
+      // brief unauthenticated flash that makes the user think they need to sign in again.
+      res.redirect(302, "/home");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });
