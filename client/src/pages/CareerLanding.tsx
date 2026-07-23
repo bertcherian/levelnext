@@ -176,7 +176,6 @@ export default function CareerLanding() {
             <a href="#diagnostics" className="hover:text-white transition-colors">Diagnostics</a>
             <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
             <a href="#for-who" className="hover:text-white transition-colors">For Who</a>
-            <a href="/" className="hover:text-white transition-colors">Leadership Intelligence</a>
           </nav>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
@@ -192,10 +191,10 @@ export default function CareerLanding() {
                     Sign In
                   </Button>
                 </a>
-                <a href="/apply?product=career">
+                <a href="/signup">
                   <Button size="sm" className="font-semibold text-sm px-5"
                     style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-                    Apply for Early Access →
+                    Get Early Access →
                   </Button>
                 </a>
               </>
@@ -216,7 +215,6 @@ export default function CareerLanding() {
               { href: "#diagnostics", label: "Diagnostics" },
               { href: "#how-it-works", label: "How It Works" },
               { href: "#for-who", label: "For Who" },
-              { href: "/", label: "Leadership Intelligence" },
             ].map(({ href, label }) => (
               <a key={href} href={href} className="text-white/70 hover:text-white py-1 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}>{label}</a>
@@ -262,10 +260,10 @@ export default function CareerLanding() {
                 Free to start · First diagnostic in 10 minutes · No credit card
               </p>
               <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
-                <a href="/apply?product=career&utm_source=ci_landing&utm_medium=hero">
+                <a href="/signup">
                   <Button size="lg" className="h-13 px-8 text-base font-bold rounded-xl shadow-lg w-full sm:w-auto"
                     style={{ background: "#818cf8", color: "white" }}>
-                    Apply for Early Access
+                    Start Your Journey
                     <ArrowRight size={18} className="ml-2" />
                   </Button>
                 </a>
@@ -278,6 +276,13 @@ export default function CareerLanding() {
               </div>
               <p className="text-xs text-white/35 mt-4">
                 Used by Directors, VPs, and Business Heads at Broadridge, Volvo, Texas Instruments, and Razorpay.
+              </p>
+              <p className="text-xs mt-3" style={{ color: "oklch(55% 0.18 280 / 0.6)" }}>
+                For organisations offering outplacement support —{" "}
+                <a href="https://tidycal.com/metaresults/pilot" target="_blank" rel="noopener noreferrer"
+                  className="underline underline-offset-2 hover:opacity-80 transition-opacity">
+                  talk to us
+                </a>
               </p>
             </div>
 
@@ -592,28 +597,6 @@ export default function CareerLanding() {
         </div>
       </section>
 
-      {/* ── LEVELNEXT PLATFORM LINK ─────────────────────────────────────────── */}
-      <section className="px-6 py-10 md:py-14" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.025) c h)" }}>
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-4"
-            style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.1)", color: "var(--color-ln-yellow)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.25)" }}>
-            <Lightbulb size={12} />
-            Also available on LevelNext
-          </div>
-          <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
-            Looking to grow your Leadership Intelligence too?
-          </h2>
-          <p className="text-sm text-white/60 mb-6 max-w-lg mx-auto">
-            LevelNext also offers Leadership Intelligence — four diagnostics covering Executive Communication, Leadership Influence & Navigation, Leadership Derailment, and Strategic Thinking. Both products share one platform, one login.
-          </p>
-          <a href="/">
-            <Button variant="outline" className="font-semibold text-sm border-white/20 text-white/70 hover:text-white hover:bg-white/8">
-              Explore Leadership Intelligence →
-            </Button>
-          </a>
-        </div>
-      </section>
-
       {/* ── FINAL CTA ───────────────────────────────────────────────────────── */}
       <section className="px-6 py-20 md:py-28 text-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
@@ -638,16 +621,11 @@ export default function CareerLanding() {
             LevelNext Career Intelligence gives you the diagnostic clarity, brand strategy, market intelligence, and preparation systems to take control of what comes next — rather than waiting for it to find you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
-            <a href="/apply?product=career&utm_source=ci_landing&utm_medium=final_cta">
+            <a href="/signup">
               <Button size="lg" className="h-13 px-8 text-base font-bold rounded-xl shadow-lg w-full sm:w-auto"
                 style={{ background: "#818cf8", color: "white" }}>
-                Apply for Early Access
+                Start Your Journey
                 <ArrowRight size={18} className="ml-2" />
-              </Button>
-            </a>
-            <a href="https://tidycal.com/metaresults/pilot" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="lg" className="h-13 px-8 text-base font-semibold rounded-xl w-full sm:w-auto border-white/20 text-white/80 hover:text-white hover:bg-white/8">
-                Book a Discovery Call
               </Button>
             </a>
             <a href={BRIEF_URL} download="LevelNext_CareerIntelligence_ExecutiveBrief.pdf" target="_blank" rel="noopener noreferrer">
@@ -668,8 +646,8 @@ export default function CareerLanding() {
             <span className="text-xs text-white/40">Career Intelligence · by LevelNext</span>
           </div>
           <div className="flex items-center gap-5 text-xs text-white/40">
-            <a href="/" className="hover:text-white/70 transition-colors">Leadership Intelligence</a>
-            <a href="/apply?product=career" className="hover:text-white/70 transition-colors">Apply</a>
+            <a href="/signup" className="hover:text-white/70 transition-colors">Get Started</a>
+            <a href="https://tidycal.com/metaresults/pilot" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Contact</a>
             <span>© {new Date().getFullYear()} Meta Results Pvt. Ltd.</span>
           </div>
         </div>
