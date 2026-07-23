@@ -210,7 +210,7 @@ export default function Guide() {
     onSuccess: () => {
       refetchCommitment();
       setCommitmentSaved(true);
-      toast.success("Commitment saved — your Momentum Partner will track this on your next call.");
+      toast.success("Commitment saved — your Success Partner will track this on your next call.");
       setTimeout(() => { setShowCommitmentPanel(false); setCommitmentSaved(false); }, 2200);
     },
     onError: () => toast.error("Could not save commitment. Please try again."),

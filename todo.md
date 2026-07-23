@@ -904,4 +904,35 @@
 - [x] Portfolio: custom recharts tooltip on radar chart showing dimension name, description, baseline score, current score, and delta
 - [x] Portfolio: personalised recommendations section below radar chart — 3 action items for the lowest-scoring dimension, with module links
 - [x] TypeScript check (zero errors)
+- [x] Save checkpoint
+
+## LSOS Phase 1 — Success Partner & Workspace (Jul 23)
+
+### Step 1 — Rename
+- [x] Rename "Momentum Partner" → "Success Partner" in PlatformLayout nav
+- [x] Rename in all page titles, headings, labels across MomentumPartner*.tsx pages
+- [x] Rename in server routers (role labels, procedure names where user-facing)
+- [x] Rename in DB role enum if needed (or keep DB value, change display only)
+- [x] Rename in email templates and any other string references
+
+### Step 2 — LSOS Workspace
+- [x] Schema: lsos_missions table (spId, managerId, objective, whySelected, expectedImpact, effort, urgency, recommendedConversation, likelihoodOfSuccess, riskIfIgnored, channel, priorityScore, missionType, status, completedAt)
+- [x] Schema: lsos_daily_briefs table (spId, briefDate, narrative, celebrationsJson, risksJson)
+- [x] Apply migration SQL for new tables
+- [x] Server: lsosRouter — getWorkspaceData, generateMissions, generateDailyBrief, completeMission, getManagerLHS
+- [x] Frontend: /admin/lsos — LSOS Workspace page
+- [x] Workspace: Today's Missions tab (5 AI-generated missions with expand/collapse, complete/skip/snooze)
+- [x] Workspace: Cohort Health tab (LHS ring chart per manager, sorted by score)
+- [x] Workspace: Daily Brief tab (AI narrative, celebrations, risks)
+- [x] Workspace: Cohort summary bar (total, avg LHS, at-risk, exceptional)
+
+### Step 3 — Leadership Health Score
+- [x] Server: calculateLHS — 5 dimensions (Diagnostic Foundation, Practice Momentum, Guide Engagement, Commitment Reliability, Call Engagement), 0-100 composite
+- [x] Server: getLHSZone — 5 zones (Critical/At Risk/Developing/Strong/Exceptional)
+- [x] Frontend: LHS ring chart on every manager card in Cohort Health tab
+- [x] Frontend: LHS breakdown legend on Cohort Health tab
+- [x] Add "SP Workspace" nav item to admin sidebar (both mobile and desktop)
+
+### Step 4 — Quality
+- [x] TypeScript check (zero errors)
 - [ ] Save checkpoint

@@ -39,8 +39,8 @@ import ApplyForPilot from "@/pages/ApplyForPilot";
 import AdminPilotApplications from "@/pages/AdminPilotApplications";
 import AdminManageInvites from "@/pages/AdminManageInvites";
 import AdminDashboard from "@/pages/AdminDashboard";
-import AdminMomentumQueue from "@/pages/AdminMomentumQueue";
-import AdminMomentumBrief from "@/pages/AdminMomentumBrief";
+import AdminSuccessPartnerQueue from "@/pages/AdminSuccessPartnerQueue";
+import AdminSuccessPartnerBrief from "@/pages/AdminSuccessPartnerBrief";
 import AdminEscalations from "@/pages/AdminEscalations";
 import CareerHome from "@/pages/CareerHome";
 import AdminProductEnrollments from "@/pages/AdminProductEnrollments";
@@ -62,6 +62,7 @@ import CoachPortal from "@/pages/CoachPortal";
 import AdminCoachManagement from "@/pages/AdminCoachManagement";
 import CareerLanding from "@/pages/CareerLanding";
 import NextChapter from "@/pages/NextChapter";
+import LSOSWorkspace from "@/pages/LSOSWorkspace";
 import NextChapterPortfolio from "@/pages/NextChapterPortfolio";
 import IdentityClarityAssessment from "@/pages/IdentityClarityAssessment";
 import JoinPage from "@/pages/JoinPage";
@@ -140,8 +141,11 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/pilot-applications" component={AdminPilotApplications} />
       <Route path="/admin/invites" component={AdminManageInvites} />
-      <Route path="/admin/momentum" component={AdminMomentumQueue} />
-      <Route path="/admin/momentum/:userId" component={AdminMomentumBrief} />
+      <Route path="/admin/momentum" component={AdminSuccessPartnerQueue} />
+      <Route path="/admin/momentum/:userId" component={AdminSuccessPartnerBrief} />
+      <Route path="/admin/success-partner" component={AdminSuccessPartnerQueue} />
+      <Route path="/admin/success-partner/brief/:userId" component={AdminSuccessPartnerBrief} />
+      <Route path="/admin/lsos" component={LSOSWorkspace} />
       <Route path="/admin/escalations" component={AdminEscalations} />
       <Route path="/career" component={CareerHome} />
       <Route path="/career/progress" component={CareerProgress} />

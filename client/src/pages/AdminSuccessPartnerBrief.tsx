@@ -47,11 +47,11 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.momentumPartner.getPreCallBrief.useQuery({ userId });
-  const generateScript = trpc.momentumPartner.generateOpeningScript.useMutation();
-  const scheduleCall = trpc.momentumPartner.scheduleCall.useMutation();
-  const logOutcome = trpc.momentumPartner.logOutcome.useMutation();
-  const markMissed = trpc.momentumPartner.markMissed.useMutation();
+  const { data, isLoading } = trpc.successPartner.getPreCallBrief.useQuery({ userId });
+  const generateScript = trpc.successPartner.generateOpeningScript.useMutation();
+  const scheduleCall = trpc.successPartner.scheduleCall.useMutation();
+  const logOutcome = trpc.successPartner.logOutcome.useMutation();
+  const markMissed = trpc.successPartner.markMissed.useMutation();
 
   const [generatedScript, setGeneratedScript] = useState<string>("");
   const [copied, setCopied] = useState(false);
@@ -97,8 +97,8 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
       commitmentText: commitment?.text,
       commitmentId: commitment?.id,
     });
-    utils.momentumPartner.getPreCallBrief.invalidate({ userId });
-    utils.momentumPartner.getCallQueue.invalidate();
+    utils.successPartner.getPreCallBrief.invalidate({ userId });
+    utils.successPartner.getCallQueue.invalidate();
     toast.success("Next call scheduled for 2 weeks from now");
   }
 
@@ -115,8 +115,8 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
         escalateToCoach: escalate,
         suggestedOpening: generatedScript || undefined,
       });
-      utils.momentumPartner.getPreCallBrief.invalidate({ userId });
-      utils.momentumPartner.getCallQueue.invalidate();
+      utils.successPartner.getPreCallBrief.invalidate({ userId });
+      utils.successPartner.getCallQueue.invalidate();
       toast.success("Call outcome logged successfully");
       setSelectedOutcome("");
       setCallNotes("");

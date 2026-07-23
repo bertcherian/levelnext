@@ -29,11 +29,11 @@ const OUTCOME_CONFIG: Record<string, { label: string; color: string; icon: React
 
 export default function AdminEscalations() {
   const utils = trpc.useUtils();
-  const { data, isLoading } = trpc.momentumPartner.getEscalations.useQuery();
-  const resolveEscalation = trpc.momentumPartner.resolveEscalation.useMutation({
+  const { data, isLoading } = trpc.successPartner.getEscalations.useQuery();
+  const resolveEscalation = trpc.successPartner.resolveEscalation.useMutation({
     onSuccess: () => {
-      utils.momentumPartner.getEscalations.invalidate();
-      utils.momentumPartner.getCallQueue.invalidate();
+      utils.successPartner.getEscalations.invalidate();
+      utils.successPartner.getCallQueue.invalidate();
       toast.success("Escalation resolved — leader removed from inbox.");
     },
     onError: () => toast.error("Could not resolve escalation. Please try again."),
@@ -53,7 +53,7 @@ export default function AdminEscalations() {
               </h1>
             </div>
             <p className="text-sm text-muted-foreground">
-              Leaders flagged by the Momentum Partner for your direct attention as Executive Coach
+              Leaders flagged by the Success Partner for your direct attention as Executive Coach
             </p>
           </div>
           {!isLoading && data && data.length > 0 && (
@@ -74,7 +74,7 @@ export default function AdminEscalations() {
           <div>
             <p className="text-xs font-semibold" style={{ color: "var(--color-ln-navy)" }}>How to use this inbox</p>
             <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              Each card shows a leader the Momentum Partner flagged after a call — either a second consecutive miss, a significant blocker, or a pattern of disengagement. Review the call notes, click "View Brief" to see full context, then mark as resolved once you've taken action (called the leader, emailed them, or updated the coaching plan).
+              Each card shows a leader the Success Partner flagged after a call — either a second consecutive miss, a significant blocker, or a pattern of disengagement. Review the call notes, click "View Brief" to see full context, then mark as resolved once you've taken action (called the leader, emailed them, or updated the coaching plan).
             </p>
           </div>
         </div>
@@ -177,7 +177,7 @@ export default function AdminEscalations() {
                   {/* Call notes */}
                   {row.call.callNotes && (
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">Momentum Partner's notes</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">Success Partner's notes</p>
                       <p className="text-sm leading-relaxed text-foreground/80">{row.call.callNotes}</p>
                     </div>
                   )}
@@ -207,7 +207,7 @@ export default function AdminEscalations() {
             <Inbox size={36} className="mx-auto mb-4 text-muted-foreground opacity-30" />
             <p className="text-base font-semibold text-muted-foreground">Inbox is clear</p>
             <p className="text-sm text-muted-foreground mt-1">
-              No escalations from the Momentum Partner right now. When a leader misses commitments twice or has a significant blocker, they'll appear here.
+              No escalations from the Success Partner right now. When a leader misses commitments twice or has a significant blocker, they'll appear here.
             </p>
           </div>
         )}

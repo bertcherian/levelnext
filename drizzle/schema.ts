@@ -1815,3 +1815,40 @@ export const identityAssessments = mysqlTable("identity_assessments", {
 });
 export type IdentityAssessment = typeof identityAssessments.$inferSelect;
 export type InsertIdentityAssessment = typeof identityAssessments.$inferInsert;
+
+// ─── LSOS: Leadership Success Operating System ────────────────────────────────
+
+export const lsosMissions = mysqlTable("lsos_missions", {
+  id: int("id").autoincrement().primaryKey(),
+  spId: int("spId").notNull().references(() => users.id),
+  managerId: int("managerId").notNull().references(() => users.id),
+  objective: text("objective").notNull(),
+  whySelected: text("whySelected").notNull(),
+  expectedImpact: varchar("expectedImpact", { length: 255 }).notNull(),
+  effort: mysqlEnum("effort", ["low", "medium", "high"]).notNull().default("medium"),
+  urgency: mysqlEnum("urgency", ["low", "medium", "high", "critical"]).notNull().default("medium"),
+  recommendedConversation: text("recommendedConversation"),
+  likelihoodOfSuccess: int("likelihoodOfSuccess"),
+  riskIfIgnored: text("riskIfIgnored"),
+  channel: mysqlEnum("channel", ["call", "whatsapp", "email", "voice_note", "in_person"]).notNull().default("call"),
+  followUpDate: timestamp("followUpDate"),
+  priorityScore: int("priorityScore").notNull().default(50),
+  missionType: mysqlEnum("missionType", ["quick_win", "recovery", "celebration", "stretch", "re_engagement", "escalation"]).notNull().default("quick_win"),
+  status: mysqlEnum("status", ["pending", "completed", "skipped", "snoozed"]).notNull().default("pending"),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+});
+export type LsosMission = typeof lsosMissions.$inferSelect;
+export type InsertLsosMission = typeof lsosMissions.$inferInsert;
+
+export const lsosDailyBriefs = mysqlTable("lsos_daily_briefs", {
+  id: int("id").autoincrement().primaryKey(),
+  spId: int("spId").notNull().references(() => users.id),
+  briefDate: varchar("briefDate", { length: 10 }).notNull(),
+  narrative: text("narrative").notNull(),
+  celebrationsJson: json("celebrationsJson").$type<Array<{ managerId: number; managerName: string; reason: string }>>(),
+  risksJson: json("risksJson").$type<Array<{ managerId: number; managerName: string; risk: string; severity: "low" | "medium" | "high" }>>(),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+});
+export type LsosDailyBrief = typeof lsosDailyBriefs.$inferSelect;
+export type InsertLsosDailyBrief = typeof lsosDailyBriefs.$inferInsert;

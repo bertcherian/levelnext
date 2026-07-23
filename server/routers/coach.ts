@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { coaches, coachAssignments, users, reports, commitments, practiceAttempts, guideSessions, leadershipMemory, momentumPartnerCalls } from "../../drizzle/schema";
+import { coaches, coachAssignments, users, reports, commitments, practiceAttempts, guideSessions, leadershipMemory, momentumPartnerCalls as successPartnerCalls } from "../../drizzle/schema";
 import { eq, and, desc, gte } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "../_core/llm";
@@ -181,12 +181,12 @@ export const coachRouter = router({
         .where(eq(leadershipMemory.userId, input.clientUserId))
         .limit(1);
 
-      // Last momentum partner call
+      // Last success partner call
       const [lastCall] = await db
         .select()
-        .from(momentumPartnerCalls)
-        .where(eq(momentumPartnerCalls.userId, input.clientUserId))
-        .orderBy(desc(momentumPartnerCalls.createdAt))
+        .from(successPartnerCalls)
+        .where(eq(successPartnerCalls.userId, input.clientUserId))
+        .orderBy(desc(successPartnerCalls.createdAt))
         .limit(1);
 
       return {

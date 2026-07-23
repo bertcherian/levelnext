@@ -4,7 +4,7 @@ import { router, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   users,
-  momentumPartnerCalls,
+  momentumPartnerCalls as successPartnerCalls,
   commitments,
   assessmentSessions,
   reports,
@@ -23,7 +23,7 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
-export const momentumPartnerRouter = router({
+export const successPartnerRouter = router({
   // ── Call Queue: all users with scheduled/overdue calls ──────────────────────
   getCallQueue: adminProcedure.query(async () => {
     const db = await getDb();
@@ -55,9 +55,9 @@ export const momentumPartnerRouter = router({
         // Latest call record
         const [latestCall] = await db
           .select()
-          .from(momentumPartnerCalls)
-          .where(eq(momentumPartnerCalls.userId, user.id))
-          .orderBy(desc(momentumPartnerCalls.scheduledAt))
+          .from(successPartnerCalls)
+          .where(eq(successPartnerCalls.userId, user.id))
+          .orderBy(desc(successPartnerCalls.scheduledAt))
           .limit(1);
 
         // Latest active commitment
@@ -172,9 +172,9 @@ export const momentumPartnerRouter = router({
       // Call history (last 5)
       const callHistory = await db
         .select()
-        .from(momentumPartnerCalls)
-        .where(eq(momentumPartnerCalls.userId, input.userId))
-        .orderBy(desc(momentumPartnerCalls.scheduledAt))
+        .from(successPartnerCalls)
+        .where(eq(successPartnerCalls.userId, input.userId))
+        .orderBy(desc(successPartnerCalls.scheduledAt))
         .limit(5);
 
       // Activity signals (last 14 days)
@@ -232,7 +232,7 @@ export const momentumPartnerRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const prompt = `You are helping a Momentum Partner prepare for a 10-minute accountability call with a leader.
+      const prompt = `You are helping a Success Partner prepare for a 10-minute accountability call with a leader.
 
 Leader: ${input.leaderName}
 Their commitment (what they said they would do): "${input.commitmentText}"
@@ -241,11 +241,11 @@ ${input.zone ? `Their current leadership zone: ${input.zone}` : ""}
 Activity since last call: ${input.practiceSessions} practice sessions, ${input.guideConversations} Guide conversations
 ${input.lastCallNotes ? `Notes from last call: ${input.lastCallNotes}` : "No previous call notes."}
 
-Write a warm, direct 2–3 sentence opening for the Momentum Partner to use at the start of the call.
+Write a warm, direct 2–3 sentence opening for the Success Partner to use at the start of the call.
 - Reference the commitment by name
 - Mention the activity signals naturally (if any)
 - End with one open question that invites the leader to share a specific example
-- Do NOT be generic. Make it feel like the Momentum Partner already knows this person.
+- Do NOT be generic. Make it feel like the Success Partner already knows this person.
 - Keep it under 60 words.
 
 Return only the opening script, no labels or preamble.`;
@@ -275,7 +275,7 @@ Return only the opening script, no labels or preamble.`;
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      await db.insert(momentumPartnerCalls).values({
+      await db.insert(successPartnerCalls).values({
         userId: input.userId,
         scheduledAt: new Date(input.scheduledAt),
         commitmentText: input.commitmentText ?? null,
@@ -304,7 +304,7 @@ Return only the opening script, no labels or preamble.`;
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       await db
-        .update(momentumPartnerCalls)
+        .update(successPartnerCalls)
         .set({
           outcome: input.outcome,
           leaderConfidence: input.leaderConfidence ?? null,
@@ -315,7 +315,7 @@ Return only the opening script, no labels or preamble.`;
           calledAt: new Date(),
           status: "completed",
         })
-        .where(eq(momentumPartnerCalls.id, input.callId));
+        .where(eq(successPartnerCalls.id, input.callId));
 
       return { success: true };
     }),
@@ -328,9 +328,9 @@ Return only the opening script, no labels or preamble.`;
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       await db
-        .update(momentumPartnerCalls)
+        .update(successPartnerCalls)
         .set({ status: "missed" })
-        .where(eq(momentumPartnerCalls.id, input.callId));
+        .where(eq(successPartnerCalls.id, input.callId));
 
       return { success: true };
     }),
@@ -342,17 +342,17 @@ Return only the opening script, no labels or preamble.`;
 
     const escalated = await db
       .select({
-        call: momentumPartnerCalls,
+        call: successPartnerCalls,
         user: {
           id: users.id,
           name: users.name,
           email: users.email,
         },
       })
-      .from(momentumPartnerCalls)
-      .innerJoin(users, eq(momentumPartnerCalls.userId, users.id))
-            .where(eq(momentumPartnerCalls.escalateToCoach, true))
-      .orderBy(desc(momentumPartnerCalls.calledAt))
+      .from(successPartnerCalls)
+      .innerJoin(users, eq(successPartnerCalls.userId, users.id))
+            .where(eq(successPartnerCalls.escalateToCoach, true))
+      .orderBy(desc(successPartnerCalls.calledAt))
       .limit(50);
     return escalated;
   }),
@@ -363,9 +363,9 @@ Return only the opening script, no labels or preamble.`;
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.update(momentumPartnerCalls)
+      await db.update(successPartnerCalls)
         .set({ escalateToCoach: false })
-        .where(eq(momentumPartnerCalls.id, input.callId));
+        .where(eq(successPartnerCalls.id, input.callId));
       return { resolved: true };
     }),
 });

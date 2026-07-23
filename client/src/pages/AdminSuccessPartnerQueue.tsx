@@ -68,7 +68,7 @@ function ActivityPill({ count, icon, label }: { count: number; icon: React.React
 }
 
 export default function AdminMomentumQueue() {
-  const { data, isLoading } = trpc.momentumPartner.getCallQueue.useQuery();
+  const { data, isLoading } = trpc.successPartner.getCallQueue.useQuery();
 
   const overdue = data?.filter((r) => r.callStatus === "overdue") ?? [];
   const dueSoon = data?.filter((r) => r.callStatus === "due_soon") ?? [];
@@ -83,7 +83,7 @@ export default function AdminMomentumQueue() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
-              Momentum Partner
+              Success Partner
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Fortnightly accountability calls — pre-loaded context for every leader

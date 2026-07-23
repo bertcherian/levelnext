@@ -296,6 +296,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActivePilot = isNavActive("/admin/pilot-applications");
               const isActiveInvites = isNavActive("/admin/invites");
               const isActiveMomentumMobile = isNavActive("/admin/momentum");
+              const isActiveLSOSMobile = isNavActive("/admin/lsos");
               const isActiveEscalationsMobile = isNavActive("/admin/escalations");
               const isActiveEnrollmentsMobile = isNavActive("/admin/enrollments");
               return (
@@ -350,6 +351,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                       </div>
                     </Link>
                   </li>
+                  <li key="/admin/lsos-mobile">
+                    <Link href="/admin/lsos" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveLSOSMobile ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveLSOSMobile ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Zap size={18} className="flex-shrink-0" />
+                        <span>SP Workspace</span>
+                        {isActiveLSOSMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
                   <li key="/admin/momentum-mobile">
                     <Link href="/admin/momentum" onClick={() => setSidebarOpen(false)}>
                       <div
@@ -360,7 +376,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         style={isActiveMomentumMobile ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
                       >
                         <Phone size={18} className="flex-shrink-0" />
-                        <span>Momentum Partner</span>
+                        <span>Success Partner</span>
                         {isActiveMomentumMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
@@ -477,6 +493,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActivePilot = isNavActive("/admin/pilot-applications");
               const isActiveInvites = isNavActive("/admin/invites");
               const isActiveMomentum = isNavActive("/admin/momentum");
+              const isActiveLSOS = isNavActive("/admin/lsos");
               const isActiveEscalations = isNavActive("/admin/escalations");
               const isActiveEnrollments = isNavActive("/admin/enrollments");
               return (
@@ -531,6 +548,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                       </div>
                     </Link>
                   </li>
+                  <li key="/admin/lsos">
+                    <Link href="/admin/lsos">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveLSOS ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveLSOS ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Zap size={18} className={cn("flex-shrink-0", isActiveLSOS ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>SP Workspace</span>
+                        {isActiveLSOS && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
                   <li key="/admin/momentum">
                     <Link href="/admin/momentum">
                       <div
@@ -541,7 +573,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         style={isActiveMomentum ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
                       >
                         <Phone size={18} className={cn("flex-shrink-0", isActiveMomentum ? "" : "group-hover:scale-105 transition-transform")} />
-                        <span>Momentum Partner</span>
+                        <span>Success Partner</span>
                         {isActiveMomentum && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>

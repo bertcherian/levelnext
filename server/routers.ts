@@ -19,7 +19,7 @@ import { enterpriseOnboardingRouter } from "./routers/enterpriseOnboarding";
 import { pilotApplicationRouter } from "./routers/pilotApplication";
 import { platformInvitesRouter } from "./routers/platformInvites";
 import { adminStatsRouter } from "./routers/adminStats";
-import { momentumPartnerRouter } from "./routers/momentumPartner";
+import { successPartnerRouter } from "./routers/successPartner";
 import { cpiReportRouter } from "./routers/cpiReport";
 import { ciReportRouter } from "./routers/ciReport";
 import { niiReportRouter } from "./routers/niiReport";
@@ -38,6 +38,7 @@ import { orgIntelligenceRouter } from "./routers/orgIntelligence";
 import { coachRouter } from "./routers/coach";
 import { adminCoachRouter } from "./routers/adminCoach";
 import { nextChapterRouter } from "./routers/nextChapter";
+import { lsosRouter } from "./routers/lsos";
 
 export const appRouter = router({
   system: systemRouter,
@@ -66,7 +67,7 @@ export const appRouter = router({
   pilotApplication: pilotApplicationRouter,
   platformInvites: platformInvitesRouter,
   adminStats: adminStatsRouter,
-  momentumPartner: momentumPartnerRouter,
+  successPartner: successPartnerRouter,
   cpiReport: cpiReportRouter,
   ciReport: ciReportRouter,
   niiReport: niiReportRouter,
@@ -85,6 +86,7 @@ export const appRouter = router({
   coach: coachRouter,
   adminCoach: adminCoachRouter,
   nextChapter: nextChapterRouter,
+  lsos: lsosRouter,
 });
 
 export type AppRouter = typeof appRouter;
