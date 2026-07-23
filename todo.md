@@ -952,3 +952,12 @@
 - [ ] Onboarding tour: highlight key platform areas (Diagnostics, Guide, Practice, Next Chapter, Progress)
 - [ ] TypeScript check (zero errors)
 - [ ] Save checkpoint
+
+## Career Intelligence — Outplacement Contact Modal
+- [ ] OutplacementContactModal component: fields for name, title, organisation, email, phone (optional), cohort size estimate, message
+- [ ] Wire modal to 'talk to us' link in CareerLanding.tsx (replace TidyCal href with onClick state)
+- [ ] Server: submitOutplacementEnquiry tRPC procedure — store in DB, send email notification to Bert
+- [ ] Schema: outplacement_enquiries table (name, title, organisation, email, phone, cohortSize, message, submittedAt)
+- [ ] Apply migration for outplacement_enquiries table
+- [ ] TypeScript check (zero errors)
+- [ ] Save checkpoint

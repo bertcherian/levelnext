@@ -10,6 +10,7 @@ import {
   Menu, X,
 } from "lucide-react";
 import { getLoginUrl } from "@/const";
+import { OutplacementContactModal } from "@/components/OutplacementContactModal";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 const BRIEF_URL = "/manus-storage/LevelNext_Career_Intelligence_Executive_Brief_5a0cfaae.pdf";
@@ -152,6 +153,7 @@ export default function CareerLanding() {
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [outplacementModalOpen, setOutplacementModalOpen] = useState(false);
   const loginUrl = getLoginUrl();
 
   return (
@@ -279,10 +281,11 @@ export default function CareerLanding() {
               </p>
               <p className="text-xs mt-3" style={{ color: "oklch(55% 0.18 280 / 0.6)" }}>
                 For organisations offering outplacement support —{" "}
-                <a href="https://tidycal.com/metaresults/pilot" target="_blank" rel="noopener noreferrer"
-                  className="underline underline-offset-2 hover:opacity-80 transition-opacity">
+                <button
+                  onClick={() => setOutplacementModalOpen(true)}
+                  className="underline underline-offset-2 hover:opacity-80 transition-opacity font-medium bg-transparent border-0 p-0 cursor-pointer">
                   talk to us
-                </a>
+                </button>
               </p>
             </div>
 
@@ -653,6 +656,10 @@ export default function CareerLanding() {
         </div>
       </footer>
 
+      <OutplacementContactModal
+        open={outplacementModalOpen}
+        onOpenChange={setOutplacementModalOpen}
+      />
     </div>
   );
 }

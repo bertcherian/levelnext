@@ -1852,3 +1852,18 @@ export const lsosDailyBriefs = mysqlTable("lsos_daily_briefs", {
 });
 export type LsosDailyBrief = typeof lsosDailyBriefs.$inferSelect;
 export type InsertLsosDailyBrief = typeof lsosDailyBriefs.$inferInsert;
+
+// ── Outplacement Enquiries ────────────────────────────────────────────────────
+export const outplacementEnquiries = mysqlTable("outplacement_enquiries", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  organisation: varchar("organisation", { length: 300 }).notNull(),
+  email: varchar("email", { length: 300 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  cohortSize: varchar("cohortSize", { length: 50 }),
+  message: text("message"),
+  submittedAt: timestamp("submittedAt").defaultNow().notNull(),
+});
+export type OutplacementEnquiry = typeof outplacementEnquiries.$inferSelect;
+export type InsertOutplacementEnquiry = typeof outplacementEnquiries.$inferInsert;

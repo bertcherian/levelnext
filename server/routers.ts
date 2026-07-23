@@ -39,6 +39,7 @@ import { coachRouter } from "./routers/coach";
 import { adminCoachRouter } from "./routers/adminCoach";
 import { nextChapterRouter } from "./routers/nextChapter";
 import { lsosRouter } from "./routers/lsos";
+import { outplacementEnquiryRouter } from "./routers/outplacementEnquiry";
 
 export const appRouter = router({
   system: systemRouter,
@@ -87,6 +88,7 @@ export const appRouter = router({
   adminCoach: adminCoachRouter,
   nextChapter: nextChapterRouter,
   lsos: lsosRouter,
+  outplacementEnquiry: outplacementEnquiryRouter,
 });
 
 export type AppRouter = typeof appRouter;
