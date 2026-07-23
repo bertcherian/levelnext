@@ -43,3 +43,24 @@ export const adminProcedure = t.procedure.use(
     });
   }),
 );
+
+/**
+ * successPartnerProcedure — allows users with role 'success_partner' OR 'admin'.
+ * Admins can always access SP screens for management purposes.
+ */
+export const successPartnerProcedure = t.procedure.use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+
+    if (!ctx.user || (ctx.user.role !== 'success_partner' && ctx.user.role !== 'admin')) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Access restricted to Success Partners and Admins." });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+      },
+    });
+  }),
+);

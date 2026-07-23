@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, successPartnerProcedure, adminProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   users,
@@ -11,29 +11,53 @@ import {
   practiceSessions,
   guideConversations,
   leadershipMemory,
+  spAssignments,
 } from "../../drizzle/schema";
-import { desc, eq, and, gte, lt, count, sql, isNull } from "drizzle-orm";
+import { desc, eq, and, gte, count } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
 
-// ─── Admin guard ──────────────────────────────────────────────────────────────
-const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
+/**
+ * Get the list of user IDs that the current SP is allowed to see.
+ * Admins see all non-admin users; SPs only see their assigned cohort.
+ */
+async function getVisibleUserIds(
+  db: Awaited<ReturnType<typeof import("../db").getDb>>,
+  spId: number,
+  role: string
+): Promise<number[]> {
+  if (!db) return [];
+
+  if (role === "admin") {
+    const allUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.role, "user"));
+    return allUsers.map((u) => u.id);
   }
-  return next({ ctx });
-});
+
+  const assigned = await db
+    .select({ managedUserId: spAssignments.managedUserId })
+    .from(spAssignments)
+    .where(eq(spAssignments.spUserId, spId));
+  return assigned.map((a) => a.managedUserId);
+}
 
 export const successPartnerRouter = router({
-  // ── Call Queue: all users with scheduled/overdue calls ──────────────────────
-  getCallQueue: adminProcedure.query(async () => {
+  // ── Call Queue: users with scheduled/overdue calls (scoped to SP's cohort) ──
+  getCallQueue: successPartnerProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
     const now = new Date();
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-    // Get all users who have at least one completed diagnostic
-    const activeUsers = await db
+    // Get visible user IDs (scoped to SP's cohort)
+    const visibleIds = await getVisibleUserIds(db, ctx.user.id, ctx.user.role);
+
+    if (visibleIds.length === 0) return [];
+
+    // Get all visible users
+    const allUsers = await db
       .select({
         id: users.id,
         name: users.name,
@@ -45,9 +69,9 @@ export const successPartnerRouter = router({
       .where(eq(users.role, "user"))
       .orderBy(desc(users.lastSignedIn));
 
-    if (activeUsers.length === 0) return [];
+    const activeUsers = allUsers.filter((u) => visibleIds.includes(u.id));
 
-    const userIds = activeUsers.map((u) => u.id);
+    if (activeUsers.length === 0) return [];
 
     // For each user, get their latest scheduled/missed call and latest commitment
     const results = await Promise.all(
@@ -139,11 +163,21 @@ export const successPartnerRouter = router({
   }),
 
   // ── Pre-call Brief: full context for a single leader ────────────────────────
-  getPreCallBrief: adminProcedure
+  getPreCallBrief: successPartnerProcedure
     .input(z.object({ userId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Verify the SP has access to this user
+      if (ctx.user.role !== "admin") {
+        const [assignment] = await db
+          .select({ id: spAssignments.id })
+          .from(spAssignments)
+          .where(and(eq(spAssignments.spUserId, ctx.user.id), eq(spAssignments.managedUserId, input.userId)))
+          .limit(1);
+        if (!assignment) throw new TRPCError({ code: "FORBIDDEN", message: "You are not assigned to this user." });
+      }
 
       const [user] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
       if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
@@ -161,7 +195,7 @@ export const successPartnerRouter = router({
         .where(eq(reports.userId, input.userId))
         .orderBy(desc(reports.createdAt));
 
-      // Active commitments (last 3)
+      // Active commitments (last 5)
       const activeCommitments = await db
         .select()
         .from(commitments)
@@ -218,7 +252,7 @@ export const successPartnerRouter = router({
     }),
 
   // ── Generate AI opening script for a call ───────────────────────────────────
-  generateOpeningScript: adminProcedure
+  generateOpeningScript: successPartnerProcedure
     .input(
       z.object({
         userId: z.number(),
@@ -262,7 +296,7 @@ Return only the opening script, no labels or preamble.`;
     }),
 
   // ── Schedule a call for a user ───────────────────────────────────────────────
-  scheduleCall: adminProcedure
+  scheduleCall: successPartnerProcedure
     .input(
       z.object({
         userId: z.number(),
@@ -287,7 +321,7 @@ Return only the opening script, no labels or preamble.`;
     }),
 
   // ── Log call outcome ─────────────────────────────────────────────────────────
-  logOutcome: adminProcedure
+  logOutcome: successPartnerProcedure
     .input(
       z.object({
         callId: z.number(),
@@ -321,7 +355,7 @@ Return only the opening script, no labels or preamble.`;
     }),
 
   // ── Mark a call as missed ────────────────────────────────────────────────────
-  markMissed: adminProcedure
+  markMissed: successPartnerProcedure
     .input(z.object({ callId: z.number() }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -336,9 +370,12 @@ Return only the opening script, no labels or preamble.`;
     }),
 
   // ── Get escalation list (leaders who need coach attention) ───────────────────
-  getEscalations: adminProcedure.query(async () => {
+  getEscalations: successPartnerProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Get visible user IDs
+    const visibleIds = await getVisibleUserIds(db, ctx.user.id, ctx.user.role);
 
     const escalated = await db
       .select({
@@ -351,14 +388,18 @@ Return only the opening script, no labels or preamble.`;
       })
       .from(successPartnerCalls)
       .innerJoin(users, eq(successPartnerCalls.userId, users.id))
-            .where(eq(successPartnerCalls.escalateToCoach, true))
+      .where(eq(successPartnerCalls.escalateToCoach, true))
       .orderBy(desc(successPartnerCalls.calledAt))
       .limit(50);
-    return escalated;
+
+    // Filter to only visible users
+    return visibleIds.length > 0
+      ? escalated.filter((e) => visibleIds.includes(e.user.id))
+      : escalated;
   }),
 
   // ── Resolve an escalation (mark as handled by coach) ─────────────────────────────────
-  resolveEscalation: adminProcedure
+  resolveEscalation: successPartnerProcedure
     .input(z.object({ callId: z.number() }))
     .mutation(async ({ input }) => {
       const db = await getDb();

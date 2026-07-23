@@ -40,6 +40,7 @@ import { adminCoachRouter } from "./routers/adminCoach";
 import { nextChapterRouter } from "./routers/nextChapter";
 import { lsosRouter } from "./routers/lsos";
 import { outplacementEnquiryRouter } from "./routers/outplacementEnquiry";
+import { spAssignmentsRouter } from "./routers/spAssignments";
 
 export const appRouter = router({
   system: systemRouter,
@@ -89,6 +90,7 @@ export const appRouter = router({
   nextChapter: nextChapterRouter,
   lsos: lsosRouter,
   outplacementEnquiry: outplacementEnquiryRouter,
+  spAssignments: spAssignmentsRouter,
 });
 
 export type AppRouter = typeof appRouter;

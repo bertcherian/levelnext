@@ -274,6 +274,13 @@
       "when": 1784789152657,
       "tag": "0038_plain_carnage",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "5",
+      "when": 1784796812133,
+      "tag": "0039_wet_warpath",
+      "breakpoints": true
     }
   ]
 }

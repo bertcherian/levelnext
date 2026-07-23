@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, successPartnerProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   users,
@@ -11,17 +11,10 @@ import {
   lsosMissions,
   lsosDailyBriefs,
   momentumPartnerCalls as successPartnerCalls,
+  spAssignments,
 } from "../../drizzle/schema";
-import { desc, eq, and, gte, count, sql } from "drizzle-orm";
+import { desc, eq, and, gte, count } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
-
-// ─── Admin guard ──────────────────────────────────────────────────────────────
-const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
-  }
-  return next({ ctx });
-});
 
 // ─── Leadership Health Score calculation ─────────────────────────────────────
 // 5 dimensions, each 0–20, total 0–100
@@ -71,9 +64,37 @@ function getLHSZone(score: number): { zone: string; color: string; description: 
   return { zone: "Critical", color: "#ef4444", description: "Disengaged — urgent action required" };
 }
 
+/**
+ * Get the list of user IDs assigned to a given SP.
+ * Admins see ALL non-admin users (no assignment filter).
+ */
+async function getAssignedUserIds(
+  db: Awaited<ReturnType<typeof import("../db").getDb>>,
+  spId: number,
+  role: string
+): Promise<number[]> {
+  if (!db) return [];
+
+  if (role === "admin") {
+    // Admins see all non-admin users
+    const allUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.role, "user"));
+    return allUsers.map((u) => u.id);
+  }
+
+  // SPs only see their assigned cohort
+  const assigned = await db
+    .select({ managedUserId: spAssignments.managedUserId })
+    .from(spAssignments)
+    .where(eq(spAssignments.spUserId, spId));
+  return assigned.map((a) => a.managedUserId);
+}
+
 export const lsosRouter = router({
   // ── Full workspace data: missions + brief + cohort health ─────────────────
-  getWorkspaceData: adminProcedure.query(async ({ ctx }) => {
+  getWorkspaceData: successPartnerProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -82,12 +103,18 @@ export const lsosRouter = router({
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const today = now.toISOString().slice(0, 10);
 
-    // All managers (non-admin users)
-    const managers = await db
-      .select({ id: users.id, name: users.name, email: users.email, lastSignedIn: users.lastSignedIn, createdAt: users.createdAt })
-      .from(users)
-      .where(eq(users.role, "user"))
-      .orderBy(desc(users.lastSignedIn));
+    // Get assigned user IDs (scoped to SP's cohort)
+    const assignedIds = await getAssignedUserIds(db, spId, ctx.user.role);
+
+    // Fetch assigned managers
+    const managers = assignedIds.length === 0
+      ? []
+      : await db
+          .select({ id: users.id, name: users.name, email: users.email, lastSignedIn: users.lastSignedIn, createdAt: users.createdAt })
+          .from(users)
+          .where(eq(users.role, "user"))
+          .orderBy(desc(users.lastSignedIn))
+          .then((all) => all.filter((u) => assignedIds.includes(u.id)));
 
     // Build LHS for each manager
     const managerHealth = await Promise.all(
@@ -117,7 +144,7 @@ export const lsosRouter = router({
         const completedCommitments = allCommitments.filter((c) => c.status === "completed").length;
         const commitmentReliability = allCommitments.length > 0
           ? Math.round((completedCommitments / allCommitments.length) * 100)
-          : 50; // default for new users
+          : 50;
 
         const allCalls = await db
           .select({ status: successPartnerCalls.status })
@@ -193,7 +220,7 @@ export const lsosRouter = router({
   }),
 
   // ── Generate Today's Missions for the SP ─────────────────────────────────
-  generateMissions: adminProcedure.mutation(async ({ ctx }) => {
+  generateMissions: successPartnerProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -201,11 +228,17 @@ export const lsosRouter = router({
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Get all managers with their health data
-    const managers = await db
+    // Get assigned user IDs (scoped to SP's cohort)
+    const assignedIds = await getAssignedUserIds(db, spId, ctx.user.role);
+
+    if (assignedIds.length === 0) return { missions: [], count: 0 };
+
+    // Get assigned managers
+    const allUsers = await db
       .select({ id: users.id, name: users.name, email: users.email, lastSignedIn: users.lastSignedIn })
       .from(users)
       .where(eq(users.role, "user"));
+    const managers = allUsers.filter((u) => assignedIds.includes(u.id));
 
     if (managers.length === 0) return { missions: [], count: 0 };
 
@@ -341,17 +374,20 @@ Return a JSON array of exactly 5 mission objects. No preamble, no explanation, j
   }),
 
   // ── Generate Daily Brief ──────────────────────────────────────────────────
-  generateDailyBrief: adminProcedure.mutation(async ({ ctx }) => {
+  generateDailyBrief: successPartnerProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
     const spId = ctx.user.id;
     const today = new Date().toISOString().slice(0, 10);
 
-    // Get all managers
-    const managers = await db
+    // Get assigned user IDs (scoped to SP's cohort)
+    const assignedIds = await getAssignedUserIds(db, spId, ctx.user.role);
+
+    const allUsers = await db
       .select({ id: users.id, name: users.name, lastSignedIn: users.lastSignedIn })
       .from(users).where(eq(users.role, "user"));
+    const managers = allUsers.filter((u) => assignedIds.includes(u.id));
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
@@ -433,7 +469,7 @@ Return only the JSON object, no preamble.`;
   }),
 
   // ── Complete a mission ────────────────────────────────────────────────────
-  completeMission: adminProcedure
+  completeMission: successPartnerProcedure
     .input(z.object({ missionId: z.number(), status: z.enum(["completed", "skipped", "snoozed"]) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -445,7 +481,7 @@ Return only the JSON object, no preamble.`;
     }),
 
   // ── Get Leadership Health Score for a single manager ─────────────────────
-  getManagerLHS: adminProcedure
+  getManagerLHS: successPartnerProcedure
     .input(z.object({ managerId: z.number() }))
     .query(async ({ input }) => {
       const db = await getDb();

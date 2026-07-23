@@ -60,6 +60,7 @@ import OrgIntelligence from "@/pages/OrgIntelligence";
 import MEPLayout from "@/components/MEPLayout";
 import CoachPortal from "@/pages/CoachPortal";
 import AdminCoachManagement from "@/pages/AdminCoachManagement";
+import AdminSuccessPartners from "@/pages/AdminSuccessPartners";
 import CareerLanding from "@/pages/CareerLanding";
 import NextChapter from "@/pages/NextChapter";
 import LSOSWorkspace from "@/pages/LSOSWorkspace";
@@ -168,6 +169,7 @@ function Router() {
       <Route path="/manager/team">{() => <MEPLayout><TeamIntelligence /></MEPLayout>}</Route>
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/admin/coaches" component={AdminCoachManagement} />
+      <Route path="/admin/success-partners" component={AdminSuccessPartners} />
       <Route path="/next-chapter" component={NextChapter} />
       <Route path="/next-chapter/portfolio" component={NextChapterPortfolio} />
       <Route path="/next-chapter/identity-assessment" component={IdentityClarityAssessment} />

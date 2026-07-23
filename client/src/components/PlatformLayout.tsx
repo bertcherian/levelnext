@@ -28,6 +28,7 @@ import {
   Users,
   Route,
   Sparkles,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -299,6 +300,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveLSOSMobile = isNavActive("/admin/lsos");
               const isActiveEscalationsMobile = isNavActive("/admin/escalations");
               const isActiveEnrollmentsMobile = isNavActive("/admin/enrollments");
+              const isActiveSPsMobile = isNavActive("/admin/success-partners");
               return (
                 <>
                   <li key="/admin-section-mobile">
@@ -411,6 +413,81 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                       </div>
                     </Link>
                   </li>
+                  <li key="/admin/success-partners-mobile">
+                    <Link href="/admin/success-partners" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveSPsMobile ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveSPsMobile ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <UserCheck size={18} className="flex-shrink-0" />
+                        <span>Manage SPs</span>
+                        {isActiveSPsMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                </>
+              );
+            })()}
+            {/* SP-only nav items (success_partner role) */}
+            {user?.role === "success_partner" && (() => {
+              const isActiveSPLSOS = isNavActive("/admin/lsos");
+              const isActiveSPQueue = isNavActive("/admin/momentum");
+              const isActiveSPEscalations = isNavActive("/admin/escalations");
+              return (
+                <>
+                  <li key="/sp-section-mobile">
+                    <div className="mt-3 mb-1 px-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Success Partner</p>
+                    </div>
+                  </li>
+                  <li key="/sp-lsos-mobile">
+                    <Link href="/admin/lsos" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveSPLSOS ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveSPLSOS ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Zap size={18} className="flex-shrink-0" />
+                        <span>SP Workspace</span>
+                        {isActiveSPLSOS && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/sp-queue-mobile">
+                    <Link href="/admin/momentum" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveSPQueue ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveSPQueue ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Phone size={18} className="flex-shrink-0" />
+                        <span>Call Queue</span>
+                        {isActiveSPQueue && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/sp-escalations-mobile">
+                    <Link href="/admin/escalations" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveSPEscalations ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveSPEscalations ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <AlertCircle size={18} className="flex-shrink-0" />
+                        <span>Escalation Inbox</span>
+                        {isActiveSPEscalations && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
                 </>
               );
             })()}
@@ -496,6 +573,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveLSOS = isNavActive("/admin/lsos");
               const isActiveEscalations = isNavActive("/admin/escalations");
               const isActiveEnrollments = isNavActive("/admin/enrollments");
+              const isActiveSPs = isNavActive("/admin/success-partners");
               return (
                 <>
                   <li key="/admin-section-desktop">
@@ -605,6 +683,81 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         <UserCog size={18} className={cn("flex-shrink-0", isActiveEnrollments ? "" : "group-hover:scale-105 transition-transform")} />
                         <span>Product Enrollments</span>
                         {isActiveEnrollments && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/success-partners">
+                    <Link href="/admin/success-partners">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveSPs ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveSPs ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <UserCheck size={18} className={cn("flex-shrink-0", isActiveSPs ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Manage SPs</span>
+                        {isActiveSPs && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                </>
+              );
+            })()}
+            {/* SP-only nav items (success_partner role) */}
+            {user?.role === "success_partner" && (() => {
+              const isActiveSPLSOS = isNavActive("/admin/lsos");
+              const isActiveSPQueue = isNavActive("/admin/momentum");
+              const isActiveSPEscalations = isNavActive("/admin/escalations");
+              return (
+                <>
+                  <li key="/sp-section-desktop">
+                    <div className="mt-3 mb-1 px-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Success Partner</p>
+                    </div>
+                  </li>
+                  <li key="/sp-lsos-desktop">
+                    <Link href="/admin/lsos">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveSPLSOS ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveSPLSOS ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Zap size={18} className={cn("flex-shrink-0", isActiveSPLSOS ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>SP Workspace</span>
+                        {isActiveSPLSOS && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/sp-queue-desktop">
+                    <Link href="/admin/momentum">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveSPQueue ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveSPQueue ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Phone size={18} className={cn("flex-shrink-0", isActiveSPQueue ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Call Queue</span>
+                        {isActiveSPQueue && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/sp-escalations-desktop">
+                    <Link href="/admin/escalations">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveSPEscalations ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveSPEscalations ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <AlertCircle size={18} className={cn("flex-shrink-0", isActiveSPEscalations ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Escalation Inbox</span>
+                        {isActiveSPEscalations && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
                   </li>

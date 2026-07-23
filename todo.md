@@ -961,3 +961,35 @@
 - [ ] Apply migration for outplacement_enquiries table
 - [ ] TypeScript check (zero errors)
 - [ ] Save checkpoint
+
+## Multi-Tenant Success Partner (Jul 23)
+
+### Phase 1 — Schema
+- [x] Extend role enum: add "success_partner" to users.role
+- [x] Add sp_assignments table (id, spUserId, managedUserId, tenantId, assignedAt, assignedBy)
+- [x] Run drizzle-kit generate and apply migration SQL
+
+### Phase 2 — Server
+- [x] Add successPartnerProcedure guard (role === "success_partner" OR role === "admin")
+- [x] spAssignments router: inviteSP, listSPs, assignUser, unassignUser, getMyAssignments, getSPAssignments
+- [x] Update successPartnerRouter.getCallQueue to filter by sp_assignments
+- [x] Update lsosRouter.getWorkspaceData to filter by sp_assignments
+- [x] Update lsosRouter.generateMissions to scope to assigned users
+- [x] Update lsosRouter.generateDailyBrief to scope to assigned users
+
+### Phase 3 — Admin UI
+- [x] /admin/success-partners page — list all SPs with cohort size and LHS avg
+- [x] Invite SP modal — enter name + email, sends magic link with success_partner role
+- [x] SP detail view — list assigned users with assign/remove controls
+- [ ] Assign by organisation — assign all users from a tenant to an SP in one click (future)
+- [x] Add "Manage SPs" nav item to admin sidebar
+
+### Phase 4 — SP Experience
+- [x] SP nav: show only SP Workspace, Success Partner (call queue), Escalation Inbox
+- [x] SP home: redirect to /admin/lsos (LSOS Workspace) on magic link verify
+- [x] SP LSOS Workspace: cohort shows only assigned users
+- [x] SP Call Queue: shows only assigned users
+
+### Phase 5 — Quality
+- [x] TypeScript check (zero errors)
+- [x] Save checkpoint

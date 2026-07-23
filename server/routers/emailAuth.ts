@@ -336,6 +336,15 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
           );
       }
 
+      // If this is a Success Partner invite (sp=1 query param), promote the user
+      const isSPInvite = req.query.sp === "1";
+      if (isSPInvite && existingUser.role !== "admin" && existingUser.role !== "success_partner") {
+        await db
+          .update(users)
+          .set({ role: "success_partner" })
+          .where(eq(users.id, existingUser.id));
+      }
+
       // Update lastSignedIn
       await db
         .update(users)
@@ -351,8 +360,15 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Redirect to app — new users go to onboarding, returning users go to home
-      const postLoginPath = isNewUser ? "/onboard" : "/home";
+      // Redirect to app — SP invites go to SP workspace; new users go to onboarding; returning users go to home
+      let postLoginPath: string;
+      if (isSPInvite) {
+        postLoginPath = "/admin/lsos";
+      } else if (isNewUser) {
+        postLoginPath = "/onboard";
+      } else {
+        postLoginPath = "/home";
+      }
       res.redirect(302, `${origin}${postLoginPath}`);
     } catch (error) {
       console.error("[MagicLink] Verify failed:", error);

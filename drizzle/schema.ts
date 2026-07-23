@@ -17,7 +17,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "success_partner"]).default("user").notNull(),
   // Leadership Graph: cumulative cross-diagnostic intelligence profile
   leadershipGraph: json("leadershipGraph").$type<LeadershipGraph>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -1867,3 +1867,15 @@ export const outplacementEnquiries = mysqlTable("outplacement_enquiries", {
 });
 export type OutplacementEnquiry = typeof outplacementEnquiries.$inferSelect;
 export type InsertOutplacementEnquiry = typeof outplacementEnquiries.$inferInsert;
+
+// ── SP Assignments ────────────────────────────────────────────────────────────
+export const spAssignments = mysqlTable("sp_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  spUserId: int("spUserId").notNull().references(() => users.id),
+  managedUserId: int("managedUserId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+  assignedBy: int("assignedBy").references(() => users.id),
+});
+export type SpAssignment = typeof spAssignments.$inferSelect;
+export type InsertSpAssignment = typeof spAssignments.$inferInsert;
