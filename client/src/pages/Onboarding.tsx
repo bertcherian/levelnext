@@ -8,14 +8,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   Building2, Users, ArrowRight, CheckCircle2, ChevronLeft,
-  AlertCircle, Check, Sparkles,
+  AlertCircle, Check, Sparkles, Brain, Target, Zap, TrendingUp, BookOpen, X,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-type Mode = "choose" | "create" | "join" | "success";
+type Mode = "choose" | "create" | "join" | "success" | "tour";
 
 // ── Step definitions ───────────────────────────────────────────────────────────
-const STEPS: Record<Exclude<Mode, "choose" | "success">, { index: number; label: string }> = {
+const STEPS: Record<Exclude<Mode, "choose" | "success" | "tour">, { index: number; label: string }> = {
   create: { index: 1, label: "Create Organisation" },
   join:   { index: 1, label: "Join Organisation" },
 };
@@ -40,6 +40,167 @@ const PLATFORM_PILLARS = [
   { label: "Leadership Influence",    desc: "Expand your impact across stakeholders" },
   { label: "GCC Readiness",           desc: "Lead your global capability centre forward" },
 ];
+
+// ── Tour steps ─────────────────────────────────────────────────────────────────
+const TOUR_STEPS = [
+  {
+    icon: Brain,
+    title: "Start with a Diagnostic",
+    desc: "LevelNext begins with precision. Your first step is to complete one of 6 leadership diagnostics — each one generates a personalised score, zone, and AI-powered recommendations specific to you.",
+    highlight: "Recommended first: Executive Communication Intelligence (ECI)",
+    action: "Go to Diagnostics",
+    path: "/diagnostics",
+  },
+  {
+    icon: Target,
+    title: "Meet Guide — Your AI Coach",
+    desc: "Guide is your always-on AI coaching partner. It knows your diagnostic scores, your leadership context, and your goals. Every day it gives you specific, actionable missions — not generic advice.",
+    highlight: "Guide adapts to your exact profile. The more you share, the sharper it gets.",
+    action: "Open Guide",
+    path: "/guide",
+  },
+  {
+    icon: Zap,
+    title: "Practice Real Conversations",
+    desc: "The AI Practice Coach lets you rehearse leadership conversations before they happen — difficult feedback, stakeholder alignment, executive presence moments. Get instant, specific feedback.",
+    highlight: "Practice is where insight becomes behaviour.",
+    action: "Try Practice Coach",
+    path: "/practice",
+  },
+  {
+    icon: BookOpen,
+    title: "Begin Your Next Chapter",
+    desc: "Next Chapter is your identity-first career intelligence journey — a 16-module programme that helps you design your leadership future, build your brand, and navigate your next transition with clarity.",
+    highlight: "Start with Module 1: Understanding Today.",
+    action: "Start Next Chapter",
+    path: "/next-chapter",
+  },
+  {
+    icon: TrendingUp,
+    title: "Track Your Progress",
+    desc: "Your Leadership Edge profile evolves as you complete diagnostics, coaching sessions, and practice. Your coach can see your portfolio and brief themselves before every session.",
+    highlight: "Your data is private. You control what your coach can see.",
+    action: "View My Progress",
+    path: "/progress",
+  },
+];
+
+// ── Tour component ─────────────────────────────────────────────────────────────
+function PlatformTour({ firstName, onFinish }: { firstName: string; onFinish: () => void }) {
+  const [step, setStep] = useState(0);
+  const [, navigate] = useLocation();
+  const current = TOUR_STEPS[step];
+  const Icon = current.icon;
+  const isLast = step === TOUR_STEPS.length - 1;
+
+  return (
+    <div className="animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--color-ln-yellow)" }}>
+            Platform Tour
+          </p>
+          <h1 className="text-xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
+            {firstName}, here's how LevelNext works
+          </h1>
+        </div>
+        <button
+          onClick={onFinish}
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100"
+          title="Skip tour"
+        >
+          <X size={16} style={{ color: "var(--color-ln-muted)" }} />
+        </button>
+      </div>
+
+      {/* Progress dots */}
+      <div className="flex items-center gap-1.5 mb-6">
+        {TOUR_STEPS.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setStep(i)}
+            className="rounded-full transition-all duration-300"
+            style={{
+              width: i === step ? "24px" : "8px",
+              height: "8px",
+              background: i === step ? "var(--color-ln-navy)" : i < step ? "var(--color-ln-yellow)" : "oklch(88% 0.01 248.6)",
+            }}
+          />
+        ))}
+        <span className="ml-2 text-xs" style={{ color: "var(--color-ln-muted)" }}>
+          {step + 1} of {TOUR_STEPS.length}
+        </span>
+      </div>
+
+      {/* Step card */}
+      <div
+        className="rounded-2xl p-6 mb-4"
+        style={{ background: "white", border: "1.5px solid var(--color-ln-border)" }}
+        key={step}
+      >
+        {/* Icon */}
+        <div
+          className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+          style={{ background: "var(--color-ln-navy)" }}
+        >
+          <Icon size={22} style={{ color: "var(--color-ln-yellow)" }} />
+        </div>
+
+        <h2 className="text-lg font-bold mb-2" style={{ color: "var(--color-ln-navy)" }}>
+          {current.title}
+        </h2>
+        <p className="text-sm leading-relaxed mb-4" style={{ color: "#444" }}>
+          {current.desc}
+        </p>
+
+        {/* Highlight callout */}
+        <div
+          className="rounded-lg px-4 py-3 mb-4"
+          style={{ background: "oklch(97% 0.02 90)", border: "1px solid oklch(88% 0.06 90)" }}
+        >
+          <p className="text-xs font-semibold" style={{ color: "oklch(45% 0.12 90)" }}>
+            💡 {current.highlight}
+          </p>
+        </div>
+
+        {/* Go there button */}
+        <button
+          onClick={() => navigate(current.path)}
+          className="text-sm font-semibold flex items-center gap-1.5 transition-opacity hover:opacity-70"
+          style={{ color: "var(--color-ln-navy)" }}
+        >
+          {current.action} <ArrowRight size={14} />
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex items-center gap-3">
+        {step > 0 && (
+          <Button
+            variant="outline"
+            className="flex-1 h-10 text-sm"
+            style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-navy)" }}
+            onClick={() => setStep(s => s - 1)}
+          >
+            ← Previous
+          </Button>
+        )}
+        <Button
+          className="flex-1 h-10 text-sm font-semibold"
+          style={{ background: "var(--color-ln-navy)", color: "white" }}
+          onClick={() => isLast ? onFinish() : setStep(s => s + 1)}
+        >
+          {isLast ? "Get Started →" : "Next →"}
+        </Button>
+      </div>
+
+      <p className="text-xs text-center mt-4" style={{ color: "var(--color-ln-muted)" }}>
+        You can always revisit this tour from the Help menu.
+      </p>
+    </div>
+  );
+}
 
 // ── Step indicator ─────────────────────────────────────────────────────────────
 function StepIndicator({ mode }: { mode: Mode }) {
@@ -277,15 +438,43 @@ export default function Onboarding() {
             {/* ── SUCCESS ─────────────────────────────────────────────────── */}
             {mode === "success" && <SuccessScreen orgName={successOrgName} />}
 
+            {/* ── TOUR ────────────────────────────────────────────────────── */}
+            {mode === "tour" && (
+              <PlatformTour
+                firstName={firstName}
+                onFinish={() => setMode("choose")}
+              />
+            )}
+
             {/* ── CHOOSE ──────────────────────────────────────────────────── */}
             {mode === "choose" && (
               <div className="animate-fade-in">
                 <div className="mb-8">
-                  <h1 className="text-2xl font-bold mb-1" style={{ color: "var(--color-ln-navy)" }}>
-                    Welcome, {firstName}.
-                  </h1>
-                  <p className="text-sm" style={{ color: "var(--color-ln-muted)" }}>
-                    Let's set up your workspace to get started.
+                  {/* Welcome banner */}
+                  <div
+                    className="rounded-2xl p-5 mb-6"
+                    style={{ background: "var(--color-ln-navy)" }}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--color-ln-yellow)" }}>
+                      Welcome to LevelNext
+                    </p>
+                    <h1 className="text-xl font-bold text-white mb-2">
+                      Hi {firstName} — great to have you here.
+                    </h1>
+                    <p className="text-sm text-white/70 leading-relaxed mb-4">
+                      LevelNext is your Leadership Intelligence Platform. It combines precision diagnostics, daily AI coaching, practice simulations, and a career intelligence journey into one evolving profile.
+                    </p>
+                    <button
+                      onClick={() => setMode("tour")}
+                      className="flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-80"
+                      style={{ color: "var(--color-ln-yellow)" }}
+                    >
+                      <Sparkles size={14} /> Take a 2-minute platform tour →
+                    </button>
+                  </div>
+
+                  <p className="text-sm font-semibold mb-3" style={{ color: "var(--color-ln-navy)" }}>
+                    First, set up your workspace:
                   </p>
                 </div>
 

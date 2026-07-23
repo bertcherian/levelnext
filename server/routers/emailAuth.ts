@@ -58,38 +58,117 @@ export const emailAuthRouter = router({
 
       // Send the email
       const greeting = firstName ? `Hi ${firstName},` : "Hi,";
+      const isNewUser = !firstName; // rough heuristic — name only set on signup
       const emailSent = await sendEmail({
         to: email,
-        subject: "Your LevelNext sign-in link",
-        html: `
-          <div style="font-family: Inter, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; background: #f9f7f4;">
-            <div style="text-align: center; margin-bottom: 32px;">
-              <img src="https://storage.manus.space/public/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" style="height: 40px;" />
-            </div>
-            <div style="background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e8e6e0;">
-              <h1 style="color: #12345A; font-size: 22px; margin: 0 0 8px;">Sign in to LevelNext</h1>
-              <p style="color: #555; font-size: 15px; margin: 0 0 24px;">${greeting}</p>
-              <p style="color: #1a1a1a; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
-                Click the button below to sign in. This link is valid for ${MAGIC_LINK_EXPIRY_MINUTES} minutes and can only be used once.
-              </p>
-              <div style="text-align: center; margin-bottom: 24px;">
-                <a href="${magicLinkUrl}" style="display: inline-block; background: #F2B705; color: #12345A; font-weight: 700; font-size: 16px; padding: 16px 40px; border-radius: 8px; text-decoration: none;">
-                  Sign In to LevelNext →
-                </a>
-              </div>
-              <p style="color: #555; font-size: 13px; text-align: center; margin: 0 0 8px;">
-                Or copy and paste this link into your browser:
-              </p>
-              <p style="color: #888; font-size: 12px; text-align: center; word-break: break-all; margin: 0;">
-                ${magicLinkUrl}
-              </p>
-            </div>
-            <p style="color: #888; font-size: 12px; text-align: center; margin-top: 24px;">
-              If you didn't request this, you can safely ignore this email.<br/>
-              LevelNext by Meta Results Pvt. Ltd. · Bangalore, India
-            </p>
-          </div>
-        `,
+        subject: firstName ? `${firstName}, your LevelNext sign-in link` : "Your LevelNext sign-in link",
+        html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Sign in to LevelNext</title></head>
+<body style="margin:0;padding:0;background:#0A1A2F;font-family:'Segoe UI',Inter,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0A1A2F;padding:40px 0;">
+    <tr><td align="center">
+      <table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;">
+
+        <!-- Header -->
+        <tr><td style="padding:0 0 32px;text-align:center;">
+          <img src="https://storage.manus.space/public/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" height="52" style="display:block;margin:0 auto;" />
+        </td></tr>
+
+        <!-- Main card -->
+        <tr><td style="background:#ffffff;border-radius:16px;padding:48px 48px 40px;">
+
+          <!-- Gold accent bar -->
+          <div style="width:48px;height:4px;background:#D4AF37;border-radius:2px;margin-bottom:28px;"></div>
+
+          <!-- Greeting -->
+          <h1 style="color:#0A1A2F;font-size:24px;font-weight:700;margin:0 0 8px;line-height:1.3;">
+            ${greeting}
+          </h1>
+          <p style="color:#1C1C1C;font-size:16px;line-height:1.6;margin:0 0 28px;">
+            ${isNewUser
+              ? "Welcome to LevelNext — your Leadership Intelligence Platform. Click below to access your account and begin your leadership journey."
+              : "Your sign-in link is ready. Click the button below to access LevelNext."
+            }
+          </p>
+
+          <!-- CTA button -->
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;">
+            <tr><td style="background:#D4AF37;border-radius:10px;">
+              <a href="${magicLinkUrl}" style="display:inline-block;background:#D4AF37;color:#0A1A2F;font-weight:700;font-size:17px;padding:18px 48px;border-radius:10px;text-decoration:none;letter-spacing:0.01em;">
+                Sign In to LevelNext &rarr;
+              </a>
+            </td></tr>
+          </table>
+
+          <!-- Expiry notice -->
+          <p style="color:#666;font-size:13px;text-align:center;margin:0 0 32px;">
+            This link expires in <strong>${MAGIC_LINK_EXPIRY_MINUTES} minutes</strong> and can only be used once.
+          </p>
+
+          <!-- Divider -->
+          <hr style="border:none;border-top:1px solid #F0EDE8;margin:0 0 28px;" />
+
+          <!-- What's inside (only for new users) -->
+          ${isNewUser ? `
+          <p style="color:#0A1A2F;font-size:13px;font-weight:700;margin:0 0 14px;text-transform:uppercase;letter-spacing:0.06em;">What's waiting for you</p>
+          <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:28px;">
+            <tr>
+              <td width="50%" style="padding:0 8px 12px 0;vertical-align:top;">
+                <div style="background:#F8F5F0;border-radius:8px;padding:14px;">
+                  <p style="color:#D4AF37;font-size:18px;margin:0 0 4px;">&#129504;</p>
+                  <p style="color:#0A1A2F;font-size:13px;font-weight:600;margin:0 0 2px;">6 Precision Diagnostics</p>
+                  <p style="color:#666;font-size:12px;margin:0;">ECI, LII, TII, GCC, LDI, STI</p>
+                </div>
+              </td>
+              <td width="50%" style="padding:0 0 12px 8px;vertical-align:top;">
+                <div style="background:#F8F5F0;border-radius:8px;padding:14px;">
+                  <p style="color:#D4AF37;font-size:18px;margin:0 0 4px;">&#127919;</p>
+                  <p style="color:#0A1A2F;font-size:13px;font-weight:600;margin:0 0 2px;">Daily AI Coaching</p>
+                  <p style="color:#666;font-size:12px;margin:0;">Guide knows your exact profile</p>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td width="50%" style="padding:0 8px 0 0;vertical-align:top;">
+                <div style="background:#F8F5F0;border-radius:8px;padding:14px;">
+                  <p style="color:#D4AF37;font-size:18px;margin:0 0 4px;">&#9889;</p>
+                  <p style="color:#0A1A2F;font-size:13px;font-weight:600;margin:0 0 2px;">AI Practice Coach</p>
+                  <p style="color:#666;font-size:12px;margin:0;">Rehearse real conversations</p>
+                </div>
+              </td>
+              <td width="50%" style="padding:0 0 0 8px;vertical-align:top;">
+                <div style="background:#F8F5F0;border-radius:8px;padding:14px;">
+                  <p style="color:#D4AF37;font-size:18px;margin:0 0 4px;">&#128200;</p>
+                  <p style="color:#0A1A2F;font-size:13px;font-weight:600;margin:0 0 2px;">Career Intelligence</p>
+                  <p style="color:#666;font-size:12px;margin:0;">Map your leadership graph</p>
+                </div>
+              </td>
+            </tr>
+          </table>
+          ` : ""}
+
+          <!-- Fallback link -->
+          <p style="color:#999;font-size:12px;text-align:center;margin:0 0 4px;">Button not working? Copy and paste this link:</p>
+          <p style="color:#0A1A2F;font-size:11px;text-align:center;word-break:break-all;margin:0;">${magicLinkUrl}</p>
+
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:28px 0 0;text-align:center;">
+          <p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0 0 6px;">
+            If you didn't request this link, you can safely ignore this email.
+          </p>
+          <p style="color:rgba(255,255,255,0.25);font-size:11px;margin:0;">
+            LevelNext &nbsp;&middot;&nbsp; Meta Results Pvt. Ltd. &nbsp;&middot;&nbsp; Bangalore, India
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
       });
 
       if (!emailSent) {

@@ -17,8 +17,9 @@ import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { AlertTriangle, RefreshCw, Mail } from "lucide-react";
 
-type PageState = "enter_email" | "check_inbox";
+type PageState = "enter_email" | "check_inbox" | "link_error";
 
 const ERROR_MESSAGES: Record<string, string> = {
   missing_token: "The sign-in link is missing. Please request a new one.",
@@ -51,7 +52,13 @@ export default function Login() {
 
   useEffect(() => {
     if (inviteParam) setInviteToken(inviteParam);
-    if (errorParam) setErrorMsg(ERROR_MESSAGES[errorParam] ?? "Sign-in failed. Please try again.");
+    if (errorParam) {
+      // Link errors get their own dedicated screen
+      if (errorParam === "invalid_or_expired" || errorParam === "missing_token") {
+        setState("link_error");
+      }
+      setErrorMsg(ERROR_MESSAGES[errorParam] ?? "Sign-in failed. Please try again.");
+    }
   }, [inviteParam, errorParam]);
 
   useEffect(() => {
@@ -68,6 +75,8 @@ export default function Login() {
       if (data && "devToken" in data && data.devToken) {
         setDevToken(data.devToken as string);
       }
+      // Clear URL params so the error state doesn't re-trigger on refresh
+      window.history.replaceState({}, "", window.location.pathname);
     },
     onError: (err) => {
       setErrorMsg(err.message || "Failed to send sign-in link. Please try again.");
@@ -190,6 +199,73 @@ export default function Login() {
                   Privacy Policy
                 </a>
                 .
+              </p>
+            </div>
+          )}
+
+          {state === "link_error" && (
+            <div
+              className="bg-white rounded-2xl p-8 shadow-sm border text-center"
+              style={{ borderColor: "#e8e6e0" }}
+            >
+              {/* Icon */}
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+                style={{ background: "#FEF2F2" }}
+              >
+                <AlertTriangle size={28} style={{ color: "#DC2626" }} />
+              </div>
+
+              <h1 className="text-2xl font-bold mb-3" style={{ color: "#12345A" }}>
+                {errorParam === "invalid_or_expired" ? "Link expired" : "Invalid link"}
+              </h1>
+              <p className="text-sm mb-6" style={{ color: "#555" }}>
+                {errorParam === "invalid_or_expired"
+                  ? "This sign-in link has expired or has already been used. Magic links are valid for 15 minutes and can only be clicked once."
+                  : "This sign-in link is not valid. Please request a new one below."
+                }
+              </p>
+
+              {/* Resend form */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!email.trim()) return;
+                  setErrorMsg(null);
+                  requestMagicLink.mutate({
+                    email: email.trim().toLowerCase(),
+                    origin: window.location.origin,
+                    inviteToken: inviteToken ?? undefined,
+                  });
+                }}
+                className="space-y-3 mb-4"
+              >
+                <div className="relative">
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#999" }} />
+                  <Input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoFocus
+                    className="h-12 text-base pl-10"
+                    style={{ borderColor: "#d1cfc9" }}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-base font-bold rounded-full gap-2"
+                  style={{ background: "#F2B705", color: "#12345A" }}
+                  disabled={requestMagicLink.isPending || !email.trim()}
+                >
+                  <RefreshCw size={16} />
+                  {requestMagicLink.isPending ? "Sending new link…" : "Send New Sign-In Link"}
+                </Button>
+              </form>
+
+              <p className="text-xs" style={{ color: "#aaa" }}>
+                Enter your email above and we'll send you a fresh link.
               </p>
             </div>
           )}

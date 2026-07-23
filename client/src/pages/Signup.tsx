@@ -10,8 +10,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
-import { CheckCircle2, ArrowRight, Brain, Target, Zap, TrendingUp, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CheckCircle2, ArrowRight, Brain, Target, Zap, TrendingUp, Shield, AlertTriangle, RefreshCw, Mail } from "lucide-react";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 
@@ -56,12 +56,28 @@ const SOCIAL_PROOF = [
   },
 ];
 
+const ERROR_MESSAGES: Record<string, string> = {
+  missing_token: "The sign-in link is missing. Please request a new one.",
+  invalid_or_expired: "This sign-in link has expired or already been used. Please request a new one.",
+  server_error: "Something went wrong. Please try again.",
+};
+
 export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [state, setState] = useState<"form" | "check_inbox">("form");
+  const [state, setState] = useState<"form" | "check_inbox" | "link_error">("form");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [devToken, setDevToken] = useState<string | null>(null);
+
+  const params = new URLSearchParams(window.location.search);
+  const errorParam = params.get("error");
+
+  useEffect(() => {
+    if (errorParam === "invalid_or_expired" || errorParam === "missing_token") {
+      setState("link_error");
+      setErrorMsg(ERROR_MESSAGES[errorParam]);
+    }
+  }, [errorParam]);
 
   const requestMagicLink = trpc.emailAuth.requestMagicLink.useMutation({
     onSuccess: (data) => {
@@ -69,6 +85,7 @@ export default function Signup() {
       if (data && "devToken" in data && data.devToken) {
         setDevToken(data.devToken as string);
       }
+      window.history.replaceState({}, "", window.location.pathname);
     },
     onError: (err) => {
       setErrorMsg(err.message || "Failed to send sign-in link. Please try again.");
@@ -161,7 +178,58 @@ export default function Signup() {
 
           {/* Right: Sign-up form */}
           <div>
-            {state === "form" ? (
+            {state === "link_error" ? (
+              <div className="bg-white rounded-2xl p-8 shadow-xl text-center">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+                  style={{ background: "#FEF2F2" }}
+                >
+                  <AlertTriangle size={28} style={{ color: "#DC2626" }} />
+                </div>
+                <h2 className="text-2xl font-bold mb-3" style={{ color: "#12345A" }}>
+                  {errorParam === "invalid_or_expired" ? "Link expired" : "Invalid link"}
+                </h2>
+                <p className="text-sm mb-6" style={{ color: "#555" }}>
+                  {errorParam === "invalid_or_expired"
+                    ? "This sign-in link has expired or has already been used. Magic links are valid for 15 minutes and can only be clicked once."
+                    : "This sign-in link is not valid. Please request a new one below."
+                  }
+                </p>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!email.trim()) return;
+                    setErrorMsg(null);
+                    requestMagicLink.mutate({ email: email.trim().toLowerCase(), origin: window.location.origin, name: name || undefined });
+                  }}
+                  className="space-y-3 mb-4"
+                >
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#999" }} />
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      autoFocus
+                      className="h-12 text-base pl-10"
+                      style={{ borderColor: "#d1cfc9" }}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base font-bold rounded-full gap-2"
+                    style={{ background: "#F2B705", color: "#12345A" }}
+                    disabled={requestMagicLink.isPending || !email.trim()}
+                  >
+                    <RefreshCw size={16} />
+                    {requestMagicLink.isPending ? "Sending new link…" : "Send New Sign-In Link"}
+                  </Button>
+                </form>
+                <p className="text-xs" style={{ color: "#aaa" }}>Enter your email above and we’ll send a fresh link.</p>
+              </div>
+            ) : state === "form" ? (
               <div className="bg-white rounded-2xl p-8 shadow-xl">
                 <h2 className="text-2xl font-bold mb-1" style={{ color: "#12345A" }}>
                   Create your free account

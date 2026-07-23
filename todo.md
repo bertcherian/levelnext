@@ -942,4 +942,13 @@
 - [x] Fix: OAuth callback now redirects to /home instead of / (avoids auth-state race condition)
 - [x] Fix: Landing page now shows "Signing you in…" loading screen while auth resolves (prevents flash)
 - [x] TypeScript check (zero errors)
+- [x] Save checkpoint
+
+## Auth & Onboarding UX Improvements (Jul 23)
+- [ ] Login/Signup: detect ?error=invalid_or_expired query param and show a clear error screen with Resend Link button
+- [ ] Login/Signup: detect ?error=missing_token and ?error=server_error with appropriate messages
+- [ ] emailAuth.ts: upgrade magic link email HTML — LevelNext branding (navy/gold), personalised greeting with first name, feature highlights, footer
+- [ ] Onboarding page: add welcome message (personalised with user's name) and a 5-step interactive tour
+- [ ] Onboarding tour: highlight key platform areas (Diagnostics, Guide, Practice, Next Chapter, Progress)
+- [ ] TypeScript check (zero errors)
 - [ ] Save checkpoint
