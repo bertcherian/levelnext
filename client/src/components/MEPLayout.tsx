@@ -13,6 +13,7 @@ import {
   Activity,
   Home,
   Users,
+  FolderOpen,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { href: "/manager/practice", label: "Practice Partner", icon: Zap },
   { href: "/manager/commitments", label: "Commitments", icon: Activity },
   { href: "/manager/team", label: "Team Intelligence", icon: Users },
+  { href: "/manager/documents", label: "My Documents", icon: FolderOpen },
 ];
 
 interface MEPLayoutProps {

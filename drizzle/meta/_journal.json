@@ -281,6 +281,13 @@
       "when": 1784796812133,
       "tag": "0039_wet_warpath",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1784806638116,
+      "tag": "0040_gigantic_thunderbolts",
+      "breakpoints": true
     }
   ]
 }

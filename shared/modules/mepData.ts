@@ -450,6 +450,147 @@ const MRW_QUESTIONS: MepQuestion[] = [
   { id: "mrw_sp2", text: "I make deliberate choices about where I invest my energy — I don't try to do everything.", dimensionId: "sustainable_performance" },
 ];
 
+// ─── DMI — Decision Making Intelligence ─────────────────────────────────────
+const DMI_DIMENSIONS: MepDimension[] = [
+  { id: "dmi_clarity", label: "Decision Clarity", description: "Defining clear criteria and framing decisions well" },
+  { id: "dmi_speed", label: "Decision Speed", description: "Making timely decisions without unnecessary delay" },
+  { id: "dmi_bias", label: "Bias Awareness", description: "Recognising and mitigating cognitive biases" },
+  { id: "dmi_inclusion", label: "Stakeholder Inclusion", description: "Involving the right people at the right time" },
+  { id: "dmi_learning", label: "Decision Learning", description: "Reviewing outcomes and improving future decisions" },
+];
+
+const DMI_QUESTIONS: MepQuestion[] = [
+  // Decision Clarity
+  { id: "dmi_cl1", text: "I define clear criteria for a decision before evaluating options.", dimensionId: "dmi_clarity" },
+  { id: "dmi_cl2", text: "I distinguish between reversible and irreversible decisions and apply appropriate rigour to each.", dimensionId: "dmi_clarity" },
+  { id: "dmi_cl3", text: "I frame the decision problem clearly before jumping to solutions.", dimensionId: "dmi_clarity" },
+  { id: "dmi_cl4", text: "I consider second-order consequences when making significant decisions.", dimensionId: "dmi_clarity" },
+  { id: "dmi_cl5", text: "I communicate the rationale behind my decisions to those affected.", dimensionId: "dmi_clarity" },
+  { id: "dmi_cl6", text: "I separate fact from assumption when analysing a decision.", dimensionId: "dmi_clarity" },
+  // Decision Speed
+  { id: "dmi_sp1", text: "I make decisions at the right pace — neither rushing nor over-deliberating.", dimensionId: "dmi_speed" },
+  { id: "dmi_sp2", text: "I avoid analysis paralysis by setting a clear deadline for decisions.", dimensionId: "dmi_speed" },
+  { id: "dmi_sp3", text: "I am comfortable making decisions with incomplete information when necessary.", dimensionId: "dmi_speed" },
+  { id: "dmi_sp4", text: "I escalate or delegate decisions that are outside my authority promptly.", dimensionId: "dmi_speed" },
+  { id: "dmi_sp5", text: "I avoid delaying decisions out of fear of being wrong.", dimensionId: "dmi_speed" },
+  { id: "dmi_sp6", text: "I track pending decisions and ensure they are resolved within a reasonable timeframe.", dimensionId: "dmi_speed" },
+  // Bias Awareness
+  { id: "dmi_bi1", text: "I actively seek disconfirming evidence before finalising a decision.", dimensionId: "dmi_bias" },
+  { id: "dmi_bi2", text: "I am aware of my tendency toward confirmation bias and take steps to counter it.", dimensionId: "dmi_bias" },
+  { id: "dmi_bi3", text: "I consider diverse perspectives to reduce groupthink in team decisions.", dimensionId: "dmi_bias" },
+  { id: "dmi_bi4", text: "I challenge my initial instincts before committing to a course of action.", dimensionId: "dmi_bias" },
+  { id: "dmi_bi5", text: "I use structured approaches (e.g. pre-mortem, devil's advocate) to stress-test decisions.", dimensionId: "dmi_bias" },
+  { id: "dmi_bi6", text: "I am transparent about the assumptions underlying my decisions.", dimensionId: "dmi_bias" },
+  // Stakeholder Inclusion
+  { id: "dmi_in1", text: "I identify who needs to be consulted versus informed before making a decision.", dimensionId: "dmi_inclusion" },
+  { id: "dmi_in2", text: "I involve my team in decisions that affect their work.", dimensionId: "dmi_inclusion" },
+  { id: "dmi_in3", text: "I balance speed with appropriate consultation — I don't over-consult on simple decisions.", dimensionId: "dmi_inclusion" },
+  { id: "dmi_in4", text: "I actively seek input from people with different expertise or viewpoints.", dimensionId: "dmi_inclusion" },
+  { id: "dmi_in5", text: "I create psychological safety for team members to disagree with my initial position.", dimensionId: "dmi_inclusion" },
+  { id: "dmi_in6", text: "I communicate decisions clearly to all stakeholders once made.", dimensionId: "dmi_inclusion" },
+  // Decision Learning
+  { id: "dmi_le1", text: "I review the outcomes of significant decisions to learn from them.", dimensionId: "dmi_learning" },
+  { id: "dmi_le2", text: "I openly acknowledge and learn from decisions that did not go as planned.", dimensionId: "dmi_learning" },
+  { id: "dmi_le3", text: "I document the reasoning behind key decisions for future reference.", dimensionId: "dmi_learning" },
+  { id: "dmi_le4", text: "I share decision-making lessons with my team to build collective capability.", dimensionId: "dmi_learning" },
+  { id: "dmi_le5", text: "I adjust my decision-making approach based on feedback and experience.", dimensionId: "dmi_learning" },
+  { id: "dmi_le6", text: "I celebrate good decision processes, not just good outcomes.", dimensionId: "dmi_learning" },
+];
+
+// ─── RMI — Risk Management Intelligence ──────────────────────────────────────
+const RMI_DIMENSIONS: MepDimension[] = [
+  { id: "rmi_identify", label: "Risk Identification", description: "Proactively spotting risks before they materialise" },
+  { id: "rmi_assess", label: "Risk Assessment", description: "Evaluating likelihood and impact of risks accurately" },
+  { id: "rmi_mitigate", label: "Risk Mitigation", description: "Taking action to reduce or eliminate risks" },
+  { id: "rmi_culture", label: "Risk Culture", description: "Building a team that surfaces and discusses risks openly" },
+  { id: "rmi_learn", label: "Risk Learning", description: "Learning from near-misses and past risk events" },
+];
+
+const RMI_QUESTIONS: MepQuestion[] = [
+  // Risk Identification
+  { id: "rmi_id1", text: "I proactively identify risks before starting major projects or initiatives.", dimensionId: "rmi_identify" },
+  { id: "rmi_id2", text: "I scan for external risks (market, regulatory, competitive) that could affect my team's work.", dimensionId: "rmi_identify" },
+  { id: "rmi_id3", text: "I regularly review ongoing work for emerging risks, not just at the start.", dimensionId: "rmi_identify" },
+  { id: "rmi_id4", text: "I involve my team in identifying risks they see from their vantage point.", dimensionId: "rmi_identify" },
+  { id: "rmi_id5", text: "I maintain a clear view of the top risks facing my team at any given time.", dimensionId: "rmi_identify" },
+  { id: "rmi_id6", text: "I surface risks to senior stakeholders before they become crises.", dimensionId: "rmi_identify" },
+  // Risk Assessment
+  { id: "rmi_as1", text: "I assess both the likelihood and the potential impact of risks before prioritising them.", dimensionId: "rmi_assess" },
+  { id: "rmi_as2", text: "I distinguish between risks I can control and those I can only monitor.", dimensionId: "rmi_assess" },
+  { id: "rmi_as3", text: "I avoid over-reacting to low-probability risks at the expense of higher-priority ones.", dimensionId: "rmi_assess" },
+  { id: "rmi_as4", text: "I use data and evidence to assess risk, not just intuition.", dimensionId: "rmi_assess" },
+  { id: "rmi_as5", text: "I consider the interdependencies between risks — how one risk can trigger another.", dimensionId: "rmi_assess" },
+  { id: "rmi_as6", text: "I reassess risks as circumstances change rather than relying on initial assessments.", dimensionId: "rmi_assess" },
+  // Risk Mitigation
+  { id: "rmi_mi1", text: "I develop contingency plans for the most significant risks my team faces.", dimensionId: "rmi_mitigate" },
+  { id: "rmi_mi2", text: "I take proactive steps to reduce risk exposure rather than waiting for problems to arise.", dimensionId: "rmi_mitigate" },
+  { id: "rmi_mi3", text: "I assign clear ownership for monitoring and mitigating specific risks.", dimensionId: "rmi_mitigate" },
+  { id: "rmi_mi4", text: "I balance risk mitigation with the need to move forward — I don't let risk aversion paralyse action.", dimensionId: "rmi_mitigate" },
+  { id: "rmi_mi5", text: "I communicate risk mitigation plans clearly to my team and stakeholders.", dimensionId: "rmi_mitigate" },
+  { id: "rmi_mi6", text: "I escalate risks that exceed my authority to manage.", dimensionId: "rmi_mitigate" },
+  // Risk Culture
+  { id: "rmi_cu1", text: "My team feels safe raising concerns and risks without fear of blame.", dimensionId: "rmi_culture" },
+  { id: "rmi_cu2", text: "I model risk awareness by openly discussing risks in team meetings.", dimensionId: "rmi_culture" },
+  { id: "rmi_cu3", text: "I reward early risk identification rather than penalising people for raising concerns.", dimensionId: "rmi_culture" },
+  { id: "rmi_cu4", text: "I ensure my team understands the risk appetite and boundaries within which they operate.", dimensionId: "rmi_culture" },
+  { id: "rmi_cu5", text: "I create regular opportunities for the team to surface and discuss risks.", dimensionId: "rmi_culture" },
+  { id: "rmi_cu6", text: "I avoid creating a culture where people hide problems until they become crises.", dimensionId: "rmi_culture" },
+  // Risk Learning
+  { id: "rmi_le1", text: "I conduct post-mortems or retrospectives after significant risk events.", dimensionId: "rmi_learn" },
+  { id: "rmi_le2", text: "I share lessons from near-misses with my team to prevent recurrence.", dimensionId: "rmi_learn" },
+  { id: "rmi_le3", text: "I update processes and checklists based on risk events we have experienced.", dimensionId: "rmi_learn" },
+  { id: "rmi_le4", text: "I treat near-misses as valuable learning opportunities, not just lucky escapes.", dimensionId: "rmi_learn" },
+  { id: "rmi_le5", text: "I track whether risk mitigation actions were effective and adjust accordingly.", dimensionId: "rmi_learn" },
+  { id: "rmi_le6", text: "I build institutional memory around risk so the team does not repeat past mistakes.", dimensionId: "rmi_learn" },
+];
+
+// ─── TAI — Tech Awareness Intelligence ───────────────────────────────────────
+const TAI_DIMENSIONS: MepDimension[] = [
+  { id: "tai_awareness", label: "Tech Landscape Awareness", description: "Understanding relevant tools and technology trends" },
+  { id: "tai_adoption", label: "Team Tech Enablement", description: "Helping your team adopt and use technology effectively" },
+  { id: "tai_ai", label: "AI & Automation Readiness", description: "Leveraging AI and automation to improve team performance" },
+  { id: "tai_data", label: "Data-Informed Leadership", description: "Using data and analytics to make better management decisions" },
+  { id: "tai_security", label: "Digital Responsibility", description: "Ensuring responsible, secure, and ethical use of technology" },
+];
+
+const TAI_QUESTIONS: MepQuestion[] = [
+  // Tech Landscape Awareness
+  { id: "tai_aw1", text: "I stay current with the technology tools and platforms most relevant to my team's work.", dimensionId: "tai_awareness" },
+  { id: "tai_aw2", text: "I understand how technology trends in our industry could affect my team's work in the next 1-2 years.", dimensionId: "tai_awareness" },
+  { id: "tai_aw3", text: "I actively learn about new tools and platforms rather than waiting for IT to push them.", dimensionId: "tai_awareness" },
+  { id: "tai_aw4", text: "I can have an informed conversation with technical stakeholders about tools and systems.", dimensionId: "tai_awareness" },
+  { id: "tai_aw5", text: "I evaluate new technology options with a clear view of their benefits and limitations.", dimensionId: "tai_awareness" },
+  { id: "tai_aw6", text: "I benchmark our team's tech usage against what high-performing teams in our industry use.", dimensionId: "tai_awareness" },
+  // Team Tech Enablement
+  { id: "tai_ad1", text: "I ensure my team has access to the tools they need to do their best work.", dimensionId: "tai_adoption" },
+  { id: "tai_ad2", text: "I actively support my team in building their digital skills and tool proficiency.", dimensionId: "tai_adoption" },
+  { id: "tai_ad3", text: "I remove friction when team members encounter technology barriers.", dimensionId: "tai_adoption" },
+  { id: "tai_ad4", text: "I champion technology adoption within my team, even when it requires behaviour change.", dimensionId: "tai_adoption" },
+  { id: "tai_ad5", text: "I help my team understand the 'why' behind new technology, not just the 'how'.", dimensionId: "tai_adoption" },
+  { id: "tai_ad6", text: "I create space for my team to experiment with new tools without fear of failure.", dimensionId: "tai_adoption" },
+  // AI & Automation Readiness
+  { id: "tai_ai1", text: "I have a working understanding of how AI and automation tools can improve my team's productivity.", dimensionId: "tai_ai" },
+  { id: "tai_ai2", text: "I actively explore how AI tools (e.g. generative AI, automation) could reduce repetitive work for my team.", dimensionId: "tai_ai" },
+  { id: "tai_ai3", text: "I help my team see AI as an enabler rather than a threat to their roles.", dimensionId: "tai_ai" },
+  { id: "tai_ai4", text: "I am building my own AI literacy so I can lead my team through the AI transition.", dimensionId: "tai_ai" },
+  { id: "tai_ai5", text: "I identify which tasks in my team's workflow are good candidates for automation.", dimensionId: "tai_ai" },
+  { id: "tai_ai6", text: "I stay informed about AI developments relevant to our function and industry.", dimensionId: "tai_ai" },
+  // Data-Informed Leadership
+  { id: "tai_da1", text: "I use data and metrics to make management decisions rather than relying solely on intuition.", dimensionId: "tai_data" },
+  { id: "tai_da2", text: "I ensure my team tracks the right metrics to measure their performance and progress.", dimensionId: "tai_data" },
+  { id: "tai_da3", text: "I can interpret dashboards and reports and draw meaningful conclusions from them.", dimensionId: "tai_data" },
+  { id: "tai_da4", text: "I help my team build data literacy so they can make better decisions themselves.", dimensionId: "tai_data" },
+  { id: "tai_da5", text: "I question data quality and context before acting on it.", dimensionId: "tai_data" },
+  { id: "tai_da6", text: "I use data to identify trends and anticipate issues before they become problems.", dimensionId: "tai_data" },
+  // Digital Responsibility
+  { id: "tai_se1", text: "I ensure my team follows data privacy and security policies when using digital tools.", dimensionId: "tai_security" },
+  { id: "tai_se2", text: "I model responsible use of AI — being transparent about when AI is used in our work.", dimensionId: "tai_security" },
+  { id: "tai_se3", text: "I ensure my team understands the ethical implications of the technology they use.", dimensionId: "tai_security" },
+  { id: "tai_se4", text: "I am vigilant about cybersecurity risks and ensure my team takes them seriously.", dimensionId: "tai_security" },
+  { id: "tai_se5", text: "I avoid using technology in ways that could compromise team trust or organisational values.", dimensionId: "tai_security" },
+  { id: "tai_se6", text: "I stay informed about data governance requirements relevant to my team's work.", dimensionId: "tai_security" },
+];
+
 // ─── Diagnostic registry ──────────────────────────────────────────────────────
 export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
   {
@@ -606,7 +747,41 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     questions: MRW_QUESTIONS,
     zones: STANDARD_ZONES,
   },
+  {
+    code: "DMI",
+    title: "Decision Making Intelligence",
+    tagline: "How sound and timely are your decisions as a manager?",
+    description: "Assesses the quality and consistency of your decision-making — clarity of criteria, speed, bias awareness, stakeholder inclusion, risk consideration, and learning from outcomes.",
+    icon: "🎯",
+    estimatedMinutes: 8,
+    dimensions: DMI_DIMENSIONS,
+    questions: DMI_QUESTIONS,
+    zones: STANDARD_ZONES,
+  },
+  {
+    code: "RMI",
+    title: "Risk Management Intelligence",
+    tagline: "How proactively do you identify, assess, and manage risk?",
+    description: "Measures your risk intelligence as a manager — anticipating risks, building contingency plans, communicating risk to stakeholders, creating a risk-aware team culture, and learning from near-misses.",
+    icon: "🛡️",
+    estimatedMinutes: 8,
+    dimensions: RMI_DIMENSIONS,
+    questions: RMI_QUESTIONS,
+    zones: STANDARD_ZONES,
+  },
+  {
+    code: "TAI",
+    title: "Tech Awareness Intelligence",
+    tagline: "How effectively do you leverage technology to lead your team?",
+    description: "Assesses your technology awareness and adoption as a manager — understanding relevant tools, enabling your team with technology, staying current with AI and automation trends, and making data-informed decisions.",
+    icon: "💡",
+    estimatedMinutes: 8,
+    dimensions: TAI_DIMENSIONS,
+    questions: TAI_QUESTIONS,
+    zones: STANDARD_ZONES,
+  },
 ];
+
 
 export function getMepDiagnostic(code: string): MepDiagnostic | undefined {
   return MEP_DIAGNOSTICS.find((d) => d.code === code);

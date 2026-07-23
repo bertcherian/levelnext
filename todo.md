@@ -1004,3 +1004,34 @@
 - [x] AdminSuccessPartnerQueue: urgency filter chips (All / Overdue / Due Soon)
 - [x] LSOSWorkspace: cohort health summary dashboard (LHS avg, at-risk count, exceptional count, engagement rate)
 - [x] LSOSWorkspace: zone distribution stacked bar in summary
+
+## MEP Expansion — Diagnostics, Uploads, Org Context, CSV Import (Jul 23)
+
+### Phase A — New MEP Diagnostics
+- [x] shared/modules/mepData.ts — DMI, RMI, TAI diagnostics added (5 dimensions, 30 questions each, scoring, 5 zones, archetypes)
+- [x] Extend mepModuleType enum in schema to include decision_making, risk_management, tech_awareness
+- [x] Run drizzle-kit generate and apply migration SQL
+- [x] server/routers/mep.ts — LLM coaching personas for DMI, RMI, TAI added
+- [x] MEP Diagnostics hub page — 3 new module cards appear automatically via MEP_DIAGNOSTICS array
+
+### Phase B — Leader Document Upload Space
+- [x] DB schema: mep_leader_documents table (userId, tenantId, docType, fileName, fileUrl, fileKey, uploadedAt, notes)
+- [x] server/routers/mepDocuments.ts — uploadDocument, listDocuments, updateNotes, deleteDocument procedures
+- [x] client/src/pages/mep/MEPLeaderDocuments.tsx — upload space with tabs: Work Goals, IDP, Other Assessments, Other
+- [x] Wire /manager/documents route in App.tsx
+- [x] Add "My Documents" nav item to MEPLayout sidebar
+
+### Phase C — Org Context Setup (Admin)
+- [x] DB schema: org_context table (tenantId, websiteUrl, companyName, mission, vision, northStar, goals, scrapedAt, rawScrapedText)
+- [x] server/routers/orgContext.ts — saveOrgContext, getOrgContext, scrapeWebsite procedures
+- [x] client/src/pages/AdminOrgContext.tsx — form: website URL + scrape button, editable mission/vision/northStar/goals fields, save
+- [x] Wire /admin/org-context route in App.tsx
+- [x] Add "Org Context" nav item to admin sidebar (mobile + desktop)
+
+### Phase D — CSV Bulk Participant Import
+- [x] server/routers/participantImport.ts — parseCsvParticipants, bulkInviteParticipants procedures (name, email, phone, designation, department)
+- [x] client/src/pages/AdminParticipantImport.tsx — CSV upload, validation preview table, confirm import
+- [x] Wire /admin/participants/import route in App.tsx
+- [x] Add "Import Participants" nav item to admin sidebar (mobile + desktop)
+- [x] DB schema: mep_leader_documents and org_context tables migrated
+- [x] TypeScript check: 0 errors | Vitest: 3/3 passed

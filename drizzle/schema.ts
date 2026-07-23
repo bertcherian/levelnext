@@ -1879,3 +1879,46 @@ export const spAssignments = mysqlTable("sp_assignments", {
 });
 export type SpAssignment = typeof spAssignments.$inferSelect;
 export type InsertSpAssignment = typeof spAssignments.$inferInsert;
+
+// ─── MEP Leader Documents ─────────────────────────────────────────────────────
+// Stores metadata for documents uploaded by leaders (Work Goals, IDP, Assessments, Other)
+// Raw files are stored in S3; only metadata is persisted here.
+export type MepDocType = "work_goals" | "idp" | "prior_assessment" | "other";
+
+export const mepLeaderDocuments = mysqlTable("mep_leader_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  docType: mysqlEnum("docType", ["work_goals", "idp", "prior_assessment", "other"]).notNull().default("other"),
+  fileName: varchar("fileName", { length: 500 }).notNull(),
+  fileUrl: varchar("fileUrl", { length: 2000 }).notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  fileSizeBytes: int("fileSizeBytes"),
+  mimeType: varchar("mimeType", { length: 100 }),
+  notes: text("notes"),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type MepLeaderDocument = typeof mepLeaderDocuments.$inferSelect;
+export type InsertMepLeaderDocument = typeof mepLeaderDocuments.$inferInsert;
+
+// ─── Org Context ──────────────────────────────────────────────────────────────
+// Stores organisation-level context set by the tenant admin (mission, vision, goals, etc.)
+export const orgContext = mysqlTable("org_context", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id).unique(),
+  websiteUrl: varchar("websiteUrl", { length: 500 }),
+  companyName: varchar("companyName", { length: 255 }),
+  mission: text("mission"),
+  vision: text("vision"),
+  northStar: text("northStar"),
+  strategicGoals: json("strategicGoals").$type<string[]>(),
+  values: json("values").$type<string[]>(),
+  rawScrapedText: text("rawScrapedText"),
+  scrapedAt: timestamp("scrapedAt"),
+  lastUpdatedBy: int("lastUpdatedBy").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type OrgContext = typeof orgContext.$inferSelect;
+export type InsertOrgContext = typeof orgContext.$inferInsert;

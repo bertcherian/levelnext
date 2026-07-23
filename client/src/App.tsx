@@ -61,6 +61,9 @@ import MEPLayout from "@/components/MEPLayout";
 import CoachPortal from "@/pages/CoachPortal";
 import AdminCoachManagement from "@/pages/AdminCoachManagement";
 import AdminSuccessPartners from "@/pages/AdminSuccessPartners";
+import MEPLeaderDocuments from "@/pages/mep/MEPLeaderDocuments";
+import AdminOrgContext from "@/pages/AdminOrgContext";
+import AdminParticipantImport from "@/pages/AdminParticipantImport";
 import CareerLanding from "@/pages/CareerLanding";
 import NextChapter from "@/pages/NextChapter";
 import LSOSWorkspace from "@/pages/LSOSWorkspace";
@@ -167,9 +170,12 @@ function Router() {
       <Route path="/manager/practice">{() => <MEPLayout><ManagerPractice /></MEPLayout>}</Route>
       <Route path="/manager/commitments">{() => <MEPLayout><ManagerCommitments /></MEPLayout>}</Route>
       <Route path="/manager/team">{() => <MEPLayout><TeamIntelligence /></MEPLayout>}</Route>
+      <Route path="/manager/documents">{() => <MEPLayout><MEPLeaderDocuments /></MEPLayout>}</Route>
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/admin/coaches" component={AdminCoachManagement} />
       <Route path="/admin/success-partners" component={AdminSuccessPartners} />
+      <Route path="/admin/org-context" component={AdminOrgContext} />
+      <Route path="/admin/participants/import" component={AdminParticipantImport} />
       <Route path="/next-chapter" component={NextChapter} />
       <Route path="/next-chapter/portfolio" component={NextChapterPortfolio} />
       <Route path="/next-chapter/identity-assessment" component={IdentityClarityAssessment} />

@@ -1,0 +1,217 @@
+/**
+ * Org Context Router
+ * Allows tenant admins to set their organisation's mission, vision, north star,
+ * strategic goals, and values. Includes a website scraper to auto-extract text.
+ */
+
+import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { protectedProcedure, router } from "../_core/trpc";
+import { getDb } from "../db";
+import { orgContext, tenantUsers } from "../../drizzle/schema";
+import { invokeLLM } from "../_core/llm";
+
+// ─── Helper: get tenantId for current user (must be owner or admin) ───────────
+async function getTenantAdminId(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+  const [membership] = await db
+    .select()
+    .from(tenantUsers)
+    .where(eq(tenantUsers.userId, userId));
+
+  if (!membership) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "You are not a member of any organisation." });
+  }
+  if (membership.role !== "owner" && membership.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Only organisation owners and admins can manage org context." });
+  }
+
+  return membership.tenantId;
+}
+
+export const orgContextRouter = router({
+  /** Get the current org context for the user's tenant */
+  getOrgContext: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const [membership] = await db
+      .select()
+      .from(tenantUsers)
+      .where(eq(tenantUsers.userId, ctx.user.id));
+
+    if (!membership) return null;
+
+    const [context] = await db
+      .select()
+      .from(orgContext)
+      .where(eq(orgContext.tenantId, membership.tenantId));
+
+    return context ?? null;
+  }),
+
+  /** Save (upsert) org context */
+  saveOrgContext: protectedProcedure
+    .input(z.object({
+      websiteUrl: z.string().url().optional().or(z.literal("")),
+      companyName: z.string().max(255).optional(),
+      mission: z.string().max(5000).optional(),
+      vision: z.string().max(5000).optional(),
+      northStar: z.string().max(5000).optional(),
+      strategicGoals: z.array(z.string().max(500)).max(10).optional(),
+      values: z.array(z.string().max(200)).max(15).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = await getTenantAdminId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [existing] = await db
+        .select()
+        .from(orgContext)
+        .where(eq(orgContext.tenantId, tenantId));
+
+      const payload = {
+        tenantId,
+        websiteUrl: input.websiteUrl || null,
+        companyName: input.companyName || null,
+        mission: input.mission || null,
+        vision: input.vision || null,
+        northStar: input.northStar || null,
+        strategicGoals: input.strategicGoals ?? null,
+        values: input.values ?? null,
+        lastUpdatedBy: ctx.user.id,
+      };
+
+      if (existing) {
+        await db.update(orgContext).set(payload).where(eq(orgContext.tenantId, tenantId));
+      } else {
+        await db.insert(orgContext).values(payload);
+      }
+
+      return { success: true };
+    }),
+
+  /** Scrape a website URL and extract mission/vision/goals text using LLM */
+  scrapeWebsite: protectedProcedure
+    .input(z.object({ url: z.string().url() }))
+    .mutation(async ({ ctx, input }) => {
+      await getTenantAdminId(ctx.user.id); // verify admin
+
+      // Fetch the website HTML
+      let rawHtml = "";
+      try {
+        const resp = await fetch(input.url, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; LevelNext/1.0; +https://levelnext.io)",
+            Accept: "text/html,application/xhtml+xml",
+          },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        rawHtml = await resp.text();
+      } catch (err: any) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Could not fetch website: ${err.message ?? "Unknown error"}`,
+        });
+      }
+
+      // Strip HTML tags to get readable text (basic)
+      const plainText = rawHtml
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim()
+        .slice(0, 8000); // cap at 8k chars for LLM
+
+      // Use LLM to extract structured org context
+      let extracted: {
+        companyName?: string;
+        mission?: string;
+        vision?: string;
+        northStar?: string;
+        strategicGoals?: string[];
+        values?: string[];
+      } = {};
+
+      try {
+        const result = await invokeLLM({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert at extracting organisational context from company websites.
+Extract the following from the provided website text and return as JSON:
+- companyName: the company's name
+- mission: the company's mission statement (what they do and why)
+- vision: the company's vision (where they are going)
+- northStar: their north star metric or primary goal
+- strategicGoals: array of up to 5 strategic goals or focus areas
+- values: array of up to 8 company values
+
+If a field is not clearly present in the text, omit it or return null.
+Return ONLY valid JSON, no markdown, no explanation.`,
+            },
+            {
+              role: "user",
+              content: `Website URL: ${input.url}\n\nWebsite text:\n${plainText}`,
+            },
+          ],
+          response_format: { type: "json_object" },
+        });
+
+        const raw = result.choices[0]?.message?.content ?? "{}";
+        const text = typeof raw === "string" ? raw : (raw as any[]).map((c: any) => c.text ?? "").join("");
+        extracted = JSON.parse(text);
+      } catch {
+        // Return raw text even if LLM fails
+      }
+
+      // Save raw scraped text and extracted fields to DB
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [membership] = await db
+        .select()
+        .from(tenantUsers)
+        .where(eq(tenantUsers.userId, ctx.user.id));
+
+      if (membership) {
+        const [existing] = await db
+          .select()
+          .from(orgContext)
+          .where(eq(orgContext.tenantId, membership.tenantId));
+
+        const payload = {
+          tenantId: membership.tenantId,
+          websiteUrl: input.url,
+          rawScrapedText: plainText,
+          scrapedAt: new Date(),
+          lastUpdatedBy: ctx.user.id,
+          ...(extracted.companyName ? { companyName: extracted.companyName } : {}),
+          ...(extracted.mission ? { mission: extracted.mission } : {}),
+          ...(extracted.vision ? { vision: extracted.vision } : {}),
+          ...(extracted.northStar ? { northStar: extracted.northStar } : {}),
+          ...(extracted.strategicGoals ? { strategicGoals: extracted.strategicGoals } : {}),
+          ...(extracted.values ? { values: extracted.values } : {}),
+        };
+
+        if (existing) {
+          await db.update(orgContext).set(payload).where(eq(orgContext.tenantId, membership.tenantId));
+        } else {
+          await db.insert(orgContext).values(payload);
+        }
+      }
+
+      return {
+        success: true,
+        extracted,
+        rawTextLength: plainText.length,
+      };
+    }),
+});

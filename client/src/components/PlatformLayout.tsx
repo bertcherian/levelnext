@@ -29,6 +29,7 @@ import {
   Route,
   Sparkles,
   UserCheck,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -301,6 +302,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveEscalationsMobile = isNavActive("/admin/escalations");
               const isActiveEnrollmentsMobile = isNavActive("/admin/enrollments");
               const isActiveSPsMobile = isNavActive("/admin/success-partners");
+              const isActiveOrgContextMobile = isNavActive("/admin/org-context");
+              const isActiveImportMobile = isNavActive("/admin/participants/import");
               return (
                 <>
                   <li key="/admin-section-mobile">
@@ -425,6 +428,36 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         <UserCheck size={18} className="flex-shrink-0" />
                         <span>Manage SPs</span>
                         {isActiveSPsMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/org-context-mobile">
+                    <Link href="/admin/org-context" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveOrgContextMobile ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveOrgContextMobile ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Building2 size={18} className="flex-shrink-0" />
+                        <span>Org Context</span>
+                        {isActiveOrgContextMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/participants/import-mobile">
+                    <Link href="/admin/participants/import" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveImportMobile ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveImportMobile ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Upload size={18} className="flex-shrink-0" />
+                        <span>Import Participants</span>
+                        {isActiveImportMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
                   </li>
@@ -574,6 +607,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveEscalations = isNavActive("/admin/escalations");
               const isActiveEnrollments = isNavActive("/admin/enrollments");
               const isActiveSPs = isNavActive("/admin/success-partners");
+              const isActiveOrgContext = isNavActive("/admin/org-context");
+              const isActiveImport = isNavActive("/admin/participants/import");
               return (
                 <>
                   <li key="/admin-section-desktop">
@@ -698,6 +733,36 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         <UserCheck size={18} className={cn("flex-shrink-0", isActiveSPs ? "" : "group-hover:scale-105 transition-transform")} />
                         <span>Manage SPs</span>
                         {isActiveSPs && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/org-context">
+                    <Link href="/admin/org-context">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveOrgContext ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveOrgContext ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Building2 size={18} className={cn("flex-shrink-0", isActiveOrgContext ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Org Context</span>
+                        {isActiveOrgContext && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/participants/import">
+                    <Link href="/admin/participants/import">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveImport ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveImport ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Upload size={18} className={cn("flex-shrink-0", isActiveImport ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Import Participants</span>
+                        {isActiveImport && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
                   </li>

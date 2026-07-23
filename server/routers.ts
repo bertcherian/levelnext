@@ -41,6 +41,9 @@ import { nextChapterRouter } from "./routers/nextChapter";
 import { lsosRouter } from "./routers/lsos";
 import { outplacementEnquiryRouter } from "./routers/outplacementEnquiry";
 import { spAssignmentsRouter } from "./routers/spAssignments";
+import { mepDocumentsRouter } from "./routers/mepDocuments";
+import { orgContextRouter } from "./routers/orgContext";
+import { participantImportRouter } from "./routers/participantImport";
 
 export const appRouter = router({
   system: systemRouter,
@@ -91,6 +94,9 @@ export const appRouter = router({
   lsos: lsosRouter,
   outplacementEnquiry: outplacementEnquiryRouter,
   spAssignments: spAssignmentsRouter,
+  mepDocuments: mepDocumentsRouter,
+  orgContext: orgContextRouter,
+  participantImport: participantImportRouter,
 });
 
 export type AppRouter = typeof appRouter;
