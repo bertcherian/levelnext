@@ -65,6 +65,9 @@ import MEPLeaderDocuments from "@/pages/mep/MEPLeaderDocuments";
 import AdminOrgContext from "@/pages/AdminOrgContext";
 import AdminParticipantImport from "@/pages/AdminParticipantImport";
 import CareerLanding from "@/pages/CareerLanding";
+import ResumeMakeover from "@/pages/ci/ResumeMakeover";
+import ResumeReport from "@/pages/ci/ResumeReport";
+import ResumeRewrite from "@/pages/ci/ResumeRewrite";
 import NextChapter from "@/pages/NextChapter";
 import LSOSWorkspace from "@/pages/LSOSWorkspace";
 import NextChapterPortfolio from "@/pages/NextChapterPortfolio";
@@ -160,6 +163,9 @@ function Router() {
       <Route path="/career/radar" component={RadarSignals} />
       <Route path="/career/interview-prep" component={InterviewPrep} />
       <Route path="/career/negotiation" component={NegotiationIntelligence} />
+      <Route path="/career/resume" component={ResumeMakeover} />
+      <Route path="/career/resume/report/:id" component={ResumeReport} />
+      <Route path="/career/resume/rewrite/:id" component={ResumeRewrite} />
       <Route path="/org-intelligence" component={OrgIntelligence} />
       {/* Manager Effectiveness Platform */}
       <Route path="/manager">{() => <MEPLayout><ManagerHome /></MEPLayout>}</Route>

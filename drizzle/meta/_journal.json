@@ -295,6 +295,13 @@
       "when": 1784808582852,
       "tag": "0041_goofy_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1784817891765,
+      "tag": "0042_kind_penance",
+      "breakpoints": true
     }
   ]
 }

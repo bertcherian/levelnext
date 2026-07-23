@@ -1055,3 +1055,42 @@
 - [x] DiagnosticRadarChart reusable component created (chart.js + react-chartjs-2)
 - [x] TypeScript check (zero errors) | Vitest: 3/3 passed
 - [x] Save checkpoint
+
+## Resume Makeover — Career Intelligence (Jul 23)
+
+### Phase 1 — Schema & Dependencies
+- [x] DB schema: user_resumes table (userId, version, originalFileUrl, originalFileKey, extractedText, atsScore, atsBreakdown JSON, careerQualityScore, qualityBreakdown JSON, rewrittenHtml, rewrittenFileUrl, targetJobDescription, isActive, createdAt)
+- [x] Run drizzle-kit generate and apply migration SQL
+- [x] Install server deps: pdf-parse, mammoth, docx (DOCX generation)
+- [x] Install types: @types/pdf-parse
+
+### Phase 2 — Server Router
+- [x] server/routers/resumeMakeover.ts: uploadResume procedure (S3 upload + text extraction)
+- [x] server/routers/resumeMakeover.ts: analyseResume procedure (deterministic ATS score + LLM quality score)
+- [x] server/routers/resumeMakeover.ts: rewriteResume procedure (LLM rewrite → HTML + DOCX generation → S3 upload)
+- [x] server/routers/resumeMakeover.ts: getMyResumes procedure (version history)
+- [x] server/routers/resumeMakeover.ts: getResumeById procedure
+- [x] server/routers/resumeMakeover.ts: setActiveResume procedure
+- [x] Wire resumeMakeoverRouter into routers.ts
+
+### Phase 3 — Career Strategist Guide Integration
+- [x] server/routers/guide.ts: fetch latest active resume (atsScore, qualityBreakdown) for user
+- [x] Inject resume context into CAREER_STRATEGIST_PROMPT system prompt
+
+### Phase 4 — Hub Page
+- [x] client/src/pages/ci/ResumeMakeover.tsx: upload dropzone, active resume score gauges (ATS + Quality), version history list
+- [x] Wire /career/resume route in App.tsx
+
+### Phase 5 — Insights Report Page
+- [x] client/src/pages/ci/ResumeReport.tsx: ATS score breakdown (9 checks with pass/fail), Career Quality radar + dimension cards with callout quotes
+- [x] Wire /career/resume/report/:id route in App.tsx
+
+### Phase 6 — Rewrite Page
+- [x] client/src/pages/ci/ResumeRewrite.tsx: optional JD textarea, rewrite trigger, HTML preview of rewritten resume, DOCX download button
+- [x] Wire /career/resume/rewrite/:id route in App.tsx
+
+### Phase 7 — Nav & Polish
+- [x] Add "Resume Makeover" nav item to Career Intelligence sidebar (PlatformLayout CI_NAV_ITEMS)
+- [x] TypeScript check (zero errors)
+- [x] Vitest: 3/3 passed
+- [x] Save checkpoint

@@ -1924,3 +1924,39 @@ export const orgContext = mysqlTable("org_context", {
 });
 export type OrgContext = typeof orgContext.$inferSelect;
 export type InsertOrgContext = typeof orgContext.$inferInsert;
+
+// ─── Resume Makeover ──────────────────────────────────────────────────────────
+// One active resume per user; each AI rewrite creates a new version row.
+export const userResumes = mysqlTable("user_resumes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  version: int("version").notNull().default(1),
+  isActive: boolean("isActive").notNull().default(true),
+  // Original upload
+  originalFileName: varchar("originalFileName", { length: 255 }),
+  originalFileUrl: varchar("originalFileUrl", { length: 1000 }),
+  originalFileKey: varchar("originalFileKey", { length: 500 }),
+  extractedText: text("extractedText"),
+  // ATS analysis (deterministic rule-based)
+  atsScore: int("atsScore"),
+  atsBreakdown: json("atsBreakdown").$type<Record<string, { score: number; max: number; passed: boolean; note: string }>>(),
+  // Career quality analysis (LLM-driven)
+  careerQualityScore: int("careerQualityScore"),
+  qualityBreakdown: json("qualityBreakdown").$type<{
+    dimensions: Array<{ id: string; label: string; score: number; max: number; callouts: Array<{ quote: string; suggestion: string }> }>;
+    headline: string;
+    topStrengths: string[];
+    topImprovements: string[];
+  }>(),
+  // Rewrite
+  targetJobDescription: text("targetJobDescription"),
+  rewrittenText: text("rewrittenText"),
+  rewrittenHtml: text("rewrittenHtml"),
+  rewrittenFileUrl: varchar("rewrittenFileUrl", { length: 1000 }),
+  rewrittenFileKey: varchar("rewrittenFileKey", { length: 500 }),
+  rewrittenAt: timestamp("rewrittenAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserResume = typeof userResumes.$inferSelect;
+export type InsertUserResume = typeof userResumes.$inferInsert;

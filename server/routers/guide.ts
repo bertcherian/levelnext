@@ -20,7 +20,7 @@ type OrgContext = {
 } | null;
 
 // ─── Career Strategist system prompt ───────────────────────────────────────
-const CAREER_STRATEGIST_PROMPT = (ciData: Record<string, any> | null, userName: string): string => {
+const CAREER_STRATEGIST_PROMPT = (ciData: Record<string, any> | null, userName: string, resumeCtx?: string): string => {
   const moduleLabels: Record<string, string> = {
     CPI: "Career Positioning",
     CMK: "Career Marketability & Optionality",
@@ -72,6 +72,7 @@ COACHING PRINCIPLES:
 8. You are a trusted career strategist, not a cheerleader — be honest when a career pivot or repositioning is needed
 9. Focus on: career positioning, marketability, salary negotiation, career transitions, executive presence in the job market, building optionality
 10. Always distinguish between short-term career moves and long-term career capital building
+${resumeCtx ? `\n\nRESUME INTELLIGENCE:\n${resumeCtx}\nWhen the user asks about their resume, CV, job applications, or career positioning, reference these resume insights directly. You can suggest specific improvements based on the ATS score and quality analysis.` : ""}
 Respond in a warm, strategic, and confident tone.`.trim();
 };
 
@@ -344,7 +345,32 @@ export const guideRouter = router({
             ciData[code] = { edgeScore: r.edgeScore, zone: r.zone, zoneLabel: r.zone?.replace(/_/g, ' '), archetype: r.archetype, archetypeLabel: r.archetype?.replace(/_/g, ' '), dimensionScores: r.dimensionScores, llmAnalysis: r.llmAnalysis };
           }
         }
-        systemPromptContent = CAREER_STRATEGIST_PROMPT(ciData, userName);
+        // Fetch active resume for resume-aware coaching
+        let resumeCtx: string | undefined;
+        try {
+          const { userResumes: userResumesTable } = await import('../../drizzle/schema');
+          const [activeResume] = await db
+            .select()
+            .from(userResumesTable)
+            .where(and(eq(userResumesTable.userId, ctx.user.id), eq(userResumesTable.isActive, true)))
+            .limit(1);
+          if (activeResume) {
+            const qb = activeResume.qualityBreakdown as any;
+            const dimSummary = qb?.dimensions
+              ?.map((d: any) => `${d.label}: ${d.score}/${d.max}`)
+              .join(', ') ?? 'Not yet analysed';
+            resumeCtx = [
+              `ATS Score: ${activeResume.atsScore ?? 'Not yet scored'}/100`,
+              `Career Quality Score: ${activeResume.careerQualityScore ?? 'Not yet scored'}/100`,
+              `Quality Dimensions: ${dimSummary}`,
+              qb?.headline ? `Overall Assessment: ${qb.headline}` : '',
+              qb?.topStrengths?.length ? `Resume Strengths: ${qb.topStrengths.join('; ')}` : '',
+              qb?.topImprovements?.length ? `Key Improvements Needed: ${qb.topImprovements.join('; ')}` : '',
+              activeResume.rewrittenAt ? 'Resume has been AI-rewritten and is available for download.' : 'Resume has not yet been rewritten.',
+            ].filter(Boolean).join('\n');
+          }
+        } catch { /* non-fatal */ }
+        systemPromptContent = CAREER_STRATEGIST_PROMPT(ciData, userName, resumeCtx);
       } else {
         systemPromptContent = GUIDE_SYSTEM_PROMPT(graph, userName, orgContext);
       }
