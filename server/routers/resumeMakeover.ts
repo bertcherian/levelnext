@@ -589,6 +589,163 @@ export const resumeMakeoverRouter = router({
     return resume ?? null;
   }),
 
+  /** Generate a cover letter based on the rewritten resume + job description */
+  generateCoverLetter: protectedProcedure
+    .input(z.object({
+      resumeId: z.number(),
+      targetJobDescription: z.string().min(50, "Please paste a job description (min 50 characters)."),
+      applicantName: z.string().optional(),
+      companyName: z.string().optional(),
+      roleName: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [resume] = await db
+        .select()
+        .from(userResumes)
+        .where(and(eq(userResumes.id, input.resumeId), eq(userResumes.userId, ctx.user.id)));
+      if (!resume) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const resumeContent = resume.rewrittenText ?? resume.extractedText ?? "";
+      if (!resumeContent) throw new TRPCError({ code: "BAD_REQUEST", message: "No resume text available." });
+
+      const [userRow] = await db.select({ name: users.name }).from(users).where(eq(users.id, ctx.user.id));
+      const name = input.applicantName ?? userRow?.name ?? "[Your Name]";
+      const company = input.companyName ?? "[Company Name]";
+      const role = input.roleName ?? "[Role]";
+
+      const prompt = `You are an expert executive cover letter writer. Write a compelling, personalised cover letter.
+
+APPLICANT NAME: ${name}
+TARGET COMPANY: ${company}
+TARGET ROLE: ${role}
+
+JOB DESCRIPTION:
+${input.targetJobDescription.slice(0, 2000)}
+
+RESUME SUMMARY (use this for specific achievements and experience):
+${resumeContent.slice(0, 3000)}
+
+Instructions:
+- 3–4 paragraphs, professional executive tone
+- Opening: hook that connects the applicant's strongest achievement to the role's core need
+- Middle: 2 specific achievements from the resume that directly address the JD requirements
+- Closing: confident call to action
+- Do NOT use generic phrases like "I am writing to apply" or "I believe I would be a great fit"
+- Return as clean HTML using only <p>, <strong> tags
+- Start directly with the first paragraph (no salutation, no date — user will add those)`;
+
+      const result = await invokeLLM({
+        model: "gpt-5-mini",
+        messages: [{ role: "user", content: prompt }],
+        maxTokens: 1200,
+      });
+
+      const html = typeof result === "string" ? result
+        : (result as any)?.choices?.[0]?.message?.content
+        ?? (result as any)?.content?.[0]?.text ?? "";
+
+      const cleanHtml = html.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim();
+      return { html: cleanHtml };
+    }),
+
+  /** Skill gap analysis: compare JD keywords vs resume text */
+  analyseSkillGap: protectedProcedure
+    .input(z.object({
+      resumeId: z.number(),
+      targetJobDescription: z.string().min(50, "Please paste a job description (min 50 characters)."),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [resume] = await db
+        .select()
+        .from(userResumes)
+        .where(and(eq(userResumes.id, input.resumeId), eq(userResumes.userId, ctx.user.id)));
+      if (!resume) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const resumeText = (resume.rewrittenText ?? resume.extractedText ?? "").toLowerCase();
+      if (!resumeText) throw new TRPCError({ code: "BAD_REQUEST", message: "No resume text available." });
+
+      // Deterministic keyword extraction from JD
+      const jdLower = input.targetJobDescription.toLowerCase();
+      const jdWords = jdLower.match(/\b[a-z][a-z0-9+#.-]{2,}\b/g) ?? [];
+      const uniqueJdTerms = Array.from(new Set(jdWords)).filter((w) => !STOP_WORDS.has(w) && w.length >= 3);
+
+      const presentInResume = uniqueJdTerms.filter((w) => resumeText.includes(w));
+      const missingFromResume = uniqueJdTerms.filter((w) => !resumeText.includes(w));
+
+      // LLM categorisation of missing keywords
+      const prompt = `You are a talent acquisition expert. Categorise these keywords extracted from a job description into groups.
+
+MISSING KEYWORDS (not found in the candidate's resume):
+${missingFromResume.slice(0, 60).join(", ")}
+
+PRESENT KEYWORDS (already in the resume):
+${presentInResume.slice(0, 40).join(", ")}
+
+Return ONLY valid JSON:
+{
+  "overallMatch": <0-100 integer — percentage of JD keywords present in resume>,
+  "summary": "<one sentence assessment of the keyword match>",
+  "missing": {
+    "technical": ["keyword1", "keyword2"],
+    "leadership": ["keyword1", "keyword2"],
+    "domain": ["keyword1", "keyword2"],
+    "softSkills": ["keyword1", "keyword2"],
+    "other": ["keyword1", "keyword2"]
+  },
+  "present": {
+    "technical": ["keyword1"],
+    "leadership": ["keyword1"],
+    "domain": ["keyword1"],
+    "softSkills": ["keyword1"],
+    "other": ["keyword1"]
+  },
+  "topPriority": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"]
+}
+
+Only include non-empty arrays. topPriority = the 5 most important missing keywords to add.`;
+
+      const result = await invokeLLM({
+        model: "gpt-5-mini",
+        messages: [{ role: "user", content: prompt }],
+        maxTokens: 1000,
+        responseFormat: { type: "json_object" },
+      });
+
+      const text = typeof result === "string" ? result
+        : (result as any)?.choices?.[0]?.message?.content
+        ?? (result as any)?.content?.[0]?.text ?? "";
+
+      try {
+        const parsed = JSON.parse(text);
+        // Ensure overallMatch is calculated deterministically if LLM gives wrong value
+        const deterministicMatch = uniqueJdTerms.length > 0
+          ? Math.round((presentInResume.length / uniqueJdTerms.length) * 100)
+          : 0;
+        return {
+          ...parsed,
+          overallMatch: deterministicMatch,
+          totalJdTerms: uniqueJdTerms.length,
+          matchedTerms: presentInResume.length,
+        };
+      } catch {
+        return {
+          overallMatch: uniqueJdTerms.length > 0 ? Math.round((presentInResume.length / uniqueJdTerms.length) * 100) : 0,
+          summary: "Analysis complete.",
+          missing: { other: missingFromResume.slice(0, 20) },
+          present: { other: presentInResume.slice(0, 20) },
+          topPriority: missingFromResume.slice(0, 5),
+          totalJdTerms: uniqueJdTerms.length,
+          matchedTerms: presentInResume.length,
+        };
+      }
+    }),
+
   /** Set a specific version as active */
   setActiveResume: protectedProcedure
     .input(z.object({ id: z.number() }))

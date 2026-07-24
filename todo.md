@@ -1094,3 +1094,12 @@
 - [x] TypeScript check (zero errors)
 - [x] Vitest: 3/3 passed
 - [x] Save checkpoint
+
+## Resume Rewrite Enhancements (Jul 24)
+- [x] server/routers/resumeMakeover.ts: generateCoverLetter procedure (LLM, uses rewritten resume + JD)
+- [x] server/routers/resumeMakeover.ts: analyseSkillGap procedure (deterministic keyword diff + LLM categorisation)
+- [x] ResumeRewrite page: side-by-side comparison (original plain text left, rewritten HTML right)
+- [x] ResumeRewrite page: Cover Letter tab with generate button, HTML preview, copy-to-clipboard
+- [x] ResumeRewrite page: Skill Gap Analysis panel — missing keywords grouped by category (Technical, Leadership, Domain, Soft Skills)
+- [x] TypeScript check (zero errors) | Vitest: 3/3 passed
+- [x] Save checkpoint
