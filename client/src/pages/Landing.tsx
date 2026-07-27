@@ -133,7 +133,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <img src={LOGO_URL} alt="LevelNext" className="h-14 w-auto" />
           <div className="flex items-center gap-3">
-            <a href="/career-intelligence" className="hidden md:block text-sm text-white/60 hover:text-white transition-colors font-medium">
+            <a href="/career-landing" className="hidden md:block text-sm text-white/60 hover:text-white transition-colors font-medium">
               Career Intelligence
             </a>
             <a href="/login">

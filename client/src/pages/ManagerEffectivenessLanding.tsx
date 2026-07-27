@@ -190,7 +190,7 @@ export default function ManagerEffectivenessLanding() {
             <a href="#journey" className="hover:text-white transition-colors">The Journey</a>
             <a href="#for-who" className="hover:text-white transition-colors">For Who</a>
             <a href="/" className="hover:text-white transition-colors">Leadership Intelligence</a>
-            <a href="/career-intelligence" className="hover:text-white transition-colors">Career Intelligence</a>
+            <a href="/career-landing" className="hover:text-white transition-colors">Career Intelligence</a>
           </nav>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
@@ -471,7 +471,7 @@ export default function ManagerEffectivenessLanding() {
           </div>
           <div className="flex items-center gap-5 text-xs text-white/40">
             <a href="/" className="hover:text-white/70 transition-colors">Leadership Intelligence</a>
-            <a href="/career-intelligence" className="hover:text-white/70 transition-colors">Career Intelligence</a>
+            <a href="/career-landing" className="hover:text-white/70 transition-colors">Career Intelligence</a>
             <a href="/signup?platform=mep" className="hover:text-white/70 transition-colors">Get Started</a>
             <span>© {new Date().getFullYear()} Meta Results Pvt. Ltd.</span>
           </div>
