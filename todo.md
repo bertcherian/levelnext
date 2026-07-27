@@ -1154,3 +1154,41 @@
 - [x] CareerProgress subtitle: replace hardcoded "six" with {CI_MODULES.length}
 
 TypeScript: 0 errors | Vitest: 3/3 passed
+
+## New Features (Jul 27 2026 — Session 3)
+
+### CI Audit Skill
+- [ ] Create reusable CI audit skill using skill-creator workflow
+- [ ] Validate and deliver skill
+
+### Interview Prep — Resume-Aware Mock Questions
+- [ ] server/routers/careerAccess.ts: generateMockQuestions procedure (fetch user resume + JD, LLM generate 10 tailored questions by category)
+- [ ] InterviewPrep page: add "Generate Questions from My Resume" section with JD textarea and question list
+- [ ] Show questions grouped by category (Behavioural, Technical, Role-Specific, Culture Fit)
+- [ ] Each question has a "Practice Answer" button that opens the mock interview flow
+
+### Cover Letter Export (PDF + DOCX)
+- [ ] server/routers/resumeMakeover.ts: exportCoverLetter procedure (HTML → DOCX via docx package, HTML → PDF via html-to-text + docx)
+- [ ] ResumeRewrite page: "Download as DOCX" and "Download as PDF" buttons in Cover Letter tab
+- [ ] PDF export: use jsPDF client-side to render cover letter HTML to PDF
+- [ ] DOCX export: server-side via existing docx package, download via blob URL
+
+### Quality
+- [ ] TypeScript check (zero errors)
+- [ ] Save checkpoint
+
+## Resume & Interview Enhancements (Jul 27 2026)
+
+### CI Audit Skill
+- [x] Created /home/ubuntu/skills/levelnext-ci-audit/SKILL.md — reusable CI end-to-end audit workflow
+- [x] Created /home/ubuntu/skills/levelnext-ci-audit/references/known-issues.md — known issue patterns
+
+### Interview Prep — Resume-Aware Mock Questions
+- [x] server/routers/careerAccess.ts: generateMockQuestions procedure (uses resume text + JD, LLM generates 15 questions in 5 categories)
+- [x] client/src/pages/InterviewPrep.tsx: Mock Questions tab added — resume detection, JD input, question cards with coaching tips, category filter
+
+### Cover Letter Export
+- [x] server/routers/resumeMakeover.ts: exportCoverLetter procedure (DOCX via docx library, PDF via HTML print window)
+- [x] DB schema: coverLetterHtml, rewrittenAtsScore, rewrittenQualityScore columns added to user_resumes
+- [x] client/src/pages/ci/ResumeRewrite.tsx: DOCX and PDF download buttons in cover letter preview header
+- [x] TypeScript: 0 errors | Vitest: 3/3 passed

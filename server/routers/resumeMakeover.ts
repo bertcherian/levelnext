@@ -769,6 +769,73 @@ Only include non-empty arrays. topPriority = the 5 most important missing keywor
       }
     }),
 
+  /** Export cover letter as DOCX or PDF */
+  exportCoverLetter: protectedProcedure
+    .input(z.object({ id: z.number(), format: z.enum(["docx", "pdf"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [resume] = await db
+        .select({ coverLetterHtml: userResumes.coverLetterHtml })
+        .from(userResumes)
+        .where(and(eq(userResumes.id, input.id), eq(userResumes.userId, ctx.user.id)))
+        .limit(1);
+
+      if (!resume?.coverLetterHtml) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No cover letter found for this resume." });
+      }
+
+      const html = resume.coverLetterHtml;
+
+      if (input.format === "docx") {
+        // Strip HTML tags to plain text paragraphs for DOCX
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
+
+        // Parse HTML into paragraphs using simple regex
+        const stripped = html
+          .replace(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/gi, "HEADING:::$1")
+          .replace(/<p[^>]*>(.*?)<\/p>/gi, "PARA:::$1")
+          .replace(/<br\s*\/?>\s*/gi, "\n")
+          .replace(/<[^>]+>/g, "")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&#39;/g, "'")
+          .replace(/&quot;/g, '"');
+
+        const lines = stripped.split("\n").filter((l) => l.trim());
+
+        const docParagraphs = lines.map((line) => {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("HEADING:::")) {
+            return new Paragraph({
+              text: trimmed.replace("HEADING:::", ""),
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 240, after: 120 },
+            });
+          }
+          const text = trimmed.replace("PARA:::", "");
+          return new Paragraph({
+            children: [new TextRun({ text, size: 24, font: "Calibri" })],
+            spacing: { after: 160 },
+          });
+        });
+
+        const doc = new Document({
+          sections: [{ properties: {}, children: docParagraphs }],
+        });
+
+        const buffer = await Packer.toBuffer(doc);
+        const base64 = Buffer.from(buffer).toString("base64");
+        return { format: "docx" as const, base64, filename: "cover_letter.docx" };
+      }
+
+      // PDF: use jsPDF on the client side — return the HTML for client-side rendering
+      // Server-side we return the clean HTML; client converts to PDF via browser print
+      return { format: "pdf" as const, html, filename: "cover_letter.pdf" };
+    }),
   /** Set a specific version as active */
   setActiveResume: protectedProcedure
     .input(z.object({ id: z.number() }))

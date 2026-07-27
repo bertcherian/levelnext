@@ -189,7 +189,9 @@ function CoverLetterPanel({ resumeId, jd }: { resumeId: number; jd: string }) {
   const [companyName, setCompanyName] = useState("");
   const [roleName, setRoleName] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const generateMutation = trpc.resumeMakeover.generateCoverLetter.useMutation();
+  const exportMutation = trpc.resumeMakeover.exportCoverLetter.useMutation();
 
   const handleGenerate = () => {
     if (jd.trim().length < 50) {
@@ -211,6 +213,44 @@ function CoverLetterPanel({ resumeId, jd }: { resumeId: number; jd: string }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast.success("Cover letter copied to clipboard.");
+  };
+
+  const handleExportDocx = async () => {
+    setIsExporting(true);
+    try {
+      const result = await exportMutation.mutateAsync({ id: resumeId, format: "docx" });
+      if (result.format === "docx" && result.base64) {
+        const bytes = Uint8Array.from(atob(result.base64), (c) => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = result.filename ?? "cover_letter.docx";
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Cover letter downloaded as DOCX.");
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "Export failed");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPdf = () => {
+    if (!generateMutation.data?.html) return;
+    // Open a print-ready window with the cover letter HTML
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) { toast.error("Pop-up blocked. Please allow pop-ups for this site."); return; }
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Cover Letter</title><style>
+      body { font-family: Calibri, Georgia, serif; font-size: 12pt; line-height: 1.6; max-width: 720px; margin: 40px auto; color: #1a1a1a; }
+      h1,h2,h3 { color: #12345A; } p { margin-bottom: 0.8em; }
+      @media print { body { margin: 20mm; } }
+    </style></head><body>${generateMutation.data.html}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); }, 400);
+    toast.success("Print dialog opened — save as PDF.");
   };
 
   return (
@@ -261,9 +301,30 @@ function CoverLetterPanel({ resumeId, jd }: { resumeId: number; jd: string }) {
         <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50">
             <span className="text-sm font-semibold text-[#12345A]">Cover Letter Preview</span>
-            <Button size="sm" variant="outline" onClick={handleCopy} className="h-7 text-xs gap-1">
-              {copied ? <><Check className="h-3 w-3" />Copied</> : <><Copy className="h-3 w-3" />Copy Text</>}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={handleCopy} className="h-7 text-xs gap-1">
+                {copied ? <><Check className="h-3 w-3" />Copied</> : <><Copy className="h-3 w-3" />Copy Text</>}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleExportDocx}
+                disabled={isExporting || exportMutation.isPending}
+                className="h-7 text-xs gap-1 border-[#12345A]/30 text-[#12345A] hover:bg-[#12345A]/5"
+              >
+                {isExporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                DOCX
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleExportPdf}
+                className="h-7 text-xs gap-1 border-amber-500/40 text-amber-700 hover:bg-amber-50"
+              >
+                <Download className="h-3 w-3" />
+                PDF
+              </Button>
+            </div>
           </div>
           <div
             className="px-8 py-6 prose prose-sm max-w-none text-slate-800 leading-relaxed"

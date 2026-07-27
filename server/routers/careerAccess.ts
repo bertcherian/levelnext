@@ -1069,6 +1069,97 @@ Tone: direct, confident, strategic. Write as if briefing the executive themselve
       latestDate: latest.createdAt,
     };
   }),
+
+  // ─── Interview Prep: Generate Mock Questions ────────────────────────────────
+  generateMockQuestions: protectedProcedure
+    .input(
+      z.object({
+        jobDescription: z.string().min(50, "Job description must be at least 50 characters"),
+        roleTitle: z.string().optional(),
+        companyName: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database unavailable");
+
+      // Fetch the user's active resume for context
+      const { userResumes } = await import("../../drizzle/schema");
+      const [activeResume] = await db
+        .select({
+          extractedText: userResumes.extractedText,
+        })
+        .from(userResumes)
+        .where(and(eq(userResumes.userId, ctx.user.id), eq(userResumes.isActive, true)))
+        .limit(1);
+
+      // Fetch career profile for additional context
+      const [profile] = await db
+        .select({
+          keyAchievements: careerProfiles.keyAchievements,
+        })
+        .from(careerProfiles)
+        .where(eq(careerProfiles.userId, ctx.user.id))
+        .limit(1);
+
+      const resumeContext = activeResume?.extractedText
+        ? `\n\nCANDIDATE RESUME (first 2000 chars):\n${activeResume.extractedText.slice(0, 2000)}`
+        : "";
+
+      const profileContext = profile?.keyAchievements
+        ? `\n\nKEY ACHIEVEMENTS: ${profile.keyAchievements}`
+        : "";
+
+      const roleLabel = input.roleTitle ? ` for the ${input.roleTitle} role` : "";
+      const companyLabel = input.companyName ? ` at ${input.companyName}` : "";
+
+      const prompt = `You are an expert executive interview coach. Generate 12 highly tailored mock interview questions${roleLabel}${companyLabel}.
+
+JOB DESCRIPTION:
+${input.jobDescription}${resumeContext}${profileContext}
+
+Generate exactly 12 questions across these 4 categories (3 per category):
+1. Behavioural — STAR-format questions probing past leadership behaviour relevant to this role
+2. Technical / Functional — Questions testing domain knowledge and skills required by the JD
+3. Role-Specific — Questions about the specific responsibilities, challenges, and expectations in this JD
+4. Culture & Strategic Fit — Questions probing alignment with the company values, direction, and leadership style
+
+For each question also provide:
+- A brief coaching tip (1 sentence) on how to answer it well
+- The key competency it is testing
+
+Return ONLY valid JSON:
+{
+  "questions": [
+    {
+      "category": "Behavioural",
+      "question": "...",
+      "coachingTip": "...",
+      "competency": "..."
+    }
+  ]
+}`;
+
+      const result = await invokeLLM({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        max_tokens: 2000,
+      });
+
+      const llmContent = (result.choices?.[0]?.message?.content as string) ?? "{}";
+      let parsed: { questions: Array<{ category: string; question: string; coachingTip: string; competency: string }> };
+      try {
+        parsed = JSON.parse(llmContent);
+      } catch {
+        throw new Error("Failed to parse mock questions from AI response");
+      }
+
+      return {
+        questions: parsed.questions ?? [],
+        resumeUsed: !!activeResume?.extractedText,
+      };
+    }),
 });
 
 // ── Helper: AI relationship scoring ──────────────────────────────────────────

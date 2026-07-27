@@ -25,6 +25,10 @@ import {
   Users,
   Lightbulb,
   CheckCircle2,
+  FileQuestion,
+  Zap,
+  FileText,
+  Info,
 } from "lucide-react";
 
 // ─── Copy Button ─────────────────────────────────────────────────────────────
@@ -58,6 +62,252 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
   );
 }
 
+// ─── Category colour map ──────────────────────────────────────────────────────
+const CATEGORY_STYLES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+  "Behavioural": { bg: "oklch(from var(--color-ln-navy) l c h / 0.07)", text: "var(--color-ln-navy)", border: "oklch(from var(--color-ln-navy) l c h / 0.2)", dot: "#1e3a5f" },
+  "Technical / Functional": { bg: "oklch(0.96 0.02 250)", text: "#1d4ed8", border: "oklch(0.88 0.05 250)", dot: "#1d4ed8" },
+  "Role-Specific": { bg: "oklch(0.96 0.02 145)", text: "#166534", border: "oklch(0.88 0.05 145)", dot: "#166534" },
+  "Culture & Strategic Fit": { bg: "oklch(from var(--color-ln-gold) l c h / 0.12)", text: "oklch(0.5 0.15 70)", border: "oklch(from var(--color-ln-gold) l c h / 0.35)", dot: "oklch(0.55 0.15 70)" },
+};
+
+function categoryStyle(cat: string) {
+  return CATEGORY_STYLES[cat] ?? CATEGORY_STYLES["Behavioural"];
+}
+
+// ─── Mock Questions Panel ─────────────────────────────────────────────────────
+type MockQuestion = {
+  category: string;
+  question: string;
+  coachingTip: string;
+  competency: string;
+};
+
+function MockQuestionsPanel({ currentPrep }: { currentPrep: { targetRole?: string; targetCompany?: string } | null }) {
+  const [jd, setJd] = useState("");
+  const [roleTitle, setRoleTitle] = useState(currentPrep?.targetRole ?? "");
+  const [companyName, setCompanyName] = useState(currentPrep?.targetCompany ?? "");
+  const [questions, setQuestions] = useState<MockQuestion[]>([]);
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [resumeUsed, setResumeUsed] = useState(false);
+
+  // Sync from prep when it changes
+  useEffect(() => {
+    if (currentPrep?.targetRole) setRoleTitle(currentPrep.targetRole);
+    if (currentPrep?.targetCompany) setCompanyName(currentPrep.targetCompany);
+  }, [currentPrep?.targetRole, currentPrep?.targetCompany]);
+
+  const generateMutation = trpc.careerAccess.generateMockQuestions.useMutation({
+    onSuccess: (data) => {
+      setQuestions(data.questions);
+      setResumeUsed(data.resumeUsed);
+      setExpandedIdx(0);
+      toast.success(`${data.questions.length} mock questions generated${data.resumeUsed ? " (resume-tailored)" : ""}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Group by category
+  const grouped = questions.reduce<Record<string, MockQuestion[]>>((acc, q) => {
+    acc[q.category] = acc[q.category] ?? [];
+    acc[q.category].push(q);
+    return acc;
+  }, {});
+
+  const categoryOrder = ["Behavioural", "Technical / Functional", "Role-Specific", "Culture & Strategic Fit"];
+  const orderedGroups = categoryOrder.filter((c) => grouped[c]);
+
+  return (
+    <div className="space-y-5">
+      {/* Input panel */}
+      <div className="rounded-xl border p-5 space-y-4" style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}>
+        <div className="flex items-center gap-2">
+          <FileQuestion size={16} style={{ color: "var(--color-ln-navy)" }} />
+          <h3 className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Generate Mock Interview Questions</h3>
+        </div>
+
+        {/* Resume indicator */}
+        <div
+          className="rounded-lg px-3 py-2.5 flex items-start gap-2.5"
+          style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.1)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.3)" }}
+        >
+          <FileText size={13} className="mt-0.5 flex-shrink-0" style={{ color: "oklch(0.55 0.15 70)" }} />
+          <p className="text-xs leading-relaxed" style={{ color: "oklch(0.45 0.1 70)" }}>
+            If you have uploaded a resume in <strong>Resume Makeover</strong>, it will be used to personalise these questions to your actual background and experience.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs font-semibold">Role Title (optional)</Label>
+            <Input
+              className="mt-1"
+              value={roleTitle}
+              onChange={(e) => setRoleTitle(e.target.value)}
+              placeholder="VP Engineering, CFO…"
+            />
+          </div>
+          <div>
+            <Label className="text-xs font-semibold">Company Name (optional)</Label>
+            <Input
+              className="mt-1"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Acme Corp, Google…"
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-xs font-semibold">
+            Job Description <span className="text-red-500">*</span>
+            <span className="text-muted-foreground font-normal ml-1">(min 50 characters)</span>
+          </Label>
+          <Textarea
+            className="mt-1 text-sm resize-none"
+            rows={5}
+            value={jd}
+            onChange={(e) => setJd(e.target.value)}
+            placeholder="Paste the job description here. The more detail you provide, the more tailored the questions will be…"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">{jd.length} / 50 min characters</p>
+        </div>
+
+        <Button
+          className="w-full h-11 font-semibold gap-2"
+          style={{ background: "var(--color-ln-navy)", color: "white" }}
+          disabled={jd.length < 50 || generateMutation.isPending}
+          onClick={() => generateMutation.mutate({ jobDescription: jd, roleTitle: roleTitle || undefined, companyName: companyName || undefined })}
+        >
+          {generateMutation.isPending ? (
+            <><RefreshCw size={16} className="animate-spin" /> Generating questions…</>
+          ) : (
+            <><Zap size={16} /> Generate 12 Mock Questions</>
+          )}
+        </Button>
+      </div>
+
+      {/* Results */}
+      {questions.length > 0 && (
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+                {questions.length} Mock Questions
+              </p>
+              {resumeUsed && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] gap-1"
+                  style={{ borderColor: "oklch(from var(--color-ln-gold) l c h / 0.5)", color: "oklch(0.5 0.15 70)" }}
+                >
+                  <FileText size={9} /> Resume-tailored
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">{orderedGroups.length} categories</p>
+          </div>
+
+          {/* Category groups */}
+          {orderedGroups.map((cat) => {
+            const style = categoryStyle(cat);
+            const qs = grouped[cat];
+            return (
+              <div key={cat} className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
+                {/* Category header */}
+                <div
+                  className="px-4 py-2.5 flex items-center gap-2"
+                  style={{ background: style.bg, borderBottom: `1px solid ${style.border}` }}
+                >
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: style.dot }} />
+                  <p className="text-xs font-bold uppercase tracking-wider" style={{ color: style.text }}>{cat}</p>
+                  <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0" style={{ borderColor: style.border, color: style.text }}>
+                    {qs.length}
+                  </Badge>
+                </div>
+
+                {/* Questions */}
+                <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+                  {qs.map((q, qi) => {
+                    const globalIdx = questions.indexOf(q);
+                    const isOpen = expandedIdx === globalIdx;
+                    return (
+                      <div key={qi}>
+                        <button
+                          className="w-full flex items-start justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors gap-3"
+                          onClick={() => setExpandedIdx(isOpen ? null : globalIdx)}
+                        >
+                          <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                            <span
+                              className="text-[10px] font-bold mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                              style={{ background: style.bg, color: style.text, border: `1px solid ${style.border}` }}
+                            >
+                              {qi + 1}
+                            </span>
+                            <span className="text-sm font-medium leading-snug">{q.question}</span>
+                          </div>
+                          {isOpen ? <ChevronUp size={14} className="flex-shrink-0 mt-0.5" /> : <ChevronDown size={14} className="flex-shrink-0 mt-0.5" />}
+                        </button>
+
+                        {isOpen && (
+                          <div className="px-4 pb-4 space-y-3 border-t" style={{ borderColor: "var(--color-border)" }}>
+                            {/* Competency */}
+                            <div className="flex items-center gap-2 pt-3">
+                              <Target size={12} className="text-muted-foreground flex-shrink-0" />
+                              <p className="text-[11px] text-muted-foreground">
+                                Tests: <span className="font-semibold">{q.competency}</span>
+                              </p>
+                            </div>
+
+                            {/* Coaching tip */}
+                            <div
+                              className="rounded-lg px-3 py-2.5 flex items-start gap-2.5"
+                              style={{ background: style.bg, border: `1px solid ${style.border}` }}
+                            >
+                              <Info size={12} className="flex-shrink-0 mt-0.5" style={{ color: style.text }} />
+                              <div className="flex-1">
+                                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: style.text }}>Coaching Tip</p>
+                                <p className="text-xs leading-relaxed" style={{ color: style.text }}>{q.coachingTip}</p>
+                              </div>
+                              <CopyButton text={q.coachingTip} />
+                            </div>
+
+                            {/* Copy question */}
+                            <div className="flex items-center justify-end">
+                              <button
+                                onClick={() => { navigator.clipboard.writeText(q.question); toast.success("Question copied"); }}
+                                className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                              >
+                                <Copy size={11} /> Copy question
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Regenerate */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2"
+            disabled={generateMutation.isPending}
+            onClick={() => generateMutation.mutate({ jobDescription: jd, roleTitle: roleTitle || undefined, companyName: companyName || undefined })}
+          >
+            <RefreshCw size={13} className={generateMutation.isPending ? "animate-spin" : ""} />
+            Regenerate Questions
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Interview Prep Form ──────────────────────────────────────────────────────
 function InterviewPrepForm({
   onGenerated,
@@ -76,7 +326,6 @@ function InterviewPrepForm({
     yourBackground: "",
   });
 
-  // Sync prefillCompany when arriving from Radar signal
   useEffect(() => {
     if (prefillCompany) {
       setForm((f) => ({ ...f, targetCompany: prefillCompany }));
@@ -93,7 +342,6 @@ function InterviewPrepForm({
 
   return (
     <div className="space-y-4">
-      {/* Radar context banner */}
       {radarContext && (
         <div
           className="rounded-lg px-4 py-3 flex items-start gap-3"
@@ -109,21 +357,11 @@ function InterviewPrepForm({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label className="text-xs font-semibold">Target Role *</Label>
-          <Input
-            className="mt-1"
-            value={form.targetRole}
-            onChange={(e) => setForm((f) => ({ ...f, targetRole: e.target.value }))}
-            placeholder="VP Engineering, CFO, GM…"
-          />
+          <Input className="mt-1" value={form.targetRole} onChange={(e) => setForm((f) => ({ ...f, targetRole: e.target.value }))} placeholder="VP Engineering, CFO, GM…" />
         </div>
         <div>
           <Label className="text-xs font-semibold">Target Company *</Label>
-          <Input
-            className="mt-1"
-            value={form.targetCompany}
-            onChange={(e) => setForm((f) => ({ ...f, targetCompany: e.target.value }))}
-            placeholder="Acme Corp, Google…"
-          />
+          <Input className="mt-1" value={form.targetCompany} onChange={(e) => setForm((f) => ({ ...f, targetCompany: e.target.value }))} placeholder="Acme Corp, Google…" />
         </div>
       </div>
 
@@ -145,24 +383,12 @@ function InterviewPrepForm({
 
       <div>
         <Label className="text-xs font-semibold">Job Description (optional)</Label>
-        <Textarea
-          className="mt-1 text-sm resize-none"
-          rows={4}
-          value={form.jobDescription}
-          onChange={(e) => setForm((f) => ({ ...f, jobDescription: e.target.value }))}
-          placeholder="Paste the JD or key requirements here…"
-        />
+        <Textarea className="mt-1 text-sm resize-none" rows={4} value={form.jobDescription} onChange={(e) => setForm((f) => ({ ...f, jobDescription: e.target.value }))} placeholder="Paste the JD or key requirements here…" />
       </div>
 
       <div>
         <Label className="text-xs font-semibold">Your Relevant Background (optional)</Label>
-        <Textarea
-          className="mt-1 text-sm resize-none"
-          rows={3}
-          value={form.yourBackground}
-          onChange={(e) => setForm((f) => ({ ...f, yourBackground: e.target.value }))}
-          placeholder="Key achievements, experience, skills relevant to this role…"
-        />
+        <Textarea className="mt-1 text-sm resize-none" rows={3} value={form.yourBackground} onChange={(e) => setForm((f) => ({ ...f, yourBackground: e.target.value }))} placeholder="Key achievements, experience, skills relevant to this role…" />
       </div>
 
       <Button
@@ -195,12 +421,10 @@ type PrepData = {
 function PrepResults({ prep }: { prep: { prepData: unknown; targetRole: string; targetCompany: string; interviewType: string; createdAt: Date } }) {
   const [expandedQ, setExpandedQ] = useState<number | null>(0);
   const [expandedStory, setExpandedStory] = useState<number | null>(null);
-
   const parsed = (prep.prepData ?? {}) as PrepData;
 
   return (
     <div className="space-y-5">
-      {/* Role Research */}
       {parsed.roleResearch && (
         <SectionCard title="Role Research" icon={<Building2 size={16} />}>
           <div className="space-y-3">
@@ -234,7 +458,6 @@ function PrepResults({ prep }: { prep: { prepData: unknown; targetRole: string; 
         </SectionCard>
       )}
 
-      {/* Likely Questions */}
       {parsed.likelyQuestions && (parsed.likelyQuestions as string[]).length > 0 && (
         <SectionCard title="Likely Interview Questions" icon={<MessageSquare size={16} />}>
           <div className="space-y-2">
@@ -250,9 +473,7 @@ function PrepResults({ prep }: { prep: { prepData: unknown; targetRole: string; 
                 {expandedQ === i && parsed.suggestedAnswers && (parsed.suggestedAnswers as string[])[i] && (
                   <div className="px-4 pb-4 border-t" style={{ borderColor: "var(--color-border)" }}>
                     <div className="flex items-start justify-between gap-2 pt-3">
-                      <p className="text-sm leading-relaxed text-muted-foreground flex-1">
-                        {(parsed.suggestedAnswers as string[])[i]}
-                      </p>
+                      <p className="text-sm leading-relaxed text-muted-foreground flex-1">{(parsed.suggestedAnswers as string[])[i]}</p>
                       <CopyButton text={(parsed.suggestedAnswers as string[])[i]} />
                     </div>
                   </div>
@@ -263,7 +484,6 @@ function PrepResults({ prep }: { prep: { prepData: unknown; targetRole: string; 
         </SectionCard>
       )}
 
-      {/* Story Bank */}
       {parsed.storyBank && (parsed.storyBank as Array<Record<string, string>>).length > 0 && (
         <SectionCard title="STAR Story Bank" icon={<Star size={16} />}>
           <div className="space-y-2">
@@ -274,9 +494,7 @@ function PrepResults({ prep }: { prep: { prepData: unknown; targetRole: string; 
                   onClick={() => setExpandedStory(expandedStory === i ? null : i)}
                 >
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 flex-shrink-0">
-                      {story.competency}
-                    </Badge>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 flex-shrink-0">{story.competency}</Badge>
                     <span className="text-sm font-medium">{story.title}</span>
                   </div>
                   {expandedStory === i ? <ChevronUp size={14} className="flex-shrink-0" /> : <ChevronDown size={14} className="flex-shrink-0" />}
@@ -302,7 +520,6 @@ function PrepResults({ prep }: { prep: { prepData: unknown; targetRole: string; 
         </SectionCard>
       )}
 
-      {/* Key Messages */}
       {parsed.keyMessages && (parsed.keyMessages as string[]).length > 0 && (
         <SectionCard title="Key Messages to Land" icon={<Lightbulb size={16} />}>
           <ul className="space-y-2">
@@ -316,7 +533,6 @@ function PrepResults({ prep }: { prep: { prepData: unknown; targetRole: string; 
         </SectionCard>
       )}
 
-      {/* Questions to Ask */}
       {parsed.questionsToAsk && (parsed.questionsToAsk as string[]).length > 0 && (
         <SectionCard title="Questions to Ask the Interviewer" icon={<Users size={16} />}>
           <ul className="space-y-2">
@@ -342,17 +558,14 @@ export default function InterviewPrep() {
   const [showForm, setShowForm] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState<"prep" | "mock">("prep");
 
-  // Read URL params from Radar deep-link
   const searchParams = new URLSearchParams(window.location.search);
   const prefillCompany = searchParams.get("company") ?? "";
   const radarContext = searchParams.get("context") ?? "";
 
-  // Auto-open form when arriving from Radar
   useEffect(() => {
-    if (prefillCompany) {
-      setShowForm(true);
-    }
+    if (prefillCompany) setShowForm(true);
   }, [prefillCompany]);
 
   const { data: latestPrep, isLoading } = trpc.interviewPrep.getLatestPrep.useQuery();
@@ -367,7 +580,6 @@ export default function InterviewPrep() {
     },
   });
 
-  // Determine which prep to display: selected from history, or latest
   const displayPrep = selectedId
     ? prepList?.find((p) => p.id === selectedId) ?? latestPrep
     : latestPrep;
@@ -385,150 +597,150 @@ export default function InterviewPrep() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-6">
           <div className="flex items-start gap-4">
-            <div
-              className="rounded-xl p-3 flex-shrink-0"
-              style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)" }}
-            >
+            <div className="rounded-xl p-3 flex-shrink-0" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)" }}>
               <BookOpen size={24} style={{ color: "var(--color-ln-navy)" }} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
-                Interview Preparation
-              </h1>
+              <h1 className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Interview Preparation</h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                AI-generated role research, likely questions with suggested answers, STAR story bank, and key messages.
+                AI-generated role research, likely questions with suggested answers, STAR story bank, and resume-tailored mock questions.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {(prepList?.length ?? 0) > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowHistory(!showHistory)}
-                className="gap-2"
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowHistory(!showHistory)} className="gap-2">
                 <RefreshCw size={14} />
                 History ({prepList?.length})
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setShowForm(!showForm); setSelectedId(null); }}
-              className="gap-2"
-            >
+            <Button variant="outline" size="sm" onClick={() => { setShowForm(!showForm); setSelectedId(null); }} className="gap-2">
               <Plus size={14} />
               New Prep
             </Button>
           </div>
         </div>
 
-        {/* History Drawer */}
-        {showHistory && (prepList?.length ?? 0) > 0 && (
-          <div
-            className="rounded-xl border mb-6 overflow-hidden"
-            style={{ background: "var(--color-card)", borderColor: "var(--color-ln-border)" }}
-          >
-            <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: "var(--color-ln-border)" }}>
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>Past Sessions</p>
-              <button onClick={() => setShowHistory(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">×</button>
-            </div>
-            <div className="divide-y" style={{ borderColor: "var(--color-ln-border)" }}>
-              {prepList?.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-black/4 transition-colors cursor-pointer"
-                  style={{ background: selectedId === p.id ? "oklch(from var(--color-ln-navy) l c h / 0.06)" : undefined }}
-                  onClick={() => { setSelectedId(p.id); setShowForm(false); setShowHistory(false); }}
-                >
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 p-1 rounded-xl" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.06)" }}>
+          {[
+            { id: "prep" as const, label: "Interview Prep", icon: <BookOpen size={14} /> },
+            { id: "mock" as const, label: "Mock Questions", icon: <FileQuestion size={14} /> },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+              style={
+                activeTab === tab.id
+                  ? { background: "var(--color-ln-navy)", color: "white" }
+                  : { color: "var(--color-ln-navy)" }
+              }
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── MOCK QUESTIONS TAB ── */}
+        {activeTab === "mock" && (
+          <MockQuestionsPanel currentPrep={displayPrep as { targetRole?: string; targetCompany?: string } | null} />
+        )}
+
+        {/* ── INTERVIEW PREP TAB ── */}
+        {activeTab === "prep" && (
+          <>
+            {/* History Drawer */}
+            {showHistory && (prepList?.length ?? 0) > 0 && (
+              <div className="rounded-xl border mb-6 overflow-hidden" style={{ background: "var(--color-card)", borderColor: "var(--color-ln-border)" }}>
+                <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: "var(--color-ln-border)" }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>Past Sessions</p>
+                  <button onClick={() => setShowHistory(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">×</button>
+                </div>
+                <div className="divide-y" style={{ borderColor: "var(--color-ln-border)" }}>
+                  {prepList?.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between px-4 py-3 hover:bg-black/4 transition-colors cursor-pointer"
+                      style={{ background: selectedId === p.id ? "oklch(from var(--color-ln-navy) l c h / 0.06)" : undefined }}
+                      onClick={() => { setSelectedId(p.id); setShowForm(false); setShowHistory(false); }}
+                    >
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: "var(--color-ln-navy)" }}>
+                          {(p as any).targetRole} @ {(p as any).targetCompany}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date((p as any).createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} · {(p as any).interviewType}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {selectedId === p.id && <Badge variant="outline" className="text-[10px]">Viewing</Badge>}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteMutation.mutate({ id: p.id }); }}
+                          className="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                          title="Delete session"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Form */}
+            {(showForm || !latestPrep) && !isLoading && (
+              <div className="rounded-xl border p-5 mb-6" style={{ background: "var(--color-card)", borderColor: "var(--color-ln-navy)" }}>
+                <p className="text-sm font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>New Interview Prep Session</p>
+                <InterviewPrepForm onGenerated={handleGenerated} prefillCompany={prefillCompany} radarContext={radarContext} />
+              </div>
+            )}
+
+            {/* Results */}
+            {isLoading ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+              </div>
+            ) : displayPrep && !showForm ? (
+              <div>
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-sm font-medium" style={{ color: "var(--color-ln-navy)" }}>
-                      {(p as any).targetRole} @ {(p as any).targetCompany}
+                    <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+                      {(displayPrep as any).targetRole} @ {(displayPrep as any).targetCompany}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date((p as any).createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} · {(p as any).interviewType}
+                      {new Date((displayPrep as any).createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {selectedId === p.id && <Badge variant="outline" className="text-[10px]">Viewing</Badge>}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteMutation.mutate({ id: p.id }); }}
-                      className="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
-                      title="Delete session"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    <Badge variant="outline" className="text-xs capitalize">{(displayPrep as any).interviewType}</Badge>
+                    {selectedId && (
+                      <Button variant="outline" size="sm" onClick={() => setSelectedId(null)} className="text-xs gap-1">
+                        View Latest
+                      </Button>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Form */}
-        {(showForm || !latestPrep) && !isLoading && (
-          <div
-            className="rounded-xl border p-5 mb-6"
-            style={{ background: "var(--color-card)", borderColor: "var(--color-ln-navy)" }}
-          >
-            <p className="text-sm font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>
-              New Interview Prep Session
-            </p>
-            <InterviewPrepForm onGenerated={handleGenerated} prefillCompany={prefillCompany} radarContext={radarContext} />
-          </div>
-        )}
-
-        {/* Results */}
-        {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
-          </div>
-        ) : displayPrep && !showForm ? (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
-                  {(displayPrep as any).targetRole} @ {(displayPrep as any).targetCompany}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date((displayPrep as any).createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                </p>
+                <PrepResults prep={displayPrep as any} />
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs capitalize">{(displayPrep as any).interviewType}</Badge>
-                {selectedId && (
-                  <Button variant="outline" size="sm" onClick={() => setSelectedId(null)} className="text-xs gap-1">
-                    View Latest
-                  </Button>
-                )}
+            ) : !showForm ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="rounded-2xl p-5 mb-6" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)" }}>
+                  <BookOpen size={36} style={{ color: "var(--color-ln-navy)" }} />
+                </div>
+                <h2 className="text-xl font-bold mb-2" style={{ color: "var(--color-ln-navy)" }}>Prepare for Your Next Interview</h2>
+                <p className="text-sm text-muted-foreground max-w-md mb-8">
+                  Enter the role and company, and AI will generate role research, likely questions with suggested answers, a STAR story bank, and key messages to land.
+                </p>
+                <Button onClick={() => setShowForm(true)} className="h-11 px-8 font-semibold" style={{ background: "var(--color-ln-navy)", color: "white" }}>
+                  <Sparkles size={16} className="mr-2" /> Start Interview Prep
+                </Button>
               </div>
-            </div>
-            <PrepResults prep={displayPrep as any} />
-          </div>
-        ) : !showForm ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div
-              className="rounded-2xl p-5 mb-6"
-              style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)" }}
-            >
-              <BookOpen size={36} style={{ color: "var(--color-ln-navy)" }} />
-            </div>
-            <h2 className="text-xl font-bold mb-2" style={{ color: "var(--color-ln-navy)" }}>
-              Prepare for Your Next Interview
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-md mb-8">
-              Enter the role and company, and AI will generate role research, likely questions with suggested answers, a STAR story bank, and key messages to land.
-            </p>
-            <Button
-              onClick={() => setShowForm(true)}
-              className="h-11 px-8 font-semibold"
-              style={{ background: "var(--color-ln-navy)", color: "white" }}
-            >
-              <Sparkles size={16} className="mr-2" /> Start Interview Prep
-            </Button>
-          </div>
-        ) : null}
+            ) : null}
+          </>
+        )}
       </div>
     </PlatformLayout>
   );
