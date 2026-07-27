@@ -36,7 +36,7 @@ const PRODUCT_CONFIG: Record<string, {
     homeRoute: "/home",
   },
   career_intelligence: {
-    label: "Career Intelligence",
+    label: "Career Transition Intelligence",
     shortLabel: "Career",
     icon: Briefcase,
     color: "#818cf8",

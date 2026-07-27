@@ -10,7 +10,7 @@ const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 // Product metadata for the welcome screen
 const PRODUCT_META: Record<string, { name: string; tagline: string; destination: string; color: string }> = {
   career_intelligence: {
-    name: "Career Intelligence",
+    name: "Career Transition Intelligence",
     tagline: "Your personal career strategist — powered by AI.",
     destination: "/career",
     color: "#12345A",

@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
+import CareerLanding from "@/pages/CareerLanding";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
@@ -82,7 +82,7 @@ function CareerPracticeCard() {
   );
 }
 
-// ── Career Strategist (Guide) Card ───────────────────────────────────────────
+// ── Career Transition Coach (Guide) Card ───────────────────────────────────────────
 function CareerStrategistCard() {
   const [, navigate] = useLocation();
   // No dedicated unread count — use guide nav badge from PlatformLayout instead
@@ -98,7 +98,7 @@ function CareerStrategistCard() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-white">Career Strategist</p>
+            <p className="text-sm font-semibold text-white">Career Transition Coach</p>
             {unreadCount > 0 && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#6366f1", color: "white" }}>
                 {unreadCount} new
@@ -135,13 +135,11 @@ export default function CareerHome() {
     enabled: isAuthenticated,
   });
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate("/");
-    }
-  }, [loading, isAuthenticated, navigate]);
+  // For unauthenticated visitors, show the public Career Transition Intelligence landing page
+  // instead of bouncing them to the root landing page.
+  if (!loading && !isAuthenticated) return <CareerLanding />;
 
-  if (loading || !isAuthenticated) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-ivory)" }}>
         <Loader2 className="animate-spin" style={{ color: "var(--color-ln-navy)" }} />
@@ -182,16 +180,16 @@ export default function CareerHome() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Briefcase size={16} style={{ color: "var(--color-ln-yellow)" }} />
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-ln-yellow)" }}>Career Intelligence</span>
+            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-ln-yellow)" }}>Career Transition Intelligence</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
             Welcome back, {user?.name?.split(" ")[0] ?? "there"}
           </h1>
           <p className="text-sm mt-1" style={{ color: "oklch(45% 0.02 248.6)" }}>
             {completedCount === 0
-              ? "Start your Career Intelligence journey — discover your gaps and build your career capital."
+              ? "Start your Career Transition Intelligence journey — discover your gaps and build your career capital."
               : completedCount === totalModules
-              ? "You've completed all 6 Career Intelligence diagnostics. Your Career Edge is fully mapped."
+              ? "You've completed all 6 Career Transition Intelligence diagnostics. Your Career Edge is fully mapped."
               : `${completedCount} of ${totalModules} diagnostics complete — keep going to unlock your full Career Edge score.`}
           </p>
         </div>
@@ -245,7 +243,7 @@ export default function CareerHome() {
           </div>
         )}
 
-        {/* Career Strategist + Practice Coach */}
+        {/* Career Transition Coach + Practice Coach */}
         <div className="space-y-3">
           <CareerStrategistCard />
           <CareerPracticeCard />

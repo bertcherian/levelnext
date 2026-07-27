@@ -203,7 +203,7 @@ export default function CpiReport() {
       <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: IVORY }}>
         <h1 className="text-2xl font-bold mb-2" style={{ color: NAVY }}>Report not found</h1>
         <p className="text-sm mb-6" style={{ color: "#6B7280" }}>This report may have been removed or the link is incorrect.</p>
-        <Link href="/career"><Button style={{ background: NAVY, color: "white" }}>Go to Career Intelligence</Button></Link>
+        <Link href="/career"><Button style={{ background: NAVY, color: "white" }}>Go to Career Transition Intelligence</Button></Link>
       </div>
     );
   }
@@ -221,7 +221,7 @@ export default function CpiReport() {
           <button onClick={() => navigate("/career")}
             className="flex items-center gap-2 text-sm font-medium opacity-80 hover:opacity-100 transition-opacity"
             style={{ color: "white" }}>
-            <ArrowLeft size={16} /> Back to Career Intelligence
+            <ArrowLeft size={16} /> Back to Career Transition Intelligence
           </button>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-widest" style={{ color: GOLD }}>
@@ -262,7 +262,7 @@ export default function CpiReport() {
             <Sparkles size={32} className="mx-auto mb-3" style={{ color: INDIGO }} />
             <h3 className="text-lg font-bold mb-2" style={{ color: NAVY }}>Generate Your Full Analysis</h3>
             <p className="text-sm mb-5 max-w-md mx-auto" style={{ color: "#6B7280" }}>
-              Your Career Strategist will analyse your full dimension profile and generate personalised insights,
+              Your Career Transition Coach will analyse your full dimension profile and generate personalised insights,
               blind spots, a 90-day action plan, and learning recommendations.
             </p>
             <Button onClick={handleGenerate} disabled={generating}
@@ -441,12 +441,12 @@ export default function CpiReport() {
 
         {/* ── Section 8: AI Coach Configuration ── */}
         {currentAnalysis && (
-          <Section title="Your Career Strategist is Configured" icon={<MessageSquare size={18} />} accent={INDIGO}>
+          <Section title="Your Career Transition Coach is Configured" icon={<MessageSquare size={18} />} accent={INDIGO}>
             <div className="rounded-xl p-6" style={{ background: `linear-gradient(135deg, ${INDIGO}08 0%, ${TEAL}08 100%)`, border: `1px solid ${INDIGO}20` }}>
               {/* Focus areas */}
               <div className="mb-6">
                 <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: INDIGO }}>
-                  Your Career Strategist will prioritise
+                  Your Career Transition Coach will prioritise
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {currentAnalysis.coachFocusAreas?.map((area: string, i: number) => (
@@ -460,7 +460,7 @@ export default function CpiReport() {
               {/* Opening prompt */}
               <div className="rounded-xl p-4 mb-4" style={{ background: "white", border: `1px solid ${INDIGO}20` }}>
                 <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: TEAL }}>
-                  Career Strategist Opening Message
+                  Career Transition Coach Opening Message
                 </p>
                 <p className="text-sm leading-relaxed italic" style={{ color: "#374151" }}>
                   "{currentAnalysis.coachOpeningPrompt}"
@@ -481,7 +481,7 @@ export default function CpiReport() {
                 <Link href="/guide">
                   <Button style={{ background: INDIGO, color: "white" }}>
                     <MessageSquare size={16} className="mr-2" />
-                    Start Conversation with Career Strategist
+                    Start Conversation with Career Transition Coach
                   </Button>
                 </Link>
               </div>

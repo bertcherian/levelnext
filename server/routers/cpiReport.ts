@@ -8,7 +8,7 @@
 //   5. Hidden Blind Spots
 //   6. 90-Day Career Positioning Action Plan
 //   7. Personalised Learning Recommendations
-//   8. AI Career Strategist Configuration
+//   8. AI Career Transition Coach Configuration
 
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
@@ -80,8 +80,8 @@ export type CpiAnalysis = {
   learningRecommendations: CpiLearningRecommendation[];  // 4–5 items
 
   // Section 8: AI Coach Configuration
-  coachFocusAreas: string[];            // 3 focus areas for the Career Strategist to prioritise
-  coachOpeningPrompt: string;           // A personalised opening message from the Career Strategist
+  coachFocusAreas: string[];            // 3 focus areas for the Career Transition Coach to prioritise
+  coachOpeningPrompt: string;           // A personalised opening message from the Career Transition Coach
   coachChallengeQuestion: string;       // One powerful question to start the coaching conversation
 };
 
@@ -144,7 +144,7 @@ export const cpiReportRouter = router({
         return `${d.label}: ${score}/100 (${band}) — ${d.description}`;
       }).join("\n");
 
-      const systemPrompt = `You are a senior Career Strategist and executive coach on the LevelNext Career Intelligence platform.
+      const systemPrompt = `You are a senior Career Transition Coach and executive coach on the LevelNext Career Transition Intelligence platform.
 You are generating a comprehensive, boardroom-grade Career Positioning Intelligence (CPI) report for a mid-to-senior professional.
 
 Your analysis must be:
@@ -156,7 +156,7 @@ Your analysis must be:
 - Professional but human — not corporate jargon
 
 Never mention "scores", "assessment", "test", or "chatbot".
-Always refer to the platform as LevelNext and the coach as Career Strategist.
+Always refer to the platform as LevelNext and the coach as Career Transition Coach.
 
 Return ONLY valid JSON matching this exact schema — no markdown, no preamble:
 {
@@ -233,7 +233,7 @@ For the 90-day actionPlan, create 6 items: Week 1–2, Week 3–4, Week 5–6, W
 
 For learningRecommendations, provide 4–5 items (mix of books, podcasts, exercises, and practices) that are specifically relevant to the gaps in this profile.
 
-For coachFocusAreas, identify the 3 most important areas for the Career Strategist to focus on in coaching conversations based on this profile.`;
+For coachFocusAreas, identify the 3 most important areas for the Career Transition Coach to focus on in coaching conversations based on this profile.`;
 
       let analysis: CpiAnalysis;
       try {
@@ -297,7 +297,7 @@ function buildFallbackAnalysis(
   const bottomDim = sortedDims[sortedDims.length - 1];
 
   return {
-    executiveSummary: `${name}, your Career Positioning Intelligence score of ${edgeScore}/100 places you in the ${zoneLabel} band. This profile reveals a professional with genuine capability who has not yet fully translated that capability into a compelling, market-visible positioning.\n\nYour strongest dimension — ${getDimensionLabel(topDim.id)} — is a genuine asset that you can leverage more deliberately. Your most significant development area — ${getDimensionLabel(bottomDim.id)} — represents the gap between where you are and where you could be in the market.\n\nThe 90-day plan in this report is designed to close that gap systematically. The Career Strategist is configured to your specific profile and ready to work through each dimension with you.`,
+    executiveSummary: `${name}, your Career Positioning Intelligence score of ${edgeScore}/100 places you in the ${zoneLabel} band. This profile reveals a professional with genuine capability who has not yet fully translated that capability into a compelling, market-visible positioning.\n\nYour strongest dimension — ${getDimensionLabel(topDim.id)} — is a genuine asset that you can leverage more deliberately. Your most significant development area — ${getDimensionLabel(bottomDim.id)} — represents the gap between where you are and where you could be in the market.\n\nThe 90-day plan in this report is designed to close that gap systematically. The Career Transition Coach is configured to your specific profile and ready to work through each dimension with you.`,
     scoreInterpretation: `A score of ${edgeScore}/100 in the ${zoneLabel} band means that your professional positioning is partially developed but not yet operating at full strength. Decision-makers who encounter you may recognise your capability, but they may not immediately understand the specific value you bring or why you are the right choice.\n\nThe opportunity here is significant. Professionals who move from this band to the next typically do so by sharpening two or three specific dimensions rather than trying to improve everything at once. Your action plan focuses on exactly that.`,
     dimensionAnalysis: CPI_DIMENSIONS.map((d) => {
       const score = dimScores[d.id] ?? 50;

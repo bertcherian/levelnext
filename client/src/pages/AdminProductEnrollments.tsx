@@ -133,7 +133,7 @@ export default function AdminProductEnrollments() {
           <div>
             <h1 className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Product Enrollments</h1>
             <p className="text-sm mt-1" style={{ color: "oklch(50% 0.02 248.6)" }}>
-              Manage which users have access to Leadership Intelligence and Career Intelligence.
+              Manage which users have access to Leadership Intelligence and Career Transition Intelligence.
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={exportCsv} className="flex items-center gap-2">

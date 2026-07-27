@@ -146,7 +146,7 @@ function CiScoreBanner({ completedReports }: { completedReports: Array<{ edgeSco
         <div className="flex items-center gap-4">
           <ScoreRing score={avg} color="#D4AF37" size={80} />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-white/50 mb-1">Career Intelligence Score</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-white/50 mb-1">Career Transition Intelligence Score</p>
             <p className="text-2xl font-bold text-white">{avg} / 100</p>
             <p className="text-xs text-white/40 mt-0.5">
               Average across {completedReports.length} of {CI_MODULES.length} diagnostics
@@ -231,12 +231,12 @@ export default function CareerProgress() {
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={18} style={{ color: "#D4AF37" }} />
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#D4AF37" }}>
-              Career Intelligence
+              Career Transition Intelligence
             </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Your Progress</h1>
           <p className="text-sm text-white/50">
-            Track your journey across all {CI_MODULES.length} Career Intelligence diagnostics. Work with your coach to decide which to take next.
+            Track your journey across all {CI_MODULES.length} Career Transition Intelligence diagnostics. Work with your coach to decide which to take next.
           </p>
         </div>
 
@@ -304,7 +304,7 @@ export default function CareerProgress() {
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">No diagnostics completed yet</h3>
                 <p className="text-sm text-white/40 mb-6 max-w-sm mx-auto">
-                  Talk to your coach about which Career Intelligence diagnostic to start with.
+                  Talk to your coach about which Career Transition Intelligence diagnostic to start with.
                 </p>
                 <Button
                   onClick={() => navigate("/diagnostics")}

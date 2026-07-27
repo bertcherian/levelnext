@@ -107,7 +107,7 @@ function buildFallbackAnalysis(
   const bottomDim = sorted[sorted.length - 1];
 
   return {
-    executiveSummary: `${name}, your ${moduleLabel} score of ${edgeScore}/100 places you in the ${zoneLabel} band. ${moduleMeta?.description ?? "This diagnostic reveals important insights about your career intelligence."}\n\nYour strongest dimension — ${dimLabels[topDim?.id ?? ""] ?? topDim?.label ?? "top area"} — is a genuine asset that you can leverage more deliberately. Your most significant development area — ${dimLabels[bottomDim?.id ?? ""] ?? bottomDim?.label ?? "growth area"} — represents the gap between where you are and where you could be.\n\nThe 90-day plan in this report is designed to close that gap systematically. Your Career Strategist is configured to your specific profile and ready to work through each dimension with you.`,
+    executiveSummary: `${name}, your ${moduleLabel} score of ${edgeScore}/100 places you in the ${zoneLabel} band. ${moduleMeta?.description ?? "This diagnostic reveals important insights about your career transition readiness."}\n\nYour strongest dimension — ${dimLabels[topDim?.id ?? ""] ?? topDim?.label ?? "top area"} — is a genuine asset that you can leverage more deliberately. Your most significant development area — ${dimLabels[bottomDim?.id ?? ""] ?? bottomDim?.label ?? "growth area"} — represents the gap between where you are and where you could be.\n\nThe 90-day plan in this report is designed to close that gap systematically. Your Career Transition Coach is configured to your specific profile and ready to work through each dimension with you.`,
     scoreInterpretation: `A score of ${edgeScore}/100 in the ${zoneLabel} band means your ${moduleLabel.toLowerCase()} is partially developed but not yet operating at full strength. Decision-makers who encounter you may recognise your capability, but may not immediately understand the specific value you bring.\n\nThe opportunity here is significant. Professionals who move from this band to the next typically do so by sharpening two or three specific dimensions rather than trying to improve everything at once. Your action plan focuses on exactly that.`,
     dimensionAnalysis: dimensions.map((d) => {
       const score = dimScores[d.id] ?? 50;
@@ -220,7 +220,7 @@ export const ciReportRouter = router({
 
       const dimensionOrder = dimensions.map((d, i) => `${i + 1}. ${d.id}`).join("\n");
 
-      const systemPrompt = `You are a senior Career Strategist and executive coach on the LevelNext Career Intelligence platform.
+      const systemPrompt = `You are a senior Career Transition Coach and executive coach on the LevelNext Career Transition Intelligence platform.
 You are generating a comprehensive, boardroom-grade ${moduleLabel} (${moduleCode}) report for a mid-to-senior professional.
 
 Your analysis must be:
@@ -235,7 +235,7 @@ Module context: ${moduleMeta?.description ?? ""}
 Module journey stage: ${moduleMeta?.journeyStage ?? ""}
 
 Never mention "scores", "assessment", "test", or "chatbot".
-Always refer to the platform as LevelNext and the coach as Career Strategist.
+Always refer to the platform as LevelNext and the coach as Career Transition Coach.
 
 Return ONLY valid JSON matching this exact schema — no markdown, no preamble:
 {
@@ -303,7 +303,7 @@ For the 90-day actionPlan, create 6 items: Week 1–2, Week 3–4, Week 5–6, W
 
 For learningRecommendations, provide 4–5 items (mix of books, podcasts, exercises, and practices) specifically relevant to the gaps in this profile.
 
-For coachFocusAreas, identify the 3 most important areas for the Career Strategist to focus on based on this profile.`;
+For coachFocusAreas, identify the 3 most important areas for the Career Transition Coach to focus on based on this profile.`;
 
       let analysis: CiAnalysis;
       try {

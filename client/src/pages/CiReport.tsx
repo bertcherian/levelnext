@@ -26,7 +26,7 @@ const CI_MODULE_META: Record<string, {
     tagline: "Know exactly where you stand — and where you should be.",
     color: "#D4AF37",
     icon: <Target size={18} />,
-    coachLabel: "Career Strategist",
+    coachLabel: "Career Transition Coach",
     samplePdf: "/manus-storage/cpi_sample_report_b3dd24bb.pdf",
   },
   CRS: {

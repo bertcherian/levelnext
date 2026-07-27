@@ -59,7 +59,7 @@ const NAV_ITEMS = [
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 
-// Career Intelligence nav items
+// Career Transition Intelligence nav items
 const CI_NAV_ITEMS = [
   { label: "Career Home", icon: Briefcase, href: "/career" },
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },

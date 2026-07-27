@@ -78,7 +78,7 @@ const LI_MODULES = [
   },
 ];
 
-// ── Career Intelligence modules (no gate — coach-guided selection) ─────────────
+// ── Career Transition Intelligence modules (no gate — coach-guided selection) ─────────────
 const CI_MODULES = [
   {
     id: "CPI",
@@ -521,7 +521,7 @@ export default function Diagnostics() {
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-1">
               <Briefcase size={15} style={{ color: "var(--color-ln-yellow)" }} />
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-ln-yellow)" }}>Career Intelligence</span>
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-ln-yellow)" }}>Career Transition Intelligence</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Career Diagnostics</h1>
             <p className="mt-1 text-base" style={{ color: "var(--color-ln-muted)" }}>
@@ -552,7 +552,7 @@ export default function Diagnostics() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>Upload Prior Assessments</p>
                 <p className="text-xs mt-1" style={{ color: "var(--color-ln-muted)" }}>
-                  Already have a DISC, Hogan, Gallup StrengthsFinder, 360° feedback, or any other career assessment? Upload it and your Career Strategist will extract the relevant insights to enrich your coaching context.
+                  Already have a DISC, Hogan, Gallup StrengthsFinder, 360° feedback, or any other career assessment? Upload it and your Career Transition Coach will extract the relevant insights to enrich your coaching context.
                 </p>
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {["DISC", "Hogan", "Gallup", "360°", "EQ", "Enneagram", "MBTI"].map((tag) => (
