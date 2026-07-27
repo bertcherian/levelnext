@@ -247,7 +247,7 @@ export default function CareerLanding() {
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 70% 80% at 0% 50%, oklch(55% 0.18 280 / 0.08) 0%, transparent 60%), radial-gradient(ellipse 50% 60% at 100% 80%, oklch(72% 0.17 162 / 0.06) 0%, transparent 60%)"
         }} />
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 pt-16 pb-12 md:pt-28 md:pb-20">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 pt-8 pb-10 md:pt-12 md:pb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-8"
             style={{
               background: "oklch(55% 0.18 280 / 0.15)",
@@ -263,7 +263,7 @@ export default function CareerLanding() {
             <div className="lg:w-[55%]">
               <h1 className="font-bold leading-[1.1] mb-6">
                 <span className="block text-4xl sm:text-5xl md:text-6xl text-white">
-                  Your next career opportunity<br className="hidden md:block" /> shouldn't depend on luck.
+                  Your next career<br /> opportunity<br /> shouldn't depend on luck.
                 </span>
               </h1>
               <p className="text-base md:text-lg leading-relaxed mb-4 text-white/75 max-w-2xl">
