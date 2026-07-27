@@ -112,7 +112,7 @@ function DimensionBar({ dim, expanded, onToggle }: {
                 {bandLabel(dim.band)}
               </span>
               <span className="font-bold text-sm" style={{ color: NAVY }}>{dim.score}</span>
-              {expanded ? <ChevronUp size={14} style={{ color: "#9CA3AF" }} /> : <ChevronDown size={14} style={{ color: "#9CA3AF" }} />}
+              {expanded ? <ChevronUp size={14} style={{ color: "#555555" }} /> : <ChevronDown size={14} style={{ color: "#555555" }} />}
             </div>
           </div>
           <div className="h-2 rounded-full" style={{ background: "#F3F4F6" }}>
@@ -202,7 +202,7 @@ export default function CpiReport() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: IVORY }}>
         <h1 className="text-2xl font-bold mb-2" style={{ color: NAVY }}>Report not found</h1>
-        <p className="text-sm mb-6" style={{ color: "#6B7280" }}>This report may have been removed or the link is incorrect.</p>
+        <p className="text-sm mb-6" style={{ color: "#333333" }}>This report may have been removed or the link is incorrect.</p>
         <Link href="/career"><Button style={{ background: NAVY, color: "white" }}>Go to Career Transition Intelligence</Button></Link>
       </div>
     );
@@ -261,7 +261,7 @@ export default function CpiReport() {
             style={{ borderColor: INDIGO + "40", background: INDIGO + "05" }}>
             <Sparkles size={32} className="mx-auto mb-3" style={{ color: INDIGO }} />
             <h3 className="text-lg font-bold mb-2" style={{ color: NAVY }}>Generate Your Full Analysis</h3>
-            <p className="text-sm mb-5 max-w-md mx-auto" style={{ color: "#6B7280" }}>
+            <p className="text-sm mb-5 max-w-md mx-auto" style={{ color: "#333333" }}>
               Your Career Transition Coach will analyse your full dimension profile and generate personalised insights,
               blind spots, a 90-day action plan, and learning recommendations.
             </p>
@@ -291,7 +291,7 @@ export default function CpiReport() {
                 <div className="text-4xl font-black" style={{ color: zoneColor }}>{Math.round(report.edgeScore ?? 0)}</div>
                 <div>
                   <div className="font-bold text-sm" style={{ color: NAVY }}>{zoneLabel}</div>
-                  <div className="text-xs" style={{ color: "#6B7280" }}>Career Positioning Score</div>
+                  <div className="text-xs" style={{ color: "#333333" }}>Career Positioning Score</div>
                 </div>
                 <div className="flex-1 h-3 rounded-full ml-4" style={{ background: "#F3F4F6" }}>
                   <div className="h-3 rounded-full" style={{ width: `${report.edgeScore ?? 0}%`, background: zoneColor }} />
@@ -307,7 +307,7 @@ export default function CpiReport() {
         {/* ── Section 3: Dimension Analysis ── */}
         {currentAnalysis && currentAnalysis.dimensionAnalysis?.length > 0 && (
           <Section title="Dimension-by-Dimension Analysis" icon={<Brain size={18} />} accent={TEAL}>
-            <p className="text-sm mb-4" style={{ color: "#6B7280" }}>
+            <p className="text-sm mb-4" style={{ color: "#333333" }}>
               Click any dimension to see the full insight, career implication, and a 14-day quick win.
             </p>
             {currentAnalysis.dimensionAnalysis.map((dim: CpiDimensionAnalysis) => (
@@ -351,7 +351,7 @@ export default function CpiReport() {
         {/* ── Section 5: Hidden Blind Spots ── */}
         {currentAnalysis && currentAnalysis.blindSpots?.length > 0 && (
           <Section title="Hidden Blind Spots" icon={<AlertTriangle size={18} />} accent="#EF4444">
-            <p className="text-sm mb-4" style={{ color: "#6B7280" }}>
+            <p className="text-sm mb-4" style={{ color: "#333333" }}>
               These are patterns in your profile that are likely limiting your career opportunities without you being fully aware of them.
             </p>
             {currentAnalysis.blindSpots.map((bs: CpiBlindSpot, i: number) => (
@@ -362,7 +362,7 @@ export default function CpiReport() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-7">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#6B7280" }}>What it is</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#333333" }}>What it is</p>
                     <p className="text-sm" style={{ color: "#374151" }}>{bs.description}</p>
                   </div>
                   <div>
@@ -398,7 +398,7 @@ export default function CpiReport() {
                       <p className="text-sm font-medium mb-2" style={{ color: NAVY }}>{item.action}</p>
                       <div className="flex items-start gap-2">
                         <CheckCircle2 size={13} className="flex-shrink-0 mt-0.5" style={{ color: TEAL }} />
-                        <p className="text-xs" style={{ color: "#6B7280" }}><span className="font-semibold">Success metric:</span> {item.successMetric}</p>
+                        <p className="text-xs" style={{ color: "#333333" }}><span className="font-semibold">Success metric:</span> {item.successMetric}</p>
                       </div>
                     </div>
                   </div>
@@ -430,7 +430,7 @@ export default function CpiReport() {
                     <p className="text-sm mb-3" style={{ color: "#374151" }}>{rec.description}</p>
                     <div className="flex items-center gap-1.5">
                       <Circle size={8} style={{ color: catColor }} fill={catColor} />
-                      <span className="text-xs" style={{ color: "#6B7280" }}>{rec.timeInvestment}</span>
+                      <span className="text-xs" style={{ color: "#333333" }}>{rec.timeInvestment}</span>
                     </div>
                   </div>
                 );
@@ -506,7 +506,7 @@ export default function CpiReport() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm" style={{ color: NAVY }}>View Sample Report</p>
-            <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>See how a completed Career Positioning Intelligence report looks with full coaching narrative.</p>
+            <p className="text-xs mt-0.5" style={{ color: "#333333" }}>See how a completed Career Positioning Intelligence report looks with full coaching narrative.</p>
           </div>
           {SAMPLE_PDF_URLS["CPI"] && (
             <a href={SAMPLE_PDF_URLS["CPI"]} target="_blank" rel="noopener noreferrer">
@@ -519,10 +519,10 @@ export default function CpiReport() {
 
         {/* ── Footer ── */}
         <div className="text-center py-6 border-t" style={{ borderColor: "#E5E7EB" }}>
-          <p className="text-xs" style={{ color: "#9CA3AF" }}>
+          <p className="text-xs" style={{ color: "#555555" }}>
             Career Positioning Intelligence · LevelNext by Meta Results Pvt. Ltd., Bangalore, India
           </p>
-          <p className="text-xs mt-1" style={{ color: "#9CA3AF" }}>
+          <p className="text-xs mt-1" style={{ color: "#555555" }}>
             © Meta Results Pvt. Ltd. · <a href="mailto:reports@metaresults.com" style={{ color: INDIGO }}>reports@metaresults.com</a>
           </p>
         </div>

@@ -293,7 +293,7 @@ function DimensionBar({
               <Badge className="text-xs px-2 py-0.5" style={{ background: bandColor + "18", color: bandColor, border: `1px solid ${bandColor}30` }}>
                 {dim.band}
               </Badge>
-              {expanded ? <ChevronUp size={14} style={{ color: "#9CA3AF" }} /> : <ChevronDown size={14} style={{ color: "#9CA3AF" }} />}
+              {expanded ? <ChevronUp size={14} style={{ color: "#555555" }} /> : <ChevronDown size={14} style={{ color: "#555555" }} />}
             </div>
           </div>
           <div className="w-full h-2 rounded-full bg-gray-100">
@@ -650,7 +650,7 @@ export default function CiReport() {
                       <p className="text-xs font-semibold mb-2" style={{ color: NAVY }}>{item.focus}</p>
                       <p className="text-sm leading-relaxed mb-2" style={{ color: "#374151" }}>{item.action}</p>
                       <div className="rounded-lg p-2" style={{ background: accent + "0D" }}>
-                        <p className="text-xs" style={{ color: "#6B7280" }}>✓ {item.successMetric}</p>
+                        <p className="text-xs" style={{ color: "#333333" }}>✓ {item.successMetric}</p>
                       </div>
                     </div>
                   ))}
@@ -668,7 +668,7 @@ export default function CiReport() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm" style={{ color: NAVY }}>{rec.title}</p>
-                      <p className="text-xs mt-0.5 mb-1" style={{ color: "#6B7280" }}>{rec.description}</p>
+                      <p className="text-xs mt-0.5 mb-1" style={{ color: "#333333" }}>{rec.description}</p>
                       <p className="text-xs font-medium" style={{ color: accent }}>{rec.timeInvestment}</p>
                     </div>
                   </div>
@@ -727,7 +727,7 @@ export default function CiReport() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm" style={{ color: NAVY }}>View Sample Report</p>
-            <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>See how a completed {meta.label} report looks with full coaching narrative.</p>
+            <p className="text-xs mt-0.5" style={{ color: "#333333" }}>See how a completed {meta.label} report looks with full coaching narrative.</p>
           </div>
           <a href={meta.samplePdf} target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="outline" className="font-semibold flex-shrink-0" style={{ borderColor: "#E5E7EB", color: NAVY }}>
@@ -759,7 +759,7 @@ export default function CiReport() {
         </div>
 
         {/* ── Footer ── */}
-        <p className="text-center text-xs pb-4" style={{ color: "#9CA3AF" }}>
+        <p className="text-center text-xs pb-4" style={{ color: "#555555" }}>
           Copyright: Meta Results Pvt. Ltd., Bangalore, India · reports@metaresults.com
         </p>
       </div>

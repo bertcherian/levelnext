@@ -192,71 +192,91 @@ const TESTIMONIALS = [
   },
 ];
 
-// ── FAQs ─────────────────────────────────────────────────────────────────────
-const FAQS = [
+// ── FAQs (categorized) ───────────────────────────────────────────────────────
+const FAQ_CATEGORIES = [
   {
-    q: "Why 90 days?",
-    a: "Career transitions require consistent, structured effort over time. 90 days is long enough to complete diagnostics, build new habits, position yourself properly, and have meaningful conversations in the market — but short enough to maintain momentum and urgency. Most professionals who commit fully see meaningful results within this window.",
+    category: "About the Programme",
+    faqs: [
+      {
+        q: "Who is this designed for?",
+        a: "Career Transition Intelligence is designed for Directors, VPs, Senior Managers, and CXOs who are considering a transition, actively searching, or want to build long-term career capital. It is also valuable for professionals returning to work after a break, changing industries, or preparing for their first senior role.",
+      },
+      {
+        q: "Why 90 days?",
+        a: "Career transitions require consistent, structured effort over time. 90 days is long enough to complete diagnostics, build new habits, position yourself properly, and have meaningful conversations in the market — but short enough to maintain momentum and urgency. Most professionals who commit fully see meaningful results within this window.",
+      },
+      {
+        q: "How much time does it require?",
+        a: "We recommend 30–45 minutes per day. This includes completing diagnostics, working with your AI coach, practising for interviews, building your CV and LinkedIn, and reviewing your progress. The platform is designed to fit around a working professional's schedule.",
+      },
+      {
+        q: "How is this different from LinkedIn Premium?",
+        a: "LinkedIn Premium gives you visibility into job postings and who viewed your profile. Career Transition Intelligence gives you the diagnostics to understand your gaps, the AI coaching to close them, the tools to position yourself, the practice to perform in interviews, and the intelligence to negotiate confidently. They are complementary, not competing.",
+      },
+      {
+        q: "Do I need to be actively job hunting?",
+        a: "No. Many professionals use Career Transition Intelligence to build career capital while still in their current role — so they are ready when the right opportunity appears. Starting before you need to is one of the most strategic decisions you can make.",
+      },
+      {
+        q: "What if I'm unsure about changing jobs?",
+        a: "That is exactly the right time to start. The diagnostics will give you clarity on where you stand, what your options are, and what a transition would realistically involve. Many professionals complete the programme and decide to stay — but with a much stronger negotiating position and clearer career direction.",
+      },
+    ],
   },
   {
-    q: "Is this coaching?",
-    a: "The Essentials plan is AI-powered and self-directed — you have access to an AI Career Transition Coach, Practice Coach, and Interview Simulator available 24/7. The Executive plan adds a real executive coach with six personal conversations. The Advisory plan provides intensive personal coaching throughout.",
+    category: "Coaching & AI",
+    faqs: [
+      {
+        q: "Is this coaching?",
+        a: "The Essentials plan is AI-powered and self-directed — you have access to an AI Career Transition Coach, Practice Coach, and Interview Simulator available 24/7. The Executive plan adds a real executive coach with six personal conversations. The Advisory plan provides intensive personal coaching throughout.",
+      },
+      {
+        q: "Will AI replace the coach?",
+        a: "No. The AI handles the always-available, personalised, data-driven elements — diagnostics, daily coaching, practice, and preparation. The human executive coach provides strategic judgment, emotional intelligence, and the kind of honest conversation that only a trusted advisor can offer. They work together.",
+      },
+      {
+        q: "How do I book a discovery conversation before committing?",
+        a: "You can book a free 30-minute discovery conversation with one of our advisors at any time. This is a no-pressure conversation to understand your situation, answer your questions, and help you decide if Career Transition Intelligence is the right fit. Use the 'Book a Discovery Conversation' button on this page.",
+      },
+    ],
   },
   {
-    q: "How much time does it require?",
-    a: "We recommend 30–45 minutes per day. This includes completing diagnostics, working with your AI coach, practising for interviews, building your CV and LinkedIn, and reviewing your progress. The platform is designed to fit around a working professional's schedule.",
+    category: "Payment & Process",
+    faqs: [
+      {
+        q: "How does payment work?",
+        a: "After you choose your plan, you will receive a payment link via email. Payment is accepted via credit/debit card, UPI, or bank transfer. Once payment is confirmed, your account is activated within 24 hours and you receive onboarding instructions to begin your 90-day journey.",
+      },
+      {
+        q: "What happens immediately after I pay?",
+        a: "Within 24 hours of payment confirmation, you will receive a welcome email with your login credentials, a short onboarding guide, and your first recommended diagnostic to complete. If you have chosen the Executive or Advisory plan, your executive coach will contact you within 48 hours to schedule your first conversation.",
+      },
+      {
+        q: "Is there a refund policy?",
+        a: "We offer a 7-day exploration period. If you complete your first diagnostic and feel the platform is not right for you, contact us within 7 days of activation for a full refund — no questions asked. After the 7-day window, we do not offer refunds, but we will work with you to ensure you get full value from the programme.",
+      },
+      {
+        q: "Can I pay in instalments?",
+        a: "Instalment options are available for the Executive and Advisory plans. The Executive plan can be split into two payments of ₹40,000 each. The Advisory plan can be discussed on a case-by-case basis. Contact us at transitions@levelnext.coach to arrange this before purchasing.",
+      },
+      {
+        q: "Can my employer pay?",
+        a: "Yes. Many organisations fund this through their professional development, leadership, or learning budgets. Some use it as part of outplacement support. We provide a sponsorship request letter you can share with your HR or manager.",
+      },
+    ],
   },
   {
-    q: "Will AI replace the coach?",
-    a: "No. The AI handles the always-available, personalised, data-driven elements — diagnostics, daily coaching, practice, and preparation. The human executive coach provides strategic judgment, emotional intelligence, and the kind of honest conversation that only a trusted advisor can offer. They work together.",
-  },
-  {
-    q: "Who is this designed for?",
-    a: "Career Transition Intelligence is designed for Directors, VPs, Senior Managers, and CXOs who are considering a transition, actively searching, or want to build long-term career capital. It is also valuable for professionals returning to work after a break, changing industries, or preparing for their first senior role.",
-  },
-  {
-    q: "How is this different from LinkedIn Premium?",
-    a: "LinkedIn Premium gives you visibility into job postings and who viewed your profile. Career Transition Intelligence gives you the diagnostics to understand your gaps, the AI coaching to close them, the tools to position yourself, the practice to perform in interviews, and the intelligence to negotiate confidently. They are complementary, not competing.",
-  },
-  {
-    q: "Can my employer pay?",
-    a: "Yes. Many organisations fund this through their professional development, leadership, or learning budgets. Some use it as part of outplacement support. We provide a sponsorship request letter you can share with your HR or manager.",
-  },
-  {
-    q: "Do I need to be actively job hunting?",
-    a: "No. Many professionals use Career Transition Intelligence to build career capital while still in their current role — so they are ready when the right opportunity appears. Starting before you need to is one of the most strategic decisions you can make.",
-  },
-  {
-    q: "What if I'm unsure about changing jobs?",
-    a: "That is exactly the right time to start. The diagnostics will give you clarity on where you stand, what your options are, and what a transition would realistically involve. Many professionals complete the programme and decide to stay — but with a much stronger negotiating position and clearer career direction.",
-  },
-  {
-    q: "How does payment work?",
-    a: "After you choose your plan, you will receive a payment link via email. Payment is accepted via credit/debit card, UPI, or bank transfer. Once payment is confirmed, your account is activated within 24 hours and you receive onboarding instructions to begin your 90-day journey.",
-  },
-  {
-    q: "What happens immediately after I pay?",
-    a: "Within 24 hours of payment confirmation, you will receive a welcome email with your login credentials, a short onboarding guide, and your first recommended diagnostic to complete. If you have chosen the Executive or Advisory plan, your executive coach will contact you within 48 hours to schedule your first conversation.",
-  },
-  {
-    q: "Is there a refund policy?",
-    a: "We offer a 7-day exploration period. If you complete your first diagnostic and feel the platform is not right for you, contact us within 7 days of activation for a full refund — no questions asked. After the 7-day window, we do not offer refunds, but we will work with you to ensure you get full value from the programme.",
-  },
-  {
-    q: "Can I pay in instalments?",
-    a: "Instalment options are available for the Executive and Advisory plans. The Executive plan can be split into two payments of ₹40,000 each. The Advisory plan can be discussed on a case-by-case basis. Contact us at transitions@levelnext.coach to arrange this before purchasing.",
-  },
-  {
-    q: "Can I pause or extend my 90 days?",
-    a: "Yes. Life happens. If you face a significant disruption — a medical situation, a major work crisis, or a family emergency — we will pause your programme and restart your 90-day clock when you are ready. This is available once per enrolment. Contact your coach or our support team to activate a pause.",
-  },
-  {
-    q: "What if I get a job before the 90 days are up?",
-    a: "That is the best possible outcome. Your access continues for the full 90 days regardless — you can use the remaining time to prepare for your new role, negotiate your offer, or build the habits you will need to succeed in the next chapter. Many of our best conversations happen after an offer is received.",
-  },
-  {
-    q: "How do I book a discovery conversation before committing?",
-    a: "You can book a free 30-minute discovery conversation with one of our advisors at any time. This is a no-pressure conversation to understand your situation, answer your questions, and help you decide if Career Transition Intelligence is the right fit. Use the 'Book a Discovery Conversation' button on this page.",
+    category: "During the Programme",
+    faqs: [
+      {
+        q: "Can I pause or extend my 90 days?",
+        a: "Yes. Life happens. If you face a significant disruption — a medical situation, a major work crisis, or a family emergency — we will pause your programme and restart your 90-day clock when you are ready. This is available once per enrolment. Contact your coach or our support team to activate a pause.",
+      },
+      {
+        q: "What if I get a job before the 90 days are up?",
+        a: "That is the best possible outcome. Your access continues for the full 90 days regardless — you can use the remaining time to prepare for your new role, negotiate your offer, or build the habits you will need to succeed in the next chapter. Many of our best conversations happen after an offer is received.",
+      },
+    ],
   },
 ];
 
@@ -338,10 +358,10 @@ export default function CareerInvestment() {
         <h1 className="font-bold mb-5" style={{ fontSize: "clamp(2.2rem, 5vw, 3.5rem)", lineHeight: 1.1, color: "#0A1A2F" }}>
           Invest in the next chapter<br />of your career.
         </h1>
-        <p className="text-lg mb-3 mx-auto max-w-2xl" style={{ color: "rgba(10,26,47,0.55)", lineHeight: 1.7 }}>
+        <p className="text-lg mb-3 mx-auto max-w-2xl" style={{ color: "rgba(0,0,0,0.7)", lineHeight: 1.7 }}>
           Your next career opportunity shouldn't depend on luck.
         </p>
-        <p className="text-base mb-10 mx-auto max-w-2xl" style={{ color: "rgba(10,26,47,0.5)", lineHeight: 1.7 }}>
+        <p className="text-base mb-10 mx-auto max-w-2xl" style={{ color: "rgba(0,0,0,0.65)", lineHeight: 1.7 }}>
           Career Transition Intelligence combines AI coaching, diagnostics, deliberate practice and executive guidance to help you confidently transition into your next role.
         </p>
         <a href="#plans">
@@ -359,14 +379,14 @@ export default function CareerInvestment() {
             <h2 className="font-bold mb-4" style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.5rem)", color: "#0A1A2F" }}>
               Waiting costs more than acting.
             </h2>
-            <p className="text-base max-w-2xl mx-auto" style={{ color: "rgba(10,26,47,0.55)", lineHeight: 1.7 }}>
+            <p className="text-base max-w-2xl mx-auto" style={{ color: "rgba(0,0,0,0.7)", lineHeight: 1.7 }}>
               Most professionals delay their transition until they have no choice. By then, the market has moved, confidence has eroded, and options have narrowed.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             {/* Cost of waiting */}
             <div className="rounded-2xl p-8 border" style={{ background: "rgba(10,26,47,0.02)", borderColor: "rgba(10,26,47,0.08)" }}>
-              <p className="text-sm font-semibold mb-5" style={{ color: "rgba(10,26,47,0.4)" }}>Waiting six months could mean</p>
+              <p className="text-sm font-semibold mb-5" style={{ color: "rgba(0,0,0,0.55)" }}>Waiting six months could mean</p>
               {[
                 "Missed promotions that went to better-positioned peers",
                 "Lost salary growth — every month without a move is a month without an increase",
@@ -378,7 +398,7 @@ export default function CareerInvestment() {
                   <div className="mt-1 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)" }}>
                     <X size={11} style={{ color: "#ef4444" }} />
                   </div>
-                  <p className="text-sm" style={{ color: "rgba(10,26,47,0.65)", lineHeight: 1.6 }}>{item}</p>
+                  <p className="text-sm" style={{ color: "rgba(0,0,0,0.8)", lineHeight: 1.6 }}>{item}</p>
                 </div>
               ))}
             </div>
@@ -396,7 +416,7 @@ export default function CareerInvestment() {
                   <div className="mt-1 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "rgba(212,175,55,0.15)" }}>
                     <Check size={11} style={{ color: "#B8960C" }} />
                   </div>
-                  <p className="text-sm" style={{ color: "rgba(10,26,47,0.65)", lineHeight: 1.6 }}>{item}</p>
+                  <p className="text-sm" style={{ color: "rgba(0,0,0,0.8)", lineHeight: 1.6 }}>{item}</p>
                 </div>
               ))}
             </div>
@@ -412,7 +432,7 @@ export default function CareerInvestment() {
             <h2 className="font-bold mb-4" style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.5rem)", color: "#0A1A2F" }}>
               Choose the level of support that's right for you.
             </h2>
-            <p className="text-base max-w-xl mx-auto" style={{ color: "rgba(10,26,47,0.5)" }}>
+            <p className="text-base max-w-xl mx-auto" style={{ color: "rgba(0,0,0,0.65)" }}>
               All plans are 90 days. All plans include the full AI platform. The difference is the level of personal guidance.
             </p>
           </div>
@@ -433,23 +453,23 @@ export default function CareerInvestment() {
                   </div>
                 )}
                 <div className="mb-6">
-                  <p className="text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: plan.recommended ? "rgba(248,245,240,0.5)" : "rgba(10,26,47,0.4)" }}>{plan.duration}</p>
+                  <p className="text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: plan.recommended ? "rgba(248,245,240,0.5)" : "rgba(0,0,0,0.55)" }}>{plan.duration}</p>
                   <h3 className="font-bold text-lg mb-2" style={{ color: plan.recommended ? "#F8F5F0" : "#0A1A2F" }}>{plan.name}</h3>
-                  <p className="text-sm mb-5" style={{ color: plan.recommended ? "rgba(248,245,240,0.6)" : "rgba(10,26,47,0.5)" }}>{plan.tagline}</p>
+                  <p className="text-sm mb-5" style={{ color: plan.recommended ? "rgba(248,245,240,0.6)" : "rgba(0,0,0,0.65)" }}>{plan.tagline}</p>
                   <div className="flex items-baseline gap-1 mb-1">
                     <span className="font-bold" style={{ fontSize: "1.75rem", color: plan.recommended ? "#D4AF37" : "#0A1A2F" }}>{plan.price}</span>
                   </div>
                   <p className="text-xs" style={{ color: plan.recommended ? "rgba(248,245,240,0.4)" : "rgba(10,26,47,0.35)" }}>{plan.priceNote}</p>
                 </div>
-                <p className="text-xs mb-6 leading-relaxed" style={{ color: plan.recommended ? "rgba(248,245,240,0.55)" : "rgba(10,26,47,0.5)" }}>
-                  <span className="font-semibold" style={{ color: plan.recommended ? "rgba(248,245,240,0.7)" : "rgba(10,26,47,0.65)" }}>Ideal for: </span>
+                <p className="text-xs mb-6 leading-relaxed" style={{ color: plan.recommended ? "rgba(248,245,240,0.55)" : "rgba(0,0,0,0.65)" }}>
+                  <span className="font-semibold" style={{ color: plan.recommended ? "rgba(248,245,240,0.7)" : "rgba(0,0,0,0.8)" }}>Ideal for: </span>
                   {plan.idealFor}
                 </p>
                 <div className="flex-1 mb-8">
                   {plan.features.map((f, i) => (
                     <div key={i} className="flex items-center gap-2.5 mb-2.5">
                       <Check size={13} style={{ color: plan.recommended ? "#D4AF37" : "#0A1A2F", flexShrink: 0 }} />
-                      <span className="text-sm" style={{ color: plan.recommended ? "rgba(248,245,240,0.75)" : "rgba(10,26,47,0.65)" }}>{f}</span>
+                      <span className="text-sm" style={{ color: plan.recommended ? "rgba(248,245,240,0.75)" : "rgba(0,0,0,0.8)" }}>{f}</span>
                     </div>
                   ))}
                 </div>
@@ -480,7 +500,7 @@ export default function CareerInvestment() {
             <table className="w-full">
               <thead>
                 <tr>
-                  <th className="text-left py-4 pr-6 text-sm font-medium" style={{ color: "rgba(10,26,47,0.4)", width: "40%" }}>Feature</th>
+                  <th className="text-left py-4 pr-6 text-sm font-medium" style={{ color: "rgba(0,0,0,0.55)", width: "40%" }}>Feature</th>
                   {PLANS.map((p) => (
                     <th key={p.id} className="text-center py-4 px-4 text-sm font-semibold" style={{ color: p.recommended ? "#D4AF37" : "#0A1A2F", width: "20%" }}>
                       {p.recommended && <span className="block text-xs font-normal mb-0.5" style={{ color: "#D4AF37" }}>★ Most Popular</span>}
@@ -492,7 +512,7 @@ export default function CareerInvestment() {
               <tbody>
                 {COMPARISON_ROWS.map((row, i) => (
                   <tr key={i} style={{ borderTop: "1px solid rgba(10,26,47,0.05)" }}>
-                    <td className="py-3 pr-6 text-sm" style={{ color: "rgba(10,26,47,0.65)" }}>{row.feature}</td>
+                    <td className="py-3 pr-6 text-sm" style={{ color: "rgba(0,0,0,0.8)" }}>{row.feature}</td>
                     {[row.essentials, row.executive, row.advisory].map((val, j) => (
                       <td key={j} className="py-3 px-4 text-center text-sm">
                         {val === true ? (
@@ -531,7 +551,7 @@ export default function CareerInvestment() {
                   </div>
                   <p className="font-bold text-sm mb-3" style={{ color: "#0A1A2F" }}>{step.step}</p>
                   {step.items.map((item, i) => (
-                    <p key={i} className="text-xs mb-1.5" style={{ color: "rgba(10,26,47,0.55)" }}>{item}</p>
+                    <p key={i} className="text-xs mb-1.5" style={{ color: "rgba(0,0,0,0.7)" }}>{item}</p>
                   ))}
                 </div>
               );
@@ -548,7 +568,7 @@ export default function CareerInvestment() {
             <h2 className="font-bold mb-4" style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "#0A1A2F" }}>
               Why this investment makes sense.
             </h2>
-            <p className="text-base max-w-xl mx-auto" style={{ color: "rgba(10,26,47,0.5)" }}>
+            <p className="text-base max-w-xl mx-auto" style={{ color: "rgba(0,0,0,0.65)" }}>
               Compare the cost of Career Transition Intelligence against the alternatives.
             </p>
           </div>
@@ -557,8 +577,8 @@ export default function CareerInvestment() {
               <div key={i} className="rounded-xl p-5 border" style={{ background: "#FFFFFF", borderColor: "rgba(10,26,47,0.08)" }}>
                 <p className="font-semibold text-sm mb-2" style={{ color: "#0A1A2F" }}>{alt.name}</p>
                 <p className="font-bold text-lg mb-1" style={{ color: "#ef4444" }}>{alt.cost}</p>
-                <p className="text-xs mb-2" style={{ color: "rgba(10,26,47,0.4)" }}>{alt.duration}</p>
-                <p className="text-xs" style={{ color: "rgba(10,26,47,0.45)" }}>{alt.note}</p>
+                <p className="text-xs mb-2" style={{ color: "rgba(0,0,0,0.55)" }}>{alt.duration}</p>
+                <p className="text-xs" style={{ color: "rgba(0,0,0,0.6)" }}>{alt.note}</p>
               </div>
             ))}
           </div>
@@ -588,7 +608,7 @@ export default function CareerInvestment() {
             ].map((item, i) => (
               <div key={i} className="rounded-xl p-5 border" style={{ background: "#FFFFFF", borderColor: "rgba(10,26,47,0.07)" }}>
                 <div className="text-2xl mb-3">{item.icon}</div>
-                <p className="text-sm leading-relaxed" style={{ color: "rgba(10,26,47,0.65)" }}>{item.text}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(0,0,0,0.8)" }}>{item.text}</p>
               </div>
             ))}
           </div>
@@ -608,10 +628,10 @@ export default function CareerInvestment() {
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-5" style={{ background: "rgba(212,175,55,0.1)", color: "#B8960C" }}>
                   <Award size={11} /> {t.outcome}
                 </div>
-                <p className="text-sm leading-relaxed mb-5" style={{ color: "rgba(10,26,47,0.65)", fontStyle: "italic" }}>"{t.quote}"</p>
+                <p className="text-sm leading-relaxed mb-5" style={{ color: "rgba(0,0,0,0.8)", fontStyle: "italic" }}>"{t.quote}"</p>
                 <div>
                   <p className="font-semibold text-sm" style={{ color: "#0A1A2F" }}>{t.name}</p>
-                  <p className="text-xs" style={{ color: "rgba(10,26,47,0.45)" }}>{t.role}, {t.company}</p>
+                  <p className="text-xs" style={{ color: "rgba(0,0,0,0.6)" }}>{t.role}, {t.company}</p>
                 </div>
               </div>
             ))}
@@ -625,23 +645,38 @@ export default function CareerInvestment() {
           <div className="text-center mb-12">
             <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: "#D4AF37" }}>Frequently Asked Questions</p>
             <h2 className="font-bold mb-3" style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "#0A1A2F" }}>Questions worth asking.</h2>
-            <p className="text-sm" style={{ color: "rgba(10,26,47,0.5)" }}>About the programme, payment, and what happens next.</p>
+            <p className="text-sm" style={{ color: "rgba(0,0,0,0.65)" }}>About the programme, payment, and what happens next.</p>
           </div>
-          <div className="space-y-2">
-            {FAQS.map((faq, i) => (
-              <div key={i} className="rounded-xl border overflow-hidden" style={{ background: "#FFFFFF", borderColor: "rgba(10,26,47,0.08)" }}>
-                <button
-                  className="w-full flex items-center justify-between px-6 py-5 text-left"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                >
-                  <span className="font-semibold text-sm pr-4" style={{ color: "#0A1A2F" }}>{faq.q}</span>
-                  {openFaq === i ? <ChevronUp size={16} style={{ color: "rgba(10,26,47,0.4)", flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: "rgba(10,26,47,0.4)", flexShrink: 0 }} />}
-                </button>
-                {openFaq === i && (
-                  <div className="px-6 pb-5">
-                    <p className="text-sm leading-relaxed" style={{ color: "rgba(10,26,47,0.6)" }}>{faq.a}</p>
-                  </div>
-                )}
+          <div className="space-y-10">
+            {FAQ_CATEGORIES.map((cat, catIdx) => (
+              <div key={catIdx}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-px flex-1" style={{ background: "rgba(10,26,47,0.1)" }} />
+                  <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full" style={{ background: "rgba(212,175,55,0.12)", color: "#0A1A2F" }}>{cat.category}</span>
+                  <div className="h-px flex-1" style={{ background: "rgba(10,26,47,0.1)" }} />
+                </div>
+                <div className="space-y-2">
+                  {cat.faqs.map((faq, i) => {
+                    const key = `${catIdx}-${i}`;
+                    const isOpen = openFaq === (catIdx * 100 + i);
+                    return (
+                      <div key={key} className="rounded-xl border overflow-hidden" style={{ background: "#FFFFFF", borderColor: "rgba(10,26,47,0.08)" }}>
+                        <button
+                          className="w-full flex items-center justify-between px-6 py-5 text-left"
+                          onClick={() => setOpenFaq(isOpen ? null : catIdx * 100 + i)}
+                        >
+                          <span className="font-semibold text-sm pr-4" style={{ color: "#0A1A2F" }}>{faq.q}</span>
+                          {isOpen ? <ChevronUp size={16} style={{ color: "rgba(0,0,0,0.55)", flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: "rgba(0,0,0,0.55)", flexShrink: 0 }} />}
+                        </button>
+                        {isOpen && (
+                          <div className="px-6 pb-5">
+                            <p className="text-sm leading-relaxed" style={{ color: "rgba(0,0,0,0.75)" }}>{faq.a}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </div>
@@ -657,14 +692,14 @@ export default function CareerInvestment() {
               <h2 className="font-bold mb-4" style={{ fontSize: "clamp(1.5rem, 2.5vw, 2rem)", color: "#0A1A2F" }}>
                 Your employer may already fund this.
               </h2>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: "rgba(10,26,47,0.55)" }}>
+              <p className="text-sm leading-relaxed mb-6" style={{ color: "rgba(0,0,0,0.7)" }}>
                 Many organisations sponsor Career Transition Intelligence through their professional development, leadership, or learning budgets. Some use it as part of outplacement support or career transition programmes.
               </p>
               <div className="space-y-2 mb-6">
                 {["Professional Development Budget", "Leadership Development Budget", "Learning & Development Budget", "Outplacement Support", "Career Transition Programmes"].map((item, i) => (
                   <div key={i} className="flex items-center gap-2.5">
                     <Check size={13} style={{ color: "#D4AF37" }} />
-                    <span className="text-sm" style={{ color: "rgba(10,26,47,0.65)" }}>{item}</span>
+                    <span className="text-sm" style={{ color: "rgba(0,0,0,0.8)" }}>{item}</span>
                   </div>
                 ))}
               </div>
@@ -678,10 +713,10 @@ export default function CareerInvestment() {
             </div>
             <div className="rounded-2xl p-8 border" style={{ background: "#F4F1EC", borderColor: "rgba(10,26,47,0.08)" }}>
               <p className="font-semibold text-sm mb-4" style={{ color: "#0A1A2F" }}>What to say to your manager</p>
-              <div className="rounded-xl p-5 border text-sm leading-relaxed" style={{ background: "#FFFFFF", borderColor: "rgba(10,26,47,0.07)", color: "rgba(10,26,47,0.6)", fontStyle: "italic" }}>
+              <div className="rounded-xl p-5 border text-sm leading-relaxed" style={{ background: "#FFFFFF", borderColor: "rgba(10,26,47,0.07)", color: "rgba(0,0,0,0.75)", fontStyle: "italic" }}>
                 "I've identified a 90-day programme that combines AI-powered career diagnostics, coaching, and deliberate practice. It aligns directly with my professional development goals and would strengthen my leadership capability and positioning. I'd like to request that this be funded through our L&D budget."
               </div>
-              <p className="text-xs mt-4" style={{ color: "rgba(10,26,47,0.4)" }}>We provide a formal sponsorship request letter on enrolment.</p>
+              <p className="text-xs mt-4" style={{ color: "rgba(0,0,0,0.55)" }}>We provide a formal sponsorship request letter on enrolment.</p>
             </div>
           </div>
         </div>
@@ -695,7 +730,7 @@ export default function CareerInvestment() {
             <h2 className="font-bold mb-3" style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "#0A1A2F" }}>
               What is your transition worth?
             </h2>
-            <p className="text-sm" style={{ color: "rgba(10,26,47,0.5)" }}>Adjust the sliders to estimate the value of a successful transition.</p>
+            <p className="text-sm" style={{ color: "rgba(0,0,0,0.65)" }}>Adjust the sliders to estimate the value of a successful transition.</p>
           </div>
           <div className="rounded-2xl p-8 border" style={{ background: "#FFFFFF", borderColor: "rgba(10,26,47,0.08)" }}>
             <div className="space-y-6 mb-8">
@@ -738,22 +773,22 @@ export default function CareerInvestment() {
             </div>
             <div className="grid grid-cols-3 gap-4 pt-6 border-t" style={{ borderColor: "rgba(10,26,47,0.08)" }}>
               <div className="text-center">
-                <p className="text-xs mb-1" style={{ color: "rgba(10,26,47,0.45)" }}>Salary Increase</p>
+                <p className="text-xs mb-1" style={{ color: "rgba(0,0,0,0.6)" }}>Salary Increase</p>
                 <p className="font-bold text-lg" style={{ color: "#0A1A2F" }}>₹{((targetSalary - salary) / 100000).toFixed(0)}L</p>
               </div>
               <div className="text-center">
-                <p className="text-xs mb-1" style={{ color: "rgba(10,26,47,0.45)" }}>Time Recovered</p>
+                <p className="text-xs mb-1" style={{ color: "rgba(0,0,0,0.6)" }}>Time Recovered</p>
                 <p className="font-bold text-lg" style={{ color: "#0A1A2F" }}>₹{((monthsSaved * salary / 12) / 100000).toFixed(0)}L</p>
               </div>
               <div className="text-center">
-                <p className="text-xs mb-1" style={{ color: "rgba(10,26,47,0.45)" }}>Total Value Created</p>
+                <p className="text-xs mb-1" style={{ color: "rgba(0,0,0,0.6)" }}>Total Value Created</p>
                 <p className="font-bold text-lg" style={{ color: "#D4AF37" }}>₹{(roi / 100000).toFixed(0)}L</p>
               </div>
             </div>
             <div className="mt-5 rounded-xl p-4 text-center" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.2)" }}>
-              <p className="text-xs mb-1" style={{ color: "rgba(10,26,47,0.5)" }}>Your estimated ROI on the Executive plan</p>
+              <p className="text-xs mb-1" style={{ color: "rgba(0,0,0,0.65)" }}>Your estimated ROI on the Executive plan</p>
               <p className="font-bold text-2xl" style={{ color: "#0A1A2F" }}>{roiMultiple}× return</p>
-              <p className="text-xs mt-1" style={{ color: "rgba(10,26,47,0.4)" }}>Based on ₹80,000 investment</p>
+              <p className="text-xs mt-1" style={{ color: "rgba(0,0,0,0.55)" }}>Based on ₹80,000 investment</p>
             </div>
           </div>
         </div>
@@ -780,7 +815,7 @@ export default function CareerInvestment() {
               <div key={i} className="rounded-xl p-5 border" style={{ background: "#FFFFFF", borderColor: "rgba(10,26,47,0.08)" }}>
                 <div className="text-2xl mb-3">{item.icon}</div>
                 <p className="font-semibold text-sm mb-2" style={{ color: "#0A1A2F" }}>{item.title}</p>
-                <p className="text-xs leading-relaxed" style={{ color: "rgba(10,26,47,0.55)" }}>{item.desc}</p>
+                <p className="text-xs leading-relaxed" style={{ color: "rgba(0,0,0,0.7)" }}>{item.desc}</p>
               </div>
             ))}
           </div>
@@ -824,12 +859,12 @@ export default function CareerInvestment() {
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img src={LOGO_URL} alt="LevelNext" className="h-6 object-contain" />
-            <span className="text-xs" style={{ color: "rgba(10,26,47,0.4)" }}>Career Transition Intelligence</span>
+            <span className="text-xs" style={{ color: "rgba(0,0,0,0.55)" }}>Career Transition Intelligence</span>
           </div>
           <div className="flex items-center gap-6">
-            <a href="/career-intelligence" className="text-xs" style={{ color: "rgba(10,26,47,0.4)" }}>Platform</a>
-            <a href="/" className="text-xs" style={{ color: "rgba(10,26,47,0.4)" }}>LevelNext</a>
-            <button onClick={() => setOutplacementModalOpen(true)} className="text-xs" style={{ color: "rgba(10,26,47,0.4)" }}>Contact</button>
+            <a href="/career-intelligence" className="text-xs" style={{ color: "rgba(0,0,0,0.55)" }}>Platform</a>
+            <a href="/" className="text-xs" style={{ color: "rgba(0,0,0,0.55)" }}>LevelNext</a>
+            <button onClick={() => setOutplacementModalOpen(true)} className="text-xs" style={{ color: "rgba(0,0,0,0.55)" }}>Contact</button>
           </div>
         </div>
       </footer>

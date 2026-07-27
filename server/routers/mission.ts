@@ -62,7 +62,7 @@ Respond with ONLY a JSON object:
 `.trim();
 
     const result = await invokeLLM({
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       maxTokens: 300,
       responseFormat: { type: "json_object" },
