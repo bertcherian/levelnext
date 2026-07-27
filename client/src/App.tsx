@@ -65,6 +65,7 @@ import MEPLeaderDocuments from "@/pages/mep/MEPLeaderDocuments";
 import AdminOrgContext from "@/pages/AdminOrgContext";
 import AdminParticipantImport from "@/pages/AdminParticipantImport";
 import CareerLanding from "@/pages/CareerLanding";
+import CareerInvestment from "@/pages/CareerInvestment";
 import ResumeMakeover from "@/pages/ci/ResumeMakeover";
 import ResumeReport from "@/pages/ci/ResumeReport";
 import ResumeRewrite from "@/pages/ci/ResumeRewrite";
@@ -188,6 +189,7 @@ function Router() {
       <Route path="/coach" component={CoachPortal} />
       <Route path="/career-landing" component={CareerLanding} />
       <Route path="/career-intelligence" component={CareerLanding} />
+      <Route path="/career-investment" component={CareerInvestment} />
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />

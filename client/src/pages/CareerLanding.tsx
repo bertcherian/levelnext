@@ -197,6 +197,7 @@ export default function CareerLanding() {
             <a href="#journey" className="hover:text-white transition-colors">The Journey</a>
             <a href="#engines" className="hover:text-white transition-colors">AI Engines</a>
             <a href="#for-who" className="hover:text-white transition-colors">For Who</a>
+            <a href="/career-investment" className="hover:text-white transition-colors">Investment</a>
             <a href="/" className="hover:text-white transition-colors">Leadership Intelligence</a>
           </nav>
           <div className="flex items-center gap-3">
@@ -234,6 +235,7 @@ export default function CareerLanding() {
               { href: "#journey", label: "The Journey" },
               { href: "#engines", label: "AI Engines" },
               { href: "#for-who", label: "For Who" },
+              { href: "/career-investment", label: "Investment" },
             ].map(({ href, label }) => (
               <a key={href} href={href} className="text-white/70 hover:text-white py-1 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}>{label}</a>
