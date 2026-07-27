@@ -799,7 +799,7 @@ Key achievements: ${profile?.keyAchievements ? "Documented" : "Not documented"}`
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
       ],
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       maxTokens: 800,
     });
 
@@ -910,7 +910,7 @@ Today's date: ${today}`;
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
       ],
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       maxTokens: 600,
     });
 

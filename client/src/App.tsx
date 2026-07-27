@@ -186,7 +186,7 @@ function Router() {
       <Route path="/next-chapter/portfolio" component={NextChapterPortfolio} />
       <Route path="/next-chapter/identity-assessment" component={IdentityClarityAssessment} />
       <Route path="/coach" component={CoachPortal} />
-      <Route path="/career-intelligence" component={CareerLanding} />
+      <Route path="/career-intelligence">{() => { useEffect(() => { window.location.replace("/career"); }, []); return null; }}</Route>
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />

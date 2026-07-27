@@ -1955,6 +1955,12 @@ export const userResumes = mysqlTable("user_resumes", {
   rewrittenFileUrl: varchar("rewrittenFileUrl", { length: 1000 }),
   rewrittenFileKey: varchar("rewrittenFileKey", { length: 500 }),
   rewrittenAt: timestamp("rewrittenAt"),
+  // Post-rewrite scores (to show before/after comparison)
+  rewrittenAtsScore: int("rewrittenAtsScore"),
+  rewrittenQualityScore: int("rewrittenQualityScore"),
+  // Cover letter
+  coverLetterHtml: text("coverLetterHtml"),
+  coverLetterGeneratedAt: timestamp("coverLetterGeneratedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

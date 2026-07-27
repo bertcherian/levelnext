@@ -1103,3 +1103,54 @@
 - [x] ResumeRewrite page: Skill Gap Analysis panel — missing keywords grouped by category (Technical, Leadership, Domain, Soft Skills)
 - [x] TypeScript check (zero errors) | Vitest: 3/3 passed
 - [x] Save checkpoint
+
+## CI Audit Fixes (Jul 27 2026)
+
+### P0
+- [ ] Add Radar Signals, Interview Prep, Negotiation to CI_NAV_ITEMS in PlatformLayout
+- [ ] Fix CI Home quick-links: /progress → /career/progress, /growth-profile → /career/progress
+- [ ] Fix gpt-5-mini → gpt-4o-mini in careerAccess.ts computeCareerAccessScore
+
+### P1
+- [ ] Wire computeCareerAccessScore result to CI Home career edge score display
+- [ ] Fix CI Home to show CI diagnostic progress (not LI progress)
+- [ ] Add post-rewrite ATS re-score to resumeMakeover rewriteResume procedure
+- [ ] Persist cover letters to user_resumes table (coverLetterHtml column)
+
+### P2
+- [ ] Better scanned PDF error message with user guidance
+- [ ] Fix skill gap word-boundary matching (use word-boundary regex instead of includes)
+- [ ] Add loading skeleton to Resume Makeover hub page
+- [ ] Add back navigation breadcrumb to Rewrite page
+
+### P3
+- [ ] Redirect /career-intelligence legacy route to /career
+- [ ] Fix hardcoded "six diagnostics" copy in CareerProgress page
+- [ ] Fix unreadCount hardcoded to 0 on CareerHome
+
+## CI Audit Fixes (Jul 27 2026)
+
+### P0 — Critical
+- [x] Add Radar Signals, Interview Prep, Negotiation to CI_NAV_ITEMS in PlatformLayout
+- [x] Fix CI Home quick-links: /progress → /career/progress, /growth-profile → /career/progress
+- [x] Fix gpt-5-mini → gpt-4o-mini in careerAccess.ts
+
+### P1 — High Impact
+- [x] Wire computeCareerAccessScore result to CI Home score display
+- [x] Fix CI Home diagnostic list to show CI modules (not LI modules)
+- [x] Add post-rewrite ATS re-score (rewrittenAtsScore, rewrittenQualityScore columns + scoring in rewriteResume)
+- [x] Persist cover letters to DB (coverLetterHtml column on user_resumes)
+- [x] Fix generateCoverLetter model name gpt-5-mini → gpt-4o-mini
+
+### P2 — UX Polish
+- [x] Scanned PDF error: differentiated message for image-based PDFs vs short/corrupted files
+- [x] Skill gap word-boundary matching: use regex lookahead/lookbehind instead of .includes()
+- [x] Fix skill gap analyseSkillGap model name gpt-5-mini → gpt-4o-mini
+- [x] Resume Makeover hub: loading skeleton while resumes query is in flight
+- [x] Rewrite back navigation: confirmed already present
+
+### P3 — Maintenance
+- [x] Legacy /career-intelligence route: redirect to /career via window.location.replace
+- [x] CareerProgress subtitle: replace hardcoded "six" with {CI_MODULES.length}
+
+TypeScript: 0 errors | Vitest: 3/3 passed

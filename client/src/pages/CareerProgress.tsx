@@ -236,7 +236,7 @@ export default function CareerProgress() {
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Your Progress</h1>
           <p className="text-sm text-white/50">
-            Track your journey across all six Career Intelligence diagnostics. Work with your coach to decide which to take next.
+            Track your journey across all {CI_MODULES.length} Career Intelligence diagnostics. Work with your coach to decide which to take next.
           </p>
         </div>
 

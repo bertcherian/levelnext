@@ -55,7 +55,7 @@ export default function ResumeMakeover() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [justUploadedId, setJustUploadedId] = useState<number | null>(null);
 
-  const { data: resumes, refetch } = trpc.resumeMakeover.getMyResumes.useQuery();
+  const { data: resumes, refetch, isLoading: resumesLoading } = trpc.resumeMakeover.getMyResumes.useQuery();
   const activeResume = resumes?.find((r) => r.isActive);
 
   const uploadMutation = trpc.resumeMakeover.uploadResume.useMutation();
@@ -96,6 +96,7 @@ export default function ResumeMakeover() {
   };
 
   const isLoading = uploading || analysing;
+  const showSkeleton = resumesLoading && !resumes;
 
   return (
     <div className="min-h-screen bg-[#0A1A2F] text-white p-6 max-w-5xl mx-auto">
@@ -155,6 +156,23 @@ export default function ResumeMakeover() {
           )}
         </CardContent>
       </Card>
+
+      {/* Loading skeleton */}
+      {showSkeleton && (
+        <Card className="bg-[#0F2440] border-[#1e3a5f] mb-6 animate-pulse">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-8 justify-center py-4">
+              <div className="w-24 h-24 rounded-full bg-[#1e3a5f]" />
+              <div className="w-24 h-24 rounded-full bg-[#1e3a5f]" />
+              <div className="flex flex-col gap-3">
+                <div className="h-3 w-40 rounded bg-[#1e3a5f]" />
+                <div className="h-3 w-36 rounded bg-[#1e3a5f]" />
+                <div className="h-3 w-32 rounded bg-[#1e3a5f]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Active resume scores */}
       {activeResume && (

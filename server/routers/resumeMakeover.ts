@@ -417,9 +417,12 @@ export const resumeMakeoverRouter = router({
       const text = await extractText(buffer, input.mimeType);
 
       if (!text || text.trim().length < 50) {
+        const isLikelyScanned = input.mimeType === "application/pdf" && (!text || text.trim().length < 20);
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Could not extract text from this file. Please ensure it is a text-based PDF or DOCX (not a scanned image).",
+          message: isLikelyScanned
+            ? "This PDF appears to be a scanned image and cannot be read as text. Please: (1) export your resume as a text-based PDF from Word or Google Docs, or (2) upload a DOCX file instead."
+            : "Very little text was extracted from this file. Please ensure the file is not password-protected, corrupted, or a scanned image. Try exporting as DOCX from Word or Google Docs.",
         });
       }
 
@@ -531,16 +534,21 @@ export const resumeMakeoverRouter = router({
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       );
 
+      // Run post-rewrite ATS score on the rewritten plain text
+      const rewrittenAts = scoreAts(plainText);
+      const rewrittenAtsScore = rewrittenAts.total;
+
       await db.update(userResumes).set({
         rewrittenText: plainText,
         rewrittenHtml: html,
         rewrittenFileUrl: docxUrl,
         rewrittenFileKey: docxFileKey,
         rewrittenAt: new Date(),
+        rewrittenAtsScore,
         ...(jd ? { targetJobDescription: jd } : {}),
       }).where(eq(userResumes.id, input.resumeId));
 
-      return { html, docxUrl };
+      return { html, docxUrl, rewrittenAtsScore, originalAtsScore: resume.atsScore ?? null };
     }),
 
   /** Get all resume versions for the current user */
@@ -638,7 +646,7 @@ Instructions:
 - Start directly with the first paragraph (no salutation, no date — user will add those)`;
 
       const result = await invokeLLM({
-        model: "gpt-5-mini",
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 1200,
       });
@@ -648,6 +656,13 @@ Instructions:
         ?? (result as any)?.content?.[0]?.text ?? "";
 
       const cleanHtml = html.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim();
+
+      // Persist cover letter to DB
+      await db.update(userResumes).set({
+        coverLetterHtml: cleanHtml,
+        coverLetterGeneratedAt: new Date(),
+      }).where(eq(userResumes.id, input.resumeId));
+
       return { html: cleanHtml };
     }),
 
@@ -675,8 +690,16 @@ Instructions:
       const jdWords = jdLower.match(/\b[a-z][a-z0-9+#.-]{2,}\b/g) ?? [];
       const uniqueJdTerms = Array.from(new Set(jdWords)).filter((w) => !STOP_WORDS.has(w) && w.length >= 3);
 
-      const presentInResume = uniqueJdTerms.filter((w) => resumeText.includes(w));
-      const missingFromResume = uniqueJdTerms.filter((w) => !resumeText.includes(w));
+      // Use word-boundary regex to avoid partial matches (e.g. "lead" matching "leadership")
+      const hasWordBoundary = (text: string, term: string): boolean => {
+        try {
+          return new RegExp(`(?<![a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`, "i").test(text);
+        } catch {
+          return text.includes(term);
+        }
+      };
+      const presentInResume = uniqueJdTerms.filter((w) => hasWordBoundary(resumeText, w));
+      const missingFromResume = uniqueJdTerms.filter((w) => !hasWordBoundary(resumeText, w));
 
       // LLM categorisation of missing keywords
       const prompt = `You are a talent acquisition expert. Categorise these keywords extracted from a job description into groups.
@@ -711,7 +734,7 @@ Return ONLY valid JSON:
 Only include non-empty arrays. topPriority = the 5 most important missing keywords to add.`;
 
       const result = await invokeLLM({
-        model: "gpt-5-mini",
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 1000,
         responseFormat: { type: "json_object" },

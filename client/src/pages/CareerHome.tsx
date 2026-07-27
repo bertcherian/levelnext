@@ -127,6 +127,14 @@ export default function CareerHome() {
     enabled: isAuthenticated,
   });
 
+  const { data: careerScoreData } = trpc.careerAccess.getCareerAccessScore.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const { data: ciReports } = trpc.report.myReports.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       navigate("/");
@@ -141,18 +149,31 @@ export default function CareerHome() {
     );
   }
 
-  // unlockData is an array of module status objects from unlock.getStatus
-  const moduleStatuses = Array.isArray(unlockData) ? unlockData : [];
-  const completedModules = moduleStatuses.filter((m: any) => m.state === "completed");
-  const careerEdgeScore: number | null = null; // Will come from leadershipGraph once CI reports are generated
+  // Career Access Score (from careerAccessScoreSnapshots)
+  const careerEdgeScore: number | null = careerScoreData?.latest?.compositeScore ?? null;
+
+  // CI diagnostic progress — use actual CI reports, not LI unlock status
+  const CI_CODES = new Set(CI_MODULE_ORDER);
+  const ciCompletedReports = Array.isArray(ciReports)
+    ? ciReports.filter((r: any) => CI_CODES.has(r.moduleType))
+    : [];
+  const completedCodes = new Set(ciCompletedReports.map((r: any) => r.moduleType));
   const totalModules = CI_MODULE_ORDER.length;
-  const completedCount = completedModules.length;
+  const completedCount = completedCodes.size;
   const progressPct = Math.round((completedCount / totalModules) * 100);
 
-  // Reorder modules to CI sequence
-  const orderedModules = CI_MODULE_ORDER.map(code =>
-    moduleStatuses.find((m: any) => m.moduleId === code)
-  ).filter(Boolean);
+  // Build ordered module list from CI reports
+  const orderedModules = CI_MODULE_ORDER.map(code => {
+    const report = ciCompletedReports.find((r: any) => r.moduleType === code);
+    return {
+      moduleId: code,
+      state: report ? "completed" : (completedCount === CI_MODULE_ORDER.indexOf(code) ? "unlocked" : "locked"),
+      score: report?.edgeScore ?? null,
+    };
+  });
+
+  // unlockLoading is used for the loading state
+  const moduleStatuses = orderedModules;
 
   return (
     <PlatformLayout>
@@ -307,18 +328,18 @@ export default function CareerHome() {
 
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/progress">
+          <Link href="/career/progress">
             <div className="rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow" style={{ background: "white", boxShadow: "var(--shadow-card)" }}>
               <BarChart3 size={20} className="mb-2" style={{ color: "var(--color-ln-navy)" }} />
               <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Progress</p>
               <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0.02 248.6)" }}>Track your career capital growth</p>
             </div>
           </Link>
-          <Link href="/growth-profile">
+          <Link href="/career/resume">
             <div className="rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow" style={{ background: "white", boxShadow: "var(--shadow-card)" }}>
               <Award size={20} className="mb-2" style={{ color: "var(--color-ln-navy)" }} />
-              <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Growth Profile</p>
-              <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0.02 248.6)" }}>Your career strengths & gaps</p>
+              <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Resume Makeover</p>
+              <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0.02 248.6)" }}>ATS score, rewrite & cover letter</p>
             </div>
           </Link>
         </div>

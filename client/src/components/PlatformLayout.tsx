@@ -31,6 +31,9 @@ import {
   UserCheck,
   Upload,
   FileText,
+  Radio,
+  ClipboardList,
+  Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -66,6 +69,9 @@ const CI_NAV_ITEMS = [
   { label: "Relationship Graph", icon: Users, href: "/career/relationships" },
   { label: "Access Paths", icon: Route, href: "/career/access-paths" },
   { label: "Outreach Engine", icon: Sparkles, href: "/career/brand" },
+  { label: "Radar Signals", icon: Radio, href: "/career/radar" },
+  { label: "Interview Prep", icon: ClipboardList, href: "/career/interview-prep" },
+  { label: "Negotiation Intelligence", icon: Scale, href: "/career/negotiation" },
   { label: "Resume Makeover", icon: FileText, href: "/career/resume" },
   { label: "Progress", icon: BarChart3, href: "/career/progress" },
   { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
