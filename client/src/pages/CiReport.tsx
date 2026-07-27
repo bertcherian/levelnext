@@ -489,7 +489,26 @@ export default function CiReport() {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto px-4 pt-8 pb-16">
+      {/* ── Sticky Unlock CTA Bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40" style={{ background: "#0A1A2F", borderTop: "1px solid rgba(212,175,55,0.3)" }}>
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(212,175,55,0.15)" }}>
+              <Zap size={15} style={{ color: "#D4AF37" }} />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-xs" style={{ color: "#D4AF37" }}>Unlock your full Career Transition journey</p>
+              <p className="text-xs hidden sm:block" style={{ color: "rgba(248,245,240,0.55)" }}>AI Coach · Interview Simulator · Negotiation Intelligence · 90-day roadmap</p>
+            </div>
+          </div>
+          <a href="/career-investment" className="flex-shrink-0">
+            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-[0.97]" style={{ background: "#D4AF37", color: "#0A1A2F" }}>
+              See Plans <ArrowRight size={12} />
+            </button>
+          </a>
+        </div>
+      </div>
+      <div className="max-w-3xl mx-auto px-4 pt-8 pb-28">
         {/* ── Score Hero ── */}
         <div className="rounded-2xl p-6 mb-4" style={{ background: NAVY }}>
           <div className="flex items-start justify-between gap-4">
@@ -701,25 +720,6 @@ export default function CiReport() {
           </>
         )}
 
-        {/* ── Unlock Career Transition Journey CTA ── */}
-        <div className="rounded-2xl p-6 mb-4" style={{ background: "linear-gradient(135deg, #0A1A2F 0%, #12285A 100%)", border: "1px solid rgba(212,175,55,0.25)" }}>
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(212,175,55,0.15)" }}>
-              <Zap size={18} style={{ color: "#D4AF37" }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm mb-1" style={{ color: "#D4AF37" }}>Unlock your full Career Transition journey</p>
-              <p className="text-xs leading-relaxed mb-4" style={{ color: "rgba(248,245,240,0.65)" }}>
-                You've completed your first diagnostic. Now unlock your AI Career Transition Coach, Practice Coach, Interview Simulator, Negotiation Intelligence, and your personalised 90-day roadmap.
-              </p>
-              <a href="/career-investment">
-                <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all" style={{ background: "#D4AF37", color: "#0A1A2F" }}>
-                  See Plans &amp; Investment <ArrowRight size={13} />
-                </button>
-              </a>
-            </div>
-          </div>
-        </div>
         {/* ── Sample Report Download ── */}
         <div className="rounded-2xl p-5 flex items-center gap-4 mt-2 mb-4" style={{ background: IVORY, border: "1px solid #E5E7EB" }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: accent + "18", border: `1px solid ${accent}44` }}>

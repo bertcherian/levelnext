@@ -230,6 +230,34 @@ const FAQS = [
     q: "What if I'm unsure about changing jobs?",
     a: "That is exactly the right time to start. The diagnostics will give you clarity on where you stand, what your options are, and what a transition would realistically involve. Many professionals complete the programme and decide to stay — but with a much stronger negotiating position and clearer career direction.",
   },
+  {
+    q: "How does payment work?",
+    a: "After you choose your plan, you will receive a payment link via email. Payment is accepted via credit/debit card, UPI, or bank transfer. Once payment is confirmed, your account is activated within 24 hours and you receive onboarding instructions to begin your 90-day journey.",
+  },
+  {
+    q: "What happens immediately after I pay?",
+    a: "Within 24 hours of payment confirmation, you will receive a welcome email with your login credentials, a short onboarding guide, and your first recommended diagnostic to complete. If you have chosen the Executive or Advisory plan, your executive coach will contact you within 48 hours to schedule your first conversation.",
+  },
+  {
+    q: "Is there a refund policy?",
+    a: "We offer a 7-day exploration period. If you complete your first diagnostic and feel the platform is not right for you, contact us within 7 days of activation for a full refund — no questions asked. After the 7-day window, we do not offer refunds, but we will work with you to ensure you get full value from the programme.",
+  },
+  {
+    q: "Can I pay in instalments?",
+    a: "Instalment options are available for the Executive and Advisory plans. The Executive plan can be split into two payments of ₹40,000 each. The Advisory plan can be discussed on a case-by-case basis. Contact us at transitions@levelnext.coach to arrange this before purchasing.",
+  },
+  {
+    q: "Can I pause or extend my 90 days?",
+    a: "Yes. Life happens. If you face a significant disruption — a medical situation, a major work crisis, or a family emergency — we will pause your programme and restart your 90-day clock when you are ready. This is available once per enrolment. Contact your coach or our support team to activate a pause.",
+  },
+  {
+    q: "What if I get a job before the 90 days are up?",
+    a: "That is the best possible outcome. Your access continues for the full 90 days regardless — you can use the remaining time to prepare for your new role, negotiate your offer, or build the habits you will need to succeed in the next chapter. Many of our best conversations happen after an offer is received.",
+  },
+  {
+    q: "How do I book a discovery conversation before committing?",
+    a: "You can book a free 30-minute discovery conversation with one of our advisors at any time. This is a no-pressure conversation to understand your situation, answer your questions, and help you decide if Career Transition Intelligence is the right fit. Use the 'Book a Discovery Conversation' button on this page.",
+  },
 ];
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
@@ -596,7 +624,8 @@ export default function CareerInvestment() {
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-12">
             <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: "#D4AF37" }}>Frequently Asked Questions</p>
-            <h2 className="font-bold" style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "#0A1A2F" }}>Questions worth asking.</h2>
+            <h2 className="font-bold mb-3" style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "#0A1A2F" }}>Questions worth asking.</h2>
+            <p className="text-sm" style={{ color: "rgba(10,26,47,0.5)" }}>About the programme, payment, and what happens next.</p>
           </div>
           <div className="space-y-2">
             {FAQS.map((faq, i) => (
