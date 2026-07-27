@@ -5,10 +5,10 @@ import InfinityLoader from "@/components/InfinityLoader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Loader2, ArrowLeft, Sparkles, ChevronDown, ChevronUp,
+  Loader2, ArrowLeft, ArrowRight, Sparkles, ChevronDown, ChevronUp,
   Target, TrendingUp, AlertTriangle, Calendar, Brain,
   CheckCircle2, Lightbulb, MessageSquare, BookOpen,
-  Download, FileText, Shield, BarChart2, Map, Layers, Cpu
+  Download, FileText, Shield, BarChart2, Map, Layers, Cpu, Zap
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -701,6 +701,25 @@ export default function CiReport() {
           </>
         )}
 
+        {/* ── Unlock Career Transition Journey CTA ── */}
+        <div className="rounded-2xl p-6 mb-4" style={{ background: "linear-gradient(135deg, #0A1A2F 0%, #12285A 100%)", border: "1px solid rgba(212,175,55,0.25)" }}>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(212,175,55,0.15)" }}>
+              <Zap size={18} style={{ color: "#D4AF37" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm mb-1" style={{ color: "#D4AF37" }}>Unlock your full Career Transition journey</p>
+              <p className="text-xs leading-relaxed mb-4" style={{ color: "rgba(248,245,240,0.65)" }}>
+                You've completed your first diagnostic. Now unlock your AI Career Transition Coach, Practice Coach, Interview Simulator, Negotiation Intelligence, and your personalised 90-day roadmap.
+              </p>
+              <a href="/career-investment">
+                <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all" style={{ background: "#D4AF37", color: "#0A1A2F" }}>
+                  See Plans &amp; Investment <ArrowRight size={13} />
+                </button>
+              </a>
+            </div>
+          </div>
+        </div>
         {/* ── Sample Report Download ── */}
         <div className="rounded-2xl p-5 flex items-center gap-4 mt-2 mb-4" style={{ background: IVORY, border: "1px solid #E5E7EB" }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: accent + "18", border: `1px solid ${accent}44` }}>

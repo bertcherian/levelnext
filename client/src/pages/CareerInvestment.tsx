@@ -262,17 +262,17 @@ export default function CareerInvestment() {
   return (
     <div className="min-h-screen" style={{ background: "#FAFAF8", color: "#0A1A2F", fontFamily: "'Inter', sans-serif" }}>
       {/* ── NAV ── */}
-      <nav className="sticky top-0 z-50 border-b" style={{ background: "rgba(250,250,248,0.95)", backdropFilter: "blur(12px)", borderColor: "rgba(10,26,47,0.08)" }}>
+      <nav className="sticky top-0 z-50 border-b" style={{ background: "#0A1A2F" }}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <a href="/career-intelligence" className="flex items-center gap-3">
             <img src={LOGO_URL} alt="LevelNext" className="h-8 object-contain" />
-            <span className="text-sm font-semibold" style={{ color: "#0A1A2F" }}>Career Transition Intelligence</span>
+            <span className="text-sm font-semibold" style={{ color: "#F8F5F0" }}>Career Transition Intelligence</span>
           </a>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#plans" className="text-sm font-medium" style={{ color: "rgba(10,26,47,0.6)" }}>Plans</a>
-            <a href="#compare" className="text-sm font-medium" style={{ color: "rgba(10,26,47,0.6)" }}>Compare</a>
-            <a href="#why" className="text-sm font-medium" style={{ color: "rgba(10,26,47,0.6)" }}>Why Now</a>
-            <a href="#faq" className="text-sm font-medium" style={{ color: "rgba(10,26,47,0.6)" }}>FAQ</a>
+            <a href="#plans" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }}>Plans</a>
+            <a href="#compare" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }}>Compare</a>
+            <a href="#why" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }}>Why Now</a>
+            <a href="#faq" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }}>FAQ</a>
             <button
               onClick={() => isAuthenticated ? navigate("/career") : window.location.href = getLoginUrl()}
               className="px-5 py-2 rounded-full text-sm font-semibold transition-all"
@@ -286,11 +286,11 @@ export default function CareerInvestment() {
           </button>
         </div>
         {mobileMenuOpen && (
-          <div className="md:hidden border-t px-6 py-4 flex flex-col gap-4" style={{ borderColor: "rgba(10,26,47,0.08)", background: "#FAFAF8" }}>
-            <a href="#plans" className="text-sm font-medium" style={{ color: "rgba(10,26,47,0.6)" }} onClick={() => setMobileMenuOpen(false)}>Plans</a>
-            <a href="#compare" className="text-sm font-medium" style={{ color: "rgba(10,26,47,0.6)" }} onClick={() => setMobileMenuOpen(false)}>Compare</a>
-            <a href="#why" className="text-sm font-medium" style={{ color: "rgba(10,26,47,0.6)" }} onClick={() => setMobileMenuOpen(false)}>Why Now</a>
-            <a href="#faq" className="text-sm font-medium" style={{ color: "rgba(10,26,47,0.6)" }} onClick={() => setMobileMenuOpen(false)}>FAQ</a>
+          <div className="md:hidden border-t px-6 py-4 flex flex-col gap-4" style={{ borderColor: "rgba(248,245,240,0.1)", background: "#0A1A2F" }}>
+            <a href="#plans" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }} onClick={() => setMobileMenuOpen(false)}>Plans</a>
+            <a href="#compare" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }} onClick={() => setMobileMenuOpen(false)}>Compare</a>
+            <a href="#why" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }} onClick={() => setMobileMenuOpen(false)}>Why Now</a>
+            <a href="#faq" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }} onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <button
               onClick={() => { setMobileMenuOpen(false); isAuthenticated ? navigate("/career") : window.location.href = getLoginUrl(); }}
               className="px-5 py-2 rounded-full text-sm font-semibold"
@@ -388,7 +388,7 @@ export default function CareerInvestment() {
               All plans are 90 days. All plans include the full AI platform. The difference is the level of personal guidance.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6 mt-6">
             {PLANS.map((plan) => (
               <div
                 key={plan.id}
@@ -400,7 +400,7 @@ export default function CareerInvestment() {
                 }}
               >
                 {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold" style={{ background: "#D4AF37", color: "#0A1A2F" }}>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap" style={{ background: "#D4AF37", color: "#0A1A2F", boxShadow: "0 2px 10px rgba(212,175,55,0.5)" }}>
                     {plan.badge}
                   </div>
                 )}
@@ -791,7 +791,7 @@ export default function CareerInvestment() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="py-8 border-t" style={{ borderColor: "rgba(10,26,47,0.08)", background: "#FAFAF8" }}>
+      <footer className="py-8 border-t" style={{ borderColor: "rgba(248,245,240,0.1)", background: "#0A1A2F" }}>
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img src={LOGO_URL} alt="LevelNext" className="h-6 object-contain" />

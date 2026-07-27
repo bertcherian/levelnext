@@ -264,8 +264,8 @@ export default function CareerLanding() {
             {/* Left: headline + sub + CTA */}
             <div className="lg:w-[55%]">
               <h1 className="font-bold leading-[1.1] mb-6">
-                <span className="block text-4xl sm:text-5xl md:text-6xl text-white">
-                  Your next career<br /> opportunity<br /> shouldn't depend on luck.
+                <span className="block text-3xl sm:text-4xl md:text-5xl text-white">
+                  Your next career opportunity<br /> shouldn't depend<br /> on luck.
                 </span>
               </h1>
               <p className="text-base md:text-lg leading-relaxed mb-4 text-white/75 max-w-2xl">
