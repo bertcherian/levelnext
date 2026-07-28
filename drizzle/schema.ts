@@ -1966,3 +1966,60 @@ export const userResumes = mysqlTable("user_resumes", {
 });
 export type UserResume = typeof userResumes.$inferSelect;
 export type InsertUserResume = typeof userResumes.$inferInsert;
+
+// ── Leadership Simulation Intelligence Platform ───────────────────────────────
+
+export type SimPlatform = "leadership" | "manager" | "career" | "young";
+export type SimDifficulty = "Foundation" | "Developing" | "Advanced" | "Expert";
+export type SimSessionStatus = "briefing" | "active" | "debrief" | "complete";
+
+export type SimTurn = {
+  role: "user" | "character";
+  content: string;
+  timestamp: number;
+  durationMs?: number; // voice turn duration
+};
+
+export type SimBehaviourScore = {
+  dimension: string;
+  score: number; // 0-100
+  observation: string;
+  tip: string;
+};
+
+export type SimDebrief = {
+  overallScore: number;
+  headline: string;
+  strengths: string[];
+  growthAreas: string[];
+  behaviourScores: SimBehaviourScore[];
+  coachingNote: string;
+  turningPoints: Array<{ turnIndex: number; note: string }>;
+  missedOpportunities: string[];
+  alternativeResponses: Array<{ original: string; better: string }>;
+  retryRecommended: boolean;
+  nextMissionId?: string;
+};
+
+export const simSessions = mysqlTable("sim_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  platform: varchar("platform", { length: 20 }).notNull(), // leadership | manager | career | young
+  missionId: varchar("missionId", { length: 100 }).notNull(),
+  missionTitle: varchar("missionTitle", { length: 255 }).notNull(),
+  capability: varchar("capability", { length: 100 }).notNull(),
+  difficulty: varchar("difficulty", { length: 30 }).notNull().default("Developing"),
+  voiceEnabled: boolean("voiceEnabled").default(false).notNull(),
+  characterName: varchar("characterName", { length: 100 }),
+  characterRole: varchar("characterRole", { length: 150 }),
+  transcript: json("transcript").$type<SimTurn[]>().notNull().default([]),
+  debrief: json("debrief").$type<SimDebrief>(),
+  overallScore: int("overallScore"),
+  status: varchar("status", { length: 20 }).notNull().default("briefing"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SimSession = typeof simSessions.$inferSelect;
+export type InsertSimSession = typeof simSessions.$inferInsert;

@@ -45,6 +45,7 @@ import { mepDocumentsRouter } from "./routers/mepDocuments";
 import { orgContextRouter } from "./routers/orgContext";
 import { participantImportRouter } from "./routers/participantImport";
 import { resumeMakeoverRouter } from "./routers/resumeMakeover";
+import { simulatorRouter } from "./routers/simulator";
 
 export const appRouter = router({
   system: systemRouter,
@@ -99,6 +100,7 @@ export const appRouter = router({
   orgContext: orgContextRouter,
   participantImport: participantImportRouter,
   resumeMakeover: resumeMakeoverRouter,
+  simulator: simulatorRouter,
 });
 
 export type AppRouter = typeof appRouter;

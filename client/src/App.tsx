@@ -81,6 +81,9 @@ import PWAInstallBanner from "./components/PWAInstallBanner";
 import { useEffect } from "react";
 import { useAuth } from "./_core/hooks/useAuth";
 import { trpc } from "./lib/trpc";
+import SimulatorMissions from "./pages/SimulatorMissions";
+import SimulatorSession from "./pages/SimulatorSession";
+import SimulatorDebrief from "./pages/SimulatorDebrief";
 
 const LS_KEY = "levelnext_join_product";
 
@@ -187,6 +190,13 @@ function Router() {
       <Route path="/next-chapter/portfolio" component={NextChapterPortfolio} />
       <Route path="/next-chapter/identity-assessment" component={IdentityClarityAssessment} />
       <Route path="/coach" component={CoachPortal} />
+      {/* Simulator routes - universal engine */}
+      <Route path="/leadership/simulate">{() => <SimulatorMissions platform="leadership" />}</Route>
+      <Route path="/manager/simulate">{() => <SimulatorMissions platform="manager" />}</Route>
+      <Route path="/career/simulate">{() => <SimulatorMissions platform="career" />}</Route>
+      <Route path="/young/simulate">{() => <SimulatorMissions platform="young" />}</Route>
+      <Route path="/simulator/:sessionId/debrief">{() => <SimulatorDebrief />}</Route>
+      <Route path="/simulator/:sessionId">{() => <SimulatorSession />}</Route>
       <Route path="/career-landing" component={CareerLanding} />
       <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/career-investment" component={CareerInvestment} />
