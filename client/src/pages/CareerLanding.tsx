@@ -289,10 +289,7 @@ export default function CareerLanding() {
                   </Button>
                 </a>
               </div>
-              <p className="text-xs text-white/35 mt-4">
-                Used by Directors, VPs, and Business Heads at Broadridge, Volvo, Texas Instruments, and Razorpay.
-              </p>
-              <p className="text-xs mt-3" style={{ color: "oklch(55% 0.18 280 / 0.6)" }}>
+              <p className="text-xs mt-4" style={{ color: "oklch(55% 0.18 280 / 0.6)" }}>
                 For organisations offering outplacement support —{" "}
                 <button
                   onClick={() => setOutplacementModalOpen(true)}
