@@ -283,6 +283,84 @@ Be specific, honest, and constructive. Reference actual things the user said.`,
       return session;
     }),
 
+  generateActionPlan: protectedProcedure
+    .input(z.object({ sessionId: z.number().int() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select().from(simSessions).where(eq(simSessions.id, input.sessionId)).limit(1);
+      const session = rows[0];
+      if (!session || session.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      if (session.status !== "completed") throw new TRPCError({ code: "BAD_REQUEST", message: "Session not yet completed" });
+
+      const ctx_platform = PLATFORM_CONTEXT[session.platform as string] ?? PLATFORM_CONTEXT.leadership;
+      const behaviourScores = (session.behaviourScores ?? []) as Array<{ label: string; score: number; max: number }>;
+      const improvements = (session.improvements ?? []) as string[];
+      const coachingInsights = (session.coachingInsights ?? []) as Array<{ moment: string; tryInstead: string }>;
+      const strengths = (session.strengths ?? []) as string[];
+
+      const result = await invokeLLM({
+        model: "gpt-5",
+        messages: [
+          {
+            role: "system",
+            content: `You are a world-class executive coach creating a personalised action plan after a practice simulation debrief.
+Platform: ${ctx_platform.label}
+Scenario: ${session.conversationType}
+Objective: ${session.objective}
+
+Based on the debrief data below, create a concise, actionable 7-day practice plan.
+Return ONLY valid JSON with this exact structure:
+{
+  "headline": "Short motivating headline for the plan (e.g. 'Your 7-Day Executive Presence Sprint')",
+  "summary": "2-3 sentence personalised summary of what this plan addresses and why it matters for them",
+  "actions": [
+    {
+      "day": "Day 1–2",
+      "title": "Short action title",
+      "description": "Specific, concrete action they can take. Reference their actual behaviour from the session.",
+      "category": "practice" | "reflection" | "reading" | "conversation"
+    }
+  ],
+  "weeklyCommitment": "One sentence on the minimum weekly commitment (e.g. '15 minutes daily')",
+  "successIndicator": "How they will know they have improved — one concrete, observable behaviour"
+}
+Generate 4–5 actions. Be specific, honest, and reference actual things from the debrief. Avoid generic advice.`,
+          },
+          {
+            role: "user",
+            content: `Debrief data:
+
+Overall score: ${session.overallScore}/100
+Key takeaway: ${session.keyTakeaway ?? "N/A"}
+
+Behaviour scores:\n${behaviourScores.map(b => `- ${b.label}: ${b.score}/${b.max}`).join("\n")}
+
+Strengths:\n${strengths.map(s => `- ${s}`).join("\n")}
+
+Areas to develop:\n${improvements.map(s => `- ${s}`).join("\n")}
+
+Coaching insights:\n${coachingInsights.map(c => `- Said: "${c.moment}" → Try: "${c.tryInstead}"`).join("\n")}`,
+          },
+        ],
+      });
+
+      try {
+        const text = extractContent(result.choices[0].message.content ?? "{}");
+        const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        const plan = JSON.parse(clean);
+        return {
+          headline: plan.headline ?? "Your Personalised Practice Plan",
+          summary: plan.summary ?? "",
+          actions: (plan.actions ?? []) as Array<{ day: string; title: string; description: string; category: string }>,
+          weeklyCommitment: plan.weeklyCommitment ?? "",
+          successIndicator: plan.successIndicator ?? "",
+        };
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not generate action plan" });
+      }
+    }),
+
   listSessions: protectedProcedure
     .input(z.object({ platform: z.enum(["leadership", "manager", "career", "young"]).optional() }))
     .query(async ({ input, ctx }) => {
