@@ -154,19 +154,34 @@ const FOR_WHO = [
 // ── TESTIMONIALS ──────────────────────────────────────────────────────────────
 const TESTIMONIALS = [
   {
-    quote: "I finally understood exactly where I was leaving opportunity on the table. The Career Positioning diagnostic alone changed how I showed up in every conversation.",
-    name: "Priya M.",
-    title: "VP Engineering, Global Tech MNC",
+    quote: "He helped me redesign how I manage my calendar — I now protect time for high-value work instead of reacting to whatever fills the day. Bert asks good questions, doesn't waste your time, and holds you accountable without being prescriptive.",
+    name: "Piyali Goswami",
+    title: "Senior Director, Software Engineering — Texas Instruments",
   },
   {
-    quote: "Every career platform I tried gave me a framework and left me alone. The AI Coach actually coaches me through applying it — daily, in my context.",
-    name: "Rajesh K.",
-    title: "Business Head, Fortune 500 Company",
+    quote: "He brought a totally new perspective and helped me package my story in a compelling way. He brings a strategic and holistic view and helps you see your blind spots.",
+    name: "Nagarajan Narayanaswamy",
+    title: "Technology Executive | AI Strategy & Transformation Leader",
   },
   {
-    quote: "The diagnostics surfaced a blind spot my 360 feedback never caught. Three weeks in, I had two conversations I'd been avoiding for months.",
-    name: "Ananya S.",
-    title: "Director, People & Culture",
+    quote: "Bert is one of the more proficient coaches and genuine human beings I have met. He puts in a balance between short-term growth spurts and long-term consistency.",
+    name: "Ayush Bansal",
+    title: "Vice President & General Manager — RazorpayX",
+  },
+  {
+    quote: "He helped me set clear, actionable goals and build systems that kept me focused on immediate priorities while building a vision for the future. These six months have been a game-changer.",
+    name: "Rohini George",
+    title: "Senior Leader, Pharma Data & AI/ML — Healthcare",
+  },
+  {
+    quote: "Bert helped me on strategic thinking, prioritisation, focusing on high-impact items, and decision-making. I feel far more confident handling complex challenges after coaching.",
+    name: "Rajesh Mittal",
+    title: "Director, Hardware R&D — ASM Industrial",
+  },
+  {
+    quote: "I found myself examining strongly held beliefs and challenging assumptions about myself. I gained a new lens to view the world and a stronger sense of self.",
+    name: "Ashi Mehta",
+    title: "Founder, Bolna AI (YC 2025)",
   },
 ];
 
@@ -289,11 +304,12 @@ export default function CareerLanding() {
                   </Button>
                 </a>
               </div>
-              <p className="text-xs mt-4" style={{ color: "oklch(55% 0.18 280 / 0.6)" }}>
+              <p className="text-sm mt-4 font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>
                 For organisations offering outplacement support —{" "}
                 <button
                   onClick={() => setOutplacementModalOpen(true)}
-                  className="underline underline-offset-2 hover:opacity-80 transition-opacity font-medium bg-transparent border-0 p-0 cursor-pointer">
+                  className="underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold bg-transparent border-0 p-0 cursor-pointer"
+                  style={{ color: "var(--color-ln-yellow)" }}>
                   talk to us
                 </button>
               </p>
@@ -451,17 +467,20 @@ export default function CareerLanding() {
       {/* ── TESTIMONIALS ────────────────────────────────────────────────────── */}
       <section className="px-6 py-16 md:py-20">
         <div className="max-w-5xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-10 text-center" style={{ color: "var(--color-ln-yellow)" }}>
-            What leaders are saying
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center" style={{ color: "var(--color-ln-yellow)" }}>
+            What Clients Say
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <p className="text-sm text-center mb-10" style={{ color: "rgba(255,255,255,0.55)" }}>
+            From senior leaders at Texas Instruments, RazorpayX, ASM Industrial, and beyond
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {TESTIMONIALS.map((t) => (
               <div key={t.name} className="rounded-2xl p-6 flex flex-col gap-4"
                 style={{ background: "oklch(from white 12% 0 0 / 0.06)", border: "1px solid oklch(from white 30% 0 0 / 0.08)" }}>
                 <p className="text-base leading-relaxed flex-1 text-white">"{t.quote}"</p>
                 <div>
-                  <p className="text-base font-bold text-white">{t.name}</p>
-                  <p className="text-sm mt-0.5" style={{ color: "oklch(65% 0.02 248.6)" }}>{t.title}</p>
+                  <p className="text-sm font-bold text-white">{t.name}</p>
+                  <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.6)" }}>{t.title}</p>
                 </div>
               </div>
             ))}
