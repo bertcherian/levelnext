@@ -90,27 +90,23 @@ export default function ManagerPractice() {
             </p>
           </div>
 
-          {/* Voice Simulator Banner */}
-          <div
-            onClick={() => window.location.href = '/manager/simulate'}
-            style={{
-              background: 'linear-gradient(135deg, #0A1A2F 0%, #1a3a5c 100%)',
-              borderRadius: 12, padding: '14px 18px',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              border: '1px solid rgba(212,175,55,0.3)',
-            }}
+          {/* Voice Practice Simulator Banner */}
+          <a
+            href="/manager/simulate"
+            className="flex items-center justify-between rounded-xl px-4 py-3 border cursor-pointer group"
+            style={{ background: 'linear-gradient(135deg, #0A1A2F 0%, #1a2f4f 100%)', borderColor: '#D4AF3740', textDecoration: 'none', display: 'flex' }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(212,175,55,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 18 }}>🎙️</span>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#D4AF3720' }}>
+                <Zap size={16} style={{ color: '#D4AF37' }} />
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#D4AF37', marginBottom: 2 }}>NEW — Voice Practice Simulator</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Choose a mission · Speak with an AI character · Get a coaching debrief</div>
+                <p className="text-white text-sm font-semibold">NEW — Voice Practice Simulator</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Describe your challenge. AI builds a live scenario. Practice with voice.</p>
               </div>
             </div>
-            <div style={{ fontSize: 12, color: '#D4AF37', fontWeight: 600, whiteSpace: 'nowrap', marginLeft: 12 }}>Try it →</div>
-          </div>
+            <ChevronRight size={16} style={{ color: 'rgba(255,255,255,0.3)' }} />
+          </a>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {scenarios?.map((s: any) => (

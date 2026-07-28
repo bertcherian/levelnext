@@ -357,27 +357,23 @@ function HomeScreen({
         </p>
       </div>
 
-      {/* Voice Simulator Banner */}
-      <div
-        onClick={() => window.location.href = '/leadership/simulate'}
-        style={{
-          background: 'linear-gradient(135deg, #0A1A2F 0%, #1a3a5c 100%)',
-          borderRadius: 12, padding: '14px 18px', marginBottom: 20,
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          border: '1px solid rgba(212,175,55,0.3)',
-        }}
+      {/* Voice Practice Simulator Banner */}
+      <a
+        href="/leadership/simulate"
+        className="flex items-center justify-between rounded-xl px-4 py-3 mb-5 border cursor-pointer group"
+        style={{ background: 'linear-gradient(135deg, #0A1A2F 0%, #1a2f4f 100%)', borderColor: '#D4AF3740' }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(212,175,55,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: 18 }}>🎙️</span>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#D4AF3720' }}>
+            <Zap className="w-4 h-4" style={{ color: '#D4AF37' }} />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#D4AF37', marginBottom: 2 }}>NEW — Voice Practice Simulator</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Choose a mission · Speak with an AI character · Get a coaching debrief</div>
+            <p className="text-white text-sm font-semibold">NEW — Voice Practice Simulator</p>
+            <p className="text-white/50 text-xs">Describe your challenge. AI builds a live scenario. Practice with voice.</p>
           </div>
         </div>
-        <div style={{ fontSize: 12, color: '#D4AF37', fontWeight: 600, whiteSpace: 'nowrap', marginLeft: 12 }}>Try it →</div>
-      </div>
+        <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/70 transition-colors flex-shrink-0" />
+      </a>
 
       {/* Memory Banner */}
       {memory?.aiSummary && (

@@ -1,262 +1,206 @@
 import { useState } from "react";
-import { useLocation, useParams } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import {
-  Star, ChevronLeft, MessageSquare, TrendingUp, AlertCircle,
-  CheckCircle, Lightbulb, RotateCcw, ArrowRight
-} from "lucide-react";
+import { Loader2, ChevronRight, Star, TrendingUp, AlertCircle, Lightbulb, MessageSquare, RotateCcw } from "lucide-react";
 
-const NAVY = "#0A1A2F";
-const GOLD = "#D4AF37";
+const PLATFORM_ACCENT: Record<string, string> = {
+  leadership: "#D4AF37",
+  manager: "#4ade80",
+  career: "#D4AF37",
+  young: "#818cf8",
+};
 
-function ScoreBar({ label, score, max = 10 }: { label: string; score: number; max?: number }) {
-  const pct = Math.round((score / max) * 100);
-  const color = pct >= 75 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
-  return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-        <span style={{ fontSize: 14, color: "#333", fontWeight: 500 }}>{label}</span>
-        <span style={{ fontSize: 14, fontWeight: 700, color }}>{score}/{max}</span>
-      </div>
-      <div style={{ height: 8, background: "#f3f4f6", borderRadius: 4, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 4, transition: "width 1s ease" }} />
-      </div>
-    </div>
-  );
-}
+const PLATFORM_BG: Record<string, string> = {
+  leadership: "#0A1A2F",
+  manager: "#1a3a2a",
+  career: "#0A1A2F",
+  young: "#1a1a3a",
+};
+
+const PLATFORM_PRACTICE_URL: Record<string, string> = {
+  leadership: "/practice",
+  manager: "/manager/practice",
+  career: "/career/simulate",
+  young: "/young/simulate",
+};
+
+type BehaviourScore = { label: string; score: number; max: number };
+type CoachingInsight = { moment: string; tryInstead: string };
 
 export default function SimulatorDebrief() {
-  const params = useParams<{ sessionId: string }>();
-  const sessionId = parseInt(params.sessionId || "0");
+  const [, params] = useRoute("/simulator/:sessionId/debrief");
   const [, navigate] = useLocation();
+  const sessionId = parseInt(params?.sessionId ?? "0");
   const [showTranscript, setShowTranscript] = useState(false);
 
-  const { data: session, isLoading } = trpc.simulator.getSession.useQuery({ sessionId });
+  const { data: session, isLoading } = trpc.simulator.getSession.useQuery(
+    { sessionId },
+    { enabled: !!sessionId }
+  );
 
-  if (isLoading) {
+  if (isLoading || !session) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#F8F5F0", gap: 16 }}>
-        <Spinner />
-        <p style={{ color: "#666", fontSize: 15 }}>Loading your debrief...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#0A1A2F]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37] mx-auto mb-3" />
+          <p className="text-white/60 text-sm">Generating your debrief...</p>
+        </div>
       </div>
     );
   }
 
-  if (!session) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#F8F5F0", gap: 16 }}>
-        <AlertCircle size={40} color="#ef4444" />
-        <p style={{ color: "#333", fontSize: 16 }}>Debrief not found.</p>
-        <Button onClick={() => window.history.back()}>Go Back</Button>
-      </div>
-    );
-  }
+  const platform = session.platform as string;
+  const accent = PLATFORM_ACCENT[platform] ?? "#D4AF37";
+  const bg = PLATFORM_BG[platform] ?? "#0A1A2F";
+  const practiceUrl = PLATFORM_PRACTICE_URL[platform] ?? "/practice";
 
-  const debrief = session.debrief as any;
-  const transcript = (session.transcript as any[]) || [];
-
-  if (!debrief) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#F8F5F0", gap: 16 }}>
-        <Spinner />
-        <p style={{ color: "#666", fontSize: 15 }}>Generating your personalised debrief...</p>
-        <p style={{ color: "#999", fontSize: 13 }}>This takes 15–20 seconds</p>
-      </div>
-    );
-  }
-
-  const overallScore = debrief.overallScore ?? 0;
-  const scoreColor = overallScore >= 75 ? "#22c55e" : overallScore >= 50 ? "#f59e0b" : "#ef4444";
-
-  const platformBackPath: Record<string, string> = {
-    leadership: "/leadership",
-    manager: "/manager",
-    career: "/career",
-    young: "/young",
-  };
-  const backPath = platformBackPath[session.platform] || "/";
-  const simulatePath = `/${session.platform}/simulate`;
+  const behaviourScores = (session.behaviourScores as BehaviourScore[]) ?? [];
+  const strengths = (session.strengths as string[]) ?? [];
+  const improvements = (session.improvements as string[]) ?? [];
+  const coachingInsights = (session.coachingInsights as CoachingInsight[]) ?? [];
+  const messages = (session.messages as Array<{ role: string; content: string; timestamp: number }>) ?? [];
+  const overallScore = session.overallScore ?? 0;
+  const scoreColor = overallScore >= 80 ? "#4ade80" : overallScore >= 60 ? accent : "#f87171";
 
   return (
-    <div style={{ background: "#F8F5F0", minHeight: "100vh" }}>
-      {/* Header */}
-      <div style={{ background: NAVY, color: "#fff", padding: "1.5rem 2rem" }}>
-        <div style={{ maxWidth: 800, margin: "0 auto" }}>
-          <button
-            onClick={() => navigate(backPath)}
-            style={{ color: "rgba(255,255,255,0.6)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 16, fontSize: 14 }}
-          >
-            <ChevronLeft size={16} /> Back to Dashboard
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ textAlign: "center" }}>
-              <div
-                style={{
-                  width: 72, height: 72, borderRadius: "50%",
-                  border: `4px solid ${scoreColor}`,
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                  background: "rgba(255,255,255,0.08)",
-                }}
-              >
-                <span style={{ fontSize: 22, fontWeight: 800, color: scoreColor }}>{overallScore}</span>
-                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>/100</span>
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                Session Debrief
-              </div>
-              <h1 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>{session.missionTitle}</h1>
-              <p style={{ color: "rgba(255,255,255,0.6)", margin: 0, fontSize: 14 }}>
-                {session.characterName} · {session.characterRole} · {transcript.length} exchanges
-              </p>
-            </div>
+    <div className="min-h-screen" style={{ background: bg }}>
+      <div className="border-b border-white/10 px-6 py-4">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-wider mb-0.5" style={{ color: accent }}>Session Complete</p>
+            <h1 className="text-white font-bold text-lg">{session.conversationType as string}</h1>
           </div>
+          <Button onClick={() => navigate(practiceUrl)} variant="outline" size="sm"
+            className="border-white/20 text-white/70 hover:text-white text-xs">
+            <RotateCcw className="w-3 h-3 mr-1" />Practice Again
+          </Button>
         </div>
       </div>
 
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "1.5rem 2rem" }}>
-        {/* Overall verdict */}
-        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: "1.25rem 1.5rem", marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Star size={18} color={GOLD} fill={GOLD} />
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: NAVY, margin: 0 }}>Overall Assessment</h2>
-          </div>
-          <p style={{ fontSize: 15, color: "#222", lineHeight: 1.6, margin: 0 }}>{debrief.overallAssessment}</p>
-        </div>
-
-        {/* Behaviour scores */}
-        {debrief.behaviourScores && debrief.behaviourScores.length > 0 && (
-          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: "1.25rem 1.5rem", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-              <TrendingUp size={18} color={NAVY} />
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: NAVY, margin: 0 }}>Behaviour Scores</h2>
-            </div>
-            {debrief.behaviourScores.map((b: any, i: number) => (
-              <ScoreBar key={i} label={b.behaviour} score={b.score} />
-            ))}
-          </div>
-        )}
-
-        {/* Two-column: strengths + development */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-          {/* Strengths */}
-          <div style={{ background: "#f0fdf4", borderRadius: 12, border: "1px solid #bbf7d0", padding: "1.25rem 1.5rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <CheckCircle size={16} color="#22c55e" />
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#166534", margin: 0 }}>What Worked Well</h3>
-            </div>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {(debrief.strengths || []).map((s: string, i: number) => (
-                <li key={i} style={{ fontSize: 14, color: "#166534", marginBottom: 6, lineHeight: 1.5 }}>{s}</li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Development areas */}
-          <div style={{ background: "#fff7ed", borderRadius: 12, border: "1px solid #fed7aa", padding: "1.25rem 1.5rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <AlertCircle size={16} color="#f59e0b" />
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#92400e", margin: 0 }}>Development Areas</h3>
-            </div>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {(debrief.developmentAreas || []).map((d: string, i: number) => (
-                <li key={i} style={{ fontSize: 14, color: "#92400e", marginBottom: 6, lineHeight: 1.5 }}>{d}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Coaching insights */}
-        {debrief.coachingInsights && debrief.coachingInsights.length > 0 && (
-          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: "1.25rem 1.5rem", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <Lightbulb size={18} color={GOLD} />
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: NAVY, margin: 0 }}>Coaching Insights</h2>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {debrief.coachingInsights.map((insight: any, i: number) => (
-                <div key={i} style={{ background: "#fafafa", borderRadius: 8, padding: "10px 14px", borderLeft: `3px solid ${GOLD}` }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: NAVY, marginBottom: 4 }}>{insight.moment}</div>
-                  <div style={{ fontSize: 14, color: "#333", lineHeight: 1.5 }}>{insight.insight}</div>
-                  {insight.alternative && (
-                    <div style={{ fontSize: 13, color: "#666", marginTop: 6, fontStyle: "italic" }}>
-                      💡 Try instead: "{insight.alternative}"
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Next practice recommendation */}
-        {debrief.nextPracticeRecommendation && (
-          <div style={{ background: NAVY, borderRadius: 12, padding: "1.25rem 1.5rem", marginBottom: 16, color: "#fff" }}>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
-              Recommended Next Practice
-            </div>
-            <p style={{ fontSize: 15, color: "#fff", margin: 0, lineHeight: 1.6 }}>{debrief.nextPracticeRecommendation}</p>
-          </div>
-        )}
-
-        {/* Transcript toggle */}
-        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", marginBottom: 24 }}>
-          <button
-            onClick={() => setShowTranscript(!showTranscript)}
-            style={{
-              width: "100%", padding: "1rem 1.5rem", background: "none", border: "none", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              fontSize: 15, fontWeight: 600, color: NAVY,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <MessageSquare size={16} />
-              View Full Transcript ({transcript.length} exchanges)
-            </div>
-            <span style={{ fontSize: 12, color: "#888" }}>{showTranscript ? "Hide ▲" : "Show ▼"}</span>
-          </button>
-          {showTranscript && (
-            <div style={{ borderTop: "1px solid #e5e7eb", padding: "1rem 1.5rem", display: "flex", flexDirection: "column", gap: 12 }}>
-              {transcript.map((turn: any, i: number) => (
-                <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                    background: turn.role === "user" ? GOLD : NAVY,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: turn.role === "user" ? NAVY : GOLD }}>
-                      {turn.role === "user" ? "You" : session.characterName?.split(" ").map((n: string) => n[0]).join("") || "C"}
-                    </span>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>
-                      {turn.role === "user" ? "You" : session.characterName}
-                    </div>
-                    <div style={{ fontSize: 14, color: "#333", lineHeight: 1.55 }}>{turn.content}</div>
-                  </div>
-                </div>
-              ))}
+      <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
+        {/* Overall Score */}
+        <div className="rounded-2xl p-6 text-center border" style={{ borderColor: accent + "30", background: "rgba(255,255,255,0.04)" }}>
+          <p className="text-white/40 text-xs uppercase tracking-wider mb-3">Overall Performance</p>
+          <div className="text-6xl font-bold mb-2" style={{ color: scoreColor }}>{overallScore}</div>
+          <div className="text-white/40 text-sm mb-4">out of 100</div>
+          {session.keyTakeaway && (
+            <div className="rounded-xl px-4 py-3 text-sm text-white/80 italic border"
+              style={{ borderColor: accent + "20", background: accent + "08" }}>
+              "{session.keyTakeaway as string}"
             </div>
           )}
         </div>
 
-        {/* Actions */}
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", paddingBottom: "2rem" }}>
-          <Button
-            onClick={() => navigate(simulatePath)}
-            style={{ background: NAVY, color: "#fff", display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}
-          >
-            <RotateCcw size={15} /> Practice Again
+        {/* Behaviour Scores */}
+        {behaviourScores.length > 0 && (
+          <div>
+            <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+              <Star className="w-4 h-4" style={{ color: accent }} />Behaviour Scores
+            </h2>
+            <div className="space-y-3">
+              {behaviourScores.map((b, i) => (
+                <div key={i}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-white/80 text-sm">{b.label}</span>
+                    <span className="text-white font-semibold text-sm">{b.score}<span className="text-white/30">/{b.max}</span></span>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/10">
+                    <div className="h-2 rounded-full" style={{ width: `${(b.score / b.max) * 100}%`, background: accent }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Strengths & Improvements */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {strengths.length > 0 && (
+            <div className="rounded-xl p-5 border" style={{ borderColor: "#4ade8030", background: "rgba(74,222,128,0.04)" }}>
+              <h3 className="font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: "#4ade80" }}>
+                <TrendingUp className="w-4 h-4" />What worked well
+              </h3>
+              <ul className="space-y-2">
+                {strengths.map((s, i) => (
+                  <li key={i} className="text-white/75 text-sm flex items-start gap-2">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#4ade80" }} />{s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {improvements.length > 0 && (
+            <div className="rounded-xl p-5 border" style={{ borderColor: "#f8717130", background: "rgba(248,113,113,0.04)" }}>
+              <h3 className="font-semibold text-sm mb-3 flex items-center gap-2 text-[#f87171]">
+                <AlertCircle className="w-4 h-4" />Areas to develop
+              </h3>
+              <ul className="space-y-2">
+                {improvements.map((s, i) => (
+                  <li key={i} className="text-white/75 text-sm flex items-start gap-2">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#f87171]" />{s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Coaching Insights */}
+        {coachingInsights.length > 0 && (
+          <div>
+            <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+              <Lightbulb className="w-4 h-4" style={{ color: accent }} />Coaching Insights
+            </h2>
+            <div className="space-y-3">
+              {coachingInsights.map((insight, i) => (
+                <div key={i} className="rounded-xl p-4 border" style={{ borderColor: accent + "20", background: "rgba(255,255,255,0.03)" }}>
+                  <p className="text-white/50 text-xs mb-1">What you said</p>
+                  <p className="text-white/80 text-sm mb-3 italic">"{insight.moment}"</p>
+                  <p className="text-xs uppercase tracking-wider mb-1" style={{ color: accent }}>Try instead</p>
+                  <p className="text-white/80 text-sm">{insight.tryInstead}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Transcript */}
+        <div>
+          <button onClick={() => setShowTranscript(!showTranscript)}
+            className="flex items-center gap-2 text-white/40 hover:text-white/70 text-sm transition-colors">
+            <MessageSquare className="w-4 h-4" />
+            {showTranscript ? "Hide" : "View"} full transcript
+          </button>
+          {showTranscript && (
+            <div className="mt-4 rounded-xl border border-white/10 overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/10 bg-white/5">
+                <p className="text-white/60 text-xs uppercase tracking-wider">Conversation Transcript</p>
+              </div>
+              <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                {messages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className="max-w-[80%] rounded-xl px-3 py-2 text-sm"
+                      style={{ background: msg.role === "user" ? accent + "20" : "rgba(255,255,255,0.05)", color: msg.role === "user" ? "white" : "rgba(255,255,255,0.75)" }}>
+                      <p className="text-xs mb-1" style={{ color: msg.role === "user" ? accent : "rgba(255,255,255,0.3)" }}>
+                        {msg.role === "user" ? "You" : session.characterName as string}
+                      </p>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <Button onClick={() => navigate(practiceUrl)} className="flex-1 font-semibold" style={{ background: accent, color: bg }}>
+            Practice Again <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate(backPath)}
-            style={{ display: "flex", alignItems: "center", gap: 8 }}
-          >
-            Back to Dashboard <ArrowRight size={15} />
+          <Button onClick={() => navigate("/")} variant="outline" className="flex-1 border-white/20 text-white/70 hover:text-white">
+            Back to Dashboard
           </Button>
         </div>
       </div>

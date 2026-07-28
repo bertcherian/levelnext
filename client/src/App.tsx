@@ -78,12 +78,12 @@ import JoinProduct from "@/pages/JoinProduct";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PWAInstallBanner from "./components/PWAInstallBanner";
+import SimulatorStart from "./pages/SimulatorStart";
+import SimulatorSession from "./pages/SimulatorSession";
+import SimulatorDebrief from "./pages/SimulatorDebrief";
 import { useEffect } from "react";
 import { useAuth } from "./_core/hooks/useAuth";
 import { trpc } from "./lib/trpc";
-import SimulatorMissions from "./pages/SimulatorMissions";
-import SimulatorSession from "./pages/SimulatorSession";
-import SimulatorDebrief from "./pages/SimulatorDebrief";
 
 const LS_KEY = "levelnext_join_product";
 
@@ -190,16 +190,16 @@ function Router() {
       <Route path="/next-chapter/portfolio" component={NextChapterPortfolio} />
       <Route path="/next-chapter/identity-assessment" component={IdentityClarityAssessment} />
       <Route path="/coach" component={CoachPortal} />
-      {/* Simulator routes - universal engine */}
-      <Route path="/leadership/simulate">{() => <SimulatorMissions platform="leadership" />}</Route>
-      <Route path="/manager/simulate">{() => <SimulatorMissions platform="manager" />}</Route>
-      <Route path="/career/simulate">{() => <SimulatorMissions platform="career" />}</Route>
-      <Route path="/young/simulate">{() => <SimulatorMissions platform="young" />}</Route>
-      <Route path="/simulator/:sessionId/debrief">{() => <SimulatorDebrief />}</Route>
-      <Route path="/simulator/:sessionId">{() => <SimulatorSession />}</Route>
       <Route path="/career-landing" component={CareerLanding} />
       <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/career-investment" component={CareerInvestment} />
+      {/* Voice Practice Simulator */}
+      <Route path="/leadership/simulate" component={SimulatorStart} />
+      <Route path="/manager/simulate" component={SimulatorStart} />
+      <Route path="/career/simulate" component={SimulatorStart} />
+      <Route path="/young/simulate" component={SimulatorStart} />
+      <Route path="/simulator/:sessionId/debrief" component={SimulatorDebrief} />
+      <Route path="/simulator/:sessionId" component={SimulatorSession} />
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />

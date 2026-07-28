@@ -1967,59 +1967,33 @@ export const userResumes = mysqlTable("user_resumes", {
 export type UserResume = typeof userResumes.$inferSelect;
 export type InsertUserResume = typeof userResumes.$inferInsert;
 
-// ── Leadership Simulation Intelligence Platform ───────────────────────────────
-
-export type SimPlatform = "leadership" | "manager" | "career" | "young";
-export type SimDifficulty = "Foundation" | "Developing" | "Advanced" | "Expert";
-export type SimSessionStatus = "briefing" | "active" | "debrief" | "complete";
-
-export type SimTurn = {
-  role: "user" | "character";
-  content: string;
-  timestamp: number;
-  durationMs?: number; // voice turn duration
-};
-
-export type SimBehaviourScore = {
-  dimension: string;
-  score: number; // 0-100
-  observation: string;
-  tip: string;
-};
-
-export type SimDebrief = {
-  overallScore: number;
-  headline: string;
-  strengths: string[];
-  growthAreas: string[];
-  behaviourScores: SimBehaviourScore[];
-  coachingNote: string;
-  turningPoints: Array<{ turnIndex: number; note: string }>;
-  missedOpportunities: string[];
-  alternativeResponses: Array<{ original: string; better: string }>;
-  retryRecommended: boolean;
-  nextMissionId?: string;
-};
-
+// ── Simulation Engine ─────────────────────────────────────────────────────────────
 export const simSessions = mysqlTable("sim_sessions", {
-  id: int("id").autoincrement().primaryKey(),
+  id: int("id").primaryKey().autoincrement(),
   userId: int("userId").notNull().references(() => users.id),
-  platform: varchar("platform", { length: 20 }).notNull(), // leadership | manager | career | young
-  missionId: varchar("missionId", { length: 100 }).notNull(),
-  missionTitle: varchar("missionTitle", { length: 255 }).notNull(),
-  capability: varchar("capability", { length: 100 }).notNull(),
-  difficulty: varchar("difficulty", { length: 30 }).notNull().default("Developing"),
-  voiceEnabled: boolean("voiceEnabled").default(false).notNull(),
+  platform: varchar("platform", { length: 50 }).notNull(), // leadership | manager | career | young
+  // Scenario (AI-inferred)
+  userPrompt: text("userPrompt").notNull(),
+  conversationType: varchar("conversationType", { length: 100 }),
+  stakeholder: varchar("stakeholder", { length: 100 }),
+  objective: text("objective"),
+  expectedChallenge: text("expectedChallenge"),
+  difficulty: int("difficulty").default(3), // 1-5
+  estimatedMinutes: int("estimatedMinutes").default(6),
   characterName: varchar("characterName", { length: 100 }),
-  characterRole: varchar("characterRole", { length: 150 }),
-  transcript: json("transcript").$type<SimTurn[]>().notNull().default([]),
-  debrief: json("debrief").$type<SimDebrief>(),
+  characterStyle: varchar("characterStyle", { length: 100 }),
+  // Conversation
+  messages: json("messages").$type<Array<{ role: "user" | "assistant"; content: string; timestamp: number }>>().default([]),
+  // Debrief
+  status: varchar("status", { length: 20 }).default("active"), // active | completed
   overallScore: int("overallScore"),
-  status: varchar("status", { length: 20 }).notNull().default("briefing"),
-  completedAt: timestamp("completedAt"),
+  behaviourScores: json("behaviourScores").$type<Array<{ label: string; score: number; max: number }>>(),
+  strengths: json("strengths").$type<string[]>(),
+  improvements: json("improvements").$type<string[]>(),
+  coachingInsights: json("coachingInsights").$type<Array<{ moment: string; tryInstead: string }>>(),
+  keyTakeaway: text("keyTakeaway"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  completedAt: timestamp("completedAt"),
 });
-
 export type SimSession = typeof simSessions.$inferSelect;
 export type InsertSimSession = typeof simSessions.$inferInsert;

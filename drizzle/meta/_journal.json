@@ -309,13 +309,6 @@
       "when": 1785152257801,
       "tag": "0043_even_blackheart",
       "breakpoints": true
-    },
-    {
-      "idx": 44,
-      "version": "5",
-      "when": 1785225097728,
-      "tag": "0044_perpetual_deathstrike",
-      "breakpoints": true
     }
   ]
 }
