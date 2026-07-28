@@ -8,7 +8,7 @@ import {
   Sparkles, Send, Radio, BookOpen, Scale, Zap,
   Menu, X, Search, Users, Award, Compass,
 } from "lucide-react";
-import { getLoginUrl } from "@/const";
+
 import { OutplacementContactModal } from "@/components/OutplacementContactModal";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
@@ -190,7 +190,6 @@ export default function CareerLanding() {
   const [, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [outplacementModalOpen, setOutplacementModalOpen] = useState(false);
-  const loginUrl = getLoginUrl();
 
   return (
     <div className="min-h-screen" style={{ background: "var(--color-ln-navy)", color: "white" }}>
@@ -224,7 +223,7 @@ export default function CareerLanding() {
               </Button>
             ) : (
               <>
-                <a href={loginUrl} className="hidden sm:block">
+                <a href="/login" className="hidden sm:block">
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/8 font-medium text-sm">
                     Sign In
                   </Button>
