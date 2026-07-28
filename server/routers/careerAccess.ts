@@ -238,7 +238,7 @@ ${diagnosticContext}`;
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
       ],
-      model: "claude-sonnet-4-5",
+      model: "claude-sonnet-4-6",
       maxTokens: 2000,
     });
 
@@ -374,7 +374,7 @@ Generate 15-20 organisations across all required categories. Be specific and rea
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
       ],
-      model: "claude-sonnet-4-5",
+      model: "claude-sonnet-4-6",
       maxTokens: 4000,
     });
 
@@ -675,7 +675,7 @@ Generate the most strategic access path for this leader to create access to ${op
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ],
-        model: "claude-sonnet-4-5",
+        model: "claude-sonnet-4-6",
         maxTokens: 3000,
       });
 
@@ -799,7 +799,7 @@ Key achievements: ${profile?.keyAchievements ? "Documented" : "Not documented"}`
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
       ],
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       maxTokens: 800,
     });
 
@@ -910,7 +910,7 @@ Today's date: ${today}`;
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
       ],
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       maxTokens: 600,
     });
 
@@ -1029,7 +1029,7 @@ Write a 5-sentence executive weekly summary covering:
 Tone: direct, confident, strategic. Write as if briefing the executive themselves. No bullet points — flowing narrative.`;
     const response = await invokeLLM({
       messages: [{ role: "user", content: prompt }],
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       maxTokens: 400,
     });
     const narrative = response.choices[0]?.message?.content ?? "Unable to generate report.";
@@ -1141,7 +1141,7 @@ Return ONLY valid JSON:
 }`;
 
       const result = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         max_tokens: 2000,

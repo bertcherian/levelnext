@@ -172,7 +172,7 @@ ${profileContext}`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ],
-        model: "claude-sonnet-4-5",
+        model: "claude-sonnet-4-6",
         maxTokens: 3000,
       });
 

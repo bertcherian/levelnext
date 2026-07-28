@@ -248,7 +248,7 @@ For coachFocusAreas, identify the 3 most important areas for the Navigator coach
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
-          model: "claude-sonnet-4-5",
+          model: "claude-sonnet-4-6",
         });
         const raw = (llmResult as any)?.content ?? (llmResult as any)?.choices?.[0]?.message?.content ?? "{}";
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();

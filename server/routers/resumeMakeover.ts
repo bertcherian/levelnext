@@ -646,7 +646,7 @@ Instructions:
 - Start directly with the first paragraph (no salutation, no date — user will add those)`;
 
       const result = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 1200,
       });
@@ -734,7 +734,7 @@ Return ONLY valid JSON:
 Only include non-empty arrays. topPriority = the 5 most important missing keywords to add.`;
 
       const result = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 1000,
         responseFormat: { type: "json_object" },

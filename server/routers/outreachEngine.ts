@@ -131,7 +131,7 @@ Generate 3 thought leadership pillars and 4 weeks of content calendar entries. B
         { role: "system", content: systemPrompt },
         { role: "user", content: careerContext },
       ],
-      model: "claude-sonnet-4-5",
+      model: "claude-sonnet-4-6",
       maxTokens: 4000,
     });
 

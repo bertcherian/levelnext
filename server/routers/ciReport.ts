@@ -312,7 +312,7 @@ For coachFocusAreas, identify the 3 most important areas for the Career Transiti
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
-          model: "claude-sonnet-4-5",
+          model: "claude-sonnet-4-6",
         });
         const raw =
           (llmResult as any)?.content ??
