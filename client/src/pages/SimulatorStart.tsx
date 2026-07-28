@@ -88,6 +88,7 @@ export default function SimulatorStart() {
   const [prompt, setPrompt] = useState("");
   const [scenario, setScenario] = useState<ScenarioCard | null>(null);
   const [followUpAnswer, setFollowUpAnswer] = useState("");
+  const [adjustedDifficulty, setAdjustedDifficulty] = useState<number | null>(null);
 
   const inferMutation = trpc.simulator.inferScenario.useMutation({
     onSuccess: (data) => setScenario(data),
@@ -108,6 +109,7 @@ export default function SimulatorStart() {
     const finalPrompt = scenario.followUpQuestion && followUpAnswer
       ? `${prompt}. ${followUpAnswer}`
       : prompt;
+    const effectiveDifficulty = adjustedDifficulty ?? scenario.difficulty;
     startMutation.mutate({
       platform,
       userPrompt: finalPrompt,
@@ -115,7 +117,7 @@ export default function SimulatorStart() {
       stakeholder: scenario.stakeholder,
       objective: scenario.objective,
       expectedChallenge: scenario.expectedChallenge,
-      difficulty: scenario.difficulty,
+      difficulty: effectiveDifficulty,
       estimatedMinutes: scenario.estimatedMinutes,
       characterName: scenario.characterName,
       characterStyle: scenario.characterStyle,
@@ -236,13 +238,36 @@ export default function SimulatorStart() {
                   <h2 className="text-white font-bold text-xl">{scenario.conversationType}</h2>
                 </div>
                 <div className="text-right">
-                  <div className="flex items-center gap-1 justify-end mb-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="w-2 h-2 rounded-full"
-                        style={{ background: i < scenario.difficulty ? meta.accent : "rgba(255,255,255,0.15)" }} />
-                    ))}
+                  <p className="text-white/40 text-xs uppercase tracking-wider mb-2">Difficulty</p>
+                  <div className="flex items-center gap-1.5 justify-end">
+                    {Array.from({ length: 5 }).map((_, i) => {
+                      const d = adjustedDifficulty ?? scenario.difficulty;
+                      const active = i < d;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => setAdjustedDifficulty(i + 1)}
+                          title={`Set difficulty ${i + 1}`}
+                          className="w-4 h-4 rounded-full transition-all duration-150 hover:scale-125"
+                          style={{
+                            background: active ? meta.accent : "rgba(255,255,255,0.15)",
+                            boxShadow: active ? `0 0 5px ${meta.accent}70` : "none",
+                          }}
+                        />
+                      );
+                    })}
                   </div>
-                  <p className="text-white/40 text-xs">Difficulty {scenario.difficulty}/5</p>
+                  <p className="text-white/40 text-xs mt-1.5">
+                    {(["Warm-up","Moderate","Challenging","Tough","Intense"])[(adjustedDifficulty ?? scenario.difficulty) - 1]} · {adjustedDifficulty ?? scenario.difficulty}/5
+                  </p>
+                  {adjustedDifficulty !== null && adjustedDifficulty !== scenario.difficulty && (
+                    <button
+                      onClick={() => setAdjustedDifficulty(null)}
+                      className="text-white/30 hover:text-white/60 text-[10px] mt-0.5 transition-colors block text-right"
+                    >
+                      ↺ Reset
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

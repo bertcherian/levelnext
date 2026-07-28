@@ -36,6 +36,8 @@ const PLATFORM_BG: Record<string, string> = {
   young: "#1a1a3a",
 };
 
+const NUM_BARS = 7;
+
 type Message = { role: "user" | "assistant"; content: string; timestamp: number };
 
 export default function SimulatorSession() {
@@ -49,8 +51,14 @@ export default function SimulatorSession() {
   const [isEnding, setIsEnding] = useState(false);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [interimText, setInterimText] = useState("");
+  const [waveformBars, setWaveformBars] = useState<number[]>(Array(NUM_BARS).fill(3));
+
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const animFrameRef = useRef<number | null>(null);
 
   const { data: session, isLoading } = trpc.simulator.getSession.useQuery(
     { sessionId },
@@ -94,12 +102,56 @@ export default function SimulatorSession() {
     }
   }, [session, localMessages.length]);
 
-  const startListening = () => {
+  // ── Waveform animation loop ────────────────────────────────────────────────
+  const startWaveform = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+      audioContextRef.current = ctx;
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      analyserRef.current = analyser;
+      const source = ctx.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        analyser.getByteFrequencyData(dataArray);
+        // Sample NUM_BARS evenly-spaced bins from the lower half of the spectrum
+        const bars = Array.from({ length: NUM_BARS }, (_, i) => {
+          const idx = Math.floor((i / NUM_BARS) * (dataArray.length / 2));
+          const raw = dataArray[idx] / 255; // 0–1
+          return Math.max(3, Math.round(raw * 28)); // min 3px, max 28px
+        });
+        setWaveformBars(bars);
+        animFrameRef.current = requestAnimationFrame(tick);
+      };
+      animFrameRef.current = requestAnimationFrame(tick);
+    } catch {
+      // getUserMedia failed — fall back to CSS pulse, no waveform
+    }
+  };
+
+  const stopWaveform = () => {
+    if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = null; }
+    micStreamRef.current?.getTracks().forEach(t => t.stop());
+    micStreamRef.current = null;
+    audioContextRef.current?.close();
+    audioContextRef.current = null;
+    analyserRef.current = null;
+    setWaveformBars(Array(NUM_BARS).fill(3));
+  };
+
+  // ── Speech recognition ─────────────────────────────────────────────────────
+  const startListening = async () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Voice input is not supported in this browser. Please use Chrome or Edge.");
       return;
     }
+    await startWaveform();
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
@@ -122,8 +174,8 @@ export default function SimulatorSession() {
       }
     };
 
-    recognition.onerror = () => { setIsListening(false); setInterimText(""); };
-    recognition.onend = () => { setIsListening(false); setInterimText(""); };
+    recognition.onerror = () => { setIsListening(false); setInterimText(""); stopWaveform(); };
+    recognition.onend = () => { setIsListening(false); setInterimText(""); stopWaveform(); };
 
     recognitionRef.current = recognition;
     recognition.start();
@@ -134,7 +186,11 @@ export default function SimulatorSession() {
     recognitionRef.current?.stop();
     setIsListening(false);
     setInterimText("");
+    stopWaveform();
   };
+
+  // Cleanup on unmount
+  useEffect(() => () => { stopWaveform(); }, []);
 
   const handleSend = () => {
     const text = inputText.trim();
@@ -267,21 +323,51 @@ export default function SimulatorSession() {
       <div className="flex-shrink-0 border-t border-white/10 px-4 py-4">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-end gap-3">
-            <button
-              onMouseDown={startListening}
-              onMouseUp={stopListening}
-              onTouchStart={startListening}
-              onTouchEnd={stopListening}
-              className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all"
-              style={{
-                background: isListening ? accent : "rgba(255,255,255,0.1)",
-                color: isListening ? bg : "white",
-                transform: isListening ? "scale(1.1)" : "scale(1)",
-              }}
-              title="Hold to speak"
-            >
-              {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 opacity-60" />}
-            </button>
+
+            {/* Mic button with waveform */}
+            <div className="relative flex-shrink-0 flex flex-col items-center">
+              {/* Outer pulse ring when listening */}
+              {isListening && (
+                <span
+                  className="absolute inset-0 rounded-full animate-ping opacity-30"
+                  style={{ background: accent }}
+                />
+              )}
+              <button
+                onMouseDown={startListening}
+                onMouseUp={stopListening}
+                onTouchStart={startListening}
+                onTouchEnd={stopListening}
+                className="relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-150"
+                style={{
+                  background: isListening ? accent : "rgba(255,255,255,0.1)",
+                  color: isListening ? bg : "white",
+                  transform: isListening ? "scale(1.08)" : "scale(1)",
+                  boxShadow: isListening ? `0 0 0 4px ${accent}30` : "none",
+                }}
+                title="Hold to speak"
+              >
+                {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 opacity-60" />}
+              </button>
+
+              {/* Live waveform bars shown below the button while listening */}
+              {isListening && (
+                <div className="flex items-end gap-[2px] mt-1.5 h-7">
+                  {waveformBars.map((h, i) => (
+                    <div
+                      key={i}
+                      className="rounded-full transition-all duration-75"
+                      style={{
+                        width: "3px",
+                        height: `${h}px`,
+                        background: accent,
+                        opacity: 0.85,
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="flex-1">
               <textarea
