@@ -280,7 +280,7 @@ export default function CareerHome() {
                     className={`rounded-xl p-4 flex items-center gap-4 transition-all duration-150 ${isLocked && !isCurrent ? "opacity-50" : ""} ${(isUnlocked || isCompleted) ? "cursor-pointer hover:shadow-md" : ""}`}
                     style={{ background: "white", boxShadow: "var(--shadow-card)", border: isCurrent ? "1.5px solid var(--color-ln-yellow)" : "1.5px solid transparent" }}
                     onClick={() => {
-                      if (isUnlocked || isCompleted) navigate(`/diagnostic/${code.toLowerCase()}`);
+                      if (isUnlocked || isCompleted) navigate(`/diagnostics/${code.toLowerCase()}`);
                       else toast.info("Complete the previous diagnostic to unlock this one.");
                     }}
                   >

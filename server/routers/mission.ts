@@ -61,16 +61,6 @@ Respond with ONLY a JSON object:
 }
 `.trim();
 
-    const result = await invokeLLM({
-      model: "gpt-5-mini",
-      messages: [{ role: "user", content: prompt }],
-      maxTokens: 300,
-      responseFormat: { type: "json_object" },
-    });
-
-    const rawContent = result.choices[0]?.message?.content ?? "{}";
-    const content = typeof rawContent === "string" ? rawContent : "";
-
     let missionData: { title: string; description: string; moduleType: string } = {
       title: "Practise executive presence today",
       description: "In your next meeting, speak last on at least one agenda item. Observe how others respond when you hold back and then offer a clear, considered perspective.",
@@ -78,8 +68,25 @@ Respond with ONLY a JSON object:
     };
 
     try {
-      missionData = JSON.parse(content);
-    } catch (_) {}
+      const result = await invokeLLM({
+        model: "gpt-5-mini",
+        messages: [{ role: "user", content: prompt }],
+        maxTokens: 300,
+        responseFormat: { type: "json_object" },
+      });
+
+      const rawContent = result?.choices?.[0]?.message?.content ?? "";
+      const content = typeof rawContent === "string" ? rawContent : "";
+
+      if (content) {
+        const parsed = JSON.parse(content);
+        if (parsed?.title && parsed?.description) {
+          missionData = parsed;
+        }
+      }
+    } catch (llmErr) {
+      console.warn("[mission.generate] LLM call failed, using default mission:", llmErr);
+    }
 
     const [mission] = await db
       .insert(dailyMissions)

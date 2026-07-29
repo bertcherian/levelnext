@@ -1192,3 +1192,7 @@ TypeScript: 0 errors | Vitest: 3/3 passed
 - [x] DB schema: coverLetterHtml, rewrittenAtsScore, rewrittenQualityScore columns added to user_resumes
 - [x] client/src/pages/ci/ResumeRewrite.tsx: DOCX and PDF download buttons in cover letter preview header
 - [x] TypeScript: 0 errors | Vitest: 3/3 passed
+
+### Bug Fixes — Platform Audit (Jul 29 2026)
+- [x] Fix Generate Mission crash: wrap invokeLLM in try/catch in mission.ts, guard against missing choices array, fall back to default mission
+- [x] Fix CareerHome.tsx broken route: /diagnostic/ → /diagnostics/ (typo causing 404 on Career Diagnostics Start button)
