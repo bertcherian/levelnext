@@ -274,7 +274,7 @@ Generate a concise, practical pre-call brief for the executive coach. Structure 
 Be direct, practical, and coach-ready. No fluff. Use the leader's name.`;
 
       const result = await invokeLLM({
-        model: "gpt-5-mini",
+        model: "claude-haiku-4-5",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 800,
       });

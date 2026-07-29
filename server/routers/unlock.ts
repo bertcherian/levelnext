@@ -460,7 +460,7 @@ Write a short, warm, personal message (3-4 sentences) that:
 Tone: coaching, direct, encouraging. No bullet points. No markdown. Plain prose only.`;
 
       const result = await invokeLLM({
-        model: "gpt-5-mini",
+        model: "claude-haiku-4-5",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 250,
       });

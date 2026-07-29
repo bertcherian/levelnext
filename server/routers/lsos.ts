@@ -325,7 +325,7 @@ Prioritise: leaders who are disengaged (days since active > 7), leaders with ove
 Return a JSON array of exactly 5 mission objects. No preamble, no explanation, just the JSON array.`;
 
     const result = await invokeLLM({
-      model: "gpt-5-mini",
+      model: "claude-haiku-4-5",
       messages: [{ role: "user", content: prompt }],
       maxTokens: 2000,
     });
@@ -437,7 +437,7 @@ Return a JSON object with:
 Return only the JSON object, no preamble.`;
 
     const result = await invokeLLM({
-      model: "gpt-5-mini",
+      model: "claude-haiku-4-5",
       messages: [{ role: "user", content: prompt }],
       maxTokens: 1000,
     });

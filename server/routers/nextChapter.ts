@@ -505,7 +505,7 @@ async function generateDeliverable(
     .join("\n\n");
 
   const result = await invokeLLM({
-    model: "gpt-5-mini",
+    model: "claude-haiku-4-5",
     messages: [
       {
         role: "system",
@@ -673,7 +673,7 @@ export const nextChapterRouter = router({
       let reply = "";
       try {
         const result = await invokeLLM({
-          model: "gpt-5-mini",
+          model: "claude-haiku-4-5",
           messages: [systemMsg, ...llmMessages],
           maxTokens: 500,
         });

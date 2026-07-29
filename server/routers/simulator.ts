@@ -45,7 +45,7 @@ export const simulatorRouter = router({
     .mutation(async ({ input }) => {
       const ctx_platform = PLATFORM_CONTEXT[input.platform];
       const result = await invokeLLM({
-        model: "gpt-5-mini",
+        model: "claude-haiku-4-5",
         messages: [
           {
             role: "system",
@@ -112,7 +112,7 @@ followUpQuestion: if you genuinely need one clarification, include a short quest
       const ctx_platform = PLATFORM_CONTEXT[input.platform];
 
       const openingResult = await invokeLLM({
-        model: "gpt-5-mini",
+        model: "claude-haiku-4-5",
         messages: [
           {
             role: "system",
@@ -196,7 +196,7 @@ Keep responses concise (2-4 sentences).`,
         { role: "user" as const, content: input.message },
       ];
 
-      const replyResult = await invokeLLM({ model: "gpt-5-mini", messages: llmMessages });
+      const replyResult = await invokeLLM({ model: "claude-haiku-4-5", messages: llmMessages });
       const reply = extractContent(replyResult.choices[0].message.content ?? "I see. Go on.");
       const finalMessages: Array<{ role: "user" | "assistant"; content: string; timestamp: number }> = [
         ...updatedMessages,

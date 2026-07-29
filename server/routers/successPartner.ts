@@ -285,7 +285,7 @@ Write a warm, direct 2–3 sentence opening for the Success Partner to use at th
 Return only the opening script, no labels or preamble.`;
 
       const result = await invokeLLM({
-        model: "gpt-5-mini",
+        model: "claude-haiku-4-5",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 150,
       });

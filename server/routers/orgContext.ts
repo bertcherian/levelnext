@@ -188,7 +188,7 @@ export const orgContextRouter = router({
 
       try {
         const result = await invokeLLM({
-          model: "gpt-5-mini",
+          model: "claude-haiku-4-5",
           messages: [
             {
               role: "system",

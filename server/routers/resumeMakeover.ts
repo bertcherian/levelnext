@@ -250,7 +250,7 @@ Each dimension: provide 2 callouts with exact quotes from the resume and specifi
 Be honest and direct. Score strictly — a score of 15+ means genuinely strong.`;
 
   const result = await invokeLLM({
-    model: "gpt-5-mini",
+    model: "claude-haiku-4-5",
     messages: [{ role: "user", content: prompt }],
     maxTokens: 2000,
     responseFormat: { type: "json_object" },
@@ -309,7 +309,7 @@ Do NOT include <html>, <head>, <body>, or <style> tags.
 Start directly with <h1>Name</h1>.`;
 
   const result = await invokeLLM({
-    model: "gpt-5-mini",
+    model: "claude-haiku-4-5",
     messages: [{ role: "user", content: prompt }],
     maxTokens: 3000,
   });
@@ -646,7 +646,7 @@ Instructions:
 - Start directly with the first paragraph (no salutation, no date — user will add those)`;
 
       const result = await invokeLLM({
-        model: "gpt-5-mini",
+        model: "claude-haiku-4-5",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 1200,
       });
@@ -734,7 +734,7 @@ Return ONLY valid JSON:
 Only include non-empty arrays. topPriority = the 5 most important missing keywords to add.`;
 
       const result = await invokeLLM({
-        model: "gpt-5-mini",
+        model: "claude-haiku-4-5",
         messages: [{ role: "user", content: prompt }],
         maxTokens: 1000,
         responseFormat: { type: "json_object" },

@@ -382,7 +382,7 @@ export const guideRouter = router({
       let response: string;
       try {
         const llmResult = await invokeLLM({
-          model: "gpt-5-mini",
+          model: "claude-haiku-4-5",
           messages: [systemMsg, ...llmMessages],
           maxTokens: 800,
         });
@@ -525,7 +525,7 @@ Return ONLY a JSON array of 4 strings. No explanation, no markdown, just the arr
 ["Question 1?", "Question 2?", "Question 3?", "Question 4?"]`;
 
       const llmResult = await invokeLLM({
-        model: 'gpt-5-mini',
+        model: 'claude-haiku-4-5',
         messages: [{ role: 'user', content: prompt }],
         maxTokens: 400,
       });
