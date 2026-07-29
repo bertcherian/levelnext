@@ -670,13 +670,22 @@ export const nextChapterRouter = router({
         content: m.content,
       }));
 
-      const result = await invokeLLM({
-        model: "gpt-5-mini",
-        messages: [systemMsg, ...llmMessages],
-        maxTokens: 500,
-      });
+      let reply = "";
+      try {
+        const result = await invokeLLM({
+          model: "gpt-5-mini",
+          messages: [systemMsg, ...llmMessages],
+          maxTokens: 500,
+        });
+        reply = extractText(result);
+      } catch (err) {
+        console.error("[NextChapter] invokeLLM error:", err);
+      }
 
-      const reply = extractText(result);
+      // Guard: never save or return an empty reply
+      if (!reply || reply.trim().length === 0) {
+        reply = "I'm here with you — I had a moment of difficulty processing that. Could you share that again, or tell me a little more?";
+      }
 
       // Save assistant reply
       await db.insert(nextChapterMessages).values({

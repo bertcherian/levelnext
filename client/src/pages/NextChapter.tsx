@@ -478,7 +478,12 @@ export default function NextChapter() {
       {
         onSuccess: (data) => {
           setIsTyping(false);
-          setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+          // Guard: never add a blank assistant bubble
+          if (data.reply && data.reply.trim().length > 0) {
+            setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+          } else {
+            setMessages((prev) => [...prev, { role: "assistant", content: "I'm here with you — I had a moment of difficulty processing that. Could you share that again?" }]);
+          }
           // After 3 user messages, surface the experiment card if not yet acknowledged
           const userMsgCount = messages.filter((m) => m.role === "user").length + 1;
           if (userMsgCount >= 3 && currentExperiment && !experimentAcknowledged) {
