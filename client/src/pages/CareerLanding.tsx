@@ -223,12 +223,12 @@ export default function CareerLanding() {
               </Button>
             ) : (
               <>
-                <a href="/login" className="hidden sm:block">
+                <a href="/login?returnTo=%2Fcareer" className="hidden sm:block">
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/8 font-medium text-sm">
                     Sign In
                   </Button>
                 </a>
-                <a href="/signup">
+                <a href="/signup?platform=career">
                   <Button size="sm" className="font-semibold text-sm px-5"
                     style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
                     Start Your Transition →
@@ -289,7 +289,7 @@ export default function CareerLanding() {
                 Free to start · First diagnostic in 10 minutes · No credit card
               </p>
               <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
-                <a href="/signup">
+                <a href="/signup?platform=career">
                   <Button size="lg" className="h-13 px-8 text-base font-bold rounded-xl shadow-lg w-full sm:w-auto"
                     style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
                     Start Your Career Transition
@@ -500,7 +500,7 @@ export default function CareerLanding() {
             Career Transition Intelligence gives you the diagnostic clarity, brand strategy, market intelligence, and preparation systems to take control of what comes next — rather than waiting for it to find you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/signup">
+            <a href="/signup?platform=career">
               <Button size="lg" className="h-13 px-10 text-base font-bold rounded-xl shadow-lg"
                 style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
                 Start Your Career Transition
@@ -528,7 +528,7 @@ export default function CareerLanding() {
           <div className="flex items-center gap-5 text-xs text-white/40">
             <a href="/" className="hover:text-white/70 transition-colors">Leadership Intelligence</a>
             <a href="/manager-effectiveness" className="hover:text-white/70 transition-colors">Manager Effectiveness</a>
-            <a href="/signup" className="hover:text-white/70 transition-colors">Get Started</a>
+            <a href="/signup?platform=career" className="hover:text-white/70 transition-colors">Get Started</a>
             <span>© {new Date().getFullYear()} Meta Results Pvt. Ltd.</span>
           </div>
         </div>

@@ -35,6 +35,7 @@ export const emailAuthRouter = router({
         origin: z.string().url(),
         inviteToken: z.string().optional(),
         name: z.string().optional(),
+        returnTo: z.string().optional(), // post-login redirect path e.g. /career, /manager
       })
     )
     .mutation(async ({ input }) => {
@@ -51,6 +52,7 @@ export const emailAuthRouter = router({
         token,
         email,
         inviteToken: input.inviteToken ?? null,
+        returnTo: input.returnTo ?? null,
         expiresAt,
       });
 
@@ -360,14 +362,17 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Redirect to app — SP invites go to SP workspace; new users go to onboarding; returning users go to home
+      // Redirect to app — SP invites → SP workspace; new users → onboarding (or platform-specific); returning users → returnTo or /home
       let postLoginPath: string;
       if (isSPInvite) {
         postLoginPath = "/admin/lsos";
       } else if (isNewUser) {
-        postLoginPath = "/onboard";
+        // New users go to onboarding, but preserve returnTo so onboarding can redirect them afterward
+        const returnParam = magicLink.returnTo ? `?returnTo=${encodeURIComponent(magicLink.returnTo)}` : "";
+        postLoginPath = `/onboard${returnParam}`;
       } else {
-        postLoginPath = "/home";
+        // Returning users go directly to their platform destination (or /home)
+        postLoginPath = magicLink.returnTo ?? "/home";
       }
       res.redirect(302, `${origin}${postLoginPath}`);
     } catch (error) {

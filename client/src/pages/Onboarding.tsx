@@ -342,13 +342,15 @@ export default function Onboarding() {
     onError: (e) => toast.error(e.message),
   });
 
-  // Auto-navigate after success animation
+  // Auto-navigate after success animation — respect returnTo param from magic link flow
+  const returnToParam = new URLSearchParams(window.location.search).get("returnTo");
   useEffect(() => {
     if (mode === "success") {
-      const t = setTimeout(() => navigate("/home"), 2200);
+      const destination = returnToParam ?? "/home";
+      const t = setTimeout(() => navigate(destination), 2200);
       return () => clearTimeout(t);
     }
-  }, [mode, navigate]);
+  }, [mode, navigate, returnToParam]);
 
   const firstName = user?.name?.split(" ")[0] ?? "Leader";
 

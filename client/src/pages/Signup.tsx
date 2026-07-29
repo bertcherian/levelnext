@@ -71,6 +71,13 @@ export default function Signup() {
 
   const params = new URLSearchParams(window.location.search);
   const errorParam = params.get("error");
+  // ?platform=mep → /manager, ?platform=career → /career, etc.
+  const platformParam = params.get("platform");
+  const returnToParam = params.get("returnTo");
+  const resolvedReturnTo = returnToParam ??
+    (platformParam === "mep" ? "/manager" :
+     platformParam === "career" ? "/career" :
+     platformParam === "leadership" ? "/home" : undefined);
 
   useEffect(() => {
     if (errorParam === "invalid_or_expired" || errorParam === "missing_token") {
@@ -100,6 +107,7 @@ export default function Signup() {
       email: email.trim().toLowerCase(),
       origin: window.location.origin,
       name: name.trim() || undefined,
+      returnTo: resolvedReturnTo,
     });
   };
 
@@ -200,7 +208,7 @@ export default function Signup() {
                     e.preventDefault();
                     if (!email.trim()) return;
                     setErrorMsg(null);
-                    requestMagicLink.mutate({ email: email.trim().toLowerCase(), origin: window.location.origin, name: name || undefined });
+                    requestMagicLink.mutate({ email: email.trim().toLowerCase(), origin: window.location.origin, name: name || undefined, returnTo: resolvedReturnTo });
                   }}
                   className="space-y-3 mb-4"
                 >

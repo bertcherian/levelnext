@@ -43,6 +43,7 @@ export default function Login() {
   const params = new URLSearchParams(window.location.search);
   const inviteParam = params.get("invite");
   const errorParam = params.get("error");
+  const returnToParam = params.get("returnTo");
 
   // Load invite info if invite token is present
   const inviteInfoQuery = trpc.emailAuth.getInviteInfo.useQuery(
@@ -91,6 +92,7 @@ export default function Login() {
       email: email.trim().toLowerCase(),
       origin: window.location.origin,
       inviteToken: inviteToken ?? undefined,
+      returnTo: returnToParam ?? undefined,
     });
   };
 
@@ -236,6 +238,7 @@ export default function Login() {
                     email: email.trim().toLowerCase(),
                     origin: window.location.origin,
                     inviteToken: inviteToken ?? undefined,
+                    returnTo: returnToParam ?? undefined,
                   });
                 }}
                 className="space-y-3 mb-4"

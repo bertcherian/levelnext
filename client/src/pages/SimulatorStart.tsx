@@ -130,7 +130,7 @@ export default function SimulatorStart() {
           <Mic className="w-12 h-12 mx-auto mb-4" style={{ color: meta.accent }} />
           <h2 className="text-2xl font-bold mb-2">Practice Simulator</h2>
           <p className="text-white/70 mb-6">Sign in to start your practice session</p>
-          <Button onClick={() => window.location.href = "/login"} style={{ background: meta.accent, color: meta.color }}>
+          <Button onClick={() => window.location.href = "/login?returnTo=%2Fhome"} style={{ background: meta.accent, color: meta.color }}>
             Sign In to Continue
           </Button>
         </div>

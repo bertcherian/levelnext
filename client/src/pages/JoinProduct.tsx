@@ -55,7 +55,7 @@ export default function JoinProduct() {
     if (!user) {
       // Persist the intended product so we can resume after OAuth
       localStorage.setItem(LS_KEY, productId);
-      window.location.href = "/login";
+      window.location.href = "/login?returnTo=%2Fhome";
       return;
     }
 

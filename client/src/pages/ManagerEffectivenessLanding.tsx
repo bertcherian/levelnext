@@ -200,7 +200,7 @@ export default function ManagerEffectivenessLanding() {
               </Button>
             ) : (
               <>
-                <a href="/login">
+                <a href="/login?returnTo=%2Fmanager">
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/8 font-medium text-sm">
                     Sign In
                   </Button>
