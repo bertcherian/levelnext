@@ -236,7 +236,12 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
 
   app.get("/api/auth/magic-link/verify", async (req, res) => {
     const token = typeof req.query.token === "string" ? req.query.token : null;
-    const origin = `${req.protocol}://${req.get("host")}`;
+    // Use X-Forwarded-Host when behind a reverse proxy (Cloud Run / CDN) so the
+    // cookie domain and redirect URL match the real public hostname (e.g. levelnext.coach)
+    // rather than the internal Cloud Run hostname.
+    const forwardedHost = req.headers["x-forwarded-host"];
+    const publicHost = (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) || req.get("host");
+    const origin = `${req.protocol}://${publicHost}`;
 
     if (!token) {
       res.redirect(`${origin}/login?error=missing_token`);
