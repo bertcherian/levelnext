@@ -94,6 +94,7 @@ export default function IdentityClarityAssessment() {
   const [showCelebration, setShowCelebration] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  const utils = trpc.useUtils();
   const submitAssessmentMutation = trpc.nextChapter.submitIdentityAssessment.useMutation();
 
   const question = QUESTIONS[currentQ];
@@ -174,6 +175,8 @@ export default function IdentityClarityAssessment() {
       { assessmentType: "baseline", scores: dimensionScores },
       {
         onSuccess: () => {
+          // Invalidate the assessments cache so NextChapter sees the new baseline immediately
+          utils.nextChapter.getIdentityAssessments.invalidate();
           setSubmitted(true);
           setTimeout(() => setShowCelebration(true), 100);
         },

@@ -360,6 +360,7 @@ export default function NextChapter() {
   // Check if baseline ICA has been completed
   const { data: assessments, isLoading: assessmentsLoading } = trpc.nextChapter.getIdentityAssessments.useQuery(undefined, {
     staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const startSessionMutation = trpc.nextChapter.startSession.useMutation();

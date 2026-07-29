@@ -1196,3 +1196,4 @@ TypeScript: 0 errors | Vitest: 3/3 passed
 ### Bug Fixes — Platform Audit (Jul 29 2026)
 - [x] Fix Generate Mission crash: wrap invokeLLM in try/catch in mission.ts, guard against missing choices array, fall back to default mission
 - [x] Fix CareerHome.tsx broken route: /diagnostic/ → /diagnostics/ (typo causing 404 on Career Diagnostics Start button)
+- [x] Fix Identity Clarity Assessment loop: invalidate getIdentityAssessments cache on submit success so NextChapter gate sees the new baseline immediately instead of redirecting back to the assessment
