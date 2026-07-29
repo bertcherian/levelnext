@@ -755,26 +755,29 @@ export default function NextChapter() {
             className="flex-shrink-0 px-4 py-4 border-t"
             style={{ background: "white", borderColor: "rgba(0,0,0,0.08)" }}
           >
-            {/* Module hint */}
-            {messages.filter((m) => m.role === "user").length === 0 && (
-              <div
-                className="mb-3 px-3 py-2 rounded-xl text-xs text-white/60 flex items-center gap-2"
-                style={{ background: "var(--color-ln-navy)" }}
-              >
-                <Sparkles className="h-3 w-3 flex-shrink-0" style={{ color: stage?.color ?? "#D4AF37" }} />
-                <span>
-                  <strong className="text-white/80">Module {currentModule}:</strong>{" "}
-                  {MODULE_NAMES[currentModule]} — {DELIVERABLE_NAMES[currentModule]}
-                </span>
-              </div>
-            )}
-
-            {/* Input affordance label */}
-            <div className="mb-2 flex items-center gap-1.5">
-              <div className="h-px flex-1" style={{ background: "rgba(0,0,0,0.08)" }} />
-              <span className="text-[11px] font-medium px-2" style={{ color: "oklch(50% 0.02 248.6)" }}>Type your answer below</span>
-              <div className="h-px flex-1" style={{ background: "rgba(0,0,0,0.08)" }} />
-            </div>
+                        {/* Current question prompt — always visible above the input */}
+            {(() => {
+              const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+              // Extract the last sentence/question from the assistant message (after last newline or full message)
+              const rawText = lastAssistant?.content ?? `Module ${currentModule}: ${MODULE_NAMES[currentModule]} — share your thoughts to begin.`;
+              // Strip markdown bold markers and get the last meaningful line
+              const lines = rawText.replace(/\*\*/g, "").split("\n").map((l) => l.trim()).filter(Boolean);
+              const promptText = lines[lines.length - 1] ?? rawText;
+              return (
+                <div
+                  className="mb-3 px-3 py-2.5 rounded-xl flex items-start gap-2"
+                  style={{
+                    background: (stage?.color ?? "#D4AF37") + "12",
+                    border: `1px solid ${stage?.color ?? "#D4AF37"}30`,
+                  }}
+                >
+                  <Sparkles className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{ color: stage?.color ?? "#D4AF37" }} />
+                  <span className="text-xs leading-relaxed" style={{ color: "#1C1C1C" }}>
+                    {promptText}
+                  </span>
+                </div>
+              );
+            })()}
             <div className="flex gap-3 items-end">
               <Textarea
                 ref={textareaRef}
