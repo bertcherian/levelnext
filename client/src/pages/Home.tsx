@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Sparkles, Target, TrendingUp, ArrowRight, CheckCircle2, Circle, Loader2, Zap, Flame, BookOpen } from "lucide-react";
+import { Sparkles, Target, TrendingUp, ArrowRight, CheckCircle2, Circle, Loader2, Zap, Flame, BookOpen, Building2, Wand2 } from "lucide-react";
 
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
@@ -237,6 +237,13 @@ export default function Home() {
   const completedModules = graph?.completedModules ?? [];
   const pendingModules = (["ECI", "TII", "LII", "GCC", "LDI", "STI"] as const).filter((m) => !completedModules.includes(m));
 
+  // Org admin setup card
+  const isOrgAdmin = tenant?.role === "owner" || tenant?.role === "admin";
+  const { data: myOrg } = trpc.enterpriseOnboarding.getMyOrganisation.useQuery(undefined, {
+    enabled: isAuthenticated && isOrgAdmin,
+  });
+  const showOrgSetupCard = isOrgAdmin && (!myOrg || myOrg.wizardStatus !== "activated");
+
   return (
     <PlatformLayout title="Home">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-8 animate-fade-in">
@@ -252,6 +259,70 @@ export default function Home() {
               : `Your Edge continues to strengthen. ${completedModules.length} of 6 modules complete.`}
           </p>
         </div>
+
+        {/* Org Setup Prompt Card — visible only to org owners/admins who haven't completed setup */}
+        {showOrgSetupCard && (
+          <div
+            className="rounded-2xl p-4 sm:p-5 cursor-pointer"
+            style={{
+              background: "linear-gradient(135deg, oklch(from var(--color-ln-navy) 14% 0.04 248.6) 0%, oklch(from var(--color-ln-navy) 18% 0.05 248.6) 100%)",
+              border: "1.5px solid oklch(from var(--color-ln-yellow) l c h / 0.5)",
+              boxShadow: "0 0 0 1px oklch(from var(--color-ln-yellow) l c h / 0.1), var(--shadow-card)",
+            }}
+            onClick={() => navigate("/enterprise-onboarding")}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)", border: "1.5px solid oklch(from var(--color-ln-yellow) l c h / 0.4)" }}
+              >
+                <Building2 size={18} style={{ color: "var(--color-ln-yellow)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-sm font-semibold text-white">Organisation Setup</p>
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                    style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.2)", color: "var(--color-ln-yellow)" }}
+                  >
+                    {myOrg?.wizardStatus === "in_progress" ? `Step ${myOrg.wizardStep ?? 1} of 8` : "Action Required"}
+                  </span>
+                </div>
+                <p className="text-xs" style={{ color: "oklch(70% 0.02 248.6)" }}>
+                  {myOrg?.wizardStatus === "in_progress"
+                    ? "Continue the setup wizard to activate AI coaching context for your organisation."
+                    : "Add your company URL, values, competency frameworks, and strategic priorities to personalise AI coaching for your team."}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="flex-shrink-0 font-semibold text-xs mt-0.5"
+                style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+                onClick={(e) => { e.stopPropagation(); navigate("/enterprise-onboarding"); }}
+              >
+                <Wand2 size={12} className="mr-1" />
+                {myOrg?.wizardStatus === "in_progress" ? "Continue" : "Start Setup"}
+              </Button>
+            </div>
+            {/* Quick-access links */}
+            <div className="flex items-center gap-3 mt-3 pt-3" style={{ borderTop: "1px solid oklch(from white 30% 0 0 / 0.08)" }}>
+              <button
+                className="text-[11px] font-medium flex items-center gap-1 hover:underline"
+                style={{ color: "oklch(60% 0.04 248.6)" }}
+                onClick={(e) => { e.stopPropagation(); navigate("/admin/org-context"); }}
+              >
+                Org Context →
+              </button>
+              <button
+                className="text-[11px] font-medium flex items-center gap-1 hover:underline"
+                style={{ color: "oklch(60% 0.04 248.6)" }}
+                onClick={(e) => { e.stopPropagation(); navigate("/admin"); }}
+              >
+                Admin Dashboard →
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Edge Summary */}
         {graph?.compositeEdge !== undefined && (

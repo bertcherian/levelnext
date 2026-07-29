@@ -20,12 +20,19 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Star, BookOpen, TrendingUp, BarChart2, Building2, Settings, Zap, MessageSquare } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Star, BookOpen, TrendingUp, BarChart2, Building2, Settings, Zap, MessageSquare, ShieldCheck, Globe, Wand2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
+// Admin-only nav items (owner or admin role)
+const adminNavItems = [
+  { icon: Wand2, label: "Org Setup Wizard", path: "/enterprise-onboarding" },
+  { icon: Globe, label: "Org Context", path: "/admin/org-context" },
+  { icon: ShieldCheck, label: "Admin Dashboard", path: "/admin" },
+];
 const menuItems = [
   { icon: LayoutDashboard, label: "Home", path: "/home" },
   { icon: Star, label: "My Edge", path: "/my-edge" },
@@ -112,7 +119,11 @@ function DashboardLayoutContent({
   children,
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
+  const { data: tenantData } = trpc.tenant.myTenant.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const isOrgAdmin = tenantData?.role === "owner" || tenantData?.role === "admin";
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -205,6 +216,32 @@ function DashboardLayoutContent({
                 );
               })}
             </SidebarMenu>
+            {/* Admin-only section */}
+            {isOrgAdmin && (
+              <>
+                <div className="px-4 pt-4 pb-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Admin</p>
+                </div>
+                <SidebarMenu className="px-2 pb-1">
+                  {adminNavItems.map(item => {
+                    const isActive = location === item.path || location.startsWith(item.path + "/");
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          onClick={() => setLocation(item.path)}
+                          tooltip={item.label}
+                          className="h-10 transition-all font-normal"
+                        >
+                          <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </>
+            )}
           </SidebarContent>
 
           <SidebarFooter className="p-3">
