@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { OutplacementContactModal } from "@/components/OutplacementContactModal";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_5345898b.png";
+const LOGO_URL = "/logo.png";
 
 // ── PLAN DATA ─────────────────────────────────────────────────────────────────
 const PLANS = [

@@ -818,20 +818,19 @@ export default function NextChapter() {
                     <div
                       className="mt-2 px-3 py-2.5 rounded-xl text-xs leading-relaxed"
                       style={{
-                        background: "#FFFBEB",
-                        border: `1px dashed ${stage?.color ?? "#D4AF37"}60`,
-                        color: "#5C4A00",
+                        background: "#2D2200",
+                        border: `1px solid ${stage?.color ?? "#D4AF37"}`,
                       }}
                     >
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <Lightbulb className="h-3 w-3" style={{ color: stage?.color ?? "#D4AF37" }} />
                         <span className="font-semibold text-[10px] uppercase tracking-wider" style={{ color: stage?.color ?? "#D4AF37" }}>Sample answer for inspiration</span>
-                        <button onClick={() => setShowExample(false)} className="ml-auto opacity-40 hover:opacity-70">
+                        <button onClick={() => setShowExample(false)} className="ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>
                           <X className="h-3 w-3" />
                         </button>
                       </div>
-                      <p style={{ color: "#5C4A00" }}>{exampleText}</p>
-                      <p className="mt-1.5 text-[10px] opacity-60 italic">This is just an example — your answer will be unique to your journey.</p>
+                      <p style={{ color: "#F5E6B0", lineHeight: "1.6" }}>{exampleText}</p>
+                      <p className="mt-1.5 text-[10px] italic" style={{ color: "rgba(255,255,255,0.4)" }}>This is just an example — your answer will be unique to your journey.</p>
                     </div>
                   )}
                 </div>

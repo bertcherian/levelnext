@@ -60,7 +60,7 @@ export const platformInvitesRouter = router({
         html: `
           <div style="font-family: Inter, Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #f8f7f4; padding: 40px 20px;">
             <div style="text-align: center; margin-bottom: 32px;">
-              <img src="https://manus.space/manus-storage/LevelNext_logo_transparent_a1b2c3.png" alt="LevelNext" style="height: 60px;" />
+              <img src="https://manus.space/logo.png" alt="LevelNext" style="height: 60px;" />
             </div>
             <div style="background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e8e6e0;">
               <h1 style="color: #12345A; font-size: 24px; margin: 0 0 16px;">Hi ${firstName},</h1>

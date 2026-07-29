@@ -7,7 +7,7 @@ import { CheckCircle2, ChevronRight, BarChart3, Clock, Lock } from "lucide-react
 import { toast } from "sonner";
 import DiagnosticRadarChart from "@/components/DiagnosticRadarChart";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_013311b9.png";
+const LOGO_URL = "/logo.png";
 
 const SCORE_LABELS: Record<number, string> = {
   1: "Strongly Disagree", 2: "Disagree", 3: "Somewhat Disagree",

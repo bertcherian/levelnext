@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_5345898b.png";
+const LOGO_URL = "/logo.png";
 const TIDYCAL_URL = "https://tidycal.com/metaresults/pilot";
 
 const TEAM_SIZE_OPTIONS = [

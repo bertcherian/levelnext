@@ -64,7 +64,7 @@ const CA_NAV_ITEMS = [
   },
 ];
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_a0b1c2d3.png";
+const LOGO_URL = "/logo.png";
 
 interface CareerAccessLayoutProps {
   children: React.ReactNode;

@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_013311b9.png";
+const LOGO_URL = "/logo.png";
 
 const NAV_ITEMS = [
   { href: "/manager", label: "Home", icon: Home, exact: true },
