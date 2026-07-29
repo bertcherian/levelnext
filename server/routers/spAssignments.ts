@@ -335,7 +335,7 @@ function buildSPWelcomeEmail(firstName: string, actionUrl: string, isNewUser: bo
 
         <!-- Header -->
         <tr><td style="padding:0 0 32px;text-align:center;">
-          <img src="https://storage.manus.space/public/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" height="52" style="display:block;margin:0 auto;" />
+          <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663042201754/lFoigStnAEQVqCmi.png" alt="LevelNext" height="52" style="display:block;margin:0 auto;" />
         </td></tr>
 
         <!-- Main card -->

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield, Download, FileText } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_5345898b.png";
 const VIDEO_URL = "/manus-storage/levelnext_explainer_v5_a20a9a42.mp4";
 const POSTER_URL = "/manus-storage/video_poster_9c31f573.jpg";
 
@@ -107,7 +107,7 @@ export default function Landing() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-navy)" }}>
         <div className="flex flex-col items-center gap-4">
-          <img src="/manus-storage/LevelNext_logo_transparent_570ab0aa.png" alt="LevelNext" className="h-14 object-contain animate-pulse" />
+          <img src="/manus-storage/LevelNext_logo_transparent_5345898b.png" alt="LevelNext" className="h-14 object-contain animate-pulse" />
           <p className="text-sm" style={{ color: "oklch(65% 0.02 248.6)" }}>Signing you in…</p>
         </div>
       </div>

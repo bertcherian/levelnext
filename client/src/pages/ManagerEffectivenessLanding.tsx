@@ -8,7 +8,7 @@ import {
   Star, Shield,
 } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
+const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_5345898b.png";
 
 const MEP_DIAGNOSTICS = [
   {
