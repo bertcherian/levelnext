@@ -26,6 +26,8 @@ import {
   BookOpen,
   ArrowRight,
   FlaskConical,
+  Lightbulb,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -76,6 +78,26 @@ const DELIVERABLE_NAMES: Record<number, string> = {
   14: "Legacy Statement",
   15: "Transformation Roadmap",
   16: "Monthly Reflection Journal",
+};
+
+// ─── Per-module example answers to help users who feel stuck ─────────────────
+const MODULE_EXAMPLES: Record<number, string> = {
+  1: "For 15 years I've been the person who fixes things fast — my bias for action has driven results. But I'm noticing it now stops me from listening deeply or letting my team lead. I jump in too quickly and solve problems they should be solving themselves.",
+  2: "My company is moving from product-led to platform-led growth over the next three years. That means I need to shift from being a strong individual contributor to building ecosystems, influencing without authority, and thinking across business units — not just my own P&L.",
+  3: "Three years from now I'm a VP leading a cross-functional transformation. I'm known for building leaders, not just delivering results. I'm in the room where strategy is set, not just where it's executed. I'm solving problems that span the organisation, not just my function.",
+  4: "I need to shift from 'expert who has the answers' to 'leader who asks the right questions.' I need to become someone who is comfortable with ambiguity, who builds trust across functions, and who is seen as a strategic voice — not just a functional head.",
+  5: "My limiting belief is: 'I'm not political enough to succeed at the next level.' But the truth is I've been confusing politics with influence. The rewrite is: I build genuine relationships and trust, and that is the most powerful form of influence.",
+  6: "My purpose is to build leaders who build organisations that outlast them. Every leader I develop multiplies my impact. I'm not here to be the best leader in the room — I'm here to make the room full of great leaders.",
+  7: "I believe leadership is a privilege, not a title. I commit to radical honesty, to developing others before myself, to making decisions I can defend publicly, and to leaving every team I lead stronger than I found it.",
+  8: "My biggest capability gap is executive communication — I can think strategically but I struggle to land the message with the board. I also need to build my commercial acumen; I understand my function deeply but not the full P&L.",
+  9: "I need to invest in three relationships: my CFO (I need her as an ally for budget decisions), a mentor two levels above me (I need a different perspective on my career), and two peers in other functions (I'm too siloed in my own team).",
+  10: "I operate in reactive mode too often. My new operating system: Monday morning I set three priorities for the week and protect 90 minutes of deep thinking time daily. I delegate decisions below my level and only escalate when genuinely stuck.",
+  11: "My experiment this week: In every meeting I will speak last, not first. I want to test whether my team makes better decisions when I hold back my view. I'll track what changes in the quality of discussion and whether they feel more ownership.",
+  12: "I want to be known as the leader who builds other leaders. Currently I'm known as the person who delivers results — which is good — but I want my reputation to include: develops talent, thinks strategically, and is trusted across the organisation.",
+  13: "In the last year my team's engagement score went from 62 to 78. Two people I developed got promoted. We delivered the platform migration six weeks early. But my impact on the broader organisation is still limited — I haven't influenced outside my function.",
+  14: "I want to be remembered as someone who made the people around them better. Not for the projects I delivered, but for the leaders I built. I want the people who worked for me to say: working with them changed how I lead.",
+  15: "My transformation roadmap has three tracks: capability (executive communication and commercial acumen), relationships (building my network two levels up), and visibility (presenting at the leadership forum quarterly). I'll review progress monthly.",
+  16: "This month I made progress on listening before speaking — I can feel the difference in team meetings. What I'm still working on: I default to my old identity under pressure. When a project goes wrong I still jump in and fix it instead of coaching my team through it.",
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -348,6 +370,7 @@ export default function NextChapter() {
   const [currentExperiment, setCurrentExperiment] = useState<string | null>(null);
   const [experimentAcknowledged, setExperimentAcknowledged] = useState(false);
   const [showExperimentCard, setShowExperimentCard] = useState(false);
+  const [showExample, setShowExample] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -758,23 +781,59 @@ export default function NextChapter() {
                         {/* Current question prompt — always visible above the input */}
             {(() => {
               const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
-              // Extract the last sentence/question from the assistant message (after last newline or full message)
               const rawText = lastAssistant?.content ?? `Module ${currentModule}: ${MODULE_NAMES[currentModule]} — share your thoughts to begin.`;
-              // Strip markdown bold markers and get the last meaningful line
               const lines = rawText.replace(/\*\*/g, "").split("\n").map((l) => l.trim()).filter(Boolean);
               const promptText = lines[lines.length - 1] ?? rawText;
+              const exampleText = MODULE_EXAMPLES[currentModule];
               return (
-                <div
-                  className="mb-3 px-3 py-2.5 rounded-xl flex items-start gap-2"
-                  style={{
-                    background: (stage?.color ?? "#D4AF37") + "12",
-                    border: `1px solid ${stage?.color ?? "#D4AF37"}30`,
-                  }}
-                >
-                  <Sparkles className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{ color: stage?.color ?? "#D4AF37" }} />
-                  <span className="text-xs leading-relaxed" style={{ color: "#1C1C1C" }}>
-                    {promptText}
-                  </span>
+                <div className="mb-3">
+                  <div
+                    className="px-3 py-2.5 rounded-xl flex items-start gap-2"
+                    style={{
+                      background: (stage?.color ?? "#D4AF37") + "12",
+                      border: `1px solid ${stage?.color ?? "#D4AF37"}30`,
+                    }}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{ color: stage?.color ?? "#D4AF37" }} />
+                    <span className="text-xs leading-relaxed flex-1" style={{ color: "#1C1C1C" }}>
+                      {promptText}
+                    </span>
+                    {exampleText && (
+                      <button
+                        onClick={() => setShowExample((v) => !v)}
+                        className="flex-shrink-0 flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ml-1 transition-all"
+                        style={{
+                          background: showExample ? (stage?.color ?? "#D4AF37") : (stage?.color ?? "#D4AF37") + "20",
+                          color: showExample ? "white" : stage?.color ?? "#D4AF37",
+                        }}
+                        title="See a sample answer for inspiration"
+                      >
+                        <Lightbulb className="h-2.5 w-2.5" />
+                        {showExample ? "Hide" : "Example"}
+                      </button>
+                    )}
+                  </div>
+                  {/* Example answer panel */}
+                  {showExample && exampleText && (
+                    <div
+                      className="mt-2 px-3 py-2.5 rounded-xl text-xs leading-relaxed"
+                      style={{
+                        background: "#FFFBEB",
+                        border: `1px dashed ${stage?.color ?? "#D4AF37"}60`,
+                        color: "#5C4A00",
+                      }}
+                    >
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Lightbulb className="h-3 w-3" style={{ color: stage?.color ?? "#D4AF37" }} />
+                        <span className="font-semibold text-[10px] uppercase tracking-wider" style={{ color: stage?.color ?? "#D4AF37" }}>Sample answer for inspiration</span>
+                        <button onClick={() => setShowExample(false)} className="ml-auto opacity-40 hover:opacity-70">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <p style={{ color: "#5C4A00" }}>{exampleText}</p>
+                      <p className="mt-1.5 text-[10px] opacity-60 italic">This is just an example — your answer will be unique to your journey.</p>
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -807,9 +866,35 @@ export default function NextChapter() {
                 <Send className="h-5 w-5" />
               </Button>
             </div>
-            <p className="text-[10px] text-gray-400 mt-2 text-center">
-              Press Enter to send · Shift+Enter for new line
-            </p>
+            {/* Character counter + progress nudge */}
+            <div className="mt-2 flex items-center justify-between px-1">
+              <p className="text-[10px]" style={{ color: "rgba(0,0,0,0.35)" }}>
+                Press Enter to send · Shift+Enter for new line
+              </p>
+              <div className="flex items-center gap-2">
+                {inputText.length > 0 && (
+                  <span
+                    className="text-[10px] font-medium"
+                    style={{
+                      color: inputText.length < 80
+                        ? "#E07B39"
+                        : inputText.length < 200
+                        ? "#D4AF37"
+                        : "#5BA85A",
+                    }}
+                  >
+                    {inputText.length < 80
+                      ? `${inputText.length} chars — try to add more detail`
+                      : inputText.length < 200
+                      ? `${inputText.length} chars — good, keep going`
+                      : `${inputText.length} chars — great depth ✔`}
+                  </span>
+                )}
+                {inputText.length === 0 && (
+                  <span className="text-[10px]" style={{ color: "rgba(0,0,0,0.25)" }}>Aim for 2–3 sentences</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
