@@ -379,7 +379,11 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
         // Returning users go directly to their platform destination (or /home)
         postLoginPath = magicLink.returnTo ?? "/home";
       }
-      res.redirect(302, `${origin}${postLoginPath}`);
+      // Pass the session token as _st URL param so the client can store it in
+      // sessionStorage as a Bearer token fallback when SameSite cookies are
+      // blocked (Cloud Run cross-origin, Safari ITP, WebView, etc.).
+      const sep = postLoginPath.includes("?") ? "&" : "?";
+      res.redirect(302, `${origin}${postLoginPath}${sep}_st=${encodeURIComponent(sessionToken)}`);
     } catch (error) {
       console.error("[MagicLink] Verify failed:", error);
       res.redirect(`${origin}/login?error=server_error`);

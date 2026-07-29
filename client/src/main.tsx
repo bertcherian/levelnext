@@ -1,5 +1,31 @@
 import { trpc } from "@/lib/trpc";
 import { COOKIE_NAME, UNAUTHED_ERR_MSG } from '@shared/const';
+
+// ─── Magic-link Bearer-token bootstrap ───────────────────────────────────────
+// After a magic link click the server appends ?_st=<token> to the redirect URL
+// so the client can store the session token in sessionStorage.  This lets the
+// tRPC httpBatchLink (below) forward it as "Authorization: Bearer <token>" on
+// every request, which is the fallback when the SameSite=None cookie is blocked
+// (Cloud Run cross-origin, Safari ITP, private browsing, WebView, etc.).
+(function bootstrapSessionFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const st = params.get("_st");
+    if (st) {
+      // Store in the same format the tRPC headers() function expects below.
+      sessionStorage.setItem("manus-cookie", `${COOKIE_NAME}=${st}`);
+      // Remove the token from the URL so it is never visible in the address bar
+      // after the initial load and is not accidentally shared.
+      params.delete("_st");
+      const newSearch = params.toString();
+      const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "") + window.location.hash;
+      window.history.replaceState(null, "", newUrl);
+    }
+  } catch {
+    // sessionStorage unavailable (e.g. private-browsing with strict settings)
+  }
+})();
+// ─────────────────────────────────────────────────────────────────────────────
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
