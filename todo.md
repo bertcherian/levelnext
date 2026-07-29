@@ -1197,3 +1197,5 @@ TypeScript: 0 errors | Vitest: 3/3 passed
 - [x] Fix Generate Mission crash: wrap invokeLLM in try/catch in mission.ts, guard against missing choices array, fall back to default mission
 - [x] Fix CareerHome.tsx broken route: /diagnostic/ → /diagnostics/ (typo causing 404 on Career Diagnostics Start button)
 - [x] Fix Identity Clarity Assessment loop: invalidate getIdentityAssessments cache on submit success so NextChapter gate sees the new baseline immediately instead of redirecting back to the assessment
+- [x] Fix Next Chapter user message bubble: global p { color } rule was overriding white text — added explicit color:white on the p tag
+- [x] Improve Next Chapter input affordance: gold border + glow on textarea, "Type your answer below" divider label, larger min-height, more descriptive placeholder

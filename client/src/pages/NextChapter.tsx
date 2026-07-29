@@ -667,7 +667,7 @@ export default function NextChapter() {
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   ) : (
-                    <p>{msg.content}</p>
+                    <p className="text-white" style={{ color: "white" }}>{msg.content}</p>
                   )}
                 </div>
               </div>
@@ -769,15 +769,26 @@ export default function NextChapter() {
               </div>
             )}
 
+            {/* Input affordance label */}
+            <div className="mb-2 flex items-center gap-1.5">
+              <div className="h-px flex-1" style={{ background: "rgba(0,0,0,0.08)" }} />
+              <span className="text-[11px] font-medium px-2" style={{ color: "oklch(50% 0.02 248.6)" }}>Type your answer below</span>
+              <div className="h-px flex-1" style={{ background: "rgba(0,0,0,0.08)" }} />
+            </div>
             <div className="flex gap-3 items-end">
               <Textarea
                 ref={textareaRef}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Share your thoughts…"
-                className="flex-1 min-h-[52px] max-h-[140px] resize-none rounded-xl border-0 bg-gray-50 text-sm focus-visible:ring-1 focus-visible:ring-offset-0"
-                style={{ focusRingColor: stage?.color ?? "#D4AF37" } as React.CSSProperties}
+                placeholder="Share your thoughts here — be honest and specific…"
+                className="flex-1 min-h-[64px] max-h-[140px] resize-none rounded-xl text-sm focus-visible:ring-2 focus-visible:ring-offset-0"
+                style={{
+                  background: "white",
+                  border: `2px solid ${stage?.color ?? "#D4AF37"}`,
+                  color: "#1C1C1C",
+                  boxShadow: `0 0 0 3px ${(stage?.color ?? "#D4AF37")}18`,
+                } as React.CSSProperties}
                 disabled={isTyping}
               />
               <Button
