@@ -7,7 +7,6 @@ import {
   CheckCircle2, BarChart3, Zap, Brain, BookOpen, ClipboardList,
   Star, Shield,
 } from "lucide-react";
-import { getLoginUrl } from "@/const";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
 
@@ -167,7 +166,7 @@ const JOURNEY_STAGES = [
 export default function ManagerEffectivenessLanding() {
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
-  const loginUrl = getLoginUrl();
+  
 
   return (
     <div className="min-h-screen" style={{ background: "var(--color-ln-navy)", color: "white" }}>
@@ -201,7 +200,7 @@ export default function ManagerEffectivenessLanding() {
               </Button>
             ) : (
               <>
-                <a href={loginUrl}>
+                <a href="/login">
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/8 font-medium text-sm">
                     Sign In
                   </Button>

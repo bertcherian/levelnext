@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
@@ -56,7 +55,7 @@ export default function JoinProduct() {
     if (!user) {
       // Persist the intended product so we can resume after OAuth
       localStorage.setItem(LS_KEY, productId);
-      window.location.href = getLoginUrl();
+      window.location.href = "/login";
       return;
     }
 

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Mic, Zap, ArrowRight, Loader2, ChevronRight, Target, Clock, BarChart2, User } from "lucide-react";
@@ -75,7 +74,7 @@ interface ScenarioCard {
 export default function SimulatorStart() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const loginUrl = getLoginUrl();
+  
 
   // Detect platform from URL
   const path = window.location.pathname;
@@ -131,7 +130,7 @@ export default function SimulatorStart() {
           <Mic className="w-12 h-12 mx-auto mb-4" style={{ color: meta.accent }} />
           <h2 className="text-2xl font-bold mb-2">Practice Simulator</h2>
           <p className="text-white/70 mb-6">Sign in to start your practice session</p>
-          <Button onClick={() => window.location.href = loginUrl} style={{ background: meta.accent, color: meta.color }}>
+          <Button onClick={() => window.location.href = "/login"} style={{ background: meta.accent, color: meta.color }}>
             Sign In to Continue
           </Button>
         </div>

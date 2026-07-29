@@ -8,7 +8,6 @@ import {
   Briefcase, Target, Brain, Zap, MessageSquare,
   BarChart3, BookOpen, Search, Menu,
 } from "lucide-react";
-import { getLoginUrl } from "@/const";
 import { OutplacementContactModal } from "@/components/OutplacementContactModal";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_570ab0aa.png";
@@ -299,7 +298,7 @@ export default function CareerInvestment() {
     if (isAuthenticated) {
       navigate("/career");
     } else {
-      window.location.href = getLoginUrl();
+      window.location.href = "/login";
     }
   };
 
@@ -322,7 +321,7 @@ export default function CareerInvestment() {
             <a href="#why" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }}>Why Now</a>
             <a href="#faq" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }}>FAQ</a>
             <button
-              onClick={() => isAuthenticated ? navigate("/career") : window.location.href = getLoginUrl()}
+              onClick={() => isAuthenticated ? navigate("/career") : window.location.href = "/login"}
               className="px-5 py-2 rounded-full text-sm font-semibold transition-all"
               style={{ background: "#D4AF37", color: "#0A1A2F" }}
             >
@@ -340,7 +339,7 @@ export default function CareerInvestment() {
             <a href="#why" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }} onClick={() => setMobileMenuOpen(false)}>Why Now</a>
             <a href="#faq" className="text-sm font-medium" style={{ color: "rgba(248,245,240,0.7)" }} onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <button
-              onClick={() => { setMobileMenuOpen(false); isAuthenticated ? navigate("/career") : window.location.href = getLoginUrl(); }}
+              onClick={() => { setMobileMenuOpen(false); isAuthenticated ? navigate("/career") : window.location.href = "/login"; }}
               className="px-5 py-2 rounded-full text-sm font-semibold"
               style={{ background: "#D4AF37", color: "#0A1A2F" }}
             >
@@ -834,7 +833,7 @@ export default function CareerInvestment() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => isAuthenticated ? navigate("/career") : window.location.href = getLoginUrl()}
+              onClick={() => isAuthenticated ? navigate("/career") : window.location.href = "/login"}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full font-semibold text-base transition-all"
               style={{ background: "#D4AF37", color: "#0A1A2F" }}
             >
@@ -872,7 +871,7 @@ export default function CareerInvestment() {
       {/* ── STICKY MOBILE CTA ── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden p-4 border-t" style={{ background: "rgba(250,250,248,0.97)", backdropFilter: "blur(12px)", borderColor: "rgba(10,26,47,0.1)" }}>
         <button
-          onClick={() => isAuthenticated ? navigate("/career") : window.location.href = getLoginUrl()}
+          onClick={() => isAuthenticated ? navigate("/career") : window.location.href = "/login"}
           className="w-full py-3.5 rounded-full font-semibold text-sm"
           style={{ background: "#D4AF37", color: "#0A1A2F" }}
         >

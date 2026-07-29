@@ -38,7 +38,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
 import { cn } from "@/lib/utils";
 import ProductSwitcher from "@/components/ProductSwitcher";
 
