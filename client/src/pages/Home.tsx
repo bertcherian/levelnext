@@ -211,6 +211,11 @@ export default function Home() {
     onSuccess: () => refetchMissions(),
   });
 
+  // MUST be before any early return — Rules of Hooks
+  const { data: myOrg } = trpc.enterpriseOnboarding.getMyOrganisation.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate("/");
   }, [loading, isAuthenticated, navigate]);
@@ -237,11 +242,7 @@ export default function Home() {
   const completedModules = graph?.completedModules ?? [];
   const pendingModules = (["ECI", "TII", "LII", "GCC", "LDI", "STI"] as const).filter((m) => !completedModules.includes(m));
 
-  // Org admin setup card
   const isOrgAdmin = tenant?.role === "owner" || tenant?.role === "admin";
-  const { data: myOrg } = trpc.enterpriseOnboarding.getMyOrganisation.useQuery(undefined, {
-    enabled: isAuthenticated && isOrgAdmin,
-  });
   const showOrgSetupCard = isOrgAdmin && (!myOrg || myOrg.wizardStatus !== "activated");
 
   return (

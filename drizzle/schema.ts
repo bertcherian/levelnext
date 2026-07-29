@@ -1919,6 +1919,8 @@ export const orgContext = mysqlTable("org_context", {
   values: json("values").$type<string[]>(),
   rawScrapedText: text("rawScrapedText"),
   scrapedAt: timestamp("scrapedAt"),
+  logoUrl: varchar("logoUrl", { length: 1000 }),
+  leadershipFrameworks: json("leadershipFrameworks").$type<Array<{ name: string; description: string; competencies: string[] }>>(),
   lastUpdatedBy: int("lastUpdatedBy").references(() => users.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

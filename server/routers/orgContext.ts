@@ -11,6 +11,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { orgContext, tenantUsers } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { storagePut } from "../storage";
 
 // ─── Helper: get tenantId for current user (must be owner or admin) ───────────
 async function getTenantAdminId(userId: number): Promise<number> {
@@ -92,6 +93,52 @@ export const orgContextRouter = router({
         await db.insert(orgContext).values(payload);
       }
 
+      return { success: true };
+    }),
+
+  /** Upload company logo — accepts base64 image, stores to S3, saves URL */
+  uploadLogo: protectedProcedure
+    .input(z.object({
+      fileName: z.string().min(1).max(500),
+      mimeType: z.string().regex(/^image\//),
+      base64Data: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = await getTenantAdminId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const buffer = Buffer.from(input.base64Data, "base64");
+      const safeFileName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const relKey = `org-logos/${tenantId}/${Date.now()}-${safeFileName}`;
+      const { url } = await storagePut(relKey, buffer, input.mimeType);
+      const [existing] = await db.select().from(orgContext).where(eq(orgContext.tenantId, tenantId));
+      if (existing) {
+        await db.update(orgContext).set({ logoUrl: url, lastUpdatedBy: ctx.user.id }).where(eq(orgContext.tenantId, tenantId));
+      } else {
+        await db.insert(orgContext).values({ tenantId, logoUrl: url, lastUpdatedBy: ctx.user.id });
+      }
+      return { logoUrl: url };
+    }),
+
+  /** Save custom leadership frameworks */
+  saveLeadershipFrameworks: protectedProcedure
+    .input(z.object({
+      frameworks: z.array(z.object({
+        name: z.string().min(1).max(200),
+        description: z.string().max(2000).optional().default(""),
+        competencies: z.array(z.string().max(200)).max(20),
+      })).max(10),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = await getTenantAdminId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [existing] = await db.select().from(orgContext).where(eq(orgContext.tenantId, tenantId));
+      if (existing) {
+        await db.update(orgContext).set({ leadershipFrameworks: input.frameworks, lastUpdatedBy: ctx.user.id }).where(eq(orgContext.tenantId, tenantId));
+      } else {
+        await db.insert(orgContext).values({ tenantId, leadershipFrameworks: input.frameworks, lastUpdatedBy: ctx.user.id });
+      }
       return { success: true };
     }),
 

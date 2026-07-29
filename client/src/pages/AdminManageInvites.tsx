@@ -289,6 +289,132 @@ export default function AdminManageInvites() {
           />
         </div>
 
+        {/* Visual Funnel Tracker */}
+        {total > 0 && (
+          <div className="rounded-2xl border p-5 space-y-4" style={{ background: "white", borderColor: "oklch(90% 0.01 248.6)" }}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Invite Funnel</h2>
+              <span className="text-xs text-muted-foreground">{Math.round((accepted / total) * 100)}% acceptance rate</span>
+            </div>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium" style={{ color: "var(--color-ln-navy)" }}>Sent</span>
+                  <span className="text-muted-foreground">{total} invites</span>
+                </div>
+                <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(93% 0.01 248.6)" }}>
+                  <div className="h-full rounded-full" style={{ width: "100%", background: "oklch(55% 0.15 248.6)" }} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-yellow-700">Awaiting Response</span>
+                  <span className="text-muted-foreground">{pending} pending</span>
+                </div>
+                <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(93% 0.01 248.6)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${(pending / total) * 100}%`, background: "oklch(75% 0.18 85)" }} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-green-700">Accepted</span>
+                  <span className="text-muted-foreground">{accepted} joined</span>
+                </div>
+                <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(93% 0.01 248.6)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${(accepted / total) * 100}%`, background: "oklch(60% 0.18 145)" }} />
+                </div>
+              </div>
+              {expired > 0 && (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-red-600">Expired (not acted)</span>
+                    <span className="text-muted-foreground">{expired} expired</span>
+                  </div>
+                  <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(93% 0.01 248.6)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${(expired / total) * 100}%`, background: "oklch(60% 0.2 25)" }} />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-4 pt-1">
+              {[
+                { label: "Sent", color: "oklch(55% 0.15 248.6)", count: total },
+                { label: "Pending", color: "oklch(75% 0.18 85)", count: pending },
+                { label: "Accepted", color: "oklch(60% 0.18 145)", count: accepted },
+                ...(expired > 0 ? [{ label: "Expired", color: "oklch(60% 0.2 25)", count: expired }] : []),
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
+                  <span className="text-xs text-muted-foreground">{item.label}: <strong>{item.count}</strong></span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Visual Funnel Tracker */}
+        {total > 0 && (
+          <div className="rounded-2xl border p-5 space-y-4" style={{ background: "white", borderColor: "oklch(90% 0.01 248.6)" }}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Invite Funnel</h2>
+              <span className="text-xs text-muted-foreground">{Math.round((accepted / total) * 100)}% acceptance rate</span>
+            </div>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium" style={{ color: "var(--color-ln-navy)" }}>Sent</span>
+                  <span className="text-muted-foreground">{total} invites</span>
+                </div>
+                <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(93% 0.01 248.6)" }}>
+                  <div className="h-full rounded-full" style={{ width: "100%", background: "oklch(55% 0.15 248.6)" }} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-yellow-700">Awaiting Response</span>
+                  <span className="text-muted-foreground">{pending} pending</span>
+                </div>
+                <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(93% 0.01 248.6)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${(pending / total) * 100}%`, background: "oklch(75% 0.18 85)" }} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-green-700">Accepted</span>
+                  <span className="text-muted-foreground">{accepted} joined</span>
+                </div>
+                <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(93% 0.01 248.6)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${(accepted / total) * 100}%`, background: "oklch(60% 0.18 145)" }} />
+                </div>
+              </div>
+              {expired > 0 && (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-red-600">Expired (not acted)</span>
+                    <span className="text-muted-foreground">{expired} expired</span>
+                  </div>
+                  <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(93% 0.01 248.6)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${(expired / total) * 100}%`, background: "oklch(60% 0.2 25)" }} />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-4 pt-1">
+              {[
+                { label: "Sent", color: "oklch(55% 0.15 248.6)", count: total },
+                { label: "Pending", color: "oklch(75% 0.18 85)", count: pending },
+                { label: "Accepted", color: "oklch(60% 0.18 145)", count: accepted },
+                ...(expired > 0 ? [{ label: "Expired", color: "oklch(60% 0.2 25)", count: expired }] : []),
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
+                  <span className="text-xs text-muted-foreground">{item.label}: <strong>{item.count}</strong></span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Filters */}
         <div className="flex gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
