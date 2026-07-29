@@ -379,13 +379,24 @@ export const guideRouter = router({
 
       // Call the LLM — prepend system prompt as a system message
       const systemMsg = { role: "system" as const, content: systemPromptContent };
-      const llmResult = await invokeLLM({
-        model: "gpt-5-mini",
-        messages: [systemMsg, ...llmMessages],
-        maxTokens: 800,
-      });
-      const rawContent = llmResult.choices[0]?.message?.content ?? "I'm here to help. What's on your mind?";
-      const response = typeof rawContent === "string" ? rawContent : rawContent.map((c: any) => c.text ?? "").join("");
+      let response: string;
+      try {
+        const llmResult = await invokeLLM({
+          model: "gpt-5-mini",
+          messages: [systemMsg, ...llmMessages],
+          maxTokens: 800,
+        });
+        const rawContent = llmResult.choices[0]?.message?.content;
+        if (!rawContent) {
+          console.error("[Guide] LLM returned empty content:", JSON.stringify(llmResult).slice(0, 300));
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Guide AI returned an empty response. Please try again." });
+        }
+        response = typeof rawContent === "string" ? rawContent : (rawContent as any[]).map((c: any) => c.text ?? "").join("");
+      } catch (err: any) {
+        if (err?.code === "INTERNAL_SERVER_ERROR") throw err;
+        console.error("[Guide] LLM invocation failed:", err?.message ?? String(err));
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Guide AI is temporarily unavailable. Please try again in a moment." });
+      }
 
       const assistantMessage: GuideMessage = {
         role: "assistant",
@@ -428,25 +439,28 @@ export const guideRouter = router({
       }
 
       // ── Playbook signal detection ────────────────────────────────────────────
-      // Lightweight keyword heuristic on the user's message — no extra LLM call.
-      // Triggers when the user describes a specific interpersonal or strategic situation.
-      const PLAYBOOK_KEYWORDS = [
-        "conversation", "stakeholder", "difficult", "pushback", "rejected", "conflict",
-        "negotiate", "negotiation", "feedback", "performance", "accountability",
-        "influence", "persuade", "align", "alignment", "resistance", "pushback",
-        "meeting", "presentation", "board", "executive", "CEO", "CXO", "boss",
-        "team", "report", "direct report", "underperform", "underperforming",
-        "escalate", "escalation", "crisis", "urgent", "deadline", "pressure",
-        "prepare", "preparation", "strategy", "approach", "handle", "deal with",
-        "how do I", "how should I", "what should I do", "help me with",
-        "navigate", "situation", "challenge", "problem", "issue",
+      // Only fires when the user describes a *specific* high-stakes interpersonal
+      // situation — NOT on general coaching questions or open-ended prompts.
+      // Requires a specific multi-word phrase to minimise false positives.
+      const PLAYBOOK_SITUATION_PHRASES = [
+        "difficult conversation", "hard conversation", "tough conversation",
+        "challenging conversation", "awkward conversation",
+        "pushback from", "getting pushback", "facing pushback",
+        "conflict with", "in conflict",
+        "how do I handle", "how should I handle", "how do I deal with", "how should I deal with",
+        "help me navigate", "help me handle", "help me prepare for",
+        "what should I do about", "what should I do when",
+        "negotiate with", "negotiating with",
+        "underperforming team", "underperforming direct report",
+        "performance conversation", "accountability conversation",
+        "escalation conversation", "board presentation", "board meeting",
+        "stakeholder resistance", "stakeholder pushback",
       ];
       const msgLower = input.message.toLowerCase();
-      // Only signal for LI product (not CI career coach)
+      // Only signal for LI product (not CI career coach), require 35+ chars
       const isLiProduct = activeProductId !== "career_intelligence";
-      const hasPlaybookKeyword = PLAYBOOK_KEYWORDS.some(kw => msgLower.includes(kw.toLowerCase()));
-      // Require at least 20 chars and a keyword to avoid signalling on trivial messages
-      const playbookSignal = isLiProduct && input.message.length >= 20 && hasPlaybookKeyword;
+      const hasPlaybookPhrase = PLAYBOOK_SITUATION_PHRASES.some(phrase => msgLower.includes(phrase));
+      const playbookSignal = isLiProduct && input.message.length >= 35 && hasPlaybookPhrase;
 
       return { message: assistantMessage, conversationId: convId, playbookSignal };
     }),
