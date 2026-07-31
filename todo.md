@@ -1199,3 +1199,46 @@ TypeScript: 0 errors | Vitest: 3/3 passed
 - [x] Fix Identity Clarity Assessment loop: invalidate getIdentityAssessments cache on submit success so NextChapter gate sees the new baseline immediately instead of redirecting back to the assessment
 - [x] Fix Next Chapter user message bubble: global p { color } rule was overriding white text — added explicit color:white on the p tag
 - [x] Improve Next Chapter input affordance: gold border + glow on textarea, "Type your answer below" divider label, larger min-height, more descriptive placeholder
+
+## Launch Intelligence — Phase 1: Foundation (Jul 31 2026)
+
+### DB Schema
+- [x] launchUserProgress table (XP, level, streak, totalMissionsCompleted, lastActiveDate)
+- [x] launchDailyMissions table (date, missionType, title, description, xpReward, isCompleted)
+- [x] launchMissionCompletions table (missionId, completedAt, xpEarned, reflectionNote)
+- [x] launchXpEvents table (eventType, xpAmount, description, metadata)
+- [x] launchOnboarding table (careerGoal, targetRole, industry, experienceLevel, isCompleted)
+- [x] launchBadges table (badgeType, earnedAt, metadata)
+- [x] Migration applied to live DB
+
+### Server Routers
+- [x] server/routers/launchProgress.ts — XP system, level calculation, streak tracking, onboarding completion, progress queries
+- [x] server/routers/launchDailyMissions.ts — Daily mission generation via LLM (claude-haiku-4-5), mission completion, XP award
+- [x] Both routers registered in server/routers.ts
+
+### Design System
+- [x] Launch Intelligence CSS tokens added to client/src/index.css (--li-primary: #3B82F6, --li-accent: #10B981, Warm Yellow, Coral)
+- [x] Space Grotesk + Manrope fonts added via Google Fonts CDN in client/index.html
+
+### Components & Pages
+- [x] LaunchLayout.tsx — top navigation with XP/streak display, Sky Blue design system
+- [x] LaunchHome.tsx — Daily Momentum Engine home screen (daily missions, XP, streak)
+- [x] LaunchOnboarding.tsx — 4-step onboarding flow (goal, role, industry, experience level)
+
+### Integration
+- [x] Routes /launch/home and /launch/onboarding wired in App.tsx
+- [x] PostLoginProductActivator updated to route launch_intelligence users to /launch/home
+- [x] launch_intelligence product record inserted into products DB table
+- [x] TypeScript: 0 errors
+- [x] Checkpoint saved (version: 96c7f521)
+
+## Launch Intelligence — Phase 2: Mission 1 (Career Compass) + Mission 2 (Story Builder)
+- [ ] Career Compass Assessment page (/launch/career-compass) — self-assessment with 15 questions across 5 dimensions
+- [ ] Career Compass Results page — AI-generated career direction report with top 3 career paths
+- [ ] Story Builder page (/launch/story-builder) — personal brand narrative builder (3 steps: Origin Story, Value Proposition, Elevator Pitch)
+- [ ] launchCareerCompass server router (assessment, scoring, LLM career direction report)
+- [ ] launchStoryBuilder server router (narrative generation, save/retrieve story)
+- [ ] DB schema: launch_career_compass_results, launch_story_builder tables
+- [ ] Journey Map page (/launch/journey) — visual Duolingo-style mission map showing all 7 missions with lock/unlock states
+- [ ] TypeScript check (zero errors)
+- [ ] Save checkpoint
