@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { Sparkles, ChevronRight, Loader2, Copy, Check, Edit3, RefreshCw } from "lucide-react";
+import { Sparkles, ChevronRight, Loader2, Copy, Check, Edit3, RefreshCw, Mic2, Download } from "lucide-react";
 import { toast } from "sonner";
+import { AIGeneratingScreen, SuccessScreen } from "@/components/launch/AIGeneratingScreen";
 
-type Phase = "intro" | "step1" | "step1_result" | "step2" | "step2_result" | "step3" | "step3_result" | "complete";
+type Phase = "intro" | "step1" | "step1_generating" | "step1_success" | "step1_result" | "step2" | "step2_generating" | "step2_success" | "step2_result" | "step3" | "step3_generating" | "step3_success" | "step3_result" | "complete";
 
 export default function LaunchStoryBuilder() {
   const [, navigate] = useLocation();
@@ -51,18 +52,18 @@ export default function LaunchStoryBuilder() {
   const saveOriginStory = trpc.launchStoryBuilder.saveOriginStory.useMutation({
     onSuccess: (data) => {
       setRefinedStory(data.refinedStory);
-      setPhase("step1_result");
+      setPhase("step1_success");
     },
-    onError: () => toast.error("Something went wrong. Please try again."),
+    onError: () => { toast.error("Something went wrong. Please try again."); setPhase("step1"); },
   });
 
   const generateValueProp = trpc.launchStoryBuilder.generateValueProposition.useMutation({
     onSuccess: (data) => {
       setValueProposition(data.valueProposition);
       setLinkedinHeadline(data.linkedinHeadline);
-      setPhase("step2_result");
+      setPhase("step2_success");
     },
-    onError: () => toast.error("Something went wrong. Please try again."),
+    onError: () => { toast.error("Something went wrong. Please try again."); setPhase("step2"); },
   });
 
   const generatePitch = trpc.launchStoryBuilder.generateElevatorPitch.useMutation({
@@ -70,9 +71,9 @@ export default function LaunchStoryBuilder() {
       setPitch30(data.pitch30);
       setPitch60(data.pitch60);
       setLinkedinAbout(data.linkedinAbout);
-      setPhase("step3_result");
+      setPhase("step3_success");
     },
-    onError: () => toast.error("Something went wrong. Please try again."),
+    onError: () => { toast.error("Something went wrong. Please try again."); setPhase("step3"); },
   });
 
   const updateBrandKit = trpc.launchStoryBuilder.updateBrandKit.useMutation();
@@ -185,6 +186,38 @@ export default function LaunchStoryBuilder() {
     );
   }
 
+  // ── Step 1 Generating ─────────────────────────────────────────────────────────
+  if (phase === "step1_generating") {
+    return (
+      <AIGeneratingScreen
+        title="Refining Your Origin Story"
+        subtitle="Transforming your raw story into a compelling professional narrative..."
+        accentColor="#10B981"
+        icon={<Sparkles size={32} style={{ color: "#10B981" }} />}
+        steps={[
+          { label: "Reading your raw story", duration: 1200 },
+          { label: "Identifying key narrative moments", duration: 1500 },
+          { label: "Crafting your professional arc", duration: 1800 },
+          { label: "Polishing the language", duration: 1200 },
+        ]}
+      />
+    );
+  }
+
+  // ── Step 1 Success ────────────────────────────────────────────────────────────
+  if (phase === "step1_success") {
+    return (
+      <SuccessScreen
+        title="Your Origin Story is Ready!"
+        subtitle="Your raw story has been transformed into a compelling professional narrative. Review and make it yours."
+        accentColor="#10B981"
+        icon={<Sparkles size={40} style={{ color: "#10B981" }} />}
+        onContinue={() => setPhase("step1_result")}
+        continueLabel="Review My Origin Story"
+      />
+    );
+  }
+
   // ── Step 1 Result ─────────────────────────────────────────────────────────────
   if (phase === "step1_result") {
     return (
@@ -282,14 +315,50 @@ export default function LaunchStoryBuilder() {
           </div>
 
           <button
-            onClick={() => generateValueProp.mutate({ topSkills: topSkills.filter(Boolean), targetAudience, uniqueQuality, desiredOutcome })}
-            disabled={!topSkills.some(Boolean) || !targetAudience || !uniqueQuality || !desiredOutcome || generateValueProp.isPending}
+            onClick={() => {
+              setPhase("step2_generating");
+              generateValueProp.mutate({ topSkills: topSkills.filter(Boolean), targetAudience, uniqueQuality, desiredOutcome });
+            }}
+            disabled={!topSkills.some(Boolean) || !targetAudience || !uniqueQuality || !desiredOutcome}
             className="w-full mt-6 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             style={{ background: "#3B82F6", color: "#fff", fontFamily: "Space Grotesk, sans-serif" }}>
-            {generateValueProp.isPending ? <Loader2 size={16} className="animate-spin" /> : <><Sparkles size={14} /> Generate Value Proposition</>}
+            <Sparkles size={14} /> Generate Value Proposition
           </button>
         </div>
       </div>
+    );
+  }
+
+  // ── Step 2 Generating ─────────────────────────────────────────────────────────
+  if (phase === "step2_generating") {
+    return (
+      <AIGeneratingScreen
+        title="Building Your Value Proposition"
+        subtitle="Crafting what makes you uniquely valuable..."
+        accentColor="#3B82F6"
+        icon={<Sparkles size={32} style={{ color: "#3B82F6" }} />}
+        steps={[
+          { label: "Analysing your skills & strengths", duration: 1300 },
+          { label: "Mapping your target audience", duration: 1200 },
+          { label: "Identifying your unique angle", duration: 1500 },
+          { label: "Writing your value proposition", duration: 1400 },
+          { label: "Crafting your LinkedIn headline", duration: 1000 },
+        ]}
+      />
+    );
+  }
+
+  // ── Step 2 Success ────────────────────────────────────────────────────────────
+  if (phase === "step2_success") {
+    return (
+      <SuccessScreen
+        title="Your Value Proposition is Done!"
+        subtitle="We've distilled what makes you uniquely valuable into a sharp, professional statement — plus your LinkedIn headline."
+        accentColor="#3B82F6"
+        icon={<Sparkles size={40} style={{ color: "#3B82F6" }} />}
+        onContinue={() => setPhase("step2_result")}
+        continueLabel="See My Value Proposition"
+      />
     );
   }
 
@@ -387,6 +456,40 @@ export default function LaunchStoryBuilder() {
   }
 
   // ── Step 3 Result / Complete ──────────────────────────────────────────────────
+  // ── Step 3 Generating ─────────────────────────────────────────────────────────
+  if (phase === "step3_generating") {
+    return (
+      <AIGeneratingScreen
+        title="Crafting Your Elevator Pitches"
+        subtitle="Building your 30s pitch, 60s pitch, and LinkedIn About section..."
+        accentColor="#F59E0B"
+        icon={<Mic2 size={32} style={{ color: "#F59E0B" }} />}
+        steps={[
+          { label: "Weaving your story & value together", duration: 1500 },
+          { label: "Crafting your 30-second pitch", duration: 1600 },
+          { label: "Expanding to 60-second pitch", duration: 1400 },
+          { label: "Writing your LinkedIn About section", duration: 2000 },
+          { label: "Polishing tone & language", duration: 1200 },
+        ]}
+      />
+    );
+  }
+
+  // ── Step 3 Success ────────────────────────────────────────────────────────────
+  if (phase === "step3_success") {
+    return (
+      <SuccessScreen
+        title="Your Brand Kit is Complete!"
+        subtitle="Your Origin Story, Value Proposition, and Elevator Pitches are ready. Download your Brand Kit PDF or copy directly to LinkedIn."
+        xpEarned={150}
+        accentColor="#F59E0B"
+        icon={<Sparkles size={40} style={{ color: "#F59E0B" }} />}
+        onContinue={() => setPhase("step3_result")}
+        continueLabel="View & Export My Brand Kit"
+      />
+    );
+  }
+
   if (phase === "step3_result" || phase === "complete") {
     return (
       <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
@@ -427,6 +530,26 @@ export default function LaunchStoryBuilder() {
           </div>
 
           <div className="mt-8 space-y-3">
+            <button
+              onClick={async () => {
+                try {
+                  const { exportBrandKitPdf } = await import("@/lib/brandKitPdf");
+                  await exportBrandKitPdf({
+                    originStory: refinedStory,
+                    valueProposition,
+                    linkedinHeadline,
+                    pitch30,
+                    pitch60,
+                    linkedinAbout,
+                  });
+                } catch (e) {
+                  toast.error("PDF export failed. Please try again.");
+                }
+              }}
+              className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-150 active:scale-[0.98]"
+              style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)", fontFamily: "Space Grotesk, sans-serif" }}>
+              <Download size={16} /> Download Brand Kit PDF
+            </button>
             <button onClick={() => navigate("/launch/journey")}
               className="w-full py-3.5 rounded-2xl text-sm font-bold transition-all duration-150 active:scale-[0.98]"
               style={{ background: "#10B981", color: "#fff", fontFamily: "Space Grotesk, sans-serif" }}>

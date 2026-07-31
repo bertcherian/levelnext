@@ -2127,3 +2127,52 @@ export const launchBrandKit = mysqlTable("launch_brand_kit", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type LaunchBrandKit = typeof launchBrandKit.$inferSelect;
+
+// ─── Skill Sprint (Mission 3) ─────────────────────────────────────────────────
+export const launchSkillSprint = mysqlTable("launch_skill_sprint", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  moduleId: varchar("moduleId", { length: 50 }).notNull(),
+  moduleTitle: varchar("moduleTitle", { length: 150 }).notNull(),
+  category: varchar("category", { length: 80 }).notNull(),
+  status: mysqlEnum("ssStatus", ["not_started", "in_progress", "completed"]).default("not_started").notNull(),
+  challengeResponse: text("challengeResponse"),
+  challengeFeedback: text("challengeFeedback"),
+  challengeScore: int("challengeScore"),
+  xpEarned: int("xpEarned").default(0).notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LaunchSkillSprint = typeof launchSkillSprint.$inferSelect;
+
+// ─── Application Tracker ──────────────────────────────────────────────────────
+export const launchApplications = mysqlTable("launch_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  companyName: varchar("companyName", { length: 200 }).notNull(),
+  roleName: varchar("roleName", { length: 200 }).notNull(),
+  jobUrl: text("jobUrl"),
+  location: varchar("location", { length: 150 }),
+  salaryRange: varchar("salaryRange", { length: 100 }),
+  status: mysqlEnum("appStatus", [
+    "wishlist",
+    "applied",
+    "phone_screen",
+    "interview",
+    "offer",
+    "rejected",
+    "withdrawn",
+  ]).default("wishlist").notNull(),
+  appliedAt: timestamp("appliedAt"),
+  nextActionDate: timestamp("nextActionDate"),
+  nextActionNote: varchar("nextActionNote", { length: 500 }),
+  notes: text("notes"),
+  contactName: varchar("contactName", { length: 150 }),
+  contactRole: varchar("contactRole", { length: 150 }),
+  contactLinkedin: text("contactLinkedin"),
+  excitement: int("excitement").default(3),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LaunchApplication = typeof launchApplications.$inferSelect;

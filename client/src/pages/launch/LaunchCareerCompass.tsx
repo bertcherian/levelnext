@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Compass, ChevronRight, ChevronLeft, Loader2, Sparkles, MapPin, Star } from "lucide-react";
 import { toast } from "sonner";
+import { AIGeneratingScreen, SuccessScreen } from "@/components/launch/AIGeneratingScreen";
 
 // ─── Dimension Config ─────────────────────────────────────────────────────────
 const DIMENSIONS = [
@@ -24,7 +25,7 @@ export default function LaunchCareerCompass() {
     workStyle: {},
     values: {},
   });
-  const [phase, setPhase] = useState<"intro" | "assessment" | "generating" | "results">("intro");
+  const [phase, setPhase] = useState<"intro" | "assessment" | "generating" | "success" | "results">("intro");
   const [directionCard, setDirectionCard] = useState<any>(null);
 
   const { data: sessionData } = trpc.launchCareerCompass.getSession.useQuery();
@@ -32,7 +33,7 @@ export default function LaunchCareerCompass() {
   const completeCompass = trpc.launchCareerCompass.complete.useMutation({
     onSuccess: (data) => {
       setDirectionCard(data);
-      setPhase("results");
+      setPhase("success");
     },
     onError: () => {
       toast.error("Something went wrong generating your results. Please try again.");
@@ -183,21 +184,35 @@ export default function LaunchCareerCompass() {
   // ── Generating Screen ─────────────────────────────────────────────────────────
   if (phase === "generating") {
     return (
-      <div className="launch-theme min-h-screen flex flex-col items-center justify-center" style={{ background: "#0F172A" }}>
-        <div className="text-center px-6">
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 animate-pulse"
-            style={{ background: "rgba(59,130,246,0.15)", border: "2px solid rgba(59,130,246,0.4)" }}>
-            <Sparkles size={36} style={{ color: "#3B82F6" }} />
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
-            Generating your Career Direction Card
-          </h2>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)", fontFamily: "Manrope, sans-serif" }}>
-            Analysing your responses across all 4 dimensions...
-          </p>
-          <Loader2 size={24} className="animate-spin mx-auto mt-6" style={{ color: "#3B82F6" }} />
-        </div>
-      </div>
+      <AIGeneratingScreen
+        title="Generating Your Career Direction Card"
+        subtitle="Analysing your responses across all 4 dimensions..."
+        accentColor="#3B82F6"
+        icon={<Compass size={32} style={{ color: "#3B82F6" }} />}
+        steps={[
+          { label: "Mapping your Strengths profile", duration: 1800 },
+          { label: "Analysing Interests & passions", duration: 1600 },
+          { label: "Identifying Work Style patterns", duration: 1500 },
+          { label: "Distilling core Values", duration: 1400 },
+          { label: "Synthesising career directions", duration: 2000 },
+          { label: "Writing your Direction Card", duration: 1800 },
+        ]}
+      />
+    );
+  }
+
+  // ── Success Screen ────────────────────────────────────────────────────────────
+  if (phase === "success") {
+    return (
+      <SuccessScreen
+        title="Your Career Direction Card is Ready!"
+        subtitle="We've analysed your responses across all 4 dimensions and mapped your unique career direction. Your personalised card is waiting."
+        xpEarned={100}
+        accentColor="#3B82F6"
+        icon={<MapPin size={40} style={{ color: "#3B82F6" }} />}
+        onContinue={() => setPhase("results")}
+        continueLabel="View My Career Direction Card"
+      />
     );
   }
 

@@ -50,6 +50,8 @@ import { launchProgressRouter } from "./routers/launchProgress";
 import { launchDailyMissionsRouter } from "./routers/launchDailyMissions";
 import { launchCareerCompassRouter } from "./routers/launchCareerCompass";
 import { launchStoryBuilderRouter } from "./routers/launchStoryBuilder";
+import { launchSkillSprintRouter } from "./routers/launchSkillSprint";
+import { launchApplicationsRouter } from "./routers/launchApplications";
 
 export const appRouter = router({
   system: systemRouter,
@@ -109,6 +111,8 @@ export const appRouter = router({
   launchDailyMissions: launchDailyMissionsRouter,
   launchCareerCompass: launchCareerCompassRouter,
   launchStoryBuilder: launchStoryBuilderRouter,
+  launchSkillSprint: launchSkillSprintRouter,
+  launchApplications: launchApplicationsRouter,
 });
 
 export type AppRouter = typeof appRouter;
