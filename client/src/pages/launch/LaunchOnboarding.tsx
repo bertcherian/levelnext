@@ -222,6 +222,14 @@ export default function LaunchOnboarding() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
+          {/* LevelNext Logo */}
+          <div className="flex justify-center mb-5">
+            <img
+              src="/manus-storage/LevelNext_logo_transparent_c21f58d5.png"
+              alt="LevelNext"
+              style={{ height: "72px", width: "auto", objectFit: "contain" }}
+            />
+          </div>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4"
             style={{ background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.3)" }}>
             <Rocket size={14} style={{ color: "#3B82F6" }} />
