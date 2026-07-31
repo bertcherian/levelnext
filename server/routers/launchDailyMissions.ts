@@ -1,0 +1,216 @@
+import { z } from "zod";
+import { eq, and } from "drizzle-orm";
+import { protectedProcedure, router } from "../_core/trpc";
+import { getDb } from "../db";
+import { launchDailyMissions, launchUserProgress } from "../../drizzle/schema";
+import { invokeLLM } from "../_core/llm";
+
+// ─── Mission Templates (fallback if LLM fails) ────────────────────────────────
+const MISSION_TEMPLATES = [
+  { title: "Update your LinkedIn headline", description: "Write a headline that leads with value, not your job title. Use the format: [What you do] + [Who you help] + [Result you deliver].", xp: 25, missionArea: "Brand" },
+  { title: "Research one target company", description: "Pick one company you want to work at. Find their latest news, understand their mission, and note one thing that excites you about working there.", xp: 25, missionArea: "Research" },
+  { title: "Send one warm outreach message", description: "Find someone in your target role on LinkedIn. Send a genuine, specific message — not a template. Ask one thoughtful question.", xp: 40, missionArea: "Network" },
+  { title: "Tailor your resume for one role", description: "Pick a job posting. Rewrite your top 3 bullet points to mirror the language and priorities in that job description.", xp: 30, missionArea: "Resume" },
+  { title: "Practice the STAR method", description: "Choose one achievement from your past. Write it out using Situation, Task, Action, Result. Keep the Result specific and quantified.", xp: 25, missionArea: "Interview" },
+  { title: "Add a skills section to your LinkedIn", description: "Add 5 skills that are relevant to your target role. Prioritise skills that appear in job descriptions you've been reading.", xp: 20, missionArea: "Brand" },
+  { title: "Write your elevator pitch", description: "Write a 60-second version of who you are, what you do, and what you're looking for. Say it out loud three times.", xp: 25, missionArea: "Communication" },
+  { title: "Apply to one role today", description: "Find one role that is 70–80% match (not 100%). Submit a tailored application. Done is better than perfect.", xp: 30, missionArea: "Applications" },
+  { title: "Ask for one informational interview", description: "Reach out to someone in a role or company you admire. Ask for 20 minutes to learn about their career path.", xp: 35, missionArea: "Network" },
+  { title: "Review your interview answers", description: "Pick 3 common interview questions. Write out your answers. Time yourself. Cut anything that takes longer than 2 minutes.", xp: 25, missionArea: "Interview" },
+];
+
+function getTodayDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function pickThreeMissions(targetRole?: string | null) {
+  const shuffled = [...MISSION_TEMPLATES].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3).map((m, i) => ({
+    id: `m${i + 1}_${Date.now()}`,
+    title: m.title,
+    description: m.description,
+    xp: m.xp,
+    missionArea: m.missionArea,
+    status: "pending" as const,
+  }));
+}
+
+async function generateMissionsWithLLM(
+  targetRole: string,
+  targetIndustry: string,
+  experienceLevel: string
+) {
+  try {
+    const prompt = `You are a career coach helping a ${experienceLevel} professional who wants to work as a ${targetRole} in the ${targetIndustry} industry.
+
+Generate exactly 3 daily career missions for them. Each mission should be:
+- Specific and actionable (can be done in 15–30 minutes)
+- Directly relevant to their target role and industry
+- Varied across different areas: Resume/LinkedIn, Networking, Interview Prep, Job Applications, or Skill Building
+
+Return ONLY a JSON array with exactly 3 objects, each with these fields:
+- title: string (max 60 chars, action verb first)
+- description: string (2-3 sentences, specific instructions)
+- xp: number (20-50 based on effort)
+- missionArea: string (one of: Resume, Brand, Network, Interview, Applications, Skills, Research)
+
+Example format:
+[{"title":"...","description":"...","xp":25,"missionArea":"Network"}]`;
+
+    const result = await invokeLLM({
+      model: "claude-haiku-4-5",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 800,
+    });
+
+    const rawContent = result?.choices?.[0]?.message?.content;
+    const content = typeof rawContent === "string" ? rawContent : null;
+    if (!content) return null;
+
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return null;
+
+    const missions = JSON.parse(jsonMatch[0]) as Array<{
+      title: string;
+      description: string;
+      xp: number;
+      missionArea: string;
+    }>;
+
+    if (!Array.isArray(missions) || missions.length !== 3) return null;
+
+    return missions.map((m, i) => ({
+      id: `m${i + 1}_${Date.now()}`,
+      title: m.title,
+      description: m.description,
+      xp: Math.min(Math.max(m.xp, 10), 75),
+      missionArea: m.missionArea,
+      status: "pending" as const,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+// ─── Router ───────────────────────────────────────────────────────────────────
+export const launchDailyMissionsRouter = router({
+  // Get today's missions — generate if not yet created
+  getToday: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const today = getTodayDate();
+
+    const [existing] = await db
+      .select()
+      .from(launchDailyMissions)
+      .where(
+        and(
+          eq(launchDailyMissions.userId, ctx.user.id),
+          eq(launchDailyMissions.date, today)
+        )
+      )
+      .limit(1);
+
+    if (existing) return existing;
+
+    // Get user's target role for personalisation
+    const [progress] = await db
+      .select()
+      .from(launchUserProgress)
+      .where(eq(launchUserProgress.userId, ctx.user.id))
+      .limit(1);
+
+    let missions;
+    if (progress?.targetRole && progress?.targetIndustry) {
+      missions = await generateMissionsWithLLM(
+        progress.targetRole,
+        progress.targetIndustry,
+        progress.experienceLevel ?? "entry-level"
+      );
+    }
+    if (!missions) {
+      missions = pickThreeMissions(progress?.targetRole);
+    }
+
+    await db.insert(launchDailyMissions).values({
+      userId: ctx.user.id,
+      date: today,
+      missions,
+    });
+
+    const [created] = await db
+      .select()
+      .from(launchDailyMissions)
+      .where(
+        and(
+          eq(launchDailyMissions.userId, ctx.user.id),
+          eq(launchDailyMissions.date, today)
+        )
+      )
+      .limit(1);
+
+    return created ?? null;
+  }),
+
+  // Complete a specific mission
+  completeMission: protectedProcedure
+    .input(z.object({ missionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      const today = getTodayDate();
+
+      const [record] = await db
+        .select()
+        .from(launchDailyMissions)
+        .where(
+          and(
+            eq(launchDailyMissions.userId, ctx.user.id),
+            eq(launchDailyMissions.date, today)
+          )
+        )
+        .limit(1);
+
+      if (!record) throw new Error("No missions found for today");
+
+      const missions = (record.missions as Array<{
+        id: string;
+        title: string;
+        description: string;
+        xp: number;
+        missionArea: string;
+        status: "pending" | "complete";
+        completedAt?: string;
+      }>).map((m) =>
+        m.id === input.missionId
+          ? { ...m, status: "complete" as const, completedAt: new Date().toISOString() }
+          : m
+      );
+
+      await db
+        .update(launchDailyMissions)
+        .set({ missions })
+        .where(eq(launchDailyMissions.id, record.id));
+
+      const completedMission = missions.find((m) => m.id === input.missionId);
+      const allComplete = missions.every((m) => m.status === "complete");
+
+      return {
+        xpEarned: completedMission?.xp ?? 25,
+        allComplete,
+        missions,
+      };
+    }),
+
+  // Get mission history (last 7 days)
+  getHistory: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    return db
+      .select()
+      .from(launchDailyMissions)
+      .where(eq(launchDailyMissions.userId, ctx.user.id))
+      .orderBy(launchDailyMissions.date)
+      .limit(7);
+  }),
+});

@@ -2000,3 +2000,85 @@ export const simSessions = mysqlTable("sim_sessions", {
 });
 export type SimSession = typeof simSessions.$inferSelect;
 export type InsertSimSession = typeof simSessions.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LAUNCH INTELLIGENCE — Phase 1 Schema
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── XP Ledger ────────────────────────────────────────────────────────────────
+export const launchXpLedger = mysqlTable("launch_xp_ledger", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  action: varchar("action", { length: 100 }).notNull(),
+  xpEarned: int("xpEarned").notNull(),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LaunchXpLedger = typeof launchXpLedger.$inferSelect;
+
+// ─── User Progress ────────────────────────────────────────────────────────────
+export const launchUserProgress = mysqlTable("launch_user_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  totalXp: int("totalXp").notNull().default(0),
+  currentLevel: varchar("currentLevel", { length: 50 }).notNull().default("Explorer"),
+  currentStreak: int("currentStreak").notNull().default(0),
+  longestStreak: int("longestStreak").notNull().default(0),
+  lastActiveDate: varchar("lastActiveDate", { length: 10 }),
+  employabilityScores: json("employabilityScores").$type<Record<string, number>>(),
+  compositeScore: float("compositeScore").default(0),
+  targetRole: varchar("targetRole", { length: 255 }),
+  targetIndustry: varchar("targetIndustry", { length: 255 }),
+  experienceLevel: varchar("experienceLevel", { length: 50 }),
+  onboardingComplete: boolean("onboardingComplete").default(false).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LaunchUserProgress = typeof launchUserProgress.$inferSelect;
+
+// ─── Daily Momentum Engine ────────────────────────────────────────────────────
+export const launchDailyMissions = mysqlTable("launch_daily_missions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  date: varchar("date", { length: 10 }).notNull(),
+  missions: json("missions").$type<Array<{
+    id: string;
+    title: string;
+    description: string;
+    xp: number;
+    missionArea: string;
+    status: "pending" | "complete";
+    completedAt?: string;
+  }>>().notNull(),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+});
+export type LaunchDailyMissions = typeof launchDailyMissions.$inferSelect;
+
+// ─── Achievements ─────────────────────────────────────────────────────────────
+export const launchAchievements = mysqlTable("launch_achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 100 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 10 }),
+  xpBonus: int("xpBonus").default(0).notNull(),
+});
+export type LaunchAchievement = typeof launchAchievements.$inferSelect;
+
+export const launchUserAchievements = mysqlTable("launch_user_achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  achievementCode: varchar("achievementCode", { length: 100 }).notNull(),
+  earnedAt: timestamp("earnedAt").defaultNow().notNull(),
+});
+export type LaunchUserAchievement = typeof launchUserAchievements.$inferSelect;
+
+// ─── Community Wins ───────────────────────────────────────────────────────────
+export const launchCommunityWins = mysqlTable("launch_community_wins", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  winType: mysqlEnum("winType", ["first_interview", "resume_complete", "offer_received", "streak_7", "first_application", "custom"]).notNull(),
+  message: text("message"),
+  isAnonymous: boolean("isAnonymous").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LaunchCommunityWin = typeof launchCommunityWins.$inferSelect;

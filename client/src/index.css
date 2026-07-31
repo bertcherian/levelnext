@@ -253,3 +253,61 @@
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
+
+/* ─── Launch Intelligence Design System ─────────────────────────────────────── */
+/* Sky Blue / Mint / Warm Yellow / Coral palette — scoped to .launch-theme      */
+.launch-theme {
+  --li-primary:        #1A6FD4;   /* Sky Blue */
+  --li-primary-soft:   #E8F2FD;   /* Sky Blue tint */
+  --li-primary-dark:   #1255A8;   /* Deeper blue */
+  --li-accent:         #2EC4B6;   /* Mint Green */
+  --li-accent-soft:    #E0F7F5;   /* Mint tint */
+  --li-warm:           #FFB703;   /* Warm Yellow */
+  --li-warm-soft:      #FFF8E1;   /* Warm Yellow tint */
+  --li-coral:          #FF6B6B;   /* Coral */
+  --li-coral-soft:     #FFEEEE;   /* Coral tint */
+  --li-bg:             #F7FAFF;   /* Off-white with blue tint */
+  --li-surface:        #FFFFFF;   /* Card / nav surface */
+  --li-border:         #E2EAF4;   /* Subtle blue-tinted border */
+  --li-text:           #1A202C;   /* Near-black */
+  --li-text-muted:     #4A5568;   /* Muted grey */
+  --li-text-light:     #718096;   /* Light grey */
+  --li-success:        #38A169;   /* Green for completions */
+  --li-success-soft:   #F0FFF4;
+}
+
+/* Override global p color inside launch-theme */
+.launch-theme p {
+  color: var(--li-text);
+}
+
+/* Override global h color inside launch-theme */
+.launch-theme h1,
+.launch-theme h2,
+.launch-theme h3,
+.launch-theme h4 {
+  color: var(--li-text);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* XP progress bar pulse */
+@keyframes li-xp-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+.li-xp-pulse { animation: li-xp-pulse 2s ease-in-out infinite; }
+
+/* Mission card complete animation */
+@keyframes li-check-pop {
+  0%   { transform: scale(0.8); opacity: 0; }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.li-check-pop { animation: li-check-pop 250ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+
+/* Journey node pulse for current step */
+@keyframes li-node-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(26, 111, 212, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(26, 111, 212, 0); }
+}
+.li-node-pulse { animation: li-node-pulse 2s ease-in-out infinite; }

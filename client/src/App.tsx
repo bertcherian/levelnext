@@ -74,6 +74,8 @@ import LSOSWorkspace from "@/pages/LSOSWorkspace";
 import NextChapterPortfolio from "@/pages/NextChapterPortfolio";
 import IdentityClarityAssessment from "@/pages/IdentityClarityAssessment";
 import JoinPage from "@/pages/JoinPage";
+import LaunchHome from "@/pages/LaunchHome";
+import LaunchOnboarding from "@/pages/LaunchOnboarding";
 import JoinProduct from "@/pages/JoinProduct";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -96,7 +98,7 @@ function PostLoginProductActivator() {
     onSuccess: (data) => {
       utils.products.getActiveProduct.invalidate();
       utils.products.getEnrolledProducts.invalidate();
-      const dest = data.productId === "career_intelligence" ? "/career" : data.productId === "manager_effectiveness" ? "/manager" : "/home";
+      const dest = data.productId === "career_intelligence" ? "/career" : data.productId === "manager_effectiveness" ? "/manager" : data.productId === "launch_intelligence" ? "/launch/home" : "/home";
       window.location.replace(dest);
     },
   });
@@ -200,6 +202,9 @@ function Router() {
       <Route path="/young/simulate" component={SimulatorStart} />
       <Route path="/simulator/:sessionId/debrief" component={SimulatorDebrief} />
       <Route path="/simulator/:sessionId" component={SimulatorSession} />
+      {/* Launch Intelligence */}
+      <Route path="/launch/home" component={LaunchHome} />
+      <Route path="/launch/onboarding" component={LaunchOnboarding} />
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />

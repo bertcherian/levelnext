@@ -46,6 +46,8 @@ import { orgContextRouter } from "./routers/orgContext";
 import { participantImportRouter } from "./routers/participantImport";
 import { resumeMakeoverRouter } from "./routers/resumeMakeover";
 import { simulatorRouter } from "./routers/simulator";
+import { launchProgressRouter } from "./routers/launchProgress";
+import { launchDailyMissionsRouter } from "./routers/launchDailyMissions";
 
 export const appRouter = router({
   system: systemRouter,
@@ -101,6 +103,8 @@ export const appRouter = router({
   participantImport: participantImportRouter,
   resumeMakeover: resumeMakeoverRouter,
   simulator: simulatorRouter,
+  launchProgress: launchProgressRouter,
+  launchDailyMissions: launchDailyMissionsRouter,
 });
 
 export type AppRouter = typeof appRouter;
