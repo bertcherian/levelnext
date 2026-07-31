@@ -48,6 +48,8 @@ import { resumeMakeoverRouter } from "./routers/resumeMakeover";
 import { simulatorRouter } from "./routers/simulator";
 import { launchProgressRouter } from "./routers/launchProgress";
 import { launchDailyMissionsRouter } from "./routers/launchDailyMissions";
+import { launchCareerCompassRouter } from "./routers/launchCareerCompass";
+import { launchStoryBuilderRouter } from "./routers/launchStoryBuilder";
 
 export const appRouter = router({
   system: systemRouter,
@@ -105,6 +107,8 @@ export const appRouter = router({
   simulator: simulatorRouter,
   launchProgress: launchProgressRouter,
   launchDailyMissions: launchDailyMissionsRouter,
+  launchCareerCompass: launchCareerCompassRouter,
+  launchStoryBuilder: launchStoryBuilderRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -1242,3 +1242,16 @@ TypeScript: 0 errors | Vitest: 3/3 passed
 - [ ] Journey Map page (/launch/journey) — visual Duolingo-style mission map showing all 7 missions with lock/unlock states
 - [ ] TypeScript check (zero errors)
 - [ ] Save checkpoint
+
+## Launch Intelligence — Phase 2 ✅
+
+- [x] DB: launchCareerCompass table (16-question assessment, 4 dimensions, AI direction card)
+- [x] DB: launchBrandKit table (origin story, value proposition, elevator pitches, LinkedIn About)
+- [x] Server: launchCareerCompassRouter (getSession, saveResponses, complete with LLM, getDirectionCard)
+- [x] Server: launchStoryBuilderRouter (getBrandKit, saveOriginStory, generateValueProposition, generateElevatorPitch, updateBrandKit)
+- [x] Register both routers in server/routers.ts
+- [x] Page: LaunchJourneyMap — Duolingo-style 7-mission visual map with XP-based lock/unlock
+- [x] Page: LaunchCareerCompass — 4-dimension assessment with AI Career Direction Card results
+- [x] Page: LaunchStoryBuilder — 3-step brand narrative builder (Origin Story → Value Prop → Elevator Pitch)
+- [x] Routes wired in App.tsx: /launch/journey, /launch/mission/1, /launch/mission/2
+- [x] TypeScript check: 0 errors

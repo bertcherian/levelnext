@@ -76,6 +76,9 @@ import IdentityClarityAssessment from "@/pages/IdentityClarityAssessment";
 import JoinPage from "@/pages/JoinPage";
 import LaunchHome from "@/pages/LaunchHome";
 import LaunchOnboarding from "@/pages/LaunchOnboarding";
+import LaunchJourneyMap from "@/pages/launch/LaunchJourneyMap";
+import LaunchCareerCompass from "@/pages/launch/LaunchCareerCompass";
+import LaunchStoryBuilder from "@/pages/launch/LaunchStoryBuilder";
 import JoinProduct from "@/pages/JoinProduct";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -205,6 +208,9 @@ function Router() {
       {/* Launch Intelligence */}
       <Route path="/launch/home" component={LaunchHome} />
       <Route path="/launch/onboarding" component={LaunchOnboarding} />
+      <Route path="/launch/journey" component={LaunchJourneyMap} />
+      <Route path="/launch/mission/1" component={LaunchCareerCompass} />
+      <Route path="/launch/mission/2" component={LaunchStoryBuilder} />
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />

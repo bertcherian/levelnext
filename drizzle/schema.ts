@@ -2082,3 +2082,48 @@ export const launchCommunityWins = mysqlTable("launch_community_wins", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type LaunchCommunityWin = typeof launchCommunityWins.$inferSelect;
+
+// ─── Career Compass (Mission 1) ───────────────────────────────────────────────
+export const launchCareerCompass = mysqlTable("launch_career_compass", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  strengthsResponses: json("strengthsResponses").$type<Array<{ questionId: string; answer: string }>>(),
+  interestResponses: json("interestResponses").$type<Array<{ questionId: string; answer: string }>>(),
+  workStyleResponses: json("workStyleResponses").$type<Array<{ questionId: string; answer: string }>>(),
+  valuesResponses: json("valuesResponses").$type<Array<{ questionId: string; answer: string }>>(),
+  strengthsScore: float("strengthsScore"),
+  interestScore: float("interestScore"),
+  workStyleScore: float("workStyleScore"),
+  valuesScore: float("valuesScore"),
+  primaryDirection: varchar("primaryDirection", { length: 255 }),
+  secondaryDirection: varchar("secondaryDirection", { length: 255 }),
+  tertiaryDirection: varchar("tertiaryDirection", { length: 255 }),
+  directionCardJson: json("directionCardJson").$type<Record<string, unknown>>(),
+  llmNarrative: text("llmNarrative"),
+  status: mysqlEnum("ccStatus", ["in_progress", "completed"]).default("in_progress").notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LaunchCareerCompass = typeof launchCareerCompass.$inferSelect;
+
+// ─── Story Builder / Brand Kit (Mission 2) ────────────────────────────────────
+export const launchBrandKit = mysqlTable("launch_brand_kit", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  originStory: text("originStory"),
+  originStoryRefined: text("originStoryRefined"),
+  valueProposition: text("valueProposition"),
+  valuePropositionRefined: text("valuePropositionRefined"),
+  elevatorPitch30: text("elevatorPitch30"),
+  elevatorPitch60: text("elevatorPitch60"),
+  linkedinAbout: text("linkedinAbout"),
+  linkedinHeadline: varchar("linkedinHeadline", { length: 220 }),
+  professionalBio: text("professionalBio"),
+  originStoryComplete: boolean("originStoryComplete").default(false).notNull(),
+  valuePropositionComplete: boolean("valuePropositionComplete").default(false).notNull(),
+  elevatorPitchComplete: boolean("elevatorPitchComplete").default(false).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LaunchBrandKit = typeof launchBrandKit.$inferSelect;
