@@ -2176,3 +2176,44 @@ export const launchApplications = mysqlTable("launch_applications", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type LaunchApplication = typeof launchApplications.$inferSelect;
+
+// ─── Interview Intelligence (Mission 5) ───────────────────────────────────────
+export const launchInterviewSessions = mysqlTable("launch_interview_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  interviewType: mysqlEnum("interviewType", ["hr", "behavioural", "technical", "case", "presentation"]).notNull(),
+  targetRole: varchar("targetRole", { length: 255 }),
+  targetCompany: varchar("targetCompany", { length: 255 }),
+  difficulty: mysqlEnum("interviewDifficulty", ["beginner", "intermediate", "advanced"]).default("beginner").notNull(),
+  messages: json("messages").$type<Array<{ role: string; content: string; timestamp: string; questionIndex?: number }>>().notNull(),
+  overallScore: int("overallScore"),
+  dimensionScores: json("dimensionScores").$type<Record<string, number>>(),
+  feedback: json("feedback").$type<{ strengths: string[]; improvements: string[]; nextSteps: string[] }>(),
+  xpEarned: int("xpEarned").default(0).notNull(),
+  status: mysqlEnum("interviewStatus", ["in_progress", "completed"]).default("in_progress").notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LaunchInterviewSession = typeof launchInterviewSessions.$inferSelect;
+
+// ─── Negotiation Simulator ────────────────────────────────────────────────────
+export const launchNegotiationSessions = mysqlTable("launch_negotiation_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  scenarioId: varchar("scenarioId", { length: 100 }).notNull(),
+  scenarioTitle: varchar("scenarioTitle", { length: 255 }).notNull(),
+  targetRole: varchar("targetRole", { length: 255 }),
+  targetCompany: varchar("targetCompany", { length: 255 }),
+  initialOffer: varchar("initialOffer", { length: 100 }),
+  messages: json("messages").$type<Array<{ role: string; content: string; timestamp: string }>>().notNull(),
+  finalOutcome: varchar("finalOutcome", { length: 255 }),
+  outcomeScore: int("outcomeScore"),
+  feedback: json("feedback").$type<{ strengths: string[]; improvements: string[]; tactics: string[] }>(),
+  xpEarned: int("xpEarned").default(0).notNull(),
+  status: mysqlEnum("negotiationStatus", ["in_progress", "completed"]).default("in_progress").notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LaunchNegotiationSession = typeof launchNegotiationSessions.$inferSelect;

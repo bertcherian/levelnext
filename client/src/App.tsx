@@ -82,6 +82,9 @@ import LaunchStoryBuilder from "@/pages/launch/LaunchStoryBuilder";
 import LaunchSkillSprint from "@/pages/launch/LaunchSkillSprint";
 import LaunchResumeMakeover from "@/pages/launch/LaunchResumeMakeover";
 import LaunchApplicationTracker from "@/pages/launch/LaunchApplicationTracker";
+import LaunchInterviewIntelligence from "@/pages/launch/LaunchInterviewIntelligence";
+import LaunchNegotiationSimulator from "@/pages/launch/LaunchNegotiationSimulator";
+import LaunchDashboard from "@/pages/launch/LaunchDashboard";
 import JoinProduct from "@/pages/JoinProduct";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -217,6 +220,9 @@ function Router() {
       <Route path="/launch/mission/3" component={LaunchSkillSprint} />
       <Route path="/launch/resume" component={LaunchResumeMakeover} />
       <Route path="/launch/applications" component={LaunchApplicationTracker} />
+      <Route path="/launch/interview" component={LaunchInterviewIntelligence} />
+      <Route path="/launch/negotiate" component={LaunchNegotiationSimulator} />
+      <Route path="/launch/dashboard" component={LaunchDashboard} />
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />
