@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import LaunchLayout from "@/components/LaunchLayout";
 import {
   CheckCircle2, Circle, Zap, Flame, Trophy, ChevronRight,
   Sparkles, RefreshCw, Map, Rocket, Target, Star
 } from "lucide-react";
 
-// ─── Animated Background (shared with onboarding) ─────────────────────────────
+// ─── (AnimatedBg removed — provided by LaunchLayout) ─────────────────────────
+/*
 function AnimatedBg() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
@@ -25,10 +27,10 @@ function AnimatedBg() {
           backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
           backgroundSize: "60px 60px"
         }} />
-    </div>
+        </div>
   );
 }
-
+*/
 // ─── Mission Card ─────────────────────────────────────────────────────────────
 interface Mission {
   id: string;
@@ -226,10 +228,8 @@ export default function LaunchHome() {
   ];
 
   return (
-    <div className="min-h-screen relative" style={{ fontFamily: "Manrope, sans-serif" }}>
-      <AnimatedBg />
-
-      <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
+    <LaunchLayout>
+      <div style={{ fontFamily: "Manrope, sans-serif" }}>
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
@@ -412,6 +412,6 @@ export default function LaunchHome() {
           </div>
         </div>
       </div>
-    </div>
+    </LaunchLayout>
   );
 }

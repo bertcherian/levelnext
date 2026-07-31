@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AIGeneratingScreen } from "@/components/launch/AIGeneratingScreen";
+import LaunchPageWrapper from "@/components/LaunchPageWrapper";
 
 function scoreColor(score: number | null | undefined): string {
   if (score == null) return "rgba(255,255,255,0.3)";
@@ -148,7 +149,7 @@ export default function LaunchResumeMakeover() {
   // ── Upload View ───────────────────────────────────────────────────────────────
   if (phase === "upload") {
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="max-w-lg mx-auto px-4 py-6">
           <button onClick={() => navigate("/launch/journey")} className="flex items-center gap-2 mb-6 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
             <ArrowLeft size={14} /> Back to Journey Map
@@ -229,7 +230,7 @@ export default function LaunchResumeMakeover() {
           </button>
           <p className="text-center text-[10px] mt-2" style={{ color: "rgba(255,255,255,0.25)" }}>Max 10MB · PDF or DOCX</p>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
@@ -241,7 +242,7 @@ export default function LaunchResumeMakeover() {
     const improvements = qualityBreakdown?.topImprovements ?? [];
 
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="max-w-lg mx-auto px-4 py-6">
           <button onClick={() => setPhase("upload")} className="flex items-center gap-2 mb-6 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
             <ArrowLeft size={14} /> Upload Different Resume
@@ -332,7 +333,7 @@ export default function LaunchResumeMakeover() {
             </button>
           </div>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
@@ -340,7 +341,7 @@ export default function LaunchResumeMakeover() {
   if (phase === "rewrite_result") {
     const html = rewriteHtml ?? activeResume?.rewrittenHtml;
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="max-w-lg mx-auto px-4 py-6">
           <button onClick={() => setPhase("results")} className="flex items-center gap-2 mb-4 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
             <ArrowLeft size={14} /> Back to Analysis
@@ -384,7 +385,7 @@ export default function LaunchResumeMakeover() {
             </button>
           </div>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 

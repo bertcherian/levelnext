@@ -1,3 +1,15 @@
+/**
+ * LaunchPageWrapper
+ * A lightweight wrapper that provides the dark navy background, animated orbs,
+ * LevelNext logo header, and XP/streak nav bar for Launch Intelligence pages.
+ * 
+ * Use this for pages that manage their own inner layout (multi-phase pages like
+ * StoryBuilder, SkillSprint, ResumeMakeover, ApplicationTracker).
+ * 
+ * The wrapper renders ABOVE the page's own content div, so the page's own
+ * outer div (with background: "#0F172A") becomes transparent and the navy
+ * background shows through.
+ */
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -13,20 +25,7 @@ const NAV_ITEMS = [
   { href: "/launch/applications", label: "Tracker",     icon: Briefcase },
 ];
 
-// ─── Animated Background ─────────────────────────────────────────────────────
-function NavyBg() {
-  return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      {/* Base */}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #0A0F1E 0%, #0D1B2A 40%, #0A1628 70%, #060D1A 100%)" }} />
-      {/* Orbs */}
-      <div style={{ position: "absolute", top: "-10%", left: "-5%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)", filter: "blur(60px)" }} />
-      <div style={{ position: "absolute", bottom: "10%", right: "-5%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)", filter: "blur(60px)" }} />
-    </div>
-  );
-}
-
-export default function LaunchLayout({ children }: { children: React.ReactNode }) {
+export default function LaunchPageWrapper({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -45,8 +44,18 @@ export default function LaunchLayout({ children }: { children: React.ReactNode }
   const levelXp = xp % 200;
 
   return (
-    <div style={{ fontFamily: "'Manrope', sans-serif", minHeight: "100vh", color: "#F8FAFC" }}>
-      <NavyBg />
+    <div style={{
+      fontFamily: "'Manrope', sans-serif",
+      minHeight: "100vh",
+      color: "#F8FAFC",
+      background: "linear-gradient(135deg, #0A0F1E 0%, #0D1B2A 40%, #0A1628 70%, #060D1A 100%)",
+      position: "relative",
+    }}>
+      {/* Animated background orbs */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: "-10%", left: "-5%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", bottom: "10%", right: "-5%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)", filter: "blur(60px)" }} />
+      </div>
 
       {/* ── Top Navigation ── */}
       <nav style={{
@@ -181,9 +190,9 @@ export default function LaunchLayout({ children }: { children: React.ReactNode }
       </nav>
 
       {/* ── Page Content ── */}
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.25rem 4rem" }}>
+      <div style={{ position: "relative", zIndex: 1 }}>
         {children}
-      </main>
+      </div>
     </div>
   );
 }

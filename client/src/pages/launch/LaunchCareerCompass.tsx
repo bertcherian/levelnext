@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Compass, ChevronRight, ChevronLeft, Loader2, Sparkles, MapPin, Star } from "lucide-react";
 import { toast } from "sonner";
 import { AIGeneratingScreen, SuccessScreen } from "@/components/launch/AIGeneratingScreen";
+import LaunchLayout from "@/components/LaunchLayout";
 
 // ─── Dimension Config ─────────────────────────────────────────────────────────
 const DIMENSIONS = [
@@ -122,8 +123,8 @@ export default function LaunchCareerCompass() {
   // ── Intro Screen ─────────────────────────────────────────────────────────────
   if (phase === "intro") {
     return (
-      <div className="launch-theme min-h-screen flex flex-col" style={{ background: "#0F172A" }}>
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center max-w-lg mx-auto">
+      <LaunchLayout>
+        <div className="flex flex-col items-center justify-center px-6 py-12 text-center max-w-lg mx-auto">
           <div
             className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
             style={{ background: "rgba(59,130,246,0.15)", border: "2px solid rgba(59,130,246,0.4)" }}
@@ -177,7 +178,7 @@ export default function LaunchCareerCompass() {
             Back to Journey Map
           </button>
         </div>
-      </div>
+      </LaunchLayout>
     );
   }
 
@@ -230,7 +231,7 @@ export default function LaunchCareerCompass() {
     const roleExamples: string[] = card?.roleExamples ?? [];
 
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchLayout>
         <div className="max-w-lg mx-auto px-4 py-8">
           {/* Header */}
           <div className="text-center mb-8">
@@ -351,13 +352,13 @@ export default function LaunchCareerCompass() {
             Back to Journey Map
           </button>
         </div>
-      </div>
+      </LaunchLayout>
     );
   }
 
   // ── Assessment Screen ─────────────────────────────────────────────────────────
   return (
-    <div className="launch-theme min-h-screen flex flex-col" style={{ background: "#0F172A" }}>
+    <LaunchLayout>
       {/* Progress bar */}
       <div className="h-1 w-full" style={{ background: "rgba(255,255,255,0.06)" }}>
         <div
@@ -463,6 +464,6 @@ export default function LaunchCareerCompass() {
           </button>
         </div>
       </div>
-    </div>
+    </LaunchLayout>
   );
 }

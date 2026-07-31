@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
+import LaunchLayout from "@/components/LaunchLayout";
 import {
   Compass,
   Sparkles,
@@ -145,9 +146,9 @@ export default function LaunchJourneyMap() {
   const [selectedMission, setSelectedMission] = React.useState<typeof MISSIONS[0] | null>(null);
 
   return (
-    <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+    <LaunchLayout>
       {/* Header */}
-      <div className="px-4 pt-8 pb-6 text-center">
+      <div className="pb-6 text-center">
         <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
           Your Career Journey
         </h1>
@@ -339,7 +340,7 @@ export default function LaunchJourneyMap() {
           );
         })}
       </div>
-    </div>
+    </LaunchLayout>
   );
 }
 

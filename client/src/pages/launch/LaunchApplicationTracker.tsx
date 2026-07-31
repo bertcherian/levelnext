@@ -6,6 +6,7 @@ import {
   ExternalLink, Trash2, Edit3, Check, X, Star, Calendar, Loader2, BarChart2, Bell, BellOff, CheckCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import LaunchPageWrapper from "@/components/LaunchPageWrapper";
 
 type AppStatus = "wishlist" | "applied" | "phone_screen" | "interview" | "offer" | "rejected" | "withdrawn";
 
@@ -139,7 +140,7 @@ export default function LaunchApplicationTracker() {
   // ── Add / Edit Form ───────────────────────────────────────────────────────────
   if (view === "add") {
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="max-w-lg mx-auto px-4 py-6">
           <button onClick={() => { setView("list"); setForm(DEFAULT_FORM); setEditingId(null); }}
             className="flex items-center gap-2 mb-6 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
@@ -278,13 +279,13 @@ export default function LaunchApplicationTracker() {
             {editingId ? "Save Changes" : "Add Application"}
           </button>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
   // ── List View ─────────────────────────────────────────────────────────────────
   return (
-    <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+    <LaunchPageWrapper>
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -616,6 +617,6 @@ export default function LaunchApplicationTracker() {
           </div>
         </div>
       )}
-    </div>
+    </LaunchPageWrapper>
   );
 }

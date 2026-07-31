@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Sparkles, ChevronRight, Loader2, Copy, Check, Edit3, RefreshCw, Mic2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { AIGeneratingScreen, SuccessScreen } from "@/components/launch/AIGeneratingScreen";
+import LaunchPageWrapper from "@/components/LaunchPageWrapper";
 
 type Phase = "intro" | "step1" | "step1_generating" | "step1_success" | "step1_result" | "step2" | "step2_generating" | "step2_success" | "step2_result" | "step3" | "step3_generating" | "step3_success" | "step3_result" | "complete";
 
@@ -88,7 +89,7 @@ export default function LaunchStoryBuilder() {
   // ── Intro ─────────────────────────────────────────────────────────────────────
   if (phase === "intro") {
     return (
-      <div className="launch-theme min-h-screen flex flex-col" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center max-w-lg mx-auto">
           <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
             style={{ background: "rgba(16,185,129,0.15)", border: "2px solid rgba(16,185,129,0.4)" }}>
@@ -130,14 +131,14 @@ export default function LaunchStoryBuilder() {
             Back to Journey Map
           </button>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
   // ── Step 1: Origin Story ──────────────────────────────────────────────────────
   if (phase === "step1") {
     return (
-      <div className="launch-theme min-h-screen flex flex-col" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="h-1 w-full" style={{ background: "rgba(255,255,255,0.06)" }}>
           <div className="h-1 w-1/3" style={{ background: "#10B981" }} />
         </div>
@@ -182,7 +183,7 @@ export default function LaunchStoryBuilder() {
             {saveOriginStory.isPending ? <Loader2 size={16} className="animate-spin" /> : <><Sparkles size={14} /> Refine with AI</>}
           </button>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
@@ -221,7 +222,7 @@ export default function LaunchStoryBuilder() {
   // ── Step 1 Result ─────────────────────────────────────────────────────────────
   if (phase === "step1_result") {
     return (
-      <div className="launch-theme min-h-screen flex flex-col" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="h-1 w-full" style={{ background: "rgba(255,255,255,0.06)" }}>
           <div className="h-1 w-1/3" style={{ background: "#10B981" }} />
         </div>
@@ -264,14 +265,14 @@ export default function LaunchStoryBuilder() {
             Next: Value Proposition →
           </button>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
   // ── Step 2: Value Proposition ─────────────────────────────────────────────────
   if (phase === "step2") {
     return (
-      <div className="launch-theme min-h-screen flex flex-col" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="h-1 w-full" style={{ background: "rgba(255,255,255,0.06)" }}>
           <div className="h-1 w-2/3" style={{ background: "linear-gradient(90deg, #10B981, #3B82F6)" }} />
         </div>
@@ -325,7 +326,7 @@ export default function LaunchStoryBuilder() {
             <Sparkles size={14} /> Generate Value Proposition
           </button>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
@@ -365,7 +366,7 @@ export default function LaunchStoryBuilder() {
   // ── Step 2 Result ─────────────────────────────────────────────────────────────
   if (phase === "step2_result") {
     return (
-      <div className="launch-theme min-h-screen flex flex-col" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="h-1 w-full" style={{ background: "rgba(255,255,255,0.06)" }}>
           <div className="h-1 w-2/3" style={{ background: "linear-gradient(90deg, #10B981, #3B82F6)" }} />
         </div>
@@ -409,14 +410,14 @@ export default function LaunchStoryBuilder() {
             Next: Elevator Pitch →
           </button>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
   // ── Step 3: Elevator Pitch ────────────────────────────────────────────────────
   if (phase === "step3") {
     return (
-      <div className="launch-theme min-h-screen flex flex-col" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="h-1 w-full" style={{ background: "rgba(255,255,255,0.06)" }}>
           <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #10B981, #3B82F6, #F59E0B)" }} />
         </div>
@@ -451,7 +452,7 @@ export default function LaunchStoryBuilder() {
             )}
           </button>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
@@ -492,7 +493,7 @@ export default function LaunchStoryBuilder() {
 
   if (phase === "step3_result" || phase === "complete") {
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="max-w-lg mx-auto px-4 py-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
@@ -562,7 +563,7 @@ export default function LaunchStoryBuilder() {
             </button>
           </div>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 

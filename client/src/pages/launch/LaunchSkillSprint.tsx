@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Zap, ChevronRight, ArrowLeft, Check, Loader2, Star, BookOpen, Target, Mic2, Clock, Trophy, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { AIGeneratingScreen, SuccessScreen } from "@/components/launch/AIGeneratingScreen";
+import LaunchPageWrapper from "@/components/LaunchPageWrapper";
 
 type ViewState =
   | { mode: "list" }
@@ -47,7 +48,7 @@ export default function LaunchSkillSprint() {
   // ── List View ─────────────────────────────────────────────────────────────────
   if (view.mode === "list") {
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="max-w-lg mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
@@ -162,7 +163,7 @@ export default function LaunchSkillSprint() {
             Back to Journey Map
           </button>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
@@ -173,7 +174,7 @@ export default function LaunchSkillSprint() {
     const color = CATEGORY_COLORS[module.category] ?? "#3B82F6";
 
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="max-w-lg mx-auto px-4 py-6">
           <button onClick={() => setView({ mode: "list" })} className="flex items-center gap-2 mb-6 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
             <ArrowLeft size={14} /> Back to modules
@@ -257,7 +258,7 @@ export default function LaunchSkillSprint() {
             </button>
           )}
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
@@ -284,7 +285,7 @@ export default function LaunchSkillSprint() {
     };
 
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="max-w-lg mx-auto px-4 py-6">
           <button onClick={() => setView({ mode: "module", moduleId: view.moduleId })} className="flex items-center gap-2 mb-6 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
             <ArrowLeft size={14} /> Back
@@ -329,7 +330,7 @@ export default function LaunchSkillSprint() {
             Submit & Get Feedback →
           </button>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 
@@ -362,7 +363,7 @@ export default function LaunchSkillSprint() {
     const { feedback, score, xpEarned } = view;
 
     return (
-      <div className="launch-theme min-h-screen" style={{ background: "#0F172A" }}>
+      <LaunchPageWrapper>
         <div className="max-w-lg mx-auto px-4 py-8">
           {/* Score ring */}
           <div className="text-center mb-8">
@@ -397,7 +398,7 @@ export default function LaunchSkillSprint() {
             </button>
           </div>
         </div>
-      </div>
+      </LaunchPageWrapper>
     );
   }
 

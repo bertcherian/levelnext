@@ -75,6 +75,7 @@ import NextChapterPortfolio from "@/pages/NextChapterPortfolio";
 import IdentityClarityAssessment from "@/pages/IdentityClarityAssessment";
 import JoinPage from "@/pages/JoinPage";
 import LaunchHome from "@/pages/launch/LaunchHome";
+import LaunchLanding from "@/pages/launch/LaunchLanding";
 import LaunchOnboarding from "@/pages/launch/LaunchOnboarding";
 import LaunchJourneyMap from "@/pages/launch/LaunchJourneyMap";
 import LaunchCareerCompass from "@/pages/launch/LaunchCareerCompass";
@@ -212,6 +213,7 @@ function Router() {
       <Route path="/simulator/:sessionId/debrief" component={SimulatorDebrief} />
       <Route path="/simulator/:sessionId" component={SimulatorSession} />
       {/* Launch Intelligence */}
+      <Route path="/launch" component={LaunchLanding} />
       <Route path="/launch/home" component={LaunchHome} />
       <Route path="/launch/onboarding" component={LaunchOnboarding} />
       <Route path="/launch/journey" component={LaunchJourneyMap} />
