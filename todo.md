@@ -1296,3 +1296,14 @@ TypeScript: 0 errors | Vitest: 3/3 passed
 - [ ] Launch Dashboard: Streak history chart using Chart.js
 - [ ] Interview Intelligence: PDF export button on debrief screen
 - [ ] Negotiation Simulator: PDF export button on debrief screen
+
+## Launch Intelligence — Enhancements (Jul 31)
+- [x] Application Tracker: Bell button on each card to set reminders
+- [x] Application Tracker: Upcoming Reminders panel (amber glow, mark done, delete)
+- [x] Application Tracker: Reminder modal (type, datetime-local, note, Set Reminder CTA)
+- [x] Launch Dashboard: XP Earned area chart (recharts, Sky Blue gradient)
+- [x] Launch Dashboard: XP by Activity Type bar chart (recharts, multi-color)
+- [x] Interview Intelligence: Download Debrief PDF button (jsPDF, branded)
+- [x] Negotiation Simulator: Download Debrief PDF button (jsPDF, branded)
+- [x] LaunchOnboarding: Full dark immersive redesign (gradient cards, glow selection, Space Grotesk)
+- [x] LaunchHome: Full dark immersive redesign (animated background, XP ring, mission panel)

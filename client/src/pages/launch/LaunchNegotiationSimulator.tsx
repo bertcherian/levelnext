@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import LaunchLayout from "@/components/LaunchLayout";
 import { AIGeneratingScreen, SuccessScreen } from "@/components/launch/AIGeneratingScreen";
+import { exportDebriefPdf } from "@/lib/debriefPdf";
 
 type Phase = "setup" | "starting" | "negotiation" | "debrief";
 interface Message { role: string; content: string; timestamp: string; }
@@ -233,6 +234,27 @@ export default function LaunchNegotiationSimulator() {
                   <ul className="space-y-1">{feedback.tactics.map((s, i) => <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--launch-slate, #2D3748)" }}><span style={{ color: accentColor }}>→</span>{s}</li>)}</ul>
                 </div>
               </div>
+
+              {/* PDF Export */}
+              <button
+                onClick={() => {
+                  if (!feedback) return;
+                  exportDebriefPdf({
+                    type: "negotiation",
+                    scenarioTitle: selectedScenario?.title ?? "Negotiation",
+                    outcomeScore,
+                    finalOffer: finalOutcome,
+                    tactics: feedback.tactics,
+                    strengths: feedback.strengths,
+                    improvements: feedback.improvements,
+                    xpEarned,
+                    date: new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }),
+                  });
+                }}
+                className="w-full py-3 rounded-2xl text-sm font-semibold mb-3 flex items-center justify-center gap-2 transition-all duration-150 active:scale-[0.98]"
+                style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.25)", color: accentColor }}>
+                📄 Download Debrief PDF
+              </button>
 
               <div className="grid grid-cols-2 gap-3">
                 <Button onClick={() => { setPhase("setup"); setMessages([]); setCurrentMessage(""); setExchangeCount(0); setFeedback(null); }} variant="outline" className="rounded-xl">Practice Again</Button>

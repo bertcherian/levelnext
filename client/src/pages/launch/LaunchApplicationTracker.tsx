@@ -436,6 +436,13 @@ export default function LaunchApplicationTracker() {
                             <Edit3 size={11} style={{ color: "rgba(255,255,255,0.4)" }} />
                           </button>
                           <button
+                            onClick={() => { setReminderAppId(app.id); setShowReminderModal(true); }}
+                            className="p-1.5 rounded-lg"
+                            style={{ background: "rgba(245,158,11,0.1)" }}
+                            title="Set reminder">
+                            <Bell size={11} style={{ color: "#F59E0B" }} />
+                          </button>
+                          <button
                             onClick={() => handleDelete(app.id)}
                             className="p-1.5 rounded-lg"
                             style={{ background: "rgba(239,68,68,0.1)" }}>
@@ -500,10 +507,115 @@ export default function LaunchApplicationTracker() {
           </div>
         )}
 
+        {/* ── Upcoming Reminders Panel ──────────────────────────────────────── */}
+        {upcomingReminders && upcomingReminders.length > 0 && (
+          <div className="mt-6 p-4 rounded-2xl" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Bell size={14} style={{ color: "#F59E0B" }} />
+              <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: "#F59E0B" }}>Upcoming Reminders</h3>
+            </div>
+            <div className="space-y-2">
+              {upcomingReminders.map((r) => {
+                const typeEmoji: Record<string, string> = { interview: "🎤", follow_up: "📧", deadline: "⏰", assessment: "📝", other: "📌" };
+                const appForReminder = apps?.find((a) => a.id === r.applicationId);
+                return (
+                  <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }}>
+                    <span className="text-base">{typeEmoji[r.reminderType] ?? "📌"}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-white truncate">
+                        {r.reminderType.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                        {appForReminder ? ` — ${appForReminder.companyName}` : ""}
+                      </p>
+                      <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                        {new Date(r.reminderDate).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                        {r.note ? ` · ${r.note}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => handleMarkDone(r.id)}
+                        className="p-1.5 rounded-lg" style={{ background: "rgba(16,185,129,0.1)" }} title="Mark done">
+                        <CheckCircle size={11} style={{ color: "#10B981" }} />
+                      </button>
+                      <button onClick={() => handleDeleteReminder(r.id)}
+                        className="p-1.5 rounded-lg" style={{ background: "rgba(239,68,68,0.1)" }} title="Delete">
+                        <Trash2 size={11} style={{ color: "#EF4444" }} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <button onClick={() => navigate("/launch/journey")} className="w-full mt-6 py-3 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
           Back to Journey Map
         </button>
       </div>
+
+      {/* ── Reminder Modal ──────────────────────────────────────────────────────── */}
+      {showReminderModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowReminderModal(false); }}>
+          <div className="w-full max-w-sm rounded-3xl p-5" style={{ background: "#0F172A", border: "1px solid rgba(255,255,255,0.12)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-white" style={{ fontFamily: "Space Grotesk, sans-serif" }}>Set Reminder</h3>
+              <button onClick={() => setShowReminderModal(false)}
+                className="p-1.5 rounded-xl" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-widest mb-1 block" style={{ color: "rgba(255,255,255,0.4)" }}>Type</label>
+                <select
+                  value={reminderForm.type}
+                  onChange={(e) => setReminderForm((f) => ({ ...f, type: e.target.value as typeof f.type }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none text-white"
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <option value="interview" style={{ background: "#1e293b" }}>🎤 Interview</option>
+                  <option value="follow_up" style={{ background: "#1e293b" }}>📧 Follow Up</option>
+                  <option value="deadline" style={{ background: "#1e293b" }}>⏰ Deadline</option>
+                  <option value="assessment" style={{ background: "#1e293b" }}>📝 Assessment</option>
+                  <option value="other" style={{ background: "#1e293b" }}>📌 Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-widest mb-1 block" style={{ color: "rgba(255,255,255,0.4)" }}>Date & Time</label>
+                <input
+                  type="datetime-local"
+                  value={reminderForm.date}
+                  onChange={(e) => setReminderForm((f) => ({ ...f, date: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none text-white"
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", colorScheme: "dark" }}
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-widest mb-1 block" style={{ color: "rgba(255,255,255,0.4)" }}>Note (optional)</label>
+                <input
+                  value={reminderForm.note}
+                  onChange={(e) => setReminderForm((f) => ({ ...f, note: e.target.value }))}
+                  placeholder="e.g. Prepare STAR stories"
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none text-white"
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                />
+              </div>
+
+              <button
+                onClick={handleAddReminder}
+                disabled={createReminderMutation.isPending}
+                className="w-full py-3 rounded-2xl text-sm font-bold text-white transition-all duration-150 active:scale-[0.98]"
+                style={{ background: "linear-gradient(135deg, #3B82F6, #8B5CF6)" }}>
+                {createReminderMutation.isPending ? "Setting…" : "Set Reminder"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

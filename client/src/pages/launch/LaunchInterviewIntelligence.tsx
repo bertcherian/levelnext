@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import LaunchLayout from "@/components/LaunchLayout";
 import { AIGeneratingScreen, SuccessScreen } from "@/components/launch/AIGeneratingScreen";
+import { exportDebriefPdf } from "@/lib/debriefPdf";
 
 type Phase = "setup" | "starting" | "interview" | "debrief";
 
@@ -294,6 +295,28 @@ export default function LaunchInterviewIntelligence() {
                   </ul>
                 </div>
               </div>
+
+              {/* PDF Export */}
+              <button
+                onClick={() => {
+                  if (!feedback) return;
+                  exportDebriefPdf({
+                    type: "interview",
+                    interviewType: selectedTypeConfig?.label ?? selectedType,
+                    targetRole: targetRole || "General",
+                    difficulty,
+                    overallScore,
+                    strengths: feedback.strengths,
+                    improvements: feedback.improvements,
+                    nextSteps: feedback.nextSteps,
+                    xpEarned,
+                    date: new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }),
+                  });
+                }}
+                className="w-full py-3 rounded-2xl text-sm font-semibold mb-3 flex items-center justify-center gap-2 transition-all duration-150 active:scale-[0.98]"
+                style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.25)", color: accentColor }}>
+                📄 Download Debrief PDF
+              </button>
 
               <div className="grid grid-cols-2 gap-3">
                 <Button onClick={() => { setPhase("setup"); setMessages([]); setCurrentAnswer(""); setQuestionNumber(1); setFeedback(null); }} variant="outline" className="rounded-xl">

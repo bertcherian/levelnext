@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import LaunchLayout from "@/components/LaunchLayout";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 
 const ALL_MISSIONS = [
   { id: 1, key: "career_compass", title: "Career Compass", description: "Discover your ideal career direction", icon: "🧭", xp: 100, path: "/launch/mission/1", category: "Discover", color: "#4F9CF9" },
@@ -204,6 +205,84 @@ export default function LaunchDashboard() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* XP & Streak Charts */}
+          {progressData?.recentXp && progressData.recentXp.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* XP History Chart */}
+              <div className="rounded-2xl p-5" style={{ background: "white", border: "1px solid #E2E8F0" }}>
+                <h2 className="font-semibold text-sm mb-3" style={{ color: "var(--launch-slate, #2D3748)", fontFamily: "Space Grotesk, sans-serif" }}>XP Earned (Recent)</h2>
+                <div style={{ height: 140 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={[...progressData.recentXp].reverse().map((e, i) => ({
+                        label: `#${i + 1}`,
+                        xp: e.xpEarned,
+                        action: (e.action as string).replace(/_/g, " "),
+                      }))}
+                      margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="xpGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#4F9CF9" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#4F9CF9" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#A0AEC0" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: "#A0AEC0" }} axisLine={false} tickLine={false} />
+                      <Tooltip
+                        contentStyle={{ background: "#1A202C", border: "none", borderRadius: 8, fontSize: 11 }}
+                        labelStyle={{ color: "#A0AEC0" }}
+                        itemStyle={{ color: "#4F9CF9" }}
+                        formatter={(val: number, _name: string, props: { payload?: { action?: string } }) => [`+${val} XP`, props?.payload?.action ?? ""]}
+                      />
+                      <Area type="monotone" dataKey="xp" stroke="#4F9CF9" strokeWidth={2} fill="url(#xpGrad)" dot={{ r: 3, fill: "#4F9CF9" }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Streak & Level Progress */}
+              <div className="rounded-2xl p-5" style={{ background: "white", border: "1px solid #E2E8F0" }}>
+                <h2 className="font-semibold text-sm mb-3" style={{ color: "var(--launch-slate, #2D3748)", fontFamily: "Space Grotesk, sans-serif" }}>XP by Activity Type</h2>
+                <div style={{ height: 140 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={(() => {
+                        const grouped: Record<string, number> = {};
+                        for (const e of progressData.recentXp) {
+                          const key = (e.action as string).replace(/_/g, " ").slice(0, 14);
+                          grouped[key] = (grouped[key] ?? 0) + (e.xpEarned as number);
+                        }
+                        return Object.entries(grouped).map(([name, xp]) => ({ name, xp }));
+                      })()}
+                      margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                      <XAxis dataKey="name" tick={{ fontSize: 8, fill: "#A0AEC0" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: "#A0AEC0" }} axisLine={false} tickLine={false} />
+                      <Tooltip
+                        contentStyle={{ background: "#1A202C", border: "none", borderRadius: 8, fontSize: 11 }}
+                        labelStyle={{ color: "#A0AEC0" }}
+                        itemStyle={{ color: "#3DDC97" }}
+                        formatter={(val: number) => [`${val} XP`, "Total"]}
+                      />
+                      <Bar dataKey="xp" radius={[4, 4, 0, 0]}>
+                        {(() => {
+                          const colors = ["#4F9CF9", "#9F7AEA", "#3DDC97", "#F6AD55", "#FC8181", "#667EEA"];
+                          const grouped: Record<string, number> = {};
+                          for (const e of progressData.recentXp) {
+                            const key = (e.action as string).replace(/_/g, " ").slice(0, 14);
+                            grouped[key] = (grouped[key] ?? 0) + (e.xpEarned as number);
+                          }
+                          return Object.keys(grouped).map((_, i) => (
+                            <Cell key={i} fill={colors[i % colors.length]} />
+                          ));
+                        })()}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           )}
