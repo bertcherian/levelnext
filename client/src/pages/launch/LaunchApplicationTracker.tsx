@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft, Plus, ChevronRight, Briefcase, MapPin, DollarSign,
-  ExternalLink, Trash2, Edit3, Check, X, Star, Calendar, Loader2, BarChart2
+  ExternalLink, Trash2, Edit3, Check, X, Star, Calendar, Loader2, BarChart2, Bell, BellOff, CheckCircle
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -59,6 +59,34 @@ export default function LaunchApplicationTracker() {
   const updateMutation = trpc.launchApplications.update.useMutation();
   const updateStatusMutation = trpc.launchApplications.updateStatus.useMutation();
   const deleteMutation = trpc.launchApplications.delete.useMutation();
+
+  // ── Reminders ─────────────────────────────────────────────────────────────────
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderAppId, setReminderAppId] = useState<number | null>(null);
+  const [reminderForm, setReminderForm] = useState({ type: "interview" as "interview" | "follow_up" | "deadline" | "assessment" | "other", date: "", note: "" });
+  const { data: upcomingReminders, refetch: refetchReminders } = trpc.launchReminders.getUpcoming.useQuery();
+  const createReminderMutation = trpc.launchReminders.create.useMutation();
+  const markDoneMutation = trpc.launchReminders.markDone.useMutation();
+  const deleteReminderMutation = trpc.launchReminders.delete.useMutation();
+
+  const handleAddReminder = async () => {
+    if (!reminderAppId || !reminderForm.date) { toast.error("Please select a date."); return; }
+    try {
+      await createReminderMutation.mutateAsync({ applicationId: reminderAppId, reminderType: reminderForm.type, reminderDate: new Date(reminderForm.date).toISOString(), note: reminderForm.note || undefined });
+      await refetchReminders();
+      setShowReminderModal(false);
+      setReminderForm({ type: "interview", date: "", note: "" });
+      toast.success("Reminder set!");
+    } catch { toast.error("Failed to set reminder."); }
+  };
+
+  const handleMarkDone = async (id: number) => {
+    try { await markDoneMutation.mutateAsync({ id }); await refetchReminders(); toast.success("Marked as done!"); } catch { toast.error("Failed."); }
+  };
+
+  const handleDeleteReminder = async (id: number) => {
+    try { await deleteReminderMutation.mutateAsync({ id }); await refetchReminders(); } catch { toast.error("Failed."); }
+  };
 
   const filteredApps = activeFilter === "all"
     ? (apps ?? [])

@@ -2217,3 +2217,27 @@ export const launchNegotiationSessions = mysqlTable("launch_negotiation_sessions
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type LaunchNegotiationSession = typeof launchNegotiationSessions.$inferSelect;
+
+// ─── Application Reminders ────────────────────────────────────────────────────
+export const launchApplicationReminders = mysqlTable("launch_application_reminders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  applicationId: int("applicationId").notNull().references(() => launchApplications.id, { onDelete: "cascade" }),
+  reminderType: mysqlEnum("reminderType", ["interview", "follow_up", "deadline", "assessment", "other"]).default("other").notNull(),
+  reminderDate: timestamp("reminderDate").notNull(),
+  note: varchar("note", { length: 500 }),
+  isDone: boolean("isDone").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LaunchApplicationReminder = typeof launchApplicationReminders.$inferSelect;
+
+// ─── XP History (for dashboard charts) ───────────────────────────────────────
+export const launchXpHistory = mysqlTable("launch_xp_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  xpAmount: int("xpAmount").notNull(),
+  source: varchar("source", { length: 100 }).notNull(),
+  recordedDate: varchar("recordedDate", { length: 10 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LaunchXpHistory = typeof launchXpHistory.$inferSelect;

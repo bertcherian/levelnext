@@ -1286,3 +1286,13 @@ TypeScript: 0 errors | Vitest: 3/3 passed
 - [x] Application Tracker: pipeline view, add/edit/delete, inline status updates, stats
 - [x] Routes: /launch/mission/3, /launch/resume, /launch/applications wired in App.tsx
 - [x] TypeScript: 0 errors confirmed
+
+## Launch Intelligence — Enhancements (Phase 4+)
+- [ ] Application Tracker: DB table for reminders (launch_application_reminders)
+- [ ] Application Tracker: server router for reminder CRUD
+- [ ] Application Tracker: UI to set/view/delete reminders per application (date, type, note)
+- [ ] Application Tracker: upcoming reminders panel on tracker page
+- [ ] Launch Dashboard: XP progress chart (last 7 days) using Chart.js
+- [ ] Launch Dashboard: Streak history chart using Chart.js
+- [ ] Interview Intelligence: PDF export button on debrief screen
+- [ ] Negotiation Simulator: PDF export button on debrief screen
