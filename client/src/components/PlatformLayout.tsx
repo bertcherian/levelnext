@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
@@ -34,7 +34,11 @@ import {
   Radio,
   ClipboardList,
   Scale,
+  Search,
+  X as XIcon,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { CI_MODULES } from "@shared/modules/careerData";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { trpc } from "@/lib/trpc";
@@ -58,6 +62,35 @@ const NAV_ITEMS = [
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 
+// Searchable index for Career nav — maps nested tool names to their parent route
+const CI_SEARCH_INDEX: { term: string; label: string; href: string }[] = [
+  // Market Intel sub-tools
+  { term: "opportunities executive opportunity", label: "Opportunities", href: "/career/market-intel" },
+  { term: "signals radar hiring expansion", label: "Radar Signals", href: "/career/market-intel" },
+  { term: "relationships relationship graph contacts network", label: "Relationship Graph", href: "/career/market-intel" },
+  { term: "access paths target organisations company", label: "Access Paths", href: "/career/market-intel" },
+  { term: "outreach engine linkedin brand content", label: "Outreach Engine", href: "/career/market-intel" },
+  // Prepare sub-tools
+  { term: "resume makeover cv rewrite", label: "Resume Makeover", href: "/career/prepare" },
+  { term: "interview prep mock questions", label: "Interview Prep", href: "/career/prepare" },
+  { term: "negotiation salary offer compensation", label: "Negotiation Intelligence", href: "/career/prepare" },
+  // My Journey sub-tools
+  { term: "progress journey tracker completion", label: "Journey Progress", href: "/career/journey" },
+  { term: "growth profile leadership scores", label: "Growth Profile", href: "/career/journey" },
+];
+
+// Tooltip descriptions for each CI nav item
+const CI_NAV_TOOLTIPS: Record<string, { description: string; subItems: string[] }> = {
+  "/career": { description: "Your career transition dashboard", subItems: ["Edge Score", "Daily coach prompt", "Quick diagnostics"] },
+  "/diagnostics": { description: "Run career intelligence assessments", subItems: ["Career Positioning", "Resilience", "Marketability", "+ 4 more"] },
+  "/guide": { description: "AI coaching chat for career questions", subItems: ["Ask anything", "Personalised advice", "Unlock insights"] },
+  "/practice": { description: "Role-play practice with AI feedback", subItems: ["Difficult conversations", "Executive presence", "Debrief & score"] },
+  "/career/market-intel": { description: "Find and access your next opportunity", subItems: ["Opportunities", "Radar Signals", "Relationships", "Access Paths", "Outreach"] },
+  "/career/prepare": { description: "Get ready to win the role", subItems: ["Resume Makeover", "Interview Prep", "Negotiation"] },
+  "/career/journey": { description: "Track your progress and growth", subItems: ["Journey Progress", "Growth Profile"] },
+  "/settings": { description: "Account and platform settings", subItems: [] },
+};
+
 // Career Transition Intelligence nav items — simplified 7-item structure
 const CI_NAV_ITEMS = [
   { label: "Career Home", icon: Briefcase, href: "/career" },
@@ -69,6 +102,94 @@ const CI_NAV_ITEMS = [
   { label: "My Journey", icon: BarChart3, href: "/career/journey" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
+
+// ── CI-specific nav item with tooltip ────────────────────────────────────────
+function CINavItem({
+  item,
+  isActive,
+  badge,
+  journeyPct,
+  onClick,
+}: {
+  item: typeof CI_NAV_ITEMS[0];
+  isActive: boolean;
+  badge: number;
+  journeyPct?: number; // 0-100, only for My Journey item
+  onClick?: () => void;
+}) {
+  const Icon = item.icon;
+  const tooltip = CI_NAV_TOOLTIPS[item.href];
+  const inner = (
+    <div
+      className={cn(
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+        isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+      )}
+      style={isActive ? {
+        background: "oklch(from var(--color-ln-yellow) l c h / 0.12)",
+        borderLeftColor: "var(--color-ln-yellow)",
+        color: "var(--color-ln-yellow)",
+      } : {}}
+      onClick={onClick}
+    >
+      <Icon size={18} className={cn("flex-shrink-0", isActive ? "" : "group-hover:scale-105 transition-transform")} />
+      <span className="flex-1 truncate">{item.label}</span>
+      {/* Journey progress badge */}
+      {item.href === "/career/journey" && journeyPct !== undefined && (
+        <span
+          className="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+          style={{
+            background: journeyPct >= 100
+              ? "oklch(from #34d399 l c h / 0.25)"
+              : "oklch(from var(--color-ln-yellow) l c h / 0.2)",
+            color: journeyPct >= 100 ? "#34d399" : "var(--color-ln-yellow)",
+          }}
+          title={`${journeyPct}% complete`}
+        >
+          {journeyPct}%
+        </span>
+      )}
+      {isActive && !badge && item.href !== "/career/journey" && <ChevronRight size={14} className="ml-auto opacity-60" />}
+      {badge > 0 && (
+        <span
+          className="ml-auto flex-shrink-0 flex items-center justify-center rounded-full text-[10px] font-bold leading-none"
+          style={{ minWidth: "18px", height: "18px", padding: "0 4px", background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
+        >
+          {badge > 9 ? "9+" : badge}
+        </span>
+      )}
+    </div>
+  );
+
+  if (!tooltip || tooltip.subItems.length === 0) return inner;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {inner}
+      </TooltipTrigger>
+      <TooltipContent
+        side="right"
+        sideOffset={8}
+        className="max-w-[200px] p-3"
+        style={{ background: "var(--color-ln-navy)", border: "1px solid oklch(40% 0.05 248.6)", color: "white" }}
+      >
+        <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--color-ln-yellow)" }}>{item.label}</p>
+        <p className="text-[11px] text-white/60 mb-2">{tooltip.description}</p>
+        {tooltip.subItems.length > 0 && (
+          <ul className="space-y-0.5">
+            {tooltip.subItems.map((sub) => (
+              <li key={sub} className="text-[11px] text-white/50 flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: "var(--color-ln-yellow)" }} />
+                {sub}
+              </li>
+            ))}
+          </ul>
+        )}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 // Manager Effectiveness Platform nav items
 const MEP_NAV_ITEMS: { label: string; icon: React.ElementType; href: string; badgeKey?: string }[] = [
@@ -129,6 +250,35 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
       window.location.href = "/";
     },
   });
+
+  // Career nav search state
+  const [ciSearch, setCiSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Journey progress: count completed CI diagnostics vs total
+  const { data: allReports = [] } = trpc.report.myReports.useQuery(undefined, {
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+  });
+  const journeyPct = useMemo(() => {
+    const total = CI_MODULES.length;
+    if (total === 0) return 0;
+    const ciCodes = CI_MODULES.map((m) => m.code);
+    const ciReports = allReports.filter((r) => ciCodes.includes(r.moduleType));
+    const latestByModule: Record<string, boolean> = {};
+    for (const r of ciReports) latestByModule[r.moduleType] = true;
+    const completed = Object.keys(latestByModule).length;
+    return Math.round((completed / total) * 100);
+  }, [allReports]);
+
+  // CI search results
+  const ciSearchResults = useMemo(() => {
+    const q = ciSearch.trim().toLowerCase();
+    if (!q) return [];
+    return CI_SEARCH_INDEX.filter((entry) =>
+      entry.term.includes(q) || entry.label.toLowerCase().includes(q)
+    ).slice(0, 5);
+  }, [ciSearch]);
 
   // Active product detection for product-aware nav
   const { data: activeProduct } = trpc.products.getActiveProduct.useQuery(undefined, {
@@ -262,26 +412,62 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
 
         {/* Drawer nav */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
+          {/* CI search bar — only shown for career product */}
+          {isCareerProduct && (
+            <div className="relative mb-3">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "oklch(55% 0.02 248.6)" }} />
+              <input
+                ref={searchInputRef}
+                value={ciSearch}
+                onChange={(e) => setCiSearch(e.target.value)}
+                placeholder="Find a tool…"
+                className="w-full pl-8 pr-7 py-2 text-xs rounded-lg outline-none"
+                style={{ background: "oklch(from white 15% 0 0 / 0.07)", color: "white", border: "1px solid oklch(from white 15% 0 0 / 0.12)", caretColor: "var(--color-ln-yellow)" }}
+              />
+              {ciSearch && (
+                <button onClick={() => setCiSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                  <XIcon size={12} />
+                </button>
+              )}
+              {/* Search results dropdown */}
+              {ciSearchResults.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 rounded-lg overflow-hidden z-10" style={{ background: "oklch(18% 0.05 248.6)", border: "1px solid oklch(35% 0.05 248.6)" }}>
+                  {ciSearchResults.map((r) => (
+                    <Link key={r.label} href={r.href} onClick={() => { setCiSearch(""); setSidebarOpen(false); }}>
+                      <div className="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer hover:bg-white/8">
+                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--color-ln-yellow)" }} />
+                        <span className="text-white/80">{r.label}</span>
+                        <span className="ml-auto text-white/30 text-[10px] truncate">{r.href.split("/").pop()}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <ul className="space-y-0.5">
             {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : filteredNavItems).map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
+              if (isCareerProduct) {
+                return (
+                  <li key={item.href}>
+                    <Link href={item.href} onClick={() => setSidebarOpen(false)}>
+                      <CINavItem item={item as typeof CI_NAV_ITEMS[0]} isActive={isActive} badge={badge} journeyPct={item.href === "/career/journey" ? journeyPct : undefined} onClick={() => setSidebarOpen(false)} />
+                    </Link>
+                  </li>
+                );
+              }
               return (
                 <li key={item.href}>
                   <Link href={item.href} onClick={() => setSidebarOpen(false)}>
                     <div
                       className={cn(
                         "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
-                        isActive
-                          ? "text-ln-yellow border-l-2 pl-2.5"
-                          : "text-white/70 hover:text-white hover:bg-white/8"
+                        isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
                       )}
-                      style={isActive ? {
-                        background: "oklch(from var(--color-ln-yellow) l c h / 0.12)",
-                        borderLeftColor: "var(--color-ln-yellow)",
-                        color: "var(--color-ln-yellow)",
-                      } : {}}
+                      style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
                     >
                       <Icon size={18} className="flex-shrink-0" />
                       <span>{item.label}</span>
@@ -567,26 +753,61 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         <ProductSwitcher />
         {/* Desktop nav */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
+          {/* CI search bar — only shown for career product */}
+          {isCareerProduct && (
+            <div className="relative mb-3">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "oklch(55% 0.02 248.6)" }} />
+              <input
+                value={ciSearch}
+                onChange={(e) => setCiSearch(e.target.value)}
+                placeholder="Find a tool…"
+                className="w-full pl-8 pr-7 py-2 text-xs rounded-lg outline-none"
+                style={{ background: "oklch(from white 15% 0 0 / 0.07)", color: "white", border: "1px solid oklch(from white 15% 0 0 / 0.12)", caretColor: "var(--color-ln-yellow)" }}
+              />
+              {ciSearch && (
+                <button onClick={() => setCiSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                  <XIcon size={12} />
+                </button>
+              )}
+              {/* Search results dropdown */}
+              {ciSearchResults.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 rounded-lg overflow-hidden z-10" style={{ background: "oklch(18% 0.05 248.6)", border: "1px solid oklch(35% 0.05 248.6)" }}>
+                  {ciSearchResults.map((r) => (
+                    <Link key={r.label} href={r.href} onClick={() => setCiSearch("")}>
+                      <div className="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer hover:bg-white/8">
+                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--color-ln-yellow)" }} />
+                        <span className="text-white/80">{r.label}</span>
+                        <span className="ml-auto text-white/30 text-[10px] truncate">{r.href.split("/").pop()}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <ul className="space-y-0.5">
             {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : filteredNavItems).map((item) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
+              if (isCareerProduct) {
+                return (
+                  <li key={item.href}>
+                    <Link href={item.href}>
+                      <CINavItem item={item as typeof CI_NAV_ITEMS[0]} isActive={isActive} badge={badge} journeyPct={item.href === "/career/journey" ? journeyPct : undefined} />
+                    </Link>
+                  </li>
+                );
+              }
               return (
                 <li key={item.href}>
                   <Link href={item.href}>
                     <div
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
-                        isActive
-                          ? "text-ln-yellow border-l-2 pl-2.5"
-                          : "text-white/70 hover:text-white hover:bg-white/8"
+                        isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
                       )}
-                      style={isActive ? {
-                        background: "oklch(from var(--color-ln-yellow) l c h / 0.12)",
-                        borderLeftColor: "var(--color-ln-yellow)",
-                        color: "var(--color-ln-yellow)",
-                      } : {}}
+                      style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
                     >
                       <Icon size={18} className={cn("flex-shrink-0", isActive ? "" : "group-hover:scale-105 transition-transform")} />
                       <span>{item.label}</span>
