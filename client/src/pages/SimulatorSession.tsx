@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, Volume2, VolumeX, Square, Loader2, ChevronRight } from "lucide-react";
+import { Mic, MicOff, Send, Volume2, VolumeX, Square, Loader2, ChevronRight, AlertCircle, X } from "lucide-react";
 
 interface ISpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -52,6 +52,7 @@ export default function SimulatorSession() {
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [interimText, setInterimText] = useState("");
   const [waveformBars, setWaveformBars] = useState<number[]>(Array(NUM_BARS).fill(3));
+  const [voiceError, setVoiceError] = useState<"unsupported" | "permission" | null>(null);
 
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -148,7 +149,14 @@ export default function SimulatorSession() {
   const startListening = async () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Voice input is not supported in this browser. Please use Chrome or Edge.");
+      setVoiceError("unsupported");
+      return;
+    }
+    // Request mic permission explicitly so we can surface a clear error
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      setVoiceError("permission");
       return;
     }
     await startWaveform();
@@ -174,7 +182,10 @@ export default function SimulatorSession() {
       }
     };
 
-    recognition.onerror = () => { setIsListening(false); setInterimText(""); stopWaveform(); };
+    recognition.onerror = (e: any) => {
+      if (e.error === "not-allowed") setVoiceError("permission");
+      setIsListening(false); setInterimText(""); stopWaveform();
+    };
     recognition.onend = () => { setIsListening(false); setInterimText(""); stopWaveform(); };
 
     recognitionRef.current = recognition;
@@ -324,14 +335,13 @@ export default function SimulatorSession() {
         <div className="max-w-3xl mx-auto">
           <div className="flex items-end gap-3">
 
-            {/* Mic button with waveform */}
+            {/* Mic button with double pulse rings + waveform */}
             <div className="relative flex-shrink-0 flex flex-col items-center">
-              {/* Outer pulse ring when listening */}
               {isListening && (
-                <span
-                  className="absolute inset-0 rounded-full animate-ping opacity-30"
-                  style={{ background: accent }}
-                />
+                <>
+                  <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ background: accent }} />
+                  <span className="absolute inset-[-5px] rounded-full animate-ping opacity-15" style={{ background: accent, animationDelay: "200ms" }} />
+                </>
               )}
               <button
                 onClick={() => isListening ? stopListening() : startListening()}
@@ -393,8 +403,31 @@ export default function SimulatorSession() {
             </Button>
           </div>
 
+          {/* Voice error banner */}
+          {voiceError && (
+            <div className="flex items-start gap-3 rounded-xl px-4 py-3 mt-2 text-sm" style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)" }}>
+              <AlertCircle size={15} className="flex-shrink-0 mt-0.5" style={{ color: "#fbbf24" }} />
+              <div className="flex-1">
+                {voiceError === "unsupported" ? (
+                  <>
+                    <p className="font-semibold text-white/80 text-xs">Browser not supported</p>
+                    <p className="text-white/50 text-xs mt-0.5">Voice input requires Chrome or Edge. Switch browsers, or type your response instead.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold text-white/80 text-xs">Microphone access denied</p>
+                    <p className="text-white/50 text-xs mt-0.5">Click the 🔒 lock icon in your browser address bar → Site settings → Allow Microphone. Then refresh and try again. You can still type below.</p>
+                  </>
+                )}
+              </div>
+              <button onClick={() => setVoiceError(null)} className="flex-shrink-0 p-0.5 rounded hover:bg-white/10 transition-colors">
+                <X size={13} style={{ color: "rgba(255,255,255,0.4)" }} />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mt-2">
-            <p className="text-white/25 text-xs">{isListening ? "🔴 Listening — click mic to stop" : "Click mic to speak · Enter to send · Shift+Enter for new line"}</p>
+            <p style={{ color: isListening ? accent : "rgba(255,255,255,0.25)" }} className="text-xs">{isListening ? "🔴 Listening — click mic to stop" : "Click mic to speak · Enter to send · Shift+Enter for new line"}</p>
             <button
               onClick={handleEnd}
               disabled={isEnding}

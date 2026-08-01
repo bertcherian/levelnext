@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Zap, Send, Loader2, CheckCircle2, ChevronRight, RotateCcw, Mic, MicOff } from "lucide-react";
+import { Zap, Send, Loader2, CheckCircle2, ChevronRight, RotateCcw, Mic, MicOff, AlertCircle, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +35,13 @@ export default function ManagerPractice() {
   const [debrief, setDebrief] = useState<any>(null);
   const [isListening, setIsListening] = useState(false);
   const [interimText, setInterimText] = useState("");
+  const [voiceError, setVoiceError] = useState<"unsupported" | "permission" | null>(null);
+  const [waveBars, setWaveBars] = useState<number[]>([3, 3, 3, 3, 3]);
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const animFrameRef = useRef<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data: scenarios } = trpc.mep.getPracticeScenarios.useQuery();
@@ -73,53 +79,92 @@ export default function ManagerPractice() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // ── Waveform animation ────────────────────────────────────────────────────
+  const startWave = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+      audioCtxRef.current = ctx;
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 32;
+      analyserRef.current = analyser;
+      ctx.createMediaStreamSource(stream).connect(analyser);
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        analyser.getByteFrequencyData(data);
+        const bars = Array.from({ length: 5 }, (_, i) => {
+          const idx = Math.floor((i / 5) * (data.length / 2));
+          return Math.max(3, Math.round((data[idx] / 255) * 24));
+        });
+        setWaveBars(bars);
+        animFrameRef.current = requestAnimationFrame(tick);
+      };
+      animFrameRef.current = requestAnimationFrame(tick);
+    } catch {
+      // getUserMedia denied — fall back to CSS pulse only
+    }
+  };
+
+  const stopWave = () => {
+    if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = null; }
+    micStreamRef.current?.getTracks().forEach(t => t.stop());
+    micStreamRef.current = null;
+    audioCtxRef.current?.close();
+    audioCtxRef.current = null;
+    analyserRef.current = null;
+    setWaveBars([3, 3, 3, 3, 3]);
+  };
+
   // ── Voice recognition (click-to-toggle) ──────────────────────────────────
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop();
     recognitionRef.current = null;
     setIsListening(false);
     setInterimText("");
+    stopWave();
   }, []);
 
   const startListening = useCallback(() => {
-    if (isListening) {
-      stopListening();
-      return;
-    }
+    if (isListening) { stopListening(); return; }
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      toast.error("Voice input requires Chrome or Edge browser.");
+      setVoiceError("unsupported");
       return;
     }
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-IN";
-    recognition.onresult = (event: any) => {
-      let interim = "";
-      let final = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          final += event.results[i][0].transcript;
-        } else {
-          interim += event.results[i][0].transcript;
-        }
-      }
-      setInterimText(interim);
-      if (final) {
-        setInput(prev => (prev + " " + final).trim());
-        setInterimText("");
-      }
-    };
-    recognition.onerror = () => { setIsListening(false); setInterimText(""); };
-    recognition.onend = () => { setIsListening(false); setInterimText(""); };
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
+    // Request mic permission first so we can surface a clear error
+    navigator.mediaDevices?.getUserMedia({ audio: true })
+      .then(() => {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-IN";
+        recognition.onresult = (event: any) => {
+          let interim = "";
+          let final = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) final += event.results[i][0].transcript;
+            else interim += event.results[i][0].transcript;
+          }
+          setInterimText(interim);
+          if (final) { setInput(prev => (prev + " " + final).trim()); setInterimText(""); }
+        };
+        recognition.onerror = (e: any) => {
+          if (e.error === "not-allowed") setVoiceError("permission");
+          setIsListening(false); setInterimText(""); stopWave();
+        };
+        recognition.onend = () => { setIsListening(false); setInterimText(""); stopWave(); };
+        recognitionRef.current = recognition;
+        recognition.start();
+        setIsListening(true);
+        startWave();
+      })
+      .catch(() => { setVoiceError("permission"); });
   }, [isListening, stopListening]);
 
   // Cleanup on unmount
-  useEffect(() => () => { recognitionRef.current?.stop(); }, []);
+  useEffect(() => () => { recognitionRef.current?.stop(); stopWave(); }, []);
 
   const handleStart = (scenario: any) => {
     setActiveScenario(scenario);
@@ -307,24 +352,66 @@ export default function ManagerPractice() {
           <div ref={bottomRef} />
         </div>
 
+        {/* Voice error banner */}
+        {voiceError && (
+          <div className="px-4 pt-3 max-w-3xl mx-auto">
+            <div className="flex items-start gap-3 rounded-xl px-4 py-3 text-sm"
+              style={{ background: "#fef3c7", border: "1px solid #fcd34d" }}>
+              <AlertCircle size={16} className="flex-shrink-0 mt-0.5" style={{ color: "#d97706" }} />
+              <div className="flex-1">
+                {voiceError === "unsupported" ? (
+                  <>
+                    <p className="font-semibold" style={{ color: "#92400e" }}>Browser not supported</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#78350f" }}>Voice input requires Chrome or Edge. Please switch browsers, or type your response instead.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold" style={{ color: "#92400e" }}>Microphone access denied</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#78350f" }}>To enable voice: click the 🔒 lock icon in your browser's address bar → Site settings → Allow Microphone. Then refresh and try again. You can still type your response below.</p>
+                  </>
+                )}
+              </div>
+              <button onClick={() => setVoiceError(null)} className="flex-shrink-0 p-0.5 rounded hover:bg-amber-200 transition-colors">
+                <X size={14} style={{ color: "#92400e" }} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Input */}
         <div className="px-4 py-3 border-t flex-shrink-0" style={{ background: "white", borderColor: "oklch(90% 0.01 248.6)" }}>
           <div className="flex gap-2 max-w-3xl mx-auto items-end">
-            {/* Voice toggle button */}
-            <button
-              onClick={startListening}
-              disabled={sending}
-              className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-150"
-              style={{
-                background: isListening ? "#fb923c" : "oklch(93% 0.01 248.6)",
-                color: isListening ? "white" : "oklch(45% 0.02 248.6)",
-                boxShadow: isListening ? "0 0 0 3px #fb923c30" : "none",
-                transform: isListening ? "scale(1.05)" : "scale(1)",
-              }}
-              title={isListening ? "Click to stop listening" : "Click to speak"}
-            >
-              {isListening ? <Mic size={16} /> : <MicOff size={16} className="opacity-60" />}
-            </button>
+            {/* Voice toggle button with pulse rings + wave bars */}
+            <div className="relative flex-shrink-0 flex flex-col items-center">
+              {isListening && (
+                <>
+                  <span className="absolute inset-0 rounded-full animate-ping opacity-25" style={{ background: "#fb923c" }} />
+                  <span className="absolute inset-[-4px] rounded-full animate-ping opacity-15" style={{ background: "#fb923c", animationDelay: "150ms" }} />
+                </>
+              )}
+              <button
+                onClick={startListening}
+                disabled={sending}
+                className="relative flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-150"
+                style={{
+                  background: isListening ? "#fb923c" : "oklch(93% 0.01 248.6)",
+                  color: isListening ? "white" : "oklch(45% 0.02 248.6)",
+                  boxShadow: isListening ? "0 0 0 3px #fb923c30" : "none",
+                  transform: isListening ? "scale(1.08)" : "scale(1)",
+                }}
+                title={isListening ? "Click to stop listening" : "Click to speak"}
+              >
+                {isListening ? <Mic size={16} /> : <MicOff size={16} className="opacity-60" />}
+              </button>
+              {isListening && (
+                <div className="flex items-end gap-[2px] mt-1 h-5">
+                  {waveBars.map((h, i) => (
+                    <div key={i} className="rounded-full transition-all duration-75"
+                      style={{ width: "3px", height: `${h}px`, background: "#fb923c", opacity: 0.85 }} />
+                  ))}
+                </div>
+              )}
+            </div>
 
             <Textarea
               value={displayValue}
@@ -348,8 +435,8 @@ export default function ManagerPractice() {
               {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             </Button>
           </div>
-          <p className="text-[11px] mt-1.5 max-w-3xl mx-auto" style={{ color: "oklch(65% 0.02 248.6)" }}>
-            {isListening ? "🔴 Listening — click mic to stop · Enter to send" : "Click mic to speak · Enter to send · Shift+Enter for new line"}
+          <p className="text-[11px] mt-1.5 max-w-3xl mx-auto" style={{ color: isListening ? "#fb923c" : "oklch(65% 0.02 248.6)" }}>
+            {isListening ? "🔴 Listening — click mic again to stop · Enter to send" : "Click mic to speak · Enter to send · Shift+Enter for new line"}
           </p>
         </div>
       </div>
