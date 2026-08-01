@@ -8,12 +8,11 @@ import { Mic, Zap, ArrowRight, Loader2, ChevronRight, Target, Clock, BarChart2, 
 import { toast } from "sonner";
 
 const VOICES = [
-  { id: "onyx",    label: "Onyx",    desc: "Deep, authoritative",    sample: "I hear you. Let me think about that for a moment before I respond." },
-  { id: "echo",    label: "Echo",    desc: "Measured, professional", sample: "That's an interesting perspective. Can you walk me through your reasoning?" },
-  { id: "nova",    label: "Nova",    desc: "Warm, conversational",   sample: "I appreciate you bringing this up. I want to make sure I understand correctly." },
-  { id: "shimmer", label: "Shimmer", desc: "Clear, expressive",      sample: "Okay, I see where you're coming from. Here's my take on the situation." },
-  { id: "alloy",   label: "Alloy",   desc: "Neutral, balanced",      sample: "Right. So what exactly are you hoping to achieve from this conversation?" },
-  { id: "fable",   label: "Fable",   desc: "Warm, storytelling",     sample: "Let me be honest with you — this isn't something I expected to hear today." },
+  { id: "echo",    label: "Echo",    desc: "Measured, professional", avatar: "🧑‍💼", sample: "That's an interesting perspective. Can you walk me through your reasoning?" },
+  { id: "nova",    label: "Nova",    desc: "Warm, conversational",   avatar: "👩‍💼", sample: "I appreciate you bringing this up. I want to make sure I understand correctly." },
+  { id: "shimmer", label: "Shimmer", desc: "Clear, expressive",      avatar: "🧑‍🎓", sample: "Okay, I see where you're coming from. Here's my take on the situation." },
+  { id: "alloy",   label: "Alloy",   desc: "Neutral, balanced",      avatar: "🧑‍🔬", sample: "Right. So what exactly are you hoping to achieve from this conversation?" },
+  { id: "fable",   label: "Fable",   desc: "Warm, storytelling",     avatar: "🧙",    sample: "Let me be honest with you — this isn't something I expected to hear today." },
 ] as const;
 type VoiceId = typeof VOICES[number]["id"];
 
@@ -34,8 +33,8 @@ const PLATFORM_META: Record<Platform, { label: string; color: string; accent: st
   },
   manager: {
     label: "Manager Effectiveness",
-    color: "#1a3a2a",
-    accent: "#4ade80",
+    color: "#0A1A2F",
+    accent: "#D4AF37",
     chips: [
       "Accountability conversation with an underperformer",
       "Managing up on a priority conflict",
@@ -98,7 +97,7 @@ export default function SimulatorStart() {
   const [prompt, setPrompt] = useState("");
   const [scenario, setScenario] = useState<ScenarioCard | null>(null);
   const [followUpAnswer, setFollowUpAnswer] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState<VoiceId>("onyx");
+  const [selectedVoice, setSelectedVoice] = useState<VoiceId>("echo");
   const [previewingVoice, setPreviewingVoice] = useState<VoiceId | null>(null);
   const previewAudioRef = { current: null as HTMLAudioElement | null };
   const ttsMutation = trpc.simulator.tts.useMutation({
@@ -372,32 +371,43 @@ export default function SimulatorStart() {
             {/* Voice picker */}
             <div className="px-6 py-4 border-t" style={{ borderColor: meta.accent + "20" }}>
               <p className="text-xs uppercase tracking-wider mb-3" style={{ color: meta.accent + "99" }}>Choose AI Voice</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-5 gap-2">
                 {VOICES.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVoice(v.id)}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-left transition-all border ${
-                      selectedVoice === v.id
-                        ? "border-current text-white"
-                        : "border-white/10 text-white/50 hover:text-white/80 hover:border-white/30"
-                    }`}
-                    style={selectedVoice === v.id ? { borderColor: meta.accent, background: meta.accent + "18" } : {}}
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold truncate">{v.label}</p>
-                      <p className="text-[10px] opacity-60 truncate">{v.desc}</p>
-                    </div>
+                  <div key={v.id} className="flex flex-col items-center gap-1">
                     <button
-                      onClick={(e) => { e.stopPropagation(); handlePreview(v.id); }}
-                      className="ml-1 flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
+                      onClick={() => setSelectedVoice(v.id)}
+                      className={`w-full flex flex-col items-center rounded-xl pt-3 pb-2 px-1 transition-all border ${
+                        selectedVoice === v.id
+                          ? "text-white"
+                          : "border-white/10 text-white/50 hover:text-white/80 hover:border-white/30"
+                      }`}
+                      style={selectedVoice === v.id ? { borderColor: meta.accent, background: meta.accent + "18" } : {}}
+                    >
+                      {/* Avatar */}
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-xl mb-1.5 border-2"
+                        style={{
+                          background: selectedVoice === v.id ? meta.accent + "30" : "rgba(255,255,255,0.07)",
+                          borderColor: selectedVoice === v.id ? meta.accent : "rgba(255,255,255,0.12)",
+                        }}
+                      >
+                        {v.avatar}
+                      </div>
+                      <p className="text-xs font-semibold leading-tight">{v.label}</p>
+                      <p className="text-[9px] opacity-50 leading-tight text-center mt-0.5">{v.desc}</p>
+                    </button>
+                    {/* Preview button below avatar card */}
+                    <button
+                      onClick={() => handlePreview(v.id)}
+                      className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-white/10 hover:border-white/30 text-white/40 hover:text-white/70 transition-colors"
                       title={`Preview ${v.label} voice`}
                     >
                       {previewingVoice === v.id
-                        ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: meta.accent }} />
-                        : <Volume2 className="w-3 h-3 opacity-60" />}
+                        ? <Loader2 className="w-2.5 h-2.5 animate-spin" style={{ color: meta.accent }} />
+                        : <Volume2 className="w-2.5 h-2.5" />}
+                      <span>Preview</span>
                     </button>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>

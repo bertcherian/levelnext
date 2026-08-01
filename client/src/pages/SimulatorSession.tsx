@@ -24,14 +24,14 @@ declare global {
 
 const PLATFORM_ACCENT: Record<string, string> = {
   leadership: "#D4AF37",
-  manager: "#4ade80",
+  manager: "#D4AF37",
   career: "#D4AF37",
   young: "#818cf8",
 };
 
 const PLATFORM_BG: Record<string, string> = {
   leadership: "#0A1A2F",
-  manager: "#1a3a2a",
+  manager: "#0A1A2F",
   career: "#0A1A2F",
   young: "#1a1a3a",
 };
@@ -289,7 +289,7 @@ export default function SimulatorSession() {
                     setIsSpeaking(false);
                   }
                 }}
-                className="p-2 rounded-lg text-green-400 animate-pulse hover:text-white transition-colors"
+                className="p-2 rounded-lg animate-pulse hover:text-white transition-colors" style={{ color: accent }}
                 title="Stop speaking"
               >
                 <Volume2 className="w-4 h-4" />

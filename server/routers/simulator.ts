@@ -106,7 +106,7 @@ followUpQuestion: if you genuinely need one clarification, include a short quest
       estimatedMinutes: z.number().min(4).max(10),
       characterName: z.string(),
       characterStyle: z.string(),
-      voice: z.enum(["alloy", "echo", "fable", "onyx", "nova", "shimmer"]).default("onyx"),
+      voice: z.enum(["alloy", "echo", "fable", "nova", "shimmer"]).default("echo"),
     }))
         .mutation(async ({ input, ctx }) => {
       try {
@@ -380,7 +380,7 @@ Coaching insights:\n${coachingInsights.map(c => `- Said: "${c.moment}" → Try: 
   tts: protectedProcedure
     .input(z.object({
       text: z.string().min(1).max(1000),
-      voice: z.enum(["alloy", "echo", "fable", "onyx", "nova", "shimmer"]).default("onyx"),
+      voice: z.enum(["alloy", "echo", "fable", "nova", "shimmer"]).default("echo"),
     }))
     .mutation(async ({ input }) => {
       if (!ENV.openAiApiKey) {
