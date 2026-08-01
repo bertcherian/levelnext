@@ -82,8 +82,8 @@ followUpQuestion: if you genuinely need one clarification, include a short quest
           stakeholder: parsed.stakeholder ?? "Your counterpart",
           objective: parsed.objective ?? "Achieve a positive outcome",
           expectedChallenge: parsed.expectedChallenge ?? "Expect pushback and probing questions",
-          difficulty: Math.min(5, Math.max(1, parsed.difficulty ?? 3)),
-          estimatedMinutes: Math.min(10, Math.max(4, parsed.estimatedMinutes ?? 6)),
+          difficulty: Math.round(Math.min(5, Math.max(1, parsed.difficulty ?? 3))),
+          estimatedMinutes: Math.round(Math.min(10, Math.max(4, parsed.estimatedMinutes ?? 6))),
           characterName: parsed.characterName ?? "Alex",
           characterStyle: parsed.characterStyle ?? "Professional and direct",
           followUpQuestion: parsed.followUpQuestion ?? null,
@@ -101,16 +101,19 @@ followUpQuestion: if you genuinely need one clarification, include a short quest
       stakeholder: z.string(),
       objective: z.string(),
       expectedChallenge: z.string(),
-      difficulty: z.number().int().min(1).max(5),
-      estimatedMinutes: z.number().int().min(4).max(10),
+      difficulty: z.number().min(1).max(5),
+      estimatedMinutes: z.number().min(4).max(10),
       characterName: z.string(),
       characterStyle: z.string(),
     }))
-    .mutation(async ({ input, ctx }) => {
+        .mutation(async ({ input, ctx }) => {
+      try {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
       const ctx_platform = PLATFORM_CONTEXT[input.platform];
-
+      // Ensure integers (LLM may return floats)
+      const difficulty = Math.round(input.difficulty);
+      const estimatedMinutes = Math.round(input.estimatedMinutes);
       const openingResult = await invokeLLM({
         model: "claude-haiku-4-5",
         messages: [
@@ -144,8 +147,8 @@ Be realistic, slightly challenging, and in character. Do not break the fourth wa
         stakeholder: input.stakeholder,
         objective: input.objective,
         expectedChallenge: input.expectedChallenge,
-        difficulty: input.difficulty,
-        estimatedMinutes: input.estimatedMinutes,
+        difficulty,
+        estimatedMinutes,
         characterName: input.characterName,
         characterStyle: input.characterStyle,
         messages,
@@ -154,6 +157,11 @@ Be realistic, slightly challenging, and in character. Do not break the fourth wa
 
       const sessionId = result[0].id;
       return { sessionId, opening };
+      } catch (err: any) {
+        console.error("[simulator.startSession] ERROR:", err?.message ?? err);
+        if (err instanceof TRPCError) throw err;
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err?.message ?? "Session start failed" });
+      }
     }),
 
   sendMessage: protectedProcedure
