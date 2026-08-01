@@ -48,7 +48,9 @@ export default function SimulatorSession() {
   const [inputText, setInputText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [interimText, setInterimText] = useState("");
   const [waveformBars, setWaveformBars] = useState<number[]>(Array(NUM_BARS).fill(3));
@@ -65,6 +67,24 @@ export default function SimulatorSession() {
     { sessionId },
     { enabled: !!sessionId, refetchInterval: false }
   );
+
+  const ttsMutation = trpc.simulator.tts.useMutation({
+    onSuccess: (data) => {
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+      const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
+      currentAudioRef.current = audio;
+      setIsSpeaking(true);
+      audio.play();
+      audio.onended = () => setIsSpeaking(false);
+    },
+    onError: () => {
+      // Fallback to browser TTS if OpenAI fails
+      setIsSpeaking(false);
+    },
+  });
 
   const sendMutation = trpc.simulator.sendMessage.useMutation({
     onSuccess: (data) => {
@@ -89,13 +109,23 @@ export default function SimulatorSession() {
   }, [localMessages, interimText]);
 
   const speak = useCallback((text: string) => {
-    if (!ttsEnabled || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
-    window.speechSynthesis.speak(utterance);
-  }, [ttsEnabled]);
+    if (!ttsEnabled) return;
+    // Stop any currently playing audio
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+      setIsSpeaking(false);
+    }
+    // Determine voice based on session stakeholder
+    const stakeholder = (session?.stakeholder ?? "").toLowerCase();
+    let voice: "onyx" | "echo" | "nova" | "shimmer" | "alloy" | "fable" = "onyx";
+    if (stakeholder.includes("vp") || stakeholder.includes("director") || stakeholder.includes("ceo") || stakeholder.includes("senior")) {
+      voice = "echo";
+    } else if (stakeholder.includes("hr") || stakeholder.includes("partner") || stakeholder.includes("peer")) {
+      voice = "nova";
+    }
+    ttsMutation.mutate({ text, voice });
+  }, [ttsEnabled, session?.stakeholder, ttsMutation]);
 
   useEffect(() => {
     if (session && localMessages.length === 1 && localMessages[0].role === "assistant" && ttsEnabled) {
@@ -244,10 +274,37 @@ export default function SimulatorSession() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {isSpeaking && (
+              <button
+                onClick={() => {
+                  if (currentAudioRef.current) {
+                    currentAudioRef.current.pause();
+                    currentAudioRef.current = null;
+                    setIsSpeaking(false);
+                  }
+                }}
+                className="p-2 rounded-lg text-green-400 animate-pulse hover:text-white transition-colors"
+                title="Stop speaking"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+            )}
+            {ttsMutation.isPending && !isSpeaking && (
+              <span className="p-2 text-white/40">
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </span>
+            )}
             <button
-              onClick={() => setTtsEnabled(!ttsEnabled)}
+              onClick={() => {
+                setTtsEnabled(!ttsEnabled);
+                if (ttsEnabled && currentAudioRef.current) {
+                  currentAudioRef.current.pause();
+                  currentAudioRef.current = null;
+                  setIsSpeaking(false);
+                }
+              }}
               className="p-2 rounded-lg text-white/40 hover:text-white/80 transition-colors"
-              title={ttsEnabled ? "Mute voice" : "Enable voice"}
+              title={ttsEnabled ? "Mute AI voice" : "Enable AI voice (OpenAI TTS)"}
             >
               {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>

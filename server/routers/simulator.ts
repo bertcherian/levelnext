@@ -5,6 +5,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { simSessions } from "../../drizzle/schema";
+import { ENV } from "../_core/env";
 
 const PLATFORM_CONTEXT: Record<string, { label: string; coachingStyle: string; behaviourDimensions: string[] }> = {
   leadership: {
@@ -372,6 +373,37 @@ Coaching insights:\n${coachingInsights.map(c => `- Said: "${c.moment}" → Try: 
       } catch {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not generate action plan" });
       }
+    }),
+
+  tts: protectedProcedure
+    .input(z.object({
+      text: z.string().min(1).max(1000),
+      voice: z.enum(["alloy", "echo", "fable", "onyx", "nova", "shimmer"]).default("onyx"),
+    }))
+    .mutation(async ({ input }) => {
+      if (!ENV.openAiApiKey) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+      }
+      const response = await fetch("https://api.openai.com/v1/audio/speech", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${ENV.openAiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "tts-1",
+          input: input.text,
+          voice: input.voice,
+          response_format: "mp3",
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.text();
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `TTS failed: ${err.substring(0, 100)}` });
+      }
+      const audioBuffer = await response.arrayBuffer();
+      const base64 = Buffer.from(audioBuffer).toString("base64");
+      return { audioBase64: base64, mimeType: "audio/mpeg" };
     }),
 
   listSessions: protectedProcedure
