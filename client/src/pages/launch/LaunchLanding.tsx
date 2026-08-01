@@ -1,18 +1,19 @@
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { Rocket, Map, Brain, FileText, Mic, DollarSign, Briefcase, Star, ArrowRight, CheckCircle2, Zap, Target, Trophy, Users } from "lucide-react";
+import { Rocket, Map, Brain, FileText, Mic, DollarSign, Briefcase, Star, ArrowRight, CheckCircle2, Zap, Target, Trophy, Users, X } from "lucide-react";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_c21f58d5.png";
 
 const MISSIONS = [
-  { icon: Target, color: "#3B82F6", label: "Career Compass", desc: "Discover your ideal career direction with AI-powered self-assessment", xp: 150 },
-  { icon: Brain, color: "#8B5CF6", label: "Story Builder", desc: "Craft your personal brand narrative and LinkedIn presence", xp: 200 },
-  { icon: Zap, color: "#10B981", label: "Skill Sprint", desc: "10 bite-sized modules on communication, productivity & presence", xp: 300 },
-  { icon: FileText, color: "#F59E0B", label: "Resume Makeover", desc: "AI-powered resume analysis and complete rewrite", xp: 250 },
-  { icon: Mic, color: "#EF4444", label: "Interview Intelligence", desc: "Mock interviews with real-time AI coaching and debrief", xp: 350 },
-  { icon: DollarSign, color: "#06B6D4", label: "Negotiation Simulator", desc: "Practice salary negotiation with an AI employer", xp: 300 },
-  { icon: Briefcase, color: "#F97316", label: "Application Tracker", desc: "Manage your job pipeline with reminders and status tracking", xp: 100 },
+  { icon: Target, color: "#3B82F6", label: "Career Compass", desc: "Discover your ideal career direction with AI-powered self-assessment", xp: 150, route: "/launch/mission/1" },
+  { icon: Brain, color: "#8B5CF6", label: "Story Builder", desc: "Craft your personal brand narrative and LinkedIn presence", xp: 200, route: "/launch/mission/2" },
+  { icon: Zap, color: "#10B981", label: "Skill Sprint", desc: "10 bite-sized modules on communication, productivity & presence", xp: 300, route: "/launch/mission/3" },
+  { icon: FileText, color: "#F59E0B", label: "Resume Makeover", desc: "AI-powered resume analysis and complete rewrite", xp: 250, route: "/launch/resume" },
+  { icon: Mic, color: "#EF4444", label: "Interview Intelligence", desc: "Mock interviews with real-time AI coaching and debrief", xp: 350, route: "/launch/interview" },
+  { icon: DollarSign, color: "#06B6D4", label: "Negotiation Simulator", desc: "Practice salary negotiation with an AI employer", xp: 300, route: "/launch/negotiate" },
+  { icon: Briefcase, color: "#F97316", label: "Application Tracker", desc: "Manage your job pipeline with reminders and status tracking", xp: 100, route: "/launch/applications" },
 ];
 
 const STATS = [
@@ -23,14 +24,160 @@ const STATS = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Priya S.", role: "Software Engineer, 2 YOE", text: "The Interview Intelligence module completely changed how I prepare. I got my dream offer after 3 practice sessions." },
-  { name: "Arjun M.", role: "MBA Graduate", text: "Story Builder helped me write a LinkedIn About section that got me 5 recruiter messages in one week." },
-  { name: "Kavya R.", role: "Product Manager, 1 YOE", text: "The Negotiation Simulator gave me the confidence to ask for 18% more than the initial offer. It worked." },
+  {
+    name: "Priya S.",
+    role: "Software Engineer",
+    company: "Infosys · 2 YOE",
+    text: "The Interview Intelligence module completely changed how I prepare. I got my dream offer after just 3 practice sessions.",
+    initials: "PS",
+    avatarBg: "#3B82F6",
+    rating: 5,
+  },
+  {
+    name: "Arjun M.",
+    role: "MBA Graduate",
+    company: "IIM Bangalore · Fresher",
+    text: "Story Builder helped me write a LinkedIn About section that got me 5 recruiter messages in one week. Absolutely worth it.",
+    initials: "AM",
+    avatarBg: "#8B5CF6",
+    rating: 5,
+  },
+  {
+    name: "Kavya R.",
+    role: "Product Manager",
+    company: "Razorpay · 1 YOE",
+    text: "The Negotiation Simulator gave me the confidence to ask for 18% more than the initial offer. It worked. Best tool I've used.",
+    initials: "KR",
+    avatarBg: "#10B981",
+    rating: 5,
+  },
 ];
+
+// Reusable 5-star rating component
+function StarRating({ count = 5 }: { count?: number }) {
+  return (
+    <div style={{ display: "flex", gap: 3 }}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          size={15}
+          fill={i < count ? "#F59E0B" : "none"}
+          style={{ color: i < count ? "#F59E0B" : "rgba(255,255,255,0.2)" }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Mission card with hover effect via React state (avoids CSS-in-JS limitations)
+function MissionCard({ m, idx, onClick }: { m: typeof MISSIONS[0]; idx: number; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  const Icon = m.icon;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onClick}
+      style={{
+        padding: "20px",
+        borderRadius: 16,
+        background: hovered ? `${m.color}14` : `${m.color}08`,
+        border: `1px solid ${hovered ? m.color + "55" : m.color + "25"}`,
+        boxShadow: hovered ? `0 8px 32px ${m.color}30, 0 0 0 1px ${m.color}20` : "none",
+        transform: hovered ? "translateY(-4px)" : "translateY(0)",
+        transition: "all 0.22s cubic-bezier(0.23, 1, 0.32, 1)",
+        cursor: "pointer",
+        willChange: "transform",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+          background: hovered ? `${m.color}28` : `${m.color}18`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "background 0.22s",
+        }}>
+          <Icon size={20} style={{ color: m.color }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.35)" }}>Mission {idx + 1}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: `${m.color}20`, color: m.color }}>+{m.xp} XP</span>
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#F8FAFC", marginBottom: 6, fontFamily: "'Space Grotesk', sans-serif" }}>{m.label}</p>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>{m.desc}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Testimonial card with avatar and star rating
+function TestimonialCard({ t }: { t: typeof TESTIMONIALS[0] }) {
+  return (
+    <div style={{
+      padding: "24px",
+      borderRadius: 16,
+      background: "rgba(255,255,255,0.03)",
+      border: "1px solid rgba(255,255,255,0.08)",
+      display: "flex",
+      flexDirection: "column",
+      gap: 16,
+    }}>
+      {/* Stars */}
+      <StarRating count={t.rating} />
+
+      {/* Quote */}
+      <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.75, fontStyle: "italic", flex: 1 }}>
+        "{t.text}"
+      </p>
+
+      {/* Author row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Avatar */}
+        <div style={{
+          width: 42, height: 42, borderRadius: "50%", flexShrink: 0,
+          background: `linear-gradient(135deg, ${t.avatarBg}cc, ${t.avatarBg}66)`,
+          border: `2px solid ${t.avatarBg}55`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 13, fontWeight: 800, color: "#fff",
+          fontFamily: "'Space Grotesk', sans-serif",
+          letterSpacing: "0.03em",
+        }}>
+          {t.initials}
+        </div>
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "#F8FAFC", marginBottom: 2 }}>{t.name}</p>
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>
+            {t.role}<br />
+            <span style={{ color: "rgba(255,255,255,0.25)" }}>{t.company}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function LaunchLanding() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [stickyDismissed, setStickyDismissed] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  // Show sticky bar only after the hero CTA scrolls out of view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!stickyDismissed) {
+          setShowStickyBar(!entry.isIntersecting);
+        }
+      },
+      { threshold: 0 }
+    );
+    if (heroRef.current) observer.observe(heroRef.current);
+    return () => observer.disconnect();
+  }, [stickyDismissed]);
 
   const handleCTA = () => {
     if (user) {
@@ -47,6 +194,7 @@ export default function LaunchLanding() {
       minHeight: "100vh",
       color: "#F8FAFC",
       overflowX: "hidden",
+      paddingBottom: showStickyBar && !stickyDismissed ? 80 : 0,
     }}>
       {/* Background orbs */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
@@ -149,8 +297,8 @@ export default function LaunchLanding() {
             Launch Intelligence is a 7-mission AI career platform built for ambitious professionals in their first 5 years. Complete missions, earn XP, and land the role — and the salary — you deserve.
           </p>
 
-          {/* CTA Buttons */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+          {/* CTA Buttons — observed for sticky bar visibility */}
+          <div ref={heroRef} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
             <button
               onClick={handleCTA}
               style={{
@@ -212,41 +360,9 @@ export default function LaunchLanding() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-            {MISSIONS.map((m, idx) => {
-              const Icon = m.icon;
-              return (
-                <div
-                  key={m.label}
-                  style={{
-                    padding: "20px",
-                    borderRadius: 16,
-                    background: `${m.color}08`,
-                    border: `1px solid ${m.color}25`,
-                    transition: "all 0.2s",
-                    cursor: "pointer",
-                  }}
-                  onClick={handleCTA}
-                >
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                    <div style={{
-                      width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                      background: `${m.color}18`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <Icon size={20} style={{ color: m.color }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.35)" }}>Mission {idx + 1}</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: `${m.color}20`, color: m.color }}>+{m.xp} XP</span>
-                      </div>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: "#F8FAFC", marginBottom: 6, fontFamily: "'Space Grotesk', sans-serif" }}>{m.label}</p>
-                      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>{m.desc}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {MISSIONS.map((m, idx) => (
+              <MissionCard key={m.label} m={m} idx={idx} onClick={handleCTA} />
+            ))}
           </div>
         </section>
 
@@ -284,20 +400,17 @@ export default function LaunchLanding() {
             <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif" }}>
               What could your launch look like?
             </h2>
+            {/* Aggregate rating row */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
+              <StarRating count={5} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#F8FAFC" }}>5.0</span>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>· Rated by early-career professionals</span>
+            </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
             {TESTIMONIALS.map((t) => (
-              <div key={t.name} style={{ padding: "24px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <div style={{ display: "flex", gap: 2, marginBottom: 14 }}>
-                  {[1,2,3,4,5].map((i) => <Star key={i} size={14} fill="#F59E0B" style={{ color: "#F59E0B" }} />)}
-                </div>
-                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.7, marginBottom: 16, fontStyle: "italic" }}>"{t.text}"</p>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#F8FAFC" }}>{t.name}</p>
-                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{t.role}</p>
-                </div>
-              </div>
+              <TestimonialCard key={t.name} t={t} />
             ))}
           </div>
         </section>
@@ -359,6 +472,62 @@ export default function LaunchLanding() {
         </footer>
 
       </div>
+
+      {/* ── Sticky CTA Bar ── */}
+      {showStickyBar && !stickyDismissed && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
+          background: "rgba(8, 13, 26, 0.92)",
+          backdropFilter: "blur(20px)",
+          borderTop: "1px solid rgba(59,130,246,0.3)",
+          padding: "14px 1.5rem",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 16,
+          boxShadow: "0 -4px 32px rgba(0,0,0,0.5)",
+          animation: "slideUp 0.3s cubic-bezier(0.23, 1, 0.32, 1)",
+        }}>
+          <style>{`
+            @keyframes slideUp {
+              from { transform: translateY(100%); opacity: 0; }
+              to { transform: translateY(0); opacity: 1; }
+            }
+          `}</style>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Rocket size={16} style={{ color: "#60A5FA" }} />
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 600, display: "none" }} className="sm-show">
+              Ready to launch your career?
+            </span>
+          </div>
+
+          <button
+            onClick={handleCTA}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "10px 28px", borderRadius: 10, border: "none", cursor: "pointer",
+              background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)",
+              color: "#fff", fontSize: 14, fontWeight: 800,
+              fontFamily: "'Space Grotesk', sans-serif",
+              boxShadow: "0 0 24px rgba(59,130,246,0.5)",
+              flexShrink: 0,
+            }}
+          >
+            Get Started — It's Free
+            <ArrowRight size={15} />
+          </button>
+
+          <button
+            onClick={() => setStickyDismissed(true)}
+            aria-label="Dismiss"
+            style={{
+              position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
+              background: "none", border: "none", cursor: "pointer",
+              color: "rgba(255,255,255,0.3)", padding: 4, display: "flex",
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
