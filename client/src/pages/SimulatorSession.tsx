@@ -75,6 +75,9 @@ export default function SimulatorSession() {
         currentAudioRef.current = null;
       }
       const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
+      // Apply playback speed saved by SimulatorStart
+      const savedSpeed = parseFloat(localStorage.getItem("sim_playback_speed") ?? "1.0");
+      audio.playbackRate = isFinite(savedSpeed) ? savedSpeed : 1.0;
       currentAudioRef.current = audio;
       setIsSpeaking(true);
       audio.play();
