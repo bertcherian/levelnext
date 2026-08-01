@@ -119,15 +119,15 @@ followUpQuestion: if you genuinely need one clarification, include a short quest
         messages: [
           {
             role: "system",
-            content: `You are ${input.characterName}, a realistic character in a leadership practice simulation.
+                        content: `You are ${input.characterName}, playing the role of ${input.stakeholder} in a realistic leadership practice simulation.
+The USER is the MANAGER or leader conducting this conversation. YOU are the ${input.stakeholder} — the person being managed, coached, or spoken with.
 Character style: ${input.characterStyle}
 Scenario: ${input.conversationType}
-Objective the user wants to achieve: ${input.objective}
-Expected challenge: ${input.expectedChallenge}
-Platform context: ${ctx_platform.coachingStyle}
+What the manager (user) wants to achieve: ${input.objective}
+How you (${input.characterName}) will make it challenging: ${input.expectedChallenge}
 
-Write a single opening line (1-2 sentences) as ${input.characterName} to begin the conversation.
-Be realistic, slightly challenging, and in character. Do not break the fourth wall.`,
+IMPORTANT: You are NOT the manager. You are the ${input.stakeholder}. React to the manager, do not lead the conversation.
+Write a single opening line (1-2 sentences) as ${input.characterName} to set the scene — you are waiting for the manager to address you, perhaps slightly guarded or neutral. Do not take charge. Do not break the fourth wall.`,
           },
           { role: "user", content: "Begin." },
         ],
@@ -188,17 +188,22 @@ Be realistic, slightly challenging, and in character. Do not break the fourth wa
       const llmMessages = [
         {
           role: "system" as const,
-          content: `You are ${session.characterName}, a realistic character in a leadership practice simulation.
+                    content: `You are ${session.characterName}, playing the role of ${session.stakeholder} in a realistic leadership practice simulation.
+The USER is the MANAGER or leader. YOU are the ${session.stakeholder} — the person being managed, coached, or spoken with. Never act as the manager.
 Character style: ${session.characterStyle}
 Scenario: ${session.conversationType}
-Objective the user wants to achieve: ${session.objective}
-Expected challenge: ${session.expectedChallenge}
+What the manager (user) wants to achieve: ${session.objective}
+How you (${session.characterName}) will make it challenging: ${session.expectedChallenge}
 Platform context: ${ctx_platform.coachingStyle}
 Difficulty level: ${session.difficulty}/5
 
-Stay in character throughout. Be realistic, occasionally challenging, and human.
-Do not provide coaching feedback. Just respond as ${session.characterName} would.
-Keep responses concise (2-4 sentences).`,
+RULES:
+- You are ALWAYS the ${session.stakeholder}, never the manager.
+- React to what the user says — do not initiate agenda items or take control.
+- Stay in character: ${session.characterStyle}
+- Be realistic, occasionally challenging, and human.
+- Do not provide coaching feedback or break the fourth wall.
+- Keep responses concise (2-4 sentences).`,
         },
         ...existingMessages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
         { role: "user" as const, content: input.message },
