@@ -58,22 +58,15 @@ const NAV_ITEMS = [
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 
-// Career Transition Intelligence nav items
+// Career Transition Intelligence nav items — simplified 7-item structure
 const CI_NAV_ITEMS = [
   { label: "Career Home", icon: Briefcase, href: "/career" },
+  { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
   { label: "Practice", icon: Zap, href: "/practice" },
-  { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
-  { label: "Executive Opportunity System", icon: Globe, href: "/career/access" },
-  { label: "Relationship Graph", icon: Users, href: "/career/relationships" },
-  { label: "Access Paths", icon: Route, href: "/career/access-paths" },
-  { label: "Outreach Engine", icon: Sparkles, href: "/career/brand" },
-  { label: "Radar Signals", icon: Radio, href: "/career/radar" },
-  { label: "Interview Prep", icon: ClipboardList, href: "/career/interview-prep" },
-  { label: "Negotiation Intelligence", icon: Scale, href: "/career/negotiation" },
-  { label: "Resume Makeover", icon: FileText, href: "/career/resume" },
-  { label: "Progress", icon: BarChart3, href: "/career/progress" },
-  { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
+  { label: "Market Intel", icon: Globe, href: "/career/market-intel" },
+  { label: "Prepare", icon: ClipboardList, href: "/career/prepare" },
+  { label: "My Journey", icon: BarChart3, href: "/career/journey" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 

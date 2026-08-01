@@ -43,6 +43,9 @@ import AdminSuccessPartnerQueue from "@/pages/AdminSuccessPartnerQueue";
 import AdminSuccessPartnerBrief from "@/pages/AdminSuccessPartnerBrief";
 import AdminEscalations from "@/pages/AdminEscalations";
 import CareerHome from "@/pages/CareerHome";
+import CareerMarketIntel from "@/pages/career/CareerMarketIntel";
+import CareerPrepare from "@/pages/career/CareerPrepare";
+import CareerMyJourney from "@/pages/career/CareerMyJourney";
 import AdminProductEnrollments from "@/pages/AdminProductEnrollments";
 import ManagerEffectivenessLanding from "@/pages/ManagerEffectivenessLanding";
 import ManagerHome from "@/pages/mep/ManagerHome";
@@ -182,6 +185,10 @@ function Router() {
       <Route path="/career/interview-prep" component={InterviewPrep} />
       <Route path="/career/negotiation" component={NegotiationIntelligence} />
       <Route path="/career/resume" component={ResumeMakeover} />
+      {/* Career nav — new merged pages */}
+      <Route path="/career/market-intel" component={CareerMarketIntel} />
+      <Route path="/career/prepare" component={CareerPrepare} />
+      <Route path="/career/journey" component={CareerMyJourney} />
       <Route path="/career/resume/report/:id" component={ResumeReport} />
       <Route path="/career/resume/rewrite/:id" component={ResumeRewrite} />
       <Route path="/org-intelligence" component={OrgIntelligence} />
