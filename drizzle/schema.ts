@@ -1977,14 +1977,14 @@ export const simSessions = mysqlTable("sim_sessions", {
   platform: varchar("platform", { length: 50 }).notNull(), // leadership | manager | career | young
   // Scenario (AI-inferred)
   userPrompt: text("userPrompt").notNull(),
-  conversationType: text("conversationType"),
-  stakeholder: text("stakeholder"),
+  conversationType: varchar("conversationType", { length: 100 }),
+  stakeholder: varchar("stakeholder", { length: 100 }),
   objective: text("objective"),
   expectedChallenge: text("expectedChallenge"),
   difficulty: int("difficulty").default(3), // 1-5
   estimatedMinutes: int("estimatedMinutes").default(6),
   characterName: varchar("characterName", { length: 100 }),
-  characterStyle: text("characterStyle"),
+  characterStyle: varchar("characterStyle", { length: 100 }),
   // Conversation
   messages: json("messages").$type<Array<{ role: "user" | "assistant"; content: string; timestamp: number }>>().default([]),
   // Debrief

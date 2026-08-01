@@ -265,13 +265,37 @@ export default function SimulatorSession() {
         </div>
       </div>
 
-      {/* Objective bar */}
-      <div className="flex-shrink-0 px-4 py-2 border-b border-white/5" style={{ background: accent + "08" }}>
+      {/* Character summary card */}
+      <div className="flex-shrink-0 px-4 py-3 border-b border-white/5" style={{ background: accent + "08" }}>
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs" style={{ color: accent + "cc" }}>
-            <span className="font-medium">Your objective:</span>{" "}
-            <span className="text-white/60">{session.objective}</span>
-          </p>
+          <div className="flex items-start gap-4 flex-wrap">
+            {/* Character avatar + identity */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                style={{ background: accent, color: bg }}>
+                {(session.characterName as string)?.[0] ?? "A"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-white text-sm font-semibold leading-tight">{session.characterName}</p>
+                <p className="text-white/50 text-xs leading-tight">{session.stakeholder}</p>
+              </div>
+            </div>
+            {/* Divider */}
+            <div className="hidden sm:block w-px self-stretch" style={{ background: accent + "30" }} />
+            {/* Character style */}
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: accent + "99" }}>Character style</p>
+              <p className="text-white/70 text-xs leading-snug">{session.characterStyle}</p>
+            </div>
+            {/* Divider */}
+            <div className="hidden sm:block w-px self-stretch" style={{ background: accent + "30" }} />
+            {/* Objective + time */}
+            <div className="min-w-0 max-w-xs">
+              <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: accent + "99" }}>Your objective</p>
+              <p className="text-white/70 text-xs leading-snug">{session.objective}</p>
+              <p className="text-white/30 text-[10px] mt-1">⏱ ~{session.estimatedMinutes} min</p>
+            </div>
+          </div>
         </div>
       </div>
 

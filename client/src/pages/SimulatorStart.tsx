@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Mic, Zap, ArrowRight, Loader2, ChevronRight, Target, Clock, BarChart2, User } from "lucide-react";
+import { toast } from "sonner";
 
 type Platform = "leadership" | "manager" | "career" | "young";
 
@@ -93,12 +94,24 @@ export default function SimulatorStart() {
     onSuccess: (data) => setScenario(data),
   });
 
+  const [startingLabel, setStartingLabel] = useState("Starting...");
+
   const startMutation = trpc.simulator.startSession.useMutation({
     onSuccess: (data) => navigate(`/simulator/${data.sessionId}`),
     onError: (err) => {
       console.error("[SimulatorStart] startSession error:", err.message);
+      toast.error("Could not start session — please try again.", { duration: 4000 });
     },
   });
+
+  // Cycle loading messages while session is being created
+  useEffect(() => {
+    if (!startMutation.isPending) { setStartingLabel("Starting..."); return; }
+    const labels = ["Setting the scene…", "Briefing your character…", "Opening the conversation…"];
+    let i = 0;
+    const id = setInterval(() => { i = (i + 1) % labels.length; setStartingLabel(labels[i]); }, 1400);
+    return () => clearInterval(id);
+  }, [startMutation.isPending]);
 
   const handleInfer = (text: string) => {
     if (!text.trim()) return;
@@ -338,11 +351,11 @@ export default function SimulatorStart() {
                 onClick={handleStart}
                 disabled={startMutation.isPending || (!!scenario.followUpQuestion && !followUpAnswer.trim())}
                 size="lg"
-                className="font-bold px-8"
+                className="font-bold px-8 min-w-[210px] justify-center"
                 style={{ background: meta.accent, color: meta.color }}
               >
                 {startMutation.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Starting...</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{startingLabel}</>
                 ) : (
                   <>Start Practice <ChevronRight className="w-5 h-5 ml-1" /></>
                 )}
@@ -351,15 +364,10 @@ export default function SimulatorStart() {
           </div>
         )}
 
-        {/* Errors */}
+        {/* Errors shown as toasts — startMutation errors are toast only */}
         {inferMutation.isError && (
           <div className="text-center py-4 text-red-400 text-sm">
             Could not generate scenario. Please try again or rephrase your description.
-          </div>
-        )}
-        {startMutation.isError && (
-          <div className="text-center py-4 text-red-400 text-sm">
-            Could not start session — please try again.
           </div>
         )}
       </div>
