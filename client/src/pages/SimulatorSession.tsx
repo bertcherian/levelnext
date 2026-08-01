@@ -117,9 +117,9 @@ export default function SimulatorSession() {
       setIsSpeaking(false);
     }
     // Use the voice chosen by the user at session start, or fall back to stakeholder-based selection
-    const validVoices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"] as const;
+    const validVoices = ["alloy", "echo", "fable", "nova", "shimmer"] as const;
     type VoiceId = typeof validVoices[number];
-    let voice: VoiceId = "onyx";
+    let voice: VoiceId = "echo";
     if (session?.voice && validVoices.includes(session.voice as VoiceId)) {
       voice = session.voice as VoiceId;
     } else {
