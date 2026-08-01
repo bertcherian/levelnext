@@ -153,7 +153,7 @@ export default function SimulatorSession() {
     }
     await startWaveform();
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-IN";
 
@@ -334,10 +334,7 @@ export default function SimulatorSession() {
                 />
               )}
               <button
-                onMouseDown={startListening}
-                onMouseUp={stopListening}
-                onTouchStart={startListening}
-                onTouchEnd={stopListening}
+                onClick={() => isListening ? stopListening() : startListening()}
                 className="relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-150"
                 style={{
                   background: isListening ? accent : "rgba(255,255,255,0.1)",
@@ -345,7 +342,7 @@ export default function SimulatorSession() {
                   transform: isListening ? "scale(1.08)" : "scale(1)",
                   boxShadow: isListening ? `0 0 0 4px ${accent}30` : "none",
                 }}
-                title="Hold to speak"
+                title={isListening ? "Click to stop listening" : "Click to start speaking"}
               >
                 {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 opacity-60" />}
               </button>
@@ -397,7 +394,7 @@ export default function SimulatorSession() {
           </div>
 
           <div className="flex items-center justify-between mt-2">
-            <p className="text-white/25 text-xs">Hold mic to speak · Enter to send · Shift+Enter for new line</p>
+            <p className="text-white/25 text-xs">{isListening ? "🔴 Listening — click mic to stop" : "Click mic to speak · Enter to send · Shift+Enter for new line"}</p>
             <button
               onClick={handleEnd}
               disabled={isEnding}

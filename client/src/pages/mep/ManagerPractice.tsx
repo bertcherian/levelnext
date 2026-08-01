@@ -1,10 +1,27 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Zap, Send, Loader2, CheckCircle2, ChevronRight, RotateCcw } from "lucide-react";
+import { Zap, Send, Loader2, CheckCircle2, ChevronRight, RotateCcw, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+interface ISpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: ((event: any) => void) | null;
+  onerror: ((event: any) => void) | null;
+  onend: (() => void) | null;
+}
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => ISpeechRecognition;
+    webkitSpeechRecognition?: new () => ISpeechRecognition;
+  }
+}
 
 type View = "scenarios" | "chat" | "debrief";
 
@@ -16,6 +33,9 @@ export default function ManagerPractice() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [debrief, setDebrief] = useState<any>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [interimText, setInterimText] = useState("");
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data: scenarios } = trpc.mep.getPracticeScenarios.useQuery();
@@ -53,6 +73,54 @@ export default function ManagerPractice() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // ── Voice recognition (click-to-toggle) ──────────────────────────────────
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setIsListening(false);
+    setInterimText("");
+  }, []);
+
+  const startListening = useCallback(() => {
+    if (isListening) {
+      stopListening();
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Voice input requires Chrome or Edge browser.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-IN";
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      let final = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          final += event.results[i][0].transcript;
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+      setInterimText(interim);
+      if (final) {
+        setInput(prev => (prev + " " + final).trim());
+        setInterimText("");
+      }
+    };
+    recognition.onerror = () => { setIsListening(false); setInterimText(""); };
+    recognition.onend = () => { setIsListening(false); setInterimText(""); };
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [isListening, stopListening]);
+
+  // Cleanup on unmount
+  useEffect(() => () => { recognitionRef.current?.stop(); }, []);
+
   const handleStart = (scenario: any) => {
     setActiveScenario(scenario);
     setMessages([]);
@@ -67,6 +135,7 @@ export default function ManagerPractice() {
   const handleSend = async () => {
     const msg = input.trim();
     if (!msg || !sessionId) return;
+    if (isListening) stopListening();
     setInput("");
     setSending(true);
     setMessages((prev) => [...prev, { role: "user", content: msg }]);
@@ -75,6 +144,7 @@ export default function ManagerPractice() {
 
   const handleEnd = () => {
     if (!sessionId) return;
+    if (isListening) stopListening();
     endSession.mutate({ sessionId });
   };
 
@@ -98,7 +168,7 @@ export default function ManagerPractice() {
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#D4AF3720' }}>
-                <Zap size={16} style={{ color: '#D4AF37' }} />
+                <Mic size={16} style={{ color: '#D4AF37' }} />
               </div>
               <div>
                 <p className="text-white text-sm font-semibold">NEW — Voice Practice Simulator</p>
@@ -176,6 +246,10 @@ export default function ManagerPractice() {
 
   // ── Chat view ─────────────────────────────────────────────────────────────
   if (view === "chat") {
+    const displayValue = isListening && interimText
+      ? (input ? input + " " + interimText : interimText)
+      : input;
+
     return (
       <div className="flex h-screen flex-col" style={{ background: "var(--color-ln-ivory)" }}>
         {/* Header */}
@@ -235,16 +309,35 @@ export default function ManagerPractice() {
 
         {/* Input */}
         <div className="px-4 py-3 border-t flex-shrink-0" style={{ background: "white", borderColor: "oklch(90% 0.01 248.6)" }}>
-          <div className="flex gap-2 max-w-3xl mx-auto">
+          <div className="flex gap-2 max-w-3xl mx-auto items-end">
+            {/* Voice toggle button */}
+            <button
+              onClick={startListening}
+              disabled={sending}
+              className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-150"
+              style={{
+                background: isListening ? "#fb923c" : "oklch(93% 0.01 248.6)",
+                color: isListening ? "white" : "oklch(45% 0.02 248.6)",
+                boxShadow: isListening ? "0 0 0 3px #fb923c30" : "none",
+                transform: isListening ? "scale(1.05)" : "scale(1)",
+              }}
+              title={isListening ? "Click to stop listening" : "Click to speak"}
+            >
+              {isListening ? <Mic size={16} /> : <MicOff size={16} className="opacity-60" />}
+            </button>
+
             <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+              value={displayValue}
+              onChange={(e) => { if (!isListening) setInput(e.target.value); }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder="Respond as the manager…"
+              placeholder={isListening ? "Listening… speak now" : "Respond as the manager… or click mic to speak"}
               className="flex-1 resize-none text-sm min-h-[44px] max-h-32"
               rows={1}
               disabled={sending}
+              readOnly={isListening}
+              style={isListening ? { borderColor: "#fb923c", outline: "none", boxShadow: "0 0 0 2px #fb923c20" } : {}}
             />
+
             <Button
               size="icon"
               onClick={handleSend}
@@ -255,6 +348,9 @@ export default function ManagerPractice() {
               {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             </Button>
           </div>
+          <p className="text-[11px] mt-1.5 max-w-3xl mx-auto" style={{ color: "oklch(65% 0.02 248.6)" }}>
+            {isListening ? "🔴 Listening — click mic to stop · Enter to send" : "Click mic to speak · Enter to send · Shift+Enter for new line"}
+          </p>
         </div>
       </div>
     );
@@ -317,21 +413,17 @@ export default function ManagerPractice() {
           {debrief.keyTakeaway && (
             <div className="rounded-2xl px-5 py-4" style={{ background: "oklch(from #fb923c l c h / 0.06)", border: "1px solid oklch(from #fb923c l c h / 0.2)" }}>
               <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#fb923c" }}>Key Takeaway</p>
-              <p className="text-sm" style={{ color: "oklch(30% 0.02 248.6)" }}>{debrief.keyTakeaway}</p>
+              <p className="text-sm leading-relaxed" style={{ color: "oklch(30% 0.02 248.6)" }}>{debrief.keyTakeaway}</p>
             </div>
           )}
 
           <div className="flex gap-3">
-            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setView("scenarios")}>
-              <RotateCcw size={12} className="mr-1.5" /> Try Another Scenario
-            </Button>
             <Button
-              size="sm"
-              className="flex-1 text-xs font-semibold"
-              style={{ background: "#fb923c", color: "white" }}
-              onClick={() => { setView("scenarios"); setTimeout(() => handleStart(activeScenario), 50); }}
+              className="flex-1 font-semibold"
+              style={{ background: "var(--color-ln-navy)", color: "white" }}
+              onClick={() => { setView("scenarios"); setDebrief(null); setActiveScenario(null); }}
             >
-              Retry This Scenario
+              <RotateCcw size={14} className="mr-2" /> Practice Again
             </Button>
           </div>
         </div>
