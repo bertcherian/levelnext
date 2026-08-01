@@ -116,16 +116,22 @@ export default function SimulatorSession() {
       currentAudioRef.current = null;
       setIsSpeaking(false);
     }
-    // Determine voice based on session stakeholder
-    const stakeholder = (session?.stakeholder ?? "").toLowerCase();
-    let voice: "onyx" | "echo" | "nova" | "shimmer" | "alloy" | "fable" = "onyx";
-    if (stakeholder.includes("vp") || stakeholder.includes("director") || stakeholder.includes("ceo") || stakeholder.includes("senior")) {
-      voice = "echo";
-    } else if (stakeholder.includes("hr") || stakeholder.includes("partner") || stakeholder.includes("peer")) {
-      voice = "nova";
+    // Use the voice chosen by the user at session start, or fall back to stakeholder-based selection
+    const validVoices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"] as const;
+    type VoiceId = typeof validVoices[number];
+    let voice: VoiceId = "onyx";
+    if (session?.voice && validVoices.includes(session.voice as VoiceId)) {
+      voice = session.voice as VoiceId;
+    } else {
+      const stakeholder = (session?.stakeholder ?? "").toLowerCase();
+      if (stakeholder.includes("vp") || stakeholder.includes("director") || stakeholder.includes("ceo") || stakeholder.includes("senior")) {
+        voice = "echo";
+      } else if (stakeholder.includes("hr") || stakeholder.includes("partner") || stakeholder.includes("peer")) {
+        voice = "nova";
+      }
     }
     ttsMutation.mutate({ text, voice });
-  }, [ttsEnabled, session?.stakeholder, ttsMutation]);
+  }, [ttsEnabled, session?.voice, session?.stakeholder, ttsMutation]);
 
   useEffect(() => {
     if (session && localMessages.length === 1 && localMessages[0].role === "assistant" && ttsEnabled) {

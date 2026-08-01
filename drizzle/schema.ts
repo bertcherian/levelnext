@@ -1984,7 +1984,8 @@ export const simSessions = mysqlTable("sim_sessions", {
   difficulty: int("difficulty").default(3), // 1-5
   estimatedMinutes: int("estimatedMinutes").default(6),
   characterName: varchar("characterName", { length: 100 }),
-  characterStyle: varchar("characterStyle", { length: 100 }),
+  characterStyle: text("characterStyle"),
+  voice: varchar("voice", { length: 20 }).default("onyx"),
   // Conversation
   messages: json("messages").$type<Array<{ role: "user" | "assistant"; content: string; timestamp: number }>>().default([]),
   // Debrief

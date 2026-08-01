@@ -106,6 +106,7 @@ followUpQuestion: if you genuinely need one clarification, include a short quest
       estimatedMinutes: z.number().min(4).max(10),
       characterName: z.string(),
       characterStyle: z.string(),
+      voice: z.enum(["alloy", "echo", "fable", "onyx", "nova", "shimmer"]).default("onyx"),
     }))
         .mutation(async ({ input, ctx }) => {
       try {
@@ -152,6 +153,7 @@ Write a single opening line (1-2 sentences) as ${input.characterName} to set the
         estimatedMinutes,
         characterName: input.characterName,
         characterStyle: input.characterStyle,
+        voice: input.voice,
         messages,
         status: "active",
       }).$returningId();
