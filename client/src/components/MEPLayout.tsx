@@ -7,13 +7,10 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutGrid,
   MessageSquare,
-  BookOpen,
-  Lightbulb,
   Zap,
   Activity,
   Home,
   Users,
-  FolderOpen,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -26,13 +23,10 @@ const LOGO_URL = "/logo.png";
 const NAV_ITEMS = [
   { href: "/manager", label: "Home", icon: Home, exact: true },
   { href: "/manager/diagnostics", label: "Diagnostics", icon: LayoutGrid },
-  { href: "/manager/guide", label: "Manager Guide", icon: MessageSquare },
-  { href: "/manager/playbook", label: "Playbook", icon: BookOpen },
-  { href: "/manager/brief", label: "Daily Brief", icon: Lightbulb },
-  { href: "/manager/practice", label: "Practice Partner", icon: Zap },
-  { href: "/manager/commitments", label: "Commitments", icon: Activity },
-  { href: "/manager/team", label: "Team Intelligence", icon: Users },
-  { href: "/manager/documents", label: "My Documents", icon: FolderOpen },
+  { href: "/manager/coach", label: "Coach", icon: MessageSquare },
+  { href: "/manager/practice", label: "Practice", icon: Zap },
+  { href: "/manager/team", label: "Team", icon: Users },
+  { href: "/manager/progress", label: "My Progress", icon: Activity },
 ];
 
 interface MEPLayoutProps {

@@ -35,35 +35,17 @@ const MEP_MODULES = [
     badge: null,
   },
   {
-    id: "guide",
-    title: "Manager Guide",
-    description: "AI-powered coaching for your management challenges",
+    id: "coach",
+    title: "Manager Coach",
+    description: "Ask any management question or get a scenario-specific play",
     icon: MessageSquare,
-    href: "/manager/guide",
+    href: "/manager/coach",
     color: "#60a5fa",
     badge: null,
   },
   {
-    id: "playbook",
-    title: "Manager Playbook",
-    description: "Situation-specific plays for common management scenarios",
-    icon: BookOpen,
-    href: "/manager/playbook",
-    color: "#f59e0b",
-    badge: null,
-  },
-  {
-    id: "brief",
-    title: "Daily Management Brief",
-    description: "Start each day with clarity on priorities and team pulse",
-    icon: Lightbulb,
-    href: "/manager/brief",
-    color: "#a78bfa",
-    badge: null,
-  },
-  {
     id: "practice",
-    title: "AI Practice Partner",
+    title: "Practice Partner",
     description: "Role-play difficult conversations before they happen",
     icon: Zap,
     href: "/manager/practice",
@@ -71,11 +53,20 @@ const MEP_MODULES = [
     badge: null,
   },
   {
-    id: "commitments",
-    title: "Behaviour Commitments",
-    description: "Track and reinforce your management behaviour changes",
+    id: "team",
+    title: "Team Intelligence",
+    description: "Track your team members and get AI-powered people insights",
+    icon: Users,
+    href: "/manager/team",
+    color: "#a78bfa",
+    badge: null,
+  },
+  {
+    id: "progress",
+    title: "My Progress",
+    description: "Behaviour commitments and uploaded documents in one place",
     icon: Activity,
-    href: "/manager/commitments",
+    href: "/manager/progress",
     color: "#f472b6",
     badge: null,
   },
@@ -250,12 +241,12 @@ export default function ManagerHome() {
               </>
             )}
           </div>
-          <Link href="/manager/brief" className="flex-shrink-0">
+          <Link href="/manager/coach" className="flex-shrink-0">
             <button
               className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg"
               style={{ background: "oklch(from #34d399 l c h / 0.15)", color: "#34d399", border: "1px solid oklch(from #34d399 l c h / 0.3)" }}
             >
-              Full Brief <ArrowRight size={12} />
+              Open Coach <ArrowRight size={12} />
             </button>
           </Link>
         </div>
@@ -286,7 +277,7 @@ export default function ManagerHome() {
                   <BookOpen size={14} style={{ color: "#f59e0b" }} />
                   <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#f59e0b" }}>Recent Play</p>
                 </div>
-                <Link href="/manager/playbook">
+                <Link href="/manager/coach">
                   <button className="text-[10px] font-semibold" style={{ color: "oklch(55% 0.02 248.6)" }}>View All →</button>
                 </Link>
               </div>
@@ -325,7 +316,7 @@ export default function ManagerHome() {
                     </span>
                   </div>
                 </div>
-                <Link href="/manager/playbook">
+                <Link href="/manager/coach">
                   <button
                     className="flex-shrink-0 flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg"
                     style={{ background: `oklch(from ${typeInfo.color} l c h / 0.1)`, color: typeInfo.color }}
@@ -344,7 +335,7 @@ export default function ManagerHome() {
                     <Sparkles size={12} style={{ color: "#a78bfa" }} />
                     <p className="text-xs" style={{ color: "oklch(40% 0.02 248.6)" }}>Reflect on this play to get a coaching insight</p>
                   </div>
-                  <Link href="/manager/playbook">
+                  <Link href="/manager/coach">
                     <button
                       className="text-[10px] font-semibold flex-shrink-0 px-2.5 py-1 rounded-lg"
                       style={{ background: "#a78bfa", color: "white" }}
@@ -355,7 +346,7 @@ export default function ManagerHome() {
                 </div>
               )}
 
-              <Link href="/manager/playbook">
+              <Link href="/manager/coach">
                 <button
                   className="mt-4 w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl border-2 border-dashed transition-all hover:border-solid"
                   style={{ borderColor: "oklch(85% 0.01 248.6)", color: "oklch(50% 0.02 248.6)" }}
@@ -400,7 +391,7 @@ export default function ManagerHome() {
                   </p>
                 </div>
               </div>
-              <Link href="/manager/commitments">
+              <Link href="/manager/progress">
                 <button
                   className="flex-shrink-0 text-xs font-bold px-3 py-2 rounded-xl"
                   style={{ background: "#34d399", color: "var(--color-ln-navy)" }}

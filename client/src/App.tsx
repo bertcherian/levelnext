@@ -53,6 +53,8 @@ import ManagerBrief from "@/pages/mep/ManagerBrief";
 import ManagerPractice from "@/pages/mep/ManagerPractice";
 import ManagerCommitments from "@/pages/mep/ManagerCommitments";
 import TeamIntelligence from "@/pages/mep/TeamIntelligence";
+import ManagerCoach from "@/pages/mep/ManagerCoach";
+import ManagerProgress from "@/pages/mep/ManagerProgress";
 import RadarSignals from "@/pages/RadarSignals";
 import InterviewPrep from "@/pages/InterviewPrep";
 import NegotiationIntelligence from "@/pages/NegotiationIntelligence";
@@ -183,16 +185,19 @@ function Router() {
       <Route path="/career/resume/report/:id" component={ResumeReport} />
       <Route path="/career/resume/rewrite/:id" component={ResumeRewrite} />
       <Route path="/org-intelligence" component={OrgIntelligence} />
-      {/* Manager Effectiveness Platform */}
+      {/* Manager Effectiveness Platform — 6-item nav */}
       <Route path="/manager">{() => <MEPLayout><ManagerHome /></MEPLayout>}</Route>
       <Route path="/manager/diagnostics">{() => <MEPLayout><ManagerDiagnostics /></MEPLayout>}</Route>
-      <Route path="/manager/guide">{() => <MEPLayout><ManagerGuide /></MEPLayout>}</Route>
-      <Route path="/manager/playbook">{() => <MEPLayout><ManagerPlaybook /></MEPLayout>}</Route>
-      <Route path="/manager/brief">{() => <MEPLayout><ManagerBrief /></MEPLayout>}</Route>
+      <Route path="/manager/coach">{() => <MEPLayout><ManagerCoach /></MEPLayout>}</Route>
       <Route path="/manager/practice">{() => <MEPLayout><ManagerPractice /></MEPLayout>}</Route>
-      <Route path="/manager/commitments">{() => <MEPLayout><ManagerCommitments /></MEPLayout>}</Route>
       <Route path="/manager/team">{() => <MEPLayout><TeamIntelligence /></MEPLayout>}</Route>
-      <Route path="/manager/documents">{() => <MEPLayout><MEPLeaderDocuments /></MEPLayout>}</Route>
+      <Route path="/manager/progress">{() => <MEPLayout><ManagerProgress /></MEPLayout>}</Route>
+      {/* Legacy redirects — old routes still work */}
+      <Route path="/manager/guide">{() => <MEPLayout><ManagerCoach /></MEPLayout>}</Route>
+      <Route path="/manager/playbook">{() => <MEPLayout><ManagerCoach /></MEPLayout>}</Route>
+      <Route path="/manager/brief">{() => <MEPLayout><ManagerBrief /></MEPLayout>}</Route>
+      <Route path="/manager/commitments">{() => <MEPLayout><ManagerProgress /></MEPLayout>}</Route>
+      <Route path="/manager/documents">{() => <MEPLayout><ManagerProgress /></MEPLayout>}</Route>
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/admin/coaches" component={AdminCoachManagement} />
       <Route path="/admin/success-partners" component={AdminSuccessPartners} />
