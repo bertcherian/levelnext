@@ -95,6 +95,9 @@ export default function SimulatorStart() {
 
   const startMutation = trpc.simulator.startSession.useMutation({
     onSuccess: (data) => navigate(`/simulator/${data.sessionId}`),
+    onError: (err) => {
+      console.error("[SimulatorStart] startSession error:", err.message);
+    },
   });
 
   const handleInfer = (text: string) => {
@@ -348,10 +351,15 @@ export default function SimulatorStart() {
           </div>
         )}
 
-        {/* Error */}
+        {/* Errors */}
         {inferMutation.isError && (
           <div className="text-center py-4 text-red-400 text-sm">
             Could not generate scenario. Please try again or rephrase your description.
+          </div>
+        )}
+        {startMutation.isError && (
+          <div className="text-center py-4 text-red-400 text-sm">
+            Could not start session — please try again.
           </div>
         )}
       </div>
