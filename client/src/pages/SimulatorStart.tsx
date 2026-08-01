@@ -7,13 +7,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mic, Zap, ArrowRight, Loader2, ChevronRight, Target, Clock, BarChart2, User, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 
-const VOICES = [
-  { id: "echo",    label: "Echo",    desc: "Measured, professional", avatar: "🧑‍💼", sample: "That's an interesting perspective. Can you walk me through your reasoning?" },
-  { id: "nova",    label: "Nova",    desc: "Warm, conversational",   avatar: "👩‍💼", sample: "I appreciate you bringing this up. I want to make sure I understand correctly." },
-  { id: "shimmer", label: "Shimmer", desc: "Clear, expressive",      avatar: "🧑‍🎓", sample: "Okay, I see where you're coming from. Here's my take on the situation." },
-  { id: "alloy",   label: "Alloy",   desc: "Neutral, balanced",      avatar: "🧑‍🔬", sample: "Right. So what exactly are you hoping to achieve from this conversation?" },
-  { id: "fable",   label: "Fable",   desc: "Warm, storytelling",     avatar: "🧙",    sample: "Let me be honest with you — this isn't something I expected to hear today." },
+const VOICES_INDIAN = [
+  { id: "shubh",   label: "Shubh",   desc: "Confident, clear",       avatar: "🧑‍💼", sample: "That's an interesting perspective. Can you walk me through your reasoning?" },
+  { id: "sumit",   label: "Sumit",   desc: "Measured, direct",       avatar: "👨‍💼", sample: "Right. So what exactly are you hoping to achieve from this conversation?" },
+  { id: "simran",  label: "Simran",  desc: "Warm, expressive",       avatar: "👩‍💼", sample: "I appreciate you bringing this up. I want to make sure I understand correctly." },
+  { id: "ishita",  label: "Ishita",  desc: "Clear, professional",    avatar: "👩‍🎓", sample: "Okay, I see where you're coming from. Here's my take on the situation." },
 ] as const;
+const VOICES_INTERNATIONAL = [
+  { id: "nova",    label: "Nova",    desc: "Warm, conversational",   avatar: "🌟", sample: "I appreciate you bringing this up. I want to make sure I understand correctly." },
+  { id: "shimmer", label: "Shimmer", desc: "Clear, expressive",      avatar: "✨", sample: "Okay, I see where you're coming from. Here's my take on the situation." },
+  { id: "alloy",   label: "Alloy",   desc: "Neutral, balanced",      avatar: "⚡", sample: "Right. So what exactly are you hoping to achieve from this conversation?" },
+  { id: "fable",   label: "Fable",   desc: "Warm, storytelling",     avatar: "📖", sample: "Let me be honest with you — this isn't something I expected to hear today." },
+] as const;
+const VOICES = [...VOICES_INDIAN, ...VOICES_INTERNATIONAL] as const;
 type VoiceId = typeof VOICES[number]["id"];
 
 type Platform = "leadership" | "manager" | "career" | "young";
@@ -97,7 +103,7 @@ export default function SimulatorStart() {
   const [prompt, setPrompt] = useState("");
   const [scenario, setScenario] = useState<ScenarioCard | null>(null);
   const [followUpAnswer, setFollowUpAnswer] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState<VoiceId>("echo");
+  const [selectedVoice, setSelectedVoice] = useState<VoiceId>("shubh");
   const [previewingVoice, setPreviewingVoice] = useState<VoiceId | null>(null);
   const previewAudioRef = { current: null as HTMLAudioElement | null };
   const ttsMutation = trpc.simulator.tts.useMutation({

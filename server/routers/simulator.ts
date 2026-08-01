@@ -106,7 +106,7 @@ followUpQuestion: if you genuinely need one clarification, include a short quest
       estimatedMinutes: z.number().min(4).max(10),
       characterName: z.string(),
       characterStyle: z.string(),
-      voice: z.enum(["alloy", "echo", "fable", "nova", "shimmer"]).default("echo"),
+      voice: z.enum(["nova", "shimmer", "alloy", "fable", "shubh", "sumit", "simran", "ishita"]).default("shubh"),
     }))
         .mutation(async ({ input, ctx }) => {
       try {
@@ -380,32 +380,63 @@ Coaching insights:\n${coachingInsights.map(c => `- Said: "${c.moment}" → Try: 
   tts: protectedProcedure
     .input(z.object({
       text: z.string().min(1).max(1000),
-      voice: z.enum(["alloy", "echo", "fable", "nova", "shimmer"]).default("echo"),
+      voice: z.enum(["nova", "shimmer", "alloy", "fable", "shubh", "sumit", "simran", "ishita"]).default("nova"),
     }))
     .mutation(async ({ input }) => {
-      if (!ENV.openAiApiKey) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+      const SARVAM_VOICES = ["shubh", "sumit", "simran", "ishita"];
+      const isSarvam = SARVAM_VOICES.includes(input.voice);
+
+      if (isSarvam) {
+        // Sarvam AI TTS
+        if (!ENV.sarvamApiKey) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Sarvam API key not configured" });
+        }
+        const response = await fetch("https://api.sarvam.ai/text-to-speech", {
+          method: "POST",
+          headers: {
+            "api-subscription-key": ENV.sarvamApiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            inputs: [input.text],
+            target_language_code: "en-IN",
+            speaker: input.voice,
+            model: "bulbul:v3-beta",
+          }),
+        });
+        if (!response.ok) {
+          const err = await response.text();
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Sarvam TTS failed: ${err.substring(0, 100)}` });
+        }
+        const data = await response.json() as { audios: string[] };
+        // Sarvam returns base64 WAV audio
+        return { audioBase64: data.audios[0], mimeType: "audio/wav" };
+      } else {
+        // OpenAI TTS
+        if (!ENV.openAiApiKey) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+        }
+        const response = await fetch("https://api.openai.com/v1/audio/speech", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${ENV.openAiApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "tts-1",
+            input: input.text,
+            voice: input.voice,
+            response_format: "mp3",
+          }),
+        });
+        if (!response.ok) {
+          const err = await response.text();
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `OpenAI TTS failed: ${err.substring(0, 100)}` });
+        }
+        const audioBuffer = await response.arrayBuffer();
+        const base64 = Buffer.from(audioBuffer).toString("base64");
+        return { audioBase64: base64, mimeType: "audio/mpeg" };
       }
-      const response = await fetch("https://api.openai.com/v1/audio/speech", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${ENV.openAiApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "tts-1",
-          input: input.text,
-          voice: input.voice,
-          response_format: "mp3",
-        }),
-      });
-      if (!response.ok) {
-        const err = await response.text();
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `TTS failed: ${err.substring(0, 100)}` });
-      }
-      const audioBuffer = await response.arrayBuffer();
-      const base64 = Buffer.from(audioBuffer).toString("base64");
-      return { audioBase64: base64, mimeType: "audio/mpeg" };
     }),
 
   listSessions: protectedProcedure

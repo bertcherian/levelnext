@@ -117,17 +117,17 @@ export default function SimulatorSession() {
       setIsSpeaking(false);
     }
     // Use the voice chosen by the user at session start, or fall back to stakeholder-based selection
-    const validVoices = ["alloy", "echo", "fable", "nova", "shimmer"] as const;
+    const validVoices = ["nova", "shimmer", "alloy", "fable", "shubh", "sumit", "simran", "ishita"] as const;
     type VoiceId = typeof validVoices[number];
-    let voice: VoiceId = "echo";
+    let voice: VoiceId = "shubh";
     if (session?.voice && validVoices.includes(session.voice as VoiceId)) {
       voice = session.voice as VoiceId;
     } else {
       const stakeholder = (session?.stakeholder ?? "").toLowerCase();
       if (stakeholder.includes("vp") || stakeholder.includes("director") || stakeholder.includes("ceo") || stakeholder.includes("senior")) {
-        voice = "echo";
+        voice = "sumit";
       } else if (stakeholder.includes("hr") || stakeholder.includes("partner") || stakeholder.includes("peer")) {
-        voice = "nova";
+        voice = "simran";
       }
     }
     ttsMutation.mutate({ text, voice });
