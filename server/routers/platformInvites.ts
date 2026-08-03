@@ -16,6 +16,7 @@ export const platformInvitesRouter = router({
         email: z.string().email(),
         name: z.string().optional(),
         pilotApplicationId: z.number().optional(),
+        productId: z.string().optional(), // e.g. "career_intelligence" — routes invite to /join-product
         origin: z.string().url(),
       })
     )
@@ -50,13 +51,21 @@ export const platformInvitesRouter = router({
         status: "pending",
       });
 
-      const inviteUrl = `${input.origin}/login?invite=${token}`;
+      // If a productId is specified, route the invite directly to the join-product page
+      // so the user is auto-enrolled in that product immediately after sign-in.
+      const inviteUrl = input.productId
+        ? `${input.origin}/join-product?product=${encodeURIComponent(input.productId)}&invite=${token}`
+        : `${input.origin}/login?invite=${token}`;
 
       // Send invite email
       const firstName = input.name?.split(" ")[0] || "there";
+      // Use product-specific subject line for career_intelligence invites
+      const emailSubject = input.productId === "career_intelligence"
+        ? (firstName !== "there" ? `${firstName}, your Career Transition Intelligence access is ready` : "Your Career Transition Intelligence access is ready")
+        : (firstName !== "there" ? `${firstName}, your LevelNext access is ready` : "Your LevelNext access is ready");
       await sendEmail({
         to: input.email,
-        subject: firstName !== "there" ? `${firstName}, your LevelNext access is ready` : "Your LevelNext access is ready",
+        subject: emailSubject,
         html: `
           <div style="font-family: Inter, Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #f8f7f4; padding: 40px 20px;">
             <div style="text-align: center; margin-bottom: 32px;">

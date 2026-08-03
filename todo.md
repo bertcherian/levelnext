@@ -1307,3 +1307,8 @@ TypeScript: 0 errors | Vitest: 3/3 passed
 - [x] Negotiation Simulator: Download Debrief PDF button (jsPDF, branded)
 - [x] LaunchOnboarding: Full dark immersive redesign (gradient cards, glow selection, Space Grotesk)
 - [x] LaunchHome: Full dark immersive redesign (animated background, XP ring, mission panel)
+
+## Career Transition Intelligence — Onboarding Gaps (Aug 2026)
+
+- [x] Add "Continue as Individual" skip option to Onboarding choose screen (navigates to returnTo or /home)
+- [x] Add product selector to Admin Manage Invites — allow admin to target career_intelligence so invite email links to /join-product?product=career_intelligence and auto-enrolls on sign-in

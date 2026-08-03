@@ -101,6 +101,7 @@ export default function AdminManageInvites() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteProduct, setInviteProduct] = useState<string>(""); // "" = general LevelNext access
 
   // Bulk invite state
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
@@ -190,6 +191,7 @@ export default function AdminManageInvites() {
     createInvite.mutate({
       email: inviteEmail.trim(),
       name: inviteName.trim() || undefined,
+      productId: inviteProduct || undefined,
       origin: window.location.origin,
     });
   }
@@ -715,7 +717,7 @@ export default function AdminManageInvites() {
       </Dialog>
 
       {/* Send Invite Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setInviteName(""); setInviteEmail(""); setInviteProduct(""); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Send Invite</DialogTitle>
@@ -745,6 +747,26 @@ export default function AdminManageInvites() {
                 onKeyDown={(e) => e.key === "Enter" && handleSendInvite()}
                 autoFocus
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-product">Platform Access <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <select
+                id="invite-product"
+                value={inviteProduct}
+                onChange={(e) => setInviteProduct(e.target.value)}
+                className="w-full rounded-md border px-3 py-2 text-sm"
+                style={{ borderColor: "var(--color-border)", background: "var(--color-background)", color: "var(--color-foreground)" }}
+              >
+                <option value="">General LevelNext access</option>
+                <option value="career_intelligence">Career Transition Intelligence</option>
+                <option value="leadership_intelligence">Leadership Intelligence</option>
+                <option value="manager_effectiveness">Manager Effectiveness</option>
+              </select>
+              {inviteProduct === "career_intelligence" && (
+                <p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>
+                  The invite link will take the user directly to Career Transition Intelligence and auto-enrol them.
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter className="gap-2">

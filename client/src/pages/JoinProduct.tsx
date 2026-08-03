@@ -55,7 +55,14 @@ export default function JoinProduct() {
     if (!user) {
       // Persist the intended product so we can resume after OAuth
       localStorage.setItem(LS_KEY, productId);
-      window.location.href = "/login?returnTo=%2Fhome";
+      // Pass returnTo so the magic link email redirects back here after login.
+      // Also forward the ?invite= token so the Login page can auto-verify it.
+      const inviteToken = params.get("invite") ?? "";
+      const returnTo = encodeURIComponent(`/join-product?product=${productId}`);
+      const loginUrl = inviteToken
+        ? `/login?invite=${inviteToken}&returnTo=${returnTo}`
+        : `/login?returnTo=${returnTo}`;
+      window.location.href = loginUrl;
       return;
     }
 

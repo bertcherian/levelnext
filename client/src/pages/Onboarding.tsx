@@ -520,7 +520,18 @@ export default function Onboarding() {
                   </button>
                 </div>
 
-                <div className="mt-8 pt-6" style={{ borderTop: "1px solid var(--color-ln-border)" }}>
+                {/* Skip org setup — for individual / Career Transition users */}
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => navigate(returnToParam ?? "/home")}
+                    className="text-sm transition-opacity hover:opacity-70"
+                    style={{ color: "var(--color-ln-muted)" }}
+                  >
+                    I'm using LevelNext individually — skip for now →
+                  </button>
+                </div>
+
+                <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--color-ln-border)" }}>
                   <p className="text-xs text-center" style={{ color: "var(--color-ln-muted)" }}>
                     Your data is private and never shared without your consent.
                   </p>
