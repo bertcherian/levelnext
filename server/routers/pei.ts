@@ -31,6 +31,7 @@ import {
   orgContext as orgContextTable,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { ENV } from "../_core/env";
 import {
   PEI_DIMENSIONS,
   PEI_QUESTIONS,
@@ -574,13 +575,63 @@ Return just the response text, no labels or quotes.
     const now = new Date();
     const dayOfWeek = now.toLocaleDateString("en-US", { weekday: "long" });
 
-    // Get today's calendar events if available
-    const calendarEvents = await db
+    // Get today's calendar events from user's connected integrations
+    const userIntegrations = await db
       .select()
-      .from(peCalendarEvents)
-      .where(eq(peCalendarEvents.integrationId, 0)) // placeholder — will be filtered by user's integrations
-      .limit(5)
-      .catch(() => []);
+      .from(peCalendarIntegrations)
+      .where(eq(peCalendarIntegrations.userId, ctx.user.id));
+
+    let calendarEvents: typeof peCalendarEvents.$inferSelect[] = [];
+    if (userIntegrations.length > 0) {
+      const integrationIds = userIntegrations.map((i) => i.id);
+      for (const intId of integrationIds) {
+        try {
+          const intEvents = await db
+            .select()
+            .from(peCalendarEvents)
+            .where(eq(peCalendarEvents.integrationId, intId))
+            .limit(10);
+          calendarEvents.push(...intEvents);
+        } catch {
+          // skip if events table query fails
+        }
+      }
+    }
+
+    // Filter to today's events
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+    const todaysEvents = calendarEvents
+      .filter((e) => {
+        const eventTime = new Date(e.startTime);
+        return eventTime >= todayStart && eventTime <= todayEnd;
+      })
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+      .slice(0, 5);
+
+    const calendarItemsText = todaysEvents.length > 0
+      ? todaysEvents.map((e) => `- ${new Date(e.startTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}: ${e.title ?? "Untitled event"}${e.isHighStakes ? " (HIGH-STAKES)" : ""}`).join("\n")
+      : "No calendar events scheduled for today.";
+
+    // Build commitment reminder text from active commitments
+    const activeCommitmentsList = await db
+      .select()
+      .from(peCommitments)
+      .where(and(eq(peCommitments.userId, ctx.user.id), eq(peCommitments.status, "pending")));
+
+    let commitmentReminderText = "No active commitments.";
+    if (activeCommitmentsList.length > 0) {
+      const now = new Date();
+      const overdue = activeCommitmentsList.filter((c) => c.dueDate && new Date(c.dueDate) < now);
+      const dueSoon = activeCommitmentsList.filter((c) => c.dueDate && new Date(c.dueDate) >= now && new Date(c.dueDate).getTime() - now.getTime() <= 3 * 86400000);
+      if (overdue.length > 0) {
+        commitmentReminderText = `OVERDUE: ${overdue.map((c) => c.text).join("; ")}`;
+      } else if (dueSoon.length > 0) {
+        commitmentReminderText = `DUE SOON: ${dueSoon.map((c) => `${c.text} (due ${new Date(c.dueDate!).toLocaleDateString()})`).join("; ")}`;
+      } else {
+        commitmentReminderText = `Active: ${activeCommitmentsList.map((c) => c.text).join("; ")}`;
+      }
+    }
 
     let brief: Record<string, any> = {};
     try {
@@ -594,12 +645,18 @@ Generate a Daily Professional Effectiveness Brief for ${userName} on ${dayOfWeek
 Professional context:
 ${context}
 
+Today's Calendar Events:
+${calendarItemsText}
+
+Active Commitments:
+${commitmentReminderText}
+
 Return a JSON object with these exact keys:
 {
   "greeting": "string (warm, personalised greeting for the day)",
   "dayTheme": "string (one professional effectiveness theme to focus on today based on their data)",
   "priorityFocus": "string (the single most important professional action today)",
-  "calendarItems": [],
+  "calendarItems": ${JSON.stringify(todaysEvents.map((e) => ({ time: new Date(e.startTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }), title: e.title ?? "Untitled event", type: e.isHighStakes ? "high-stakes" : "meeting" })))},
   "developmentSuggestion": { "topic": "string", "why": "string", "action": "string" },
   "reflectionQuestion": "string (a coaching question to reflect on throughout the day)",
   "commitmentReminder": "string or null",
@@ -618,10 +675,10 @@ Return a JSON object with these exact keys:
         greeting: `Good morning, ${userName}. Ready for a day of professional impact?`,
         dayTheme: "Intentional Effectiveness",
         priorityFocus: "Identify one high-impact action that will move the needle today.",
-        calendarItems: [],
+        calendarItems: todaysEvents.map((e) => ({ time: new Date(e.startTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }), title: e.title ?? "Untitled event", type: e.isHighStakes ? "high-stakes" : "meeting" })),
         developmentSuggestion: { topic: "Strategic Clarity", why: "A key growth area", action: "Take 10 minutes to connect your daily work to the bigger picture" },
         reflectionQuestion: "What would make today a great day of professional effectiveness for you?",
-        commitmentReminder: null,
+        commitmentReminder: activeCommitmentsList.length > 0 ? commitmentReminderText : null,
         coachingNudge: "Pick one thing that matters and do it exceptionally well today.",
       };
     }
@@ -1015,6 +1072,69 @@ Return coaching feedback as JSON:
 
       return events.filter((e) => new Date(e.startTime) >= now && new Date(e.startTime) <= future)
         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    }),
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LAYER 7b: Text-to-Speech for Practice Partner
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  tts: protectedProcedure
+    .input(z.object({
+      text: z.string().min(1).max(1000),
+      voice: z.enum(["nova", "shimmer", "alloy", "fable", "shubh", "sumit", "simran", "ishita"]).default("nova"),
+    }))
+    .mutation(async ({ input }) => {
+      const SARVAM_VOICES = ["shubh", "sumit", "simran", "ishita"];
+      const isSarvam = SARVAM_VOICES.includes(input.voice);
+
+      if (isSarvam) {
+        if (!ENV.sarvamApiKey) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Sarvam API key not configured" });
+        }
+        const response = await fetch("https://api.sarvam.ai/text-to-speech", {
+          method: "POST",
+          headers: {
+            "api-subscription-key": ENV.sarvamApiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            inputs: [input.text],
+            target_language_code: "en-IN",
+            speaker: input.voice,
+            model: "bulbul:v3-beta",
+          }),
+        });
+        if (!response.ok) {
+          const err = await response.text();
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Sarvam TTS failed: ${err.substring(0, 100)}` });
+        }
+        const data = await response.json() as { audios: string[] };
+        return { audioBase64: data.audios[0], mimeType: "audio/wav" };
+      } else {
+        if (!ENV.openAiApiKey) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
+        }
+        const response = await fetch("https://api.openai.com/v1/audio/speech", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${ENV.openAiApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "tts-1",
+            input: input.text,
+            voice: input.voice,
+            response_format: "mp3",
+          }),
+        });
+        if (!response.ok) {
+          const err = await response.text();
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `OpenAI TTS failed: ${err.substring(0, 100)}` });
+        }
+        const audioBuffer = await response.arrayBuffer();
+        const base64 = Buffer.from(audioBuffer).toString("base64");
+        return { audioBase64: base64, mimeType: "audio/mpeg" };
+      }
     }),
 
   // ═══════════════════════════════════════════════════════════════════════════

@@ -3,6 +3,21 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Clock, Plus, X, TrendingUp, Activity, Zap, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
+} from "recharts";
 
 export default function PEProgress() {
   const [showAddCommitment, setShowAddCommitment] = useState(false);
@@ -41,6 +56,30 @@ export default function PEProgress() {
 
   const activeCommitments = commitments.data?.filter((c) => c.status === "pending") ?? [];
   const completedCommitments = commitments.data?.filter((c) => c.status === "completed") ?? [];
+
+  // Chart data: Assessment score history
+  const scoreHistoryData = (resultsHistory.data ?? []).slice().reverse().map((r, i) => ({
+    assessment: `#${i + 1}`,
+    score: Math.round(r.overallScore),
+    date: new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    zone: r.zone,
+  }));
+
+  // Chart data: Practice session ratings
+  const practiceRatingData = (practiceSessions.data ?? [])
+    .filter((s) => s.coachingFeedback && (s.coachingFeedback as any).overallRating)
+    .slice(0, 10)
+    .reverse()
+    .map((s, i) => ({
+      session: `#${i + 1}`,
+      rating: (s.coachingFeedback as any).overallRating,
+      scenario: s.scenario,
+      date: new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    }));
+
+  // Completion rate for radial chart
+  const totalCommitments = commitments.data?.length ?? 0;
+  const completionRate = totalCommitments > 0 ? Math.round((completedCommitments.length / totalCommitments) * 100) : 0;
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
@@ -82,6 +121,86 @@ export default function PEProgress() {
           <p className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>{completedCommitments.length}</p>
         </div>
       </div>
+
+      {/* Assessment Score History Chart */}
+      {scoreHistoryData.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border p-6" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <h3 className="font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Assessment Score Trend</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={scoreHistoryData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(93% 0.02 248.6)" />
+              <XAxis dataKey="date" tick={{ fill: "oklch(55% 0.02 248.6)", fontSize: 11 }} />
+              <YAxis domain={[0, 100]} tick={{ fill: "oklch(55% 0.02 248.6)", fontSize: 11 }} />
+              <RechartsTooltip
+                contentStyle={{
+                  background: "white",
+                  border: "1px solid oklch(90% 0.02 248.6)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+                formatter={(value: any) => [`${value}/100`, "PEI Score"]}
+              />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="#0A1A2F"
+                strokeWidth={2}
+                dot={{ fill: "#d4af37", r: 5 }}
+                activeDot={{ r: 7 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Practice Session Ratings Chart */}
+      {practiceRatingData.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border p-6" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <h3 className="font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Practice Session Ratings</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={practiceRatingData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(93% 0.02 248.6)" />
+              <XAxis dataKey="date" tick={{ fill: "oklch(55% 0.02 248.6)", fontSize: 11 }} />
+              <YAxis domain={[0, 5]} tick={{ fill: "oklch(55% 0.02 248.6)", fontSize: 11 }} />
+              <RechartsTooltip
+                contentStyle={{
+                  background: "white",
+                  border: "1px solid oklch(90% 0.02 248.6)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+                formatter={(value: any) => [`${value}/5 stars`, "Rating"]}
+              />
+              <Bar dataKey="rating" radius={[4, 4, 0, 0]}>
+                {practiceRatingData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.rating >= 4 ? "#22c55e" : entry.rating >= 3 ? "#d4af37" : "#f97316"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Commitment Completion Radial Chart */}
+      {totalCommitments > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border p-6" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <h3 className="font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Commitment Completion Rate</h3>
+          <div className="flex items-center gap-6">
+            <ResponsiveContainer width="50%" height={160}>
+              <RadialBarChart innerRadius="60%" outerRadius="100%" data={[{ value: completionRate, fill: "#d4af37" }]} startAngle={90} endAngle={-270}>
+                <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                <RadialBar background={{ fill: "oklch(93% 0.02 248.6)" }} dataKey="value" cornerRadius={8} fill="#d4af37" />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div>
+              <p className="text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>{completionRate}%</p>
+              <p className="text-sm" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                {completedCommitments.length} of {totalCommitments} commitments completed
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Active Commitments */}
       <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>

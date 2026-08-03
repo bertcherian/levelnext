@@ -2,6 +2,15 @@ import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronLeft, CheckCircle2, Award, TrendingUp, AlertCircle } from "lucide-react";
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+} from "recharts";
 import { PEI_DIMENSIONS, PEI_ZONES, getZone } from "@shared/modules/peiData";
 import { toast } from "sonner";
 
@@ -230,6 +239,38 @@ export default function PEAssessment() {
           )}
         </div>
 
+        {/* Radar Chart */}
+        <div className="bg-white rounded-2xl shadow-sm border p-6" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <h3 className="font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>PEI Radar Chart</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <RadarChart data={sortedDims.map(([dimId, score]) => ({
+              dimension: PEI_DIMENSIONS.find((d: any) => d.id === dimId)?.label ?? dimId,
+              score: Math.round(score),
+              fullMark: 100,
+            }))}>
+              <PolarGrid stroke="oklch(90% 0.02 248.6)" />
+              <PolarAngleAxis dataKey="dimension" tick={{ fill: "oklch(40% 0.02 248.6)", fontSize: 11 }} />
+              <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: "oklch(55% 0.02 248.6)", fontSize: 9 }} />
+              <Radar
+                name="PEI Score"
+                dataKey="score"
+                stroke="#0A1A2F"
+                fill="#d4af37"
+                fillOpacity={0.3}
+                strokeWidth={2}
+              />
+              <RechartsTooltip
+                contentStyle={{
+                  background: "white",
+                  border: "1px solid oklch(90% 0.02 248.6)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
         {/* Dimension scores */}
         <div className="bg-white rounded-2xl shadow-sm border p-6" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
           <h3 className="font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Dimension Breakdown</h3>
@@ -306,6 +347,27 @@ export default function PEAssessment() {
                 </ul>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 90-Day Development Timeline */}
+        {devPlan?.weeklyMilestones && Array.isArray(devPlan.weeklyMilestones) && devPlan.weeklyMilestones.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border p-6" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+            <h3 className="font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>90-Day Development Timeline</h3>
+            <div className="relative pl-6">
+              {/* Vertical line */}
+              <div className="absolute left-2 top-2 bottom-2 w-0.5" style={{ background: "oklch(85% 0.02 248.6)" }} />
+              {devPlan.weeklyMilestones.map((m: any, i: number) => (
+                <div key={i} className="relative mb-4 last:mb-0">
+                  {/* Dot */}
+                  <div className="absolute -left-4 top-1 w-3 h-3 rounded-full border-2" style={{ background: i === 0 ? "#d4af37" : "white", borderColor: "#d4af37" }} />
+                  <div className="ml-4">
+                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#d4af37" }}>Week {m.week}</p>
+                    <p className="text-sm mt-0.5" style={{ color: "var(--color-ln-navy)" }}>{m.milestone}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

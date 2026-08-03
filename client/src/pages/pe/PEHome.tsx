@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Sun, Target, Calendar, Zap, MessageSquare, TrendingUp, CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { Sun, Target, Calendar, Zap, MessageSquare, TrendingUp, CheckCircle2, ArrowRight, Sparkles, Clock, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 
 export default function PEHome() {
@@ -11,6 +11,7 @@ export default function PEHome() {
 
   const summary = trpc.pei.getDashboardSummary.useQuery();
   const briefSnapshot = trpc.pei.getTodayBriefSnapshot.useQuery();
+  const upcomingEvents = trpc.pei.getUpcomingEvents.useQuery({ days: 7 });
   const generateBrief = trpc.pei.generateDailyBrief.useMutation({
     onSuccess: (data) => {
       briefSnapshot.refetch();
@@ -137,6 +138,72 @@ export default function PEHome() {
           </div>
         </Link>
       </div>
+
+      {/* Calendar Events */}
+      {upcomingEvents.data && upcomingEvents.data.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>Upcoming Calendar</h3>
+            <Link href="/pe/settings">
+              <span className="text-xs font-medium" style={{ color: "#d4af37" }}>Manage calendars →</span>
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {upcomingEvents.data.slice(0, 5).map((e: any) => {
+              const eventDate = new Date(e.startTime);
+              const isToday = eventDate.toDateString() === new Date().toDateString();
+              const isTomorrow = eventDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+              const dayLabel = isToday ? "Today" : isTomorrow ? "Tomorrow" : eventDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+              return (
+                <div key={e.id} className="flex items-center gap-3 p-2 rounded-lg" style={{ background: isToday ? "oklch(from #d4af37 l c h / 0.06)" : "oklch(96% 0.02 248.6)" }}>
+                  <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg flex-shrink-0" style={{ background: isToday ? "var(--color-ln-navy)" : "oklch(90% 0.02 248.6)" }}>
+                    <span className="text-xs font-bold" style={{ color: isToday ? "#d4af37" : "var(--color-ln-navy)" }}>{dayLabel}</span>
+                    <span className="text-xs" style={{ color: isToday ? "oklch(75% 0.02 248.6)" : "oklch(55% 0.02 248.6)" }}>{eventDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: "var(--color-ln-navy)" }}>{e.title ?? "Untitled event"}</p>
+                    {e.location && <p className="text-xs" style={{ color: "oklch(55% 0.02 248.6)" }}>📍 {e.location}</p>}
+                  </div>
+                  {e.eventType && (
+                    <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)", color: "var(--color-ln-navy)" }}>{e.eventType}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Brief Calendar Items (from AI-generated brief) */}
+      {brief?.calendarItems && Array.isArray(brief.calendarItems) && brief.calendarItems.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar size={16} style={{ color: "#d4af37" }} />
+            <h3 className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>Today's Schedule</h3>
+          </div>
+          <div className="space-y-2">
+            {brief.calendarItems.map((item: any, i: number) => (
+              <div key={i} className="flex items-center gap-3 p-2 rounded-lg" style={{ background: "oklch(96% 0.02 248.6)" }}>
+                <Clock size={14} className="flex-shrink-0" style={{ color: "oklch(55% 0.02 248.6)" }} />
+                <span className="text-xs font-medium" style={{ color: "var(--color-ln-navy)" }}>{item.time}</span>
+                <span className="text-sm" style={{ color: "var(--color-ln-navy)" }}>{item.title}</span>
+                {item.type && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)", color: "var(--color-ln-navy)" }}>{item.type}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Commitment Reminder from Brief */}
+      {brief?.commitmentReminder && (
+        <div className="rounded-2xl p-4 flex items-start gap-3" style={{ background: "oklch(from #f97316 l c h / 0.06)", border: "1px solid oklch(from #f97316 l c h / 0.2)" }}>
+          <AlertCircle size={18} className="mt-0.5 flex-shrink-0" style={{ color: "#f97316" }} />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#f97316" }}>Commitment Reminder</p>
+            <p className="text-sm mt-0.5" style={{ color: "var(--color-ln-navy)" }}>{brief.commitmentReminder}</p>
+          </div>
+        </div>
+      )}
 
       {/* Development Suggestion */}
       {brief?.developmentSuggestion && (
