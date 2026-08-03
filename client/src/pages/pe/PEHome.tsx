@@ -1,0 +1,203 @@
+import { useEffect, useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+import { Sun, Target, Calendar, Zap, MessageSquare, TrendingUp, CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { Link } from "wouter";
+
+export default function PEHome() {
+  const { user } = useAuth();
+  const [briefGenerating, setBriefGenerating] = useState(false);
+
+  const summary = trpc.pei.getDashboardSummary.useQuery();
+  const briefSnapshot = trpc.pei.getTodayBriefSnapshot.useQuery();
+  const generateBrief = trpc.pei.generateDailyBrief.useMutation({
+    onSuccess: (data) => {
+      briefSnapshot.refetch();
+      summary.refetch();
+      setBriefGenerating(false);
+    },
+  });
+
+  useEffect(() => {
+    if (!briefSnapshot.data && !briefSnapshot.isLoading && !briefGenerating) {
+      setBriefGenerating(true);
+      generateBrief.mutate();
+    }
+  }, [briefSnapshot.data, briefSnapshot.isLoading]);
+
+  if (summary.isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-pulse text-sm" style={{ color: "oklch(55% 0.02 248.6)" }}>Loading your dashboard...</div>
+      </div>
+    );
+  }
+
+  const brief = briefSnapshot.data;
+  const hasAssessment = !!summary.data?.latestResult;
+  const userName = user?.name?.split(" ")[0] ?? "there";
+
+  return (
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
+      {/* Greeting & Day Theme */}
+      <div className="rounded-2xl p-6" style={{ background: "var(--color-ln-navy)" }}>
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "#d4af37" }}>
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+            </p>
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
+              {brief?.greeting ?? `Good morning, ${userName}.`}
+            </h1>
+            {brief?.dayTheme && (
+              <p className="text-sm mt-2" style={{ color: "oklch(75% 0.02 248.6)" }}>
+                Today's theme: <span style={{ color: "#d4af37" }}>{brief.dayTheme}</span>
+              </p>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setBriefGenerating(true);
+              generateBrief.mutate();
+            }}
+            disabled={briefGenerating}
+            style={{ borderColor: "#d4af37", color: "#d4af37", background: "transparent" }}
+          >
+            <Sparkles size={14} className="mr-1" />
+            {briefGenerating ? "Generating..." : "Refresh Brief"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Priority Focus */}
+      {brief?.priorityFocus && (
+        <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <div className="flex items-start gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0" style={{ background: "oklch(from #d4af37 l c h / 0.12)" }}>
+              <Target size={18} style={{ color: "#d4af37" }} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(55% 0.02 248.6)" }}>Priority Focus</p>
+              <p className="text-sm mt-1" style={{ color: "var(--color-ln-navy)" }}>{brief.priorityFocus}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Getting Started / Empty State */}
+      {!hasAssessment && (
+        <div className="bg-white rounded-2xl shadow-sm border p-6 text-center" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <div className="flex items-center justify-center w-16 h-16 rounded-full mx-auto mb-4" style={{ background: "oklch(from #d4af37 l c h / 0.12)" }}>
+            <Zap size={28} style={{ color: "#d4af37" }} />
+          </div>
+          <h2 className="text-lg font-bold mb-2" style={{ color: "var(--color-ln-navy)" }}>Start with your PEI Assessment</h2>
+          <p className="text-sm mb-4" style={{ color: "oklch(50% 0.02 248.6)" }}>
+            Complete the 30-question Professional Effectiveness Index to unlock personalized coaching, practice scenarios, and your daily brief.
+          </p>
+          <Link href="/pe/assessment">
+            <Button style={{ background: "var(--color-ln-navy)", color: "#d4af37" }}>
+              Take the Assessment <ArrowRight size={16} className="ml-1" />
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {/* Quick Actions Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Link href="/pe/coach">
+          <div className="bg-white rounded-2xl shadow-sm border p-5 cursor-pointer hover:shadow-md transition-shadow duration-200" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl mb-3" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.08)" }}>
+              <MessageSquare size={18} style={{ color: "var(--color-ln-navy)" }} />
+            </div>
+            <h3 className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>AI Coach</h3>
+            <p className="text-xs mt-1" style={{ color: "oklch(55% 0.02 248.6)" }}>Get coaching on any professional challenge</p>
+          </div>
+        </Link>
+        <Link href="/pe/practice">
+          <div className="bg-white rounded-2xl shadow-sm border p-5 cursor-pointer hover:shadow-md transition-shadow duration-200" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl mb-3" style={{ background: "oklch(from #d4af37 l c h / 0.12)" }}>
+              <Zap size={18} style={{ color: "#d4af37" }} />
+            </div>
+            <h3 className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>Practice Partner</h3>
+            <p className="text-xs mt-1" style={{ color: "oklch(55% 0.02 248.6)" }}>Role-play high-stakes conversations</p>
+          </div>
+        </Link>
+        <Link href="/pe/assessment">
+          <div className="bg-white rounded-2xl shadow-sm border p-5 cursor-pointer hover:shadow-md transition-shadow duration-200" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl mb-3" style={{ background: "oklch(from #22c55e l c h / 0.12)" }}>
+              <TrendingUp size={18} style={{ color: "#22c55e" }} />
+            </div>
+            <h3 className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>PEI Assessment</h3>
+            <p className="text-xs mt-1" style={{ color: "oklch(55% 0.02 248.6)" }}>
+              {hasAssessment ? `Score: ${Math.round(summary.data?.latestResult?.overallScore ?? 0)}/100` : "Take the 30-question assessment"}
+            </p>
+          </div>
+        </Link>
+      </div>
+
+      {/* Development Suggestion */}
+      {brief?.developmentSuggestion && (
+        <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <div className="flex items-start gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0" style={{ background: "oklch(from #6366f1 l c h / 0.12)" }}>
+              <Sun size={18} style={{ color: "#6366f1" }} />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(55% 0.02 248.6)" }}>Today's Development Suggestion</p>
+              <p className="text-sm font-semibold mt-1" style={{ color: "var(--color-ln-navy)" }}>{brief.developmentSuggestion.topic}</p>
+              <p className="text-xs mt-1" style={{ color: "oklch(50% 0.02 248.6)" }}>{brief.developmentSuggestion.why}</p>
+              <p className="text-sm mt-2" style={{ color: "var(--color-ln-navy)" }}>{brief.developmentSuggestion.action}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reflection Question */}
+      {brief?.reflectionQuestion && (
+        <div className="rounded-2xl p-5" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.04)" }}>
+          <div className="flex items-start gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0" style={{ background: "var(--color-ln-navy)" }}>
+              <Sparkles size={18} style={{ color: "#d4af37" }} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(55% 0.02 248.6)" }}>Reflection Question</p>
+              <p className="text-sm mt-1 italic" style={{ color: "var(--color-ln-navy)" }}>"{brief.reflectionQuestion}"</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Commitments */}
+      {summary.data && summary.data.activeCommitmentsCount > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-sm" style={{ color: "var(--color-ln-navy)" }}>Active Commitments</h3>
+            <Link href="/pe/progress">
+              <span className="text-xs font-medium" style={{ color: "#d4af37" }}>View all →</span>
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {summary.data.activeCommitments.map((c: any) => (
+              <div key={c.id} className="flex items-start gap-2">
+                <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0" style={{ color: "oklch(70% 0.02 248.6)" }} />
+                <p className="text-sm" style={{ color: "var(--color-ln-navy)" }}>{c.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Coaching Nudge */}
+      {brief?.coachingNudge && (
+        <div className="text-center py-2">
+          <p className="text-sm" style={{ color: "oklch(55% 0.02 248.6)" }}>
+            <span style={{ color: "#d4af37" }}>✦</span> {brief.coachingNudge}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

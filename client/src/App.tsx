@@ -95,6 +95,14 @@ import JoinProduct from "@/pages/JoinProduct";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PWAInstallBanner from "./components/PWAInstallBanner";
+import PELayout from "./components/PELayout";
+import PEOnboarding from "./pages/pe/PEOnboarding";
+import PEHome from "./pages/pe/PEHome";
+import PEAssessment from "./pages/pe/PEAssessment";
+import PECoach from "./pages/pe/PECoach";
+import PEPractice from "./pages/pe/PEPractice";
+import PEProgress from "./pages/pe/PEProgress";
+import PESettings from "./pages/pe/PESettings";
 import SimulatorStart from "./pages/SimulatorStart";
 import SimulatorSession from "./pages/SimulatorSession";
 import SimulatorDebrief from "./pages/SimulatorDebrief";
@@ -237,6 +245,15 @@ function Router() {
       <Route path="/launch/interview" component={LaunchInterviewIntelligence} />
       <Route path="/launch/negotiate" component={LaunchNegotiationSimulator} />
       <Route path="/launch/dashboard" component={LaunchDashboard} />
+      {/* Professional Effectiveness Intelligence */}
+      <Route path="/pe/onboarding" component={PEOnboarding} />
+      <Route path="/pe">{() => <PELayout><PEHome /></PELayout>}</Route>
+      <Route path="/pe/assessment">{() => <PELayout><PEAssessment /></PELayout>}</Route>
+      <Route path="/pe/coach">{() => <PELayout><PECoach /></PELayout>}</Route>
+      <Route path="/pe/practice">{() => <PELayout><PEPractice /></PELayout>}</Route>
+      <Route path="/pe/progress">{() => <PELayout><PEProgress /></PELayout>}</Route>
+      <Route path="/pe/settings">{() => <PELayout><PESettings /></PELayout>}</Route>
+
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />
       <Route path="/organisation" component={Organisation} />

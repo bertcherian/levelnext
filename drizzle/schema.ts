@@ -2242,3 +2242,194 @@ export const launchXpHistory = mysqlTable("launch_xp_history", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type LaunchXpHistory = typeof launchXpHistory.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROFESSIONAL EFFECTIVENESS INTELLIGENCE (PEI)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── PEI User Profiles ───────────────────────────────────────────────────────
+export const peProfiles = mysqlTable("pe_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id).unique(),
+  // Role & context
+  currentRole: varchar("currentRole", { length: 255 }),
+  targetRole: varchar("targetRole", { length: 255 }),
+  experienceYears: int("experienceYears"),
+  department: varchar("department", { length: 255 }),
+  // Career goals
+  careerGoals: json("careerGoals").$type<string[]>(),
+  developmentFocus: json("developmentFocus").$type<string[]>(),
+  // Voice preference
+  voiceProvider: varchar("voiceProvider", { length: 50 }).default("openai"), // openai | sarvam
+  voiceId: varchar("voiceId", { length: 50 }).default("nova"),
+  voiceLanguage: varchar("voiceLanguage", { length: 10 }).default("en"),
+  // Onboarding
+  onboardingComplete: boolean("onboardingComplete").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PeProfile = typeof peProfiles.$inferSelect;
+export type InsertPeProfile = typeof peProfiles.$inferInsert;
+
+// ─── PEI Calendar Integrations ────────────────────────────────────────────────
+export const peCalendarIntegrations = mysqlTable("pe_calendar_integrations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  provider: varchar("provider", { length: 20 }).notNull(), // google | outlook
+  accessToken: text("accessToken").notNull(),
+  refreshToken: text("refreshToken"),
+  expiresAt: timestamp("expiresAt"),
+  lastSyncAt: timestamp("lastSyncAt"),
+  syncStatus: varchar("syncStatus", { length: 20 }).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PeCalendarIntegration = typeof peCalendarIntegrations.$inferSelect;
+
+// ─── PEI Calendar Events ──────────────────────────────────────────────────────
+export const peCalendarEvents = mysqlTable("pe_calendar_events", {
+  id: int("id").autoincrement().primaryKey(),
+  integrationId: int("integrationId").notNull().references(() => peCalendarIntegrations.id),
+  externalEventId: varchar("externalEventId", { length: 255 }).notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  startTime: timestamp("startTime").notNull(),
+  endTime: timestamp("endTime").notNull(),
+  attendees: json("attendees").$type<Array<{ name: string; email: string }>>(),
+  meetingLink: varchar("meetingLink", { length: 1000 }),
+  isHighStakes: boolean("isHighStakes").default(false).notNull(),
+  prepSuggestionSent: boolean("prepSuggestionSent").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PeCalendarEvent = typeof peCalendarEvents.$inferSelect;
+
+// ─── PEI Assessment Sessions ──────────────────────────────────────────────────
+export const peAssessmentSessions = mysqlTable("pe_assessment_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  status: mysqlEnum("status", ["in_progress", "completed", "abandoned"]).default("in_progress").notNull(),
+  responses: json("responses").$type<Record<string, number>>(),
+  currentQuestionIndex: int("currentQuestionIndex").default(0).notNull(),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PeAssessmentSession = typeof peAssessmentSessions.$inferSelect;
+
+// ─── PEI Assessment Results ───────────────────────────────────────────────────
+export const peAssessmentResults = mysqlTable("pe_assessment_results", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  sessionId: int("sessionId").references(() => peAssessmentSessions.id),
+  // Overall PEI score (0-100)
+  overallScore: float("overallScore").notNull(),
+  zone: varchar("zone", { length: 50 }).notNull(),
+  // Per-dimension scores
+  dimensionScores: json("dimensionScores").$type<Record<string, number>>().notNull(),
+  // LLM-generated analysis
+  llmAnalysis: json("llmAnalysis"),
+  // 90-day development plan
+  developmentPlan: json("developmentPlan").$type<{
+    focusAreas: Array<{ dimension: string; goal: string; actions: string[]; timeline: string }>;
+    weeklyMilestones: Array<{ week: number; milestone: string }>;
+    successIndicators: string[];
+  }>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PeAssessmentResult = typeof peAssessmentResults.$inferSelect;
+
+// ─── PEI Daily Briefs ──────────────────────────────────────────────────────────
+export const peDailyBriefs = mysqlTable("pe_daily_briefs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  briefDate: varchar("briefDate", { length: 10 }).notNull(),
+  brief: json("brief").$type<{
+    greeting: string;
+    dayTheme: string;
+    priorityFocus: string;
+    calendarItems: Array<{ title: string; time: string; isHighStakes: boolean; prepSuggestion?: string }>;
+    developmentSuggestion: { topic: string; why: string; action: string };
+    reflectionQuestion: string;
+    commitmentReminder: string | null;
+    coachingNudge: string;
+  }>().notNull(),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+});
+export type PeDailyBrief = typeof peDailyBriefs.$inferSelect;
+
+// ─── PEI Coach Sessions ───────────────────────────────────────────────────────
+export const peCoachSessions = mysqlTable("pe_coach_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }),
+  context: text("context"), // what the user wants to discuss
+  status: varchar("status", { length: 20 }).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PeCoachSession = typeof peCoachSessions.$inferSelect;
+
+// ─── PEI Coach Messages ───────────────────────────────────────────────────────
+export const peCoachMessages = mysqlTable("pe_coach_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull().references(() => peCoachSessions.id),
+  role: mysqlEnum("role", ["user", "assistant"]).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PeCoachMessage = typeof peCoachMessages.$inferSelect;
+
+// ─── PEI Practice Sessions ─────────────────────────────────────────────────────
+export const pePracticeSessions = mysqlTable("pe_practice_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  scenario: varchar("scenario", { length: 255 }).notNull(),
+  scenarioType: varchar("scenarioType", { length: 100 }),
+  counterpartPersonality: varchar("counterpartPersonality", { length: 100 }),
+  messages: json("messages").$type<Array<{ role: string; content: string; timestamp: string }>>().default([]),
+  coachingFeedback: json("coachingFeedback").$type<{
+    overallRating: number;
+    headline: string;
+    strengths: string[];
+    improvements: string[];
+    keyMoment: string;
+    nextPractice: string;
+    coachingInsight: string;
+  }>(),
+  status: mysqlEnum("status", ["active", "completed"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PePracticeSession = typeof pePracticeSessions.$inferSelect;
+
+// ─── PEI Commitments ──────────────────────────────────────────────────────────
+export const peCommitments = mysqlTable("pe_commitments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  text: text("text").notNull(),
+  dueDate: timestamp("dueDate"),
+  sourceType: varchar("sourceType", { length: 50 }).default("manual").notNull(),
+  sourceId: int("sourceId"),
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  outcome: text("outcome"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PeCommitment = typeof peCommitments.$inferSelect;
+
+// ─── PEI Team Metrics (Manager Dashboard) ─────────────────────────────────────
+export const peTeamMetrics = mysqlTable("pe_team_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  managerId: int("managerId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  teamAdoptionRate: float("teamAdoptionRate").default(0).notNull(),
+  avgSessionDuration: float("avgSessionDuration").default(0).notNull(),
+  assessmentCompletionRate: float("assessmentCompletionRate").default(0).notNull(),
+  practiceEngagementRate: float("practiceEngagementRate").default(0).notNull(),
+  developmentFocusAreas: json("developmentFocusAreas").$type<string[]>(),
+  trendData: json("trendData"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PeTeamMetric = typeof peTeamMetrics.$inferSelect;

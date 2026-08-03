@@ -351,6 +351,13 @@
       "when": 1785513160598,
       "tag": "0049_mysterious_nebula",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "5",
+      "when": 1785742896977,
+      "tag": "0050_early_blindfold",
+      "breakpoints": true
     }
   ]
 }
