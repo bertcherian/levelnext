@@ -103,6 +103,7 @@ import PECoach from "./pages/pe/PECoach";
 import PEPractice from "./pages/pe/PEPractice";
 import PEProgress from "./pages/pe/PEProgress";
 import PESettings from "./pages/pe/PESettings";
+import IntelligenceCoreDashboard from "./pages/IntelligenceCoreDashboard";
 import SimulatorStart from "./pages/SimulatorStart";
 import SimulatorSession from "./pages/SimulatorSession";
 import SimulatorDebrief from "./pages/SimulatorDebrief";
@@ -259,6 +260,8 @@ function Router() {
       <Route path="/organisation" component={Organisation} />
       <Route path="/settings" component={Settings} />
 
+      {/* Intelligence Core */}
+      <Route path="/admin/intelligence-core" component={IntelligenceCoreDashboard} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

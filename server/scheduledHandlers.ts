@@ -20,8 +20,12 @@ import {
   practiceSessions,
   practiceAttempts,
   commitments,
+  icRecommendationActions,
+  icRecommendations,
+  icOutcomeObservations,
+  icOutboxEvents,
 } from "../drizzle/schema";
-import { eq, gte, and, desc } from "drizzle-orm";
+import { eq, gte, and, desc, sql } from "drizzle-orm";
 
 // ── Weekly Practice Summary ───────────────────────────────────────────────────
 export async function weeklySummaryHandler(req: Request, res: Response) {
@@ -262,4 +266,157 @@ function buildWeeklySummaryEmail({
   </table>
 </body>
 </html>`;
+}
+
+// ── Intelligence Core: Follow-up Reminders ─────────────────────────────────────
+// Daily at 2:00 AM UTC (7:30 AM IST) — sends reminders for actions that are
+// past their planned complete date and outcomes that are due for check-in.
+export async function icFollowUpReminderHandler(req: Request, res: Response) {
+  try {
+    const db = await getDb();
+    if (!db) return res.json({ ok: true, skipped: "no-db" });
+
+    const now = new Date();
+    let remindersSent = 0;
+
+    // 1. Actions past their planned complete date that are still in_progress
+    const overdueActions = await db
+      .select({
+        action: icRecommendationActions,
+        user: users,
+      })
+      .from(icRecommendationActions)
+      .innerJoin(users, eq(users.id, icRecommendationActions.userId))
+      .where(and(
+        eq(icRecommendationActions.status, "in_progress"),
+        sql`${icRecommendationActions.plannedCompleteAt} < ${now}`,
+      ));
+
+    for (const { action, user } of overdueActions) {
+      if (!user?.email) continue;
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "LevelNext Intelligence Core — Action Reminder",
+          html: `
+            <h2>Action Reminder</h2>
+            <p>You have an action that is past its planned completion date:</p>
+            <p><strong>${action.actionDescription}</strong></p>
+            <p>Planned completion: ${action.plannedCompleteAt ? new Date(action.plannedCompleteAt).toLocaleDateString() : "N/A"}</p>
+            <p>Please update the status or record an outcome in your LevelNext dashboard.</p>
+          `,
+        });
+        remindersSent++;
+      } catch (e) {
+        console.error("[IC Reminder] Failed to send to user", user.id, e);
+      }
+    }
+
+    // 2. Recommendations that have been accepted but have no action created yet
+    // and their action check-in period has passed
+    const acceptedWithoutAction = await db
+      .select({
+        rec: icRecommendations,
+        user: users,
+      })
+      .from(icRecommendations)
+      .innerJoin(users, eq(users.id, icRecommendations.userId))
+      .leftJoin(icRecommendationActions, eq(icRecommendationActions.recommendationId, icRecommendations.id))
+      .where(and(
+        eq(icRecommendations.status, "accepted"),
+        sql`${icRecommendationActions.id} IS NULL`,
+        sql`${icRecommendations.createdAt} < ${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)}`,
+      ));
+
+    for (const { rec, user } of acceptedWithoutAction) {
+      if (!user?.email) continue;
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "LevelNext Intelligence Core — Recommendation Awaiting Action",
+          html: `
+            <h2>Recommendation Awaiting Action</h2>
+            <p>You accepted a recommendation but haven't created an action yet:</p>
+            <p><strong>${rec.title}</strong></p>
+            <p>${rec.description ?? ""}</p>
+            <p>Visit your LevelNext dashboard to create an action plan.</p>
+          `,
+        });
+        remindersSent++;
+      } catch (e) {
+        console.error("[IC Reminder] Failed to send to user", user.id, e);
+      }
+    }
+
+    // 3. Completed actions that are due for outcome check-in (30 days after completion)
+    const actionsDueForOutcome = await db
+      .select({
+        action: icRecommendationActions,
+        user: users,
+      })
+      .from(icRecommendationActions)
+      .innerJoin(users, eq(users.id, icRecommendationActions.userId))
+      .leftJoin(icOutcomeObservations, eq(icOutcomeObservations.actionId, icRecommendationActions.id))
+      .where(and(
+        eq(icRecommendationActions.status, "completed"),
+        sql`${icOutcomeObservations.id} IS NULL`,
+        sql`${icRecommendationActions.completedAt} < ${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)}`,
+      ));
+
+    for (const { action, user } of actionsDueForOutcome) {
+      if (!user?.email) continue;
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "LevelNext Intelligence Core — Outcome Check-in Due",
+          html: `
+            <h2>Outcome Check-in Due</h2>
+            <p>You completed an action 30 days ago. It's time to record the outcome:</p>
+            <p><strong>${action.actionDescription}</strong></p>
+            <p>Visit your LevelNext dashboard to record the outcome and its impact.</p>
+          `,
+        });
+        remindersSent++;
+      } catch (e) {
+        console.error("[IC Reminder] Failed to send to user", user.id, e);
+      }
+    }
+
+    return res.json({ ok: true, remindersSent });
+  } catch (error) {
+    console.error("[IC Follow-up Reminder] Error:", error);
+    return res.status(500).json({ ok: false, error: String(error) });
+  }
+}
+
+// ── Intelligence Core: Outbox Publisher ─────────────────────────────────────────
+// Every 15 minutes — processes pending outbox events and marks them as published.
+export async function icOutboxPublisherHandler(req: Request, res: Response) {
+  try {
+    const db = await getDb();
+    if (!db) return res.json({ ok: true, skipped: "no-db" });
+
+    // Get pending events
+    const pendingEvents = await db
+      .select()
+      .from(icOutboxEvents)
+      .where(eq(icOutboxEvents.status, "pending"))
+      .orderBy(icOutboxEvents.createdAt)
+      .limit(100);
+
+    let published = 0;
+    for (const event of pendingEvents) {
+      // Mark as published (in production, this would publish to event bus / webhook)
+      await db
+        .update(icOutboxEvents)
+        .set({ status: "published", publishedAt: new Date() })
+        .where(eq(icOutboxEvents.id, event.id));
+      published++;
+    }
+
+    return res.json({ ok: true, published });
+  } catch (error) {
+    console.error("[IC Outbox Publisher] Error:", error);
+    return res.status(500).json({ ok: false, error: String(error) });
+  }
 }

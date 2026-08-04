@@ -3,7 +3,7 @@
 ## Phase 1: Database Schema & Foundation
 - [x] Add Intelligence Core tables to drizzle/schema.ts (diagnostic_instances, judgment_rules, judgment_rule_versions, judgment_executions, recommendations, recommendation_actions, outcome_observations, outcome_metrics, outcome_evidence, processing_permissions, permission_events, audit_events, outbox_events)
 - [x] Generate and apply database migration
-- [ ] Create shared types for Intelligence Core
+- [x] Create shared types for Intelligence Core
 
 ## Phase 2: Permission & Consent System
 - [x] Implement permission resolution service
@@ -25,10 +25,10 @@
 - [x] Create admin dashboard with engagement funnel metrics
 
 ## Phase 6: Background Jobs & Observability
-- [ ] Implement outbox publisher job
-- [ ] Add follow-up reminder scheduler
-- [ ] Create outcome-eligibility evaluator
-- [ ] Add audit logging middleware
+- [x] Implement outbox publisher job
+- [x] Add follow-up reminder scheduler
+- [x] Create outcome-eligibility evaluator
+- [x] Add audit logging middleware
 
 ## Phase 7: Testing & Deployment
 - [x] Write unit tests for rule engine

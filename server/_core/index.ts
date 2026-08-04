@@ -9,7 +9,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { weeklySummaryHandler, momentumCheckinHandler } from "../scheduledHandlers";
+import { weeklySummaryHandler, momentumCheckinHandler, icFollowUpReminderHandler, icOutboxPublisherHandler } from "../scheduledHandlers";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -47,6 +47,8 @@ async function startServer() {
   // Scheduled Heartbeat endpoints
   app.post("/api/scheduled/weeklySummary", weeklySummaryHandler);
   app.post("/api/scheduled/momentumCheckin", momentumCheckinHandler);
+  app.post("/api/scheduled/icFollowUpReminder", icFollowUpReminderHandler);
+  app.post("/api/scheduled/icOutboxPublisher", icOutboxPublisherHandler);
 
   // tRPC API
   app.use(
