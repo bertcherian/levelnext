@@ -2433,3 +2433,265 @@ export const peTeamMetrics = mysqlTable("pe_team_metrics", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type PeTeamMetric = typeof peTeamMetrics.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTELLIGENCE CORE — Phase 1 Schema
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── IC: Diagnostic Instances ─────────────────────────────────────────────────
+// Immutable record of a completed diagnostic, linking to the existing reports table
+export const icDiagnosticInstances = mysqlTable("ic_diagnostic_instances", {
+  id: int("id").autoincrement().primaryKey(),
+  reportId: int("reportId").notNull().references(() => reports.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  userId: int("userId").references(() => users.id),
+  moduleType: varchar("moduleType", { length: 20 }).notNull(),
+  edgeScore: float("edgeScore").notNull(),
+  dimensionScores: json("dimensionScores").$type<Record<string, number>>(),
+  archetype: varchar("archetype", { length: 100 }),
+  zone: varchar("zone", { length: 100 }),
+  completedAt: timestamp("completedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcDiagnosticInstance = typeof icDiagnosticInstances.$inferSelect;
+
+// ─── IC: Judgment Rules ─────────────────────────────────────────────────────────
+// Registry of deterministic rules that produce recommendations
+export const icJudgmentRules = mysqlTable("ic_judgment_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  ruleCode: varchar("ruleCode", { length: 120 }).notNull().unique(),
+  displayName: varchar("displayName", { length: 255 }).notNull(),
+  description: text("description"),
+  moduleType: varchar("moduleType", { length: 20 }).notNull(),
+  dimensionId: varchar("dimensionId", { length: 100 }),
+  priority: int("priority").default(50).notNull(),
+  status: mysqlEnum("status", ["draft", "tested", "reviewed", "approved", "active", "retired"]).default("draft").notNull(),
+  approvedBy: int("approvedBy").references(() => users.id),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IcJudgmentRule = typeof icJudgmentRules.$inferSelect;
+
+// ─── IC: Judgment Rule Versions ─────────────────────────────────────────────────
+// Versioned rule logic — conditions, thresholds, and recommendation templates
+export const icJudgmentRuleVersions = mysqlTable("ic_judgment_rule_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  ruleId: int("ruleId").notNull().references(() => icJudgmentRules.id),
+  version: int("version").notNull(),
+  // JSON conditions: { field, operator, value }[]
+  conditions: json("conditions").$type<Array<{ field: string; operator: string; value: number | string }>>().notNull(),
+  // Recommendation template
+  recommendationTitle: varchar("recommendationTitle", { length: 255 }).notNull(),
+  recommendationDescription: text("recommendationDescription").notNull(),
+  recommendationType: varchar("recommendationType", { length: 100 }).notNull(),
+  // Follow-up timing
+  actionCheckInDays: int("actionCheckInDays").default(7).notNull(),
+  outcomeCheckInDays: int("outcomeCheckInDays").default(30).notNull(),
+  // Conflict handling
+  mutexGroup: varchar("mutexGroup", { length: 100 }),
+  maxRecommendations: int("maxRecommendations").default(3).notNull(),
+  // Explanation
+  explanationTemplate: text("explanationTemplate"),
+  status: mysqlEnum("status", ["draft", "active", "superseded"]).default("draft").notNull(),
+  effectiveFrom: timestamp("effectiveFrom"),
+  effectiveTo: timestamp("effectiveTo"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcJudgmentRuleVersion = typeof icJudgmentRuleVersions.$inferSelect;
+
+// ─── IC: Judgment Executions ───────────────────────────────────────────────────
+// Immutable record of a rule execution against a diagnostic instance
+export const icJudgmentExecutions = mysqlTable("ic_judgment_executions", {
+  id: int("id").autoincrement().primaryKey(),
+  diagnosticInstanceId: int("diagnosticInstanceId").notNull().references(() => icDiagnosticInstances.id),
+  ruleVersionId: int("ruleVersionId").notNull().references(() => icJudgmentRuleVersions.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  userId: int("userId").references(() => users.id),
+  // Input snapshot
+  inputSnapshot: json("inputSnapshot").$type<Record<string, unknown>>().notNull(),
+  // Execution result
+  matched: boolean("matched").notNull(),
+  outputSnapshot: json("outputSnapshot").$type<Record<string, unknown>>(),
+  // Confidence
+  inputConfidence: float("inputConfidence"),
+  ruleApplicability: float("ruleApplicability"),
+  // Lineage
+  traceId: varchar("traceId", { length: 80 }),
+  executedAt: timestamp("executedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcJudgmentExecution = typeof icJudgmentExecutions.$inferSelect;
+
+// ─── IC: Recommendations ────────────────────────────────────────────────────────
+// First-class recommendation records generated by the judgment engine
+export const icRecommendations = mysqlTable("ic_recommendations", {
+  id: int("id").autoincrement().primaryKey(),
+  diagnosticInstanceId: int("diagnosticInstanceId").notNull().references(() => icDiagnosticInstances.id),
+  judgmentExecutionId: int("judgmentExecutionId").notNull().references(() => icJudgmentExecutions.id),
+  ruleId: int("ruleId").notNull().references(() => icJudgmentRules.id),
+  ruleVersionId: int("ruleVersionId").notNull().references(() => icJudgmentRuleVersions.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  recommendationType: varchar("recommendationType", { length: 100 }).notNull(),
+  priority: int("priority").default(50).notNull(),
+  explanation: text("explanation"),
+  status: mysqlEnum("status", ["generated", "presented", "accepted", "rejected", "deferred", "superseded"]).default("generated").notNull(),
+  presentedAt: timestamp("presentedAt"),
+  decidedAt: timestamp("decidedAt"),
+  decisionReasonCode: varchar("decisionReasonCode", { length: 100 }),
+  decisionReasonText: text("decisionReasonText"),
+  idempotencyKey: varchar("idempotencyKey", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IcRecommendation = typeof icRecommendations.$inferSelect;
+
+// ─── IC: Recommendation Actions ─────────────────────────────────────────────────
+// Action commitments made by users based on recommendations
+export const icRecommendationActions = mysqlTable("ic_recommendation_actions", {
+  id: int("id").autoincrement().primaryKey(),
+  recommendationId: int("recommendationId").notNull().references(() => icRecommendations.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id),
+  actionTypeCode: varchar("actionTypeCode", { length: 100 }).notNull(),
+  actionDescription: text("actionDescription").notNull(),
+  status: mysqlEnum("status", ["planned", "in_progress", "completed", "cancelled"]).default("planned").notNull(),
+  plannedStartAt: timestamp("plannedStartAt"),
+  plannedCompleteAt: timestamp("plannedCompleteAt"),
+  completedAt: timestamp("completedAt"),
+  completionNotes: text("completionNotes"),
+  version: int("version").default(1).notNull(),
+  idempotencyKey: varchar("idempotencyKey", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IcRecommendationAction = typeof icRecommendationActions.$inferSelect;
+
+// ─── IC: Outcome Observations ───────────────────────────────────────────────────
+// Records of outcomes observed after actions were taken
+export const icOutcomeObservations = mysqlTable("ic_outcome_observations", {
+  id: int("id").autoincrement().primaryKey(),
+  actionId: int("actionId").notNull().references(() => icRecommendationActions.id),
+  recommendationId: int("recommendationId").notNull().references(() => icRecommendations.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id),
+  observationRound: int("observationRound").default(1).notNull(),
+  impactLevel: mysqlEnum("impactLevel", ["none", "minimal", "moderate", "significant", "transformative"]).notNull(),
+  recommendationValue: mysqlEnum("recommendationValue", ["not_helpful", "slightly_helpful", "helpful", "very_helpful", "essential"]).notNull(),
+  causalConfidence: mysqlEnum("causalConfidence", ["low", "medium", "high"]).default("medium").notNull(),
+  outcomeSummary: text("outcomeSummary"),
+  measurementMethodCode: varchar("measurementMethodCode", { length: 100 }),
+  observedAt: timestamp("observedAt").defaultNow().notNull(),
+  idempotencyKey: varchar("idempotencyKey", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcOutcomeObservation = typeof icOutcomeObservations.$inferSelect;
+
+// ─── IC: Outcome Metrics ────────────────────────────────────────────────────────
+// Normalized quantitative metrics for outcome observations
+export const icOutcomeMetrics = mysqlTable("ic_outcome_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  outcomeObservationId: int("outcomeObservationId").notNull().references(() => icOutcomeObservations.id),
+  metricCode: varchar("metricCode", { length: 120 }).notNull(),
+  baselineValue: float("baselineValue"),
+  resultValue: float("resultValue"),
+  unitCode: varchar("unitCode", { length: 40 }),
+  baselineDate: timestamp("baselineDate"),
+  resultDate: timestamp("resultDate"),
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcOutcomeMetric = typeof icOutcomeMetrics.$inferSelect;
+
+// ─── IC: Outcome Evidence ───────────────────────────────────────────────────────
+// Evidence classification for outcome observations
+export const icOutcomeEvidence = mysqlTable("ic_outcome_evidence", {
+  id: int("id").autoincrement().primaryKey(),
+  outcomeObservationId: int("outcomeObservationId").notNull().references(() => icOutcomeObservations.id),
+  evidenceSource: mysqlEnum("evidenceSource", ["self_report", "manager_confirmation", "coach_observation", "system_metric", "uploaded_document", "hr_validation"]).notNull(),
+  verificationStatus: mysqlEnum("verificationStatus", ["unverified", "pending", "verified", "disputed", "rejected"]).default("unverified").notNull(),
+  evidenceReference: varchar("evidenceReference", { length: 500 }),
+  verifiedBy: int("verifiedBy").references(() => users.id),
+  verifiedAt: timestamp("verifiedAt"),
+  verificationNotes: text("verificationNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcOutcomeEvidence = typeof icOutcomeEvidence.$inferSelect;
+
+// ─── IC: Processing Permissions ─────────────────────────────────────────────────
+// Current projection of permissions for a processing purpose
+export const icProcessingPermissions = mysqlTable("ic_processing_permissions", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  scopeType: mysqlEnum("scopeType", ["organization", "individual"]).notNull(),
+  scopeSubjectId: int("scopeSubjectId").notNull(),
+  purposeCode: varchar("purposeCode", { length: 120 }).notNull(),
+  status: mysqlEnum("status", ["pending", "granted", "revoked", "expired"]).default("pending").notNull(),
+  policyVersion: varchar("policyVersion", { length: 40 }),
+  legalBasisCode: varchar("legalBasisCode", { length: 80 }),
+  effectiveFrom: timestamp("effectiveFrom"),
+  effectiveTo: timestamp("effectiveTo"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcProcessingPermission = typeof icProcessingPermissions.$inferSelect;
+
+// ─── IC: Permission Events ──────────────────────────────────────────────────────
+// Append-only permission ledger
+export const icPermissionEvents = mysqlTable("ic_permission_events", {
+  id: int("id").autoincrement().primaryKey(),
+  permissionId: int("permissionId").references(() => icProcessingPermissions.id),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  scopeType: varchar("scopeType", { length: 40 }).notNull(),
+  scopeSubjectId: int("scopeSubjectId").notNull(),
+  purposeCode: varchar("purposeCode", { length: 120 }).notNull(),
+  eventType: mysqlEnum("eventType", ["requested", "granted", "revoked", "expired", "deletion_requested", "processing_excluded"]).notNull(),
+  policyVersion: varchar("policyVersion", { length: 40 }),
+  reason: text("reason"),
+  actorUserId: int("actorUserId").references(() => users.id),
+  occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  requestIpHash: varchar("requestIpHash", { length: 100 }),
+  userAgentClass: varchar("userAgentClass", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcPermissionEvent = typeof icPermissionEvents.$inferSelect;
+
+// ─── IC: Audit Events ───────────────────────────────────────────────────────────
+// Immutable security and business audit log
+export const icAuditEvents = mysqlTable("ic_audit_events", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").references(() => tenants.id),
+  actorUserId: int("actorUserId").references(() => users.id),
+  subjectUserId: int("subjectUserId").references(() => users.id),
+  eventType: varchar("eventType", { length: 120 }).notNull(),
+  resourceType: varchar("resourceType", { length: 80 }),
+  resourceId: int("resourceId"),
+  processingPurpose: varchar("processingPurpose", { length: 120 }),
+  authorizationResult: mysqlEnum("authorizationResult", ["allowed", "denied", "not_applicable"]).default("not_applicable").notNull(),
+  traceId: varchar("traceId", { length: 80 }),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcAuditEvent = typeof icAuditEvents.$inferSelect;
+
+// ─── IC: Outbox Events ───────────────────────────────────────────────────────────
+// Reliable event publication via transactional outbox pattern
+export const icOutboxEvents = mysqlTable("ic_outbox_events", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").references(() => tenants.id),
+  eventType: varchar("eventType", { length: 120 }).notNull(),
+  aggregateType: varchar("aggregateType", { length: 80 }),
+  aggregateId: int("aggregateId"),
+  payload: json("payload").$type<Record<string, unknown>>(),
+  status: mysqlEnum("status", ["pending", "processing", "published", "failed", "dead_letter"]).default("pending").notNull(),
+  attemptCount: int("attemptCount").default(0).notNull(),
+  availableAt: timestamp("availableAt").defaultNow().notNull(),
+  publishedAt: timestamp("publishedAt"),
+  lastError: text("lastError"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IcOutboxEvent = typeof icOutboxEvents.$inferSelect;

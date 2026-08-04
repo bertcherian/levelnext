@@ -56,6 +56,7 @@ import { launchInterviewRouter } from "./routers/launchInterview";
 import { launchNegotiationRouter } from "./routers/launchNegotiation";
 import { launchRemindersRouter } from "./routers/launchReminders";
 import { peiRouter } from "./routers/pei";
+import { intelligenceCoreRouter } from "./routers/intelligenceCore";
 
 export const appRouter = router({
   system: systemRouter,
@@ -121,6 +122,7 @@ export const appRouter = router({
   launchNegotiation: launchNegotiationRouter,
   launchReminders: launchRemindersRouter,
   pei: peiRouter,
+  intelligenceCore: intelligenceCoreRouter,
 });
 
 export type AppRouter = typeof appRouter;
