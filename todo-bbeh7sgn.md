@@ -32,3 +32,15 @@
 
 ## Phase 7: Testing & Deployment
 - [x] Write unit tests for rule engine
+
+## Phase 8: ECI Judgement Specification & User-Facing Features
+- [x] Create ECI Judgement Specification as structured shared data module (pillars, sub-dimensions, score bands, archetypes, risk catalogue, intervention library, practice scenarios)
+- [x] Seed ECI single-dimension judgment rules into database (10 sub-dimensions × 3 score bands)
+- [x] Seed ECI cross-dimensional judgment rules (High Expertise/Low Presence, Operational Expert, Hidden Executive, Political Blind Spot)
+- [x] Seed ECI archetypes (10 archetypes with strengths, blind spots, risks, priorities)
+- [x] Seed ECI executive risk catalogue (12 risks with indicators and coaching priorities)
+- [x] Register Heartbeat cron job for IC follow-up reminders (daily 2:00 AM UTC)
+- [x] Register Heartbeat cron job for IC outbox publisher (every 15 minutes)
+- [x] Build user-facing /intelligence page with recommendation list, decision workflow, action creation, and outcome recording
+- [x] Add tests for ECI rule seeding and user-facing procedures (54 tests passing)
+- [x] Save checkpoint and deploy

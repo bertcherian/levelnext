@@ -56,6 +56,7 @@ const NAV_ITEMS = [
   { label: "Patterns", icon: BarChart3, href: "/playbook/patterns" },
   { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
   { label: "Insights", icon: Lightbulb, href: "/insights" },
+  { label: "Intelligence", icon: Sparkles, href: "/intelligence" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
   { label: "Progress", icon: BarChart3, href: "/progress" },
   { label: "Organisation", icon: Building2, href: "/organisation" },
