@@ -44,3 +44,8 @@
 - [x] Build user-facing /intelligence page with recommendation list, decision workflow, action creation, and outcome recording
 - [x] Add tests for ECI rule seeding and user-facing procedures (54 tests passing)
 - [x] Save checkpoint and deploy
+
+## Phase 9: Outcomes Tab Progress Chart
+- [x] Add impact distribution bar chart to Outcomes tab
+- [x] Add summary stats (total actions, completed, outcomes recorded, avg impact)
+- [x] Save checkpoint and verify

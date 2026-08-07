@@ -40,6 +40,7 @@ import {
   ChevronUp,
   Award,
   Activity,
+  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -595,8 +596,41 @@ function ActionsTab() {
 
 function OutcomesTab() {
   const { data: outcomeData, isLoading } = trpc.intelligenceCore.myOutcomes.useQuery();
+  const { data: actionData } = trpc.intelligenceCore.myActions.useQuery();
   // Note: query invalidation handled by recordOutcomeMutation in ActionsTab
   const outcomes = outcomeData?.outcomes ?? [];
+  const actions = actionData?.actions ?? [];
+
+  // Compute summary stats
+  const totalActions = actions.length;
+  const completedActions = actions.filter(a => a.status === "completed").length;
+  const cancelledActions = actions.filter(a => a.status === "cancelled").length;
+  const outcomesRecorded = outcomes.length;
+  const completionRate = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+
+  // Impact distribution
+  const impactLevels = ["none", "minimal", "moderate", "significant", "transformative"] as const;
+  const impactCounts = impactLevels.map(level => ({
+    level,
+    count: outcomes.filter(o => o.impactLevel === level).length,
+    color: IMPACT_STYLES[level] ?? "oklch(55% 0.02 248.6)",
+  }));
+  const maxImpactCount = Math.max(...impactCounts.map(c => c.count), 1);
+
+  // Recommendation value distribution
+  const recValueLevels = ["not_helpful", "slightly_helpful", "helpful", "very_helpful", "essential"] as const;
+  const recValueCounts = recValueLevels.map(level => ({
+    level,
+    label: level.replace(/_/g, " "),
+    count: outcomes.filter(o => o.recommendationValue === level).length,
+  }));
+  const maxRecValueCount = Math.max(...recValueCounts.map(c => c.count), 1);
+
+  // Impact score: weighted average (none=0, minimal=1, moderate=2, significant=3, transformative=4)
+  const impactWeight: Record<string, number> = { none: 0, minimal: 1, moderate: 2, significant: 3, transformative: 4 };
+  const avgImpactScore = outcomes.length > 0
+    ? (outcomes.reduce((sum, o) => sum + (impactWeight[o.impactLevel] ?? 0), 0) / outcomes.length).toFixed(1)
+    : "0.0";
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
@@ -613,7 +647,7 @@ function OutcomesTab() {
         </div>
       )}
 
-      {!isLoading && outcomes.length === 0 && (
+      {!isLoading && outcomes.length === 0 && totalActions === 0 && (
         <div className="rounded-2xl px-6 py-10 text-center" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
           <Activity size={28} className="mx-auto mb-3" style={{ color: "oklch(70% 0.01 248.6)" }} />
           <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>No outcomes recorded yet</h3>
@@ -623,45 +657,157 @@ function OutcomesTab() {
         </div>
       )}
 
-      {outcomes.length > 0 && (
-        <div className="space-y-3">
-          {outcomes.map((outcome) => {
-            const impactColor = IMPACT_STYLES[outcome.impactLevel] ?? "oklch(55% 0.02 248.6)";
-            return (
-              <div key={outcome.id} className="rounded-2xl p-5" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
-                <div className="flex items-start gap-3 mb-3">
-                  <div
-                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: `oklch(from ${impactColor} l c h / 0.12)` }}
-                  >
-                    <TrendingUp size={14} style={{ color: impactColor }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
-                        style={{ background: `oklch(from ${impactColor} l c h / 0.12)`, color: impactColor }}
-                      >
-                        {outcome.impactLevel}
-                      </span>
-                      <span className="text-[10px]" style={{ color: "oklch(55% 0.02 248.6)" }}>
-                        {formatDate(outcome.observedAt)}
-                      </span>
-                    </div>
-                    {outcome.outcomeSummary && (
-                      <p className="text-sm leading-relaxed" style={{ color: "var(--color-ln-navy)" }}>
-                        {outcome.outcomeSummary}
-                      </p>
-                    )}
-                    <p className="text-[11px] mt-1.5" style={{ color: "oklch(55% 0.02 248.6)" }}>
-                      Recommendation value: {outcome.recommendationValue.replace(/_/g, " ")} · Confidence: {outcome.causalConfidence}
-                    </p>
-                  </div>
-                </div>
+      {/* Progress Summary Chart — shown whenever there are actions or outcomes */}
+      {(outcomes.length > 0 || totalActions > 0) && !isLoading && (
+        <>
+          <div className="rounded-2xl p-5" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 size={16} style={{ color: "var(--color-ln-gold)" }} />
+              <h3 className="text-sm font-bold" style={{ color: "var(--color-ln-navy)" }}>Your Progress</h3>
+            </div>
+
+            {/* Summary stat cards */}
+            <div className="grid grid-cols-4 gap-3 mb-5">
+              <div className="text-center">
+                <p className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>{totalActions}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "oklch(55% 0.02 248.6)" }}>Total Actions</p>
               </div>
-            );
-          })}
-        </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold" style={{ color: "#059669" }}>{completedActions}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "oklch(55% 0.02 248.6)" }}>Completed</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold" style={{ color: "var(--color-ln-gold)" }}>{outcomesRecorded}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "oklch(55% 0.02 248.6)" }}>Outcomes</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold" style={{ color: "#7c3aed" }}>{avgImpactScore}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "oklch(55% 0.02 248.6)" }}>Avg Impact</p>
+              </div>
+            </div>
+
+            {/* Completion rate bar */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold" style={{ color: "oklch(45% 0.02 248.6)" }}>Completion Rate</span>
+                <span className="text-[11px] font-bold" style={{ color: "var(--color-ln-navy)" }}>{completionRate}%</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: "oklch(93% 0.01 248.6)" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${completionRate}%`,
+                    background: "linear-gradient(90deg, var(--color-ln-gold), #059669)",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Impact distribution bars */}
+            <div className="mb-5">
+              <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(45% 0.02 248.6)" }}>Impact Distribution</p>
+              <div className="space-y-2">
+                {impactCounts.map(({ level, count, color }) => (
+                  <div key={level} className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium w-20 flex-shrink-0 capitalize" style={{ color: "oklch(45% 0.02 248.6)" }}>
+                      {level}
+                    </span>
+                    <div className="flex-1 h-5 rounded-md overflow-hidden" style={{ background: "oklch(95% 0.005 248.6)" }}>
+                      <div
+                        className="h-full rounded-md transition-all duration-500 flex items-center justify-end px-1.5"
+                        style={{
+                          width: `${(count / maxImpactCount) * 100}%`,
+                          background: count > 0 ? color : "transparent",
+                          minWidth: count > 0 ? "24px" : "0",
+                        }}
+                      >
+                        {count > 0 && (
+                          <span className="text-[9px] font-bold text-white">{count}</span>
+                        )}
+                      </div>
+                    </div>
+                    {count === 0 && (
+                      <span className="text-[9px]" style={{ color: "oklch(70% 0.01 248.6)" }}>0</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recommendation value distribution */}
+            <div>
+              <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(45% 0.02 248.6)" }}>Recommendation Value</p>
+              <div className="space-y-2">
+                {recValueCounts.map(({ level, label, count }) => (
+                  <div key={level} className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium w-24 flex-shrink-0 capitalize" style={{ color: "oklch(45% 0.02 248.6)" }}>
+                      {label}
+                    </span>
+                    <div className="flex-1 h-5 rounded-md overflow-hidden" style={{ background: "oklch(95% 0.005 248.6)" }}>
+                      <div
+                        className="h-full rounded-md transition-all duration-500 flex items-center justify-end px-1.5"
+                        style={{
+                          width: `${(count / maxRecValueCount) * 100}%`,
+                          background: count > 0 ? "var(--color-ln-navy)" : "transparent",
+                          minWidth: count > 0 ? "24px" : "0",
+                        }}
+                      >
+                        {count > 0 && (
+                          <span className="text-[9px] font-bold text-white">{count}</span>
+                        )}
+                      </div>
+                    </div>
+                    {count === 0 && (
+                      <span className="text-[9px]" style={{ color: "oklch(70% 0.01 248.6)" }}>0</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Outcome history list */}
+          {outcomes.length > 0 && (
+            <div className="space-y-3">
+              {outcomes.map((outcome) => {
+                const impactColor = IMPACT_STYLES[outcome.impactLevel] ?? "oklch(55% 0.02 248.6)";
+                return (
+                  <div key={outcome.id} className="rounded-2xl p-5" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
+                    <div className="flex items-start gap-3 mb-3">
+                      <div
+                        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                        style={{ background: `oklch(from ${impactColor} l c h / 0.12)` }}
+                      >
+                        <TrendingUp size={14} style={{ color: impactColor }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
+                            style={{ background: `oklch(from ${impactColor} l c h / 0.12)`, color: impactColor }}
+                          >
+                            {outcome.impactLevel}
+                          </span>
+                          <span className="text-[10px]" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                            {formatDate(outcome.observedAt)}
+                          </span>
+                        </div>
+                        {outcome.outcomeSummary && (
+                          <p className="text-sm leading-relaxed" style={{ color: "var(--color-ln-navy)" }}>
+                            {outcome.outcomeSummary}
+                          </p>
+                        )}
+                        <p className="text-[11px] mt-1.5" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                          Recommendation value: {outcome.recommendationValue.replace(/_/g, " ")} · Confidence: {outcome.causalConfidence}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
