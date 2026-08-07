@@ -41,6 +41,10 @@ import {
   Award,
   Activity,
   BarChart3,
+  Compass,
+  AlertTriangle,
+  BookOpen,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -816,6 +820,12 @@ function OutcomesTab() {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function Intelligence() {
+  const { data: eciProfile, isLoading: profileLoading } = trpc.intelligenceCore.getEciProfile.useQuery();
+  const [profileExpanded, setProfileExpanded] = useState(false);
+
+  const hasProfile = eciProfile && "hasEciDiagnostic" in eciProfile && eciProfile.hasEciDiagnostic;
+  const profile = hasProfile ? eciProfile : null;
+
   return (
     <PlatformLayout>
       <div className="min-h-screen" style={{ background: "oklch(98% 0.005 248.6)" }}>
@@ -838,6 +848,208 @@ export default function Intelligence() {
             </div>
           </div>
         </div>
+
+        {/* ECI Profile Section */}
+        {profileLoading && (
+          <div className="max-w-3xl mx-auto px-4 py-4">
+            <div className="rounded-2xl p-5 flex items-center gap-3" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
+              <Loader2 size={16} className="animate-spin" style={{ color: "var(--color-ln-gold)" }} />
+              <span className="text-xs" style={{ color: "oklch(55% 0.02 248.6)" }}>Loading your ECI profile…</span>
+            </div>
+          </div>
+        )}
+
+        {hasProfile && profile && (
+          <div className="max-w-3xl mx-auto px-4 py-4">
+            <div className="rounded-2xl overflow-hidden" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
+              {/* Archetype header */}
+              {profile.archetype && (
+                <div className="p-5" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.03)" }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Compass size={16} style={{ color: "var(--color-ln-gold)" }} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "oklch(55% 0.02 248.6)" }}>Your Communication Archetype</span>
+                  </div>
+                  <h3 className="text-base font-bold mb-1" style={{ color: "var(--color-ln-navy)" }}>{profile.archetype.label}</h3>
+                  <p className="text-xs leading-relaxed" style={{ color: "oklch(50% 0.02 248.6)" }}>{profile.archetype.description}</p>
+
+                  {/* Core strengths & blind spots */}
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "#059669" }}>Core Strengths</p>
+                      <ul className="space-y-1">
+                        {(profile.archetype.coreStrengths ?? []).slice(0, 3).map((s: string, i: number) => (
+                          <li key={i} className="text-[11px] flex items-start gap-1.5" style={{ color: "oklch(45% 0.02 248.6)" }}>
+                            <CheckCircle2 size={12} className="mt-0.5 flex-shrink-0" style={{ color: "#34d399" }} />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "#dc2626" }}>Blind Spots</p>
+                      <ul className="space-y-1">
+                        {(profile.archetype.blindSpots ?? []).slice(0, 3).map((s: string, i: number) => (
+                          <li key={i} className="text-[11px] flex items-start gap-1.5" style={{ color: "oklch(45% 0.02 248.6)" }}>
+                            <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" style={{ color: "#f59e0b" }} />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Development priorities */}
+                  {(profile.archetype.developmentPriorities ?? []).length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--color-ln-gold)" }}>Development Priorities</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(profile.archetype.developmentPriorities ?? []).map((p: string, i: number) => (
+                          <span key={i} className="text-[11px] px-2 py-1 rounded-full" style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.1)", color: "var(--color-ln-navy)" }}>
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Expandable details */}
+              <button
+                onClick={() => setProfileExpanded(!profileExpanded)}
+                className="w-full flex items-center justify-between px-5 py-3 text-xs font-semibold"
+                style={{ color: "var(--color-ln-navy)", borderTop: "1px solid oklch(90% 0.01 248.6)" }}
+              >
+                <span>{profileExpanded ? "Hide" : "Show"} development details, risks & practice scenarios</span>
+                {profileExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+
+              {profileExpanded && (
+                <div className="px-5 pb-5 space-y-5">
+                  {/* Triggered executive risks */}
+                  {(profile.triggeredRisks ?? []).length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle size={14} style={{ color: "#dc2626" }} />
+                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#dc2626" }}>Executive Risks to Watch</p>
+                      </div>
+                      <div className="space-y-2">
+                        {(profile.triggeredRisks ?? []).map((risk: any) => (
+                          <div key={risk.id} className="rounded-lg p-3" style={{ background: "oklch(from #ef4444 l c h / 0.05)", border: "1px solid oklch(from #ef4444 l c h / 0.15)" }}>
+                            <p className="text-xs font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>{risk.label}</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: "oklch(55% 0.02 248.6)" }}>Indicators</p>
+                                <ul className="space-y-0.5">
+                                  {risk.behaviouralIndicators.slice(0, 2).map((ind: string, i: number) => (
+                                    <li key={i} className="text-[10px]" style={{ color: "oklch(50% 0.02 248.6)" }}>• {ind}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: "oklch(55% 0.02 248.6)" }}>Coaching Focus</p>
+                                <ul className="space-y-0.5">
+                                  {risk.coachingPriorities.slice(0, 2).map((c: string, i: number) => (
+                                    <li key={i} className="text-[10px]" style={{ color: "oklch(50% 0.02 248.6)" }}>• {c}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recommended coaching interventions */}
+                  {(profile.recommendedInterventions ?? []).length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpen size={14} style={{ color: "var(--color-ln-gold)" }} />
+                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-gold)" }}>Recommended Development Pathways</p>
+                      </div>
+                      <div className="space-y-3">
+                        {(profile.recommendedInterventions ?? []).map((int: any) => (
+                          <div key={int.id} className="rounded-lg p-4" style={{ background: "oklch(from var(--color-ln-gold) l c h / 0.05)", border: "1px solid oklch(from var(--color-ln-gold) l c h / 0.15)" }}>
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs font-semibold" style={{ color: "var(--color-ln-navy)" }}>{int.objective}</p>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "var(--color-ln-navy)", color: "white" }}>
+                                {int.suggestedDurationWeeks} weeks
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: "oklch(55% 0.02 248.6)" }}>Practice Exercises</p>
+                                <ul className="space-y-0.5">
+                                  {int.practiceExercises.slice(0, 3).map((ex: string, i: number) => (
+                                    <li key={i} className="text-[10px]" style={{ color: "oklch(50% 0.02 248.6)" }}>• {ex}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: "oklch(55% 0.02 248.6)" }}>AI Simulations</p>
+                                <ul className="space-y-0.5">
+                                  {int.aiSimulations.slice(0, 2).map((sim: string, i: number) => (
+                                    <li key={i} className="text-[10px]" style={{ color: "oklch(50% 0.02 248.6)" }}>• {sim}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                            <div className="mt-2">
+                              <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: "#059669" }}>Success Metrics</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {int.successMetrics.map((m: string, i: number) => (
+                                  <span key={i} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "oklch(from #34d399 l c h / 0.1)", color: "#059669" }}>{m}</span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Practice scenarios */}
+                  {(profile.recommendedScenarios ?? []).length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Zap size={14} style={{ color: "var(--color-ln-gold)" }} />
+                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-gold)" }}>Practice Scenarios for Your Weakest Dimensions</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(profile.recommendedScenarios ?? []).map((ps: any) => (
+                          <div key={ps.id} className="rounded-lg p-3" style={{ background: "oklch(98% 0.005 248.6)", border: "1px solid oklch(90% 0.01 248.6)" }}>
+                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-gold)" }}>{ps.difficulty}</span>
+                            <p className="text-[11px] mt-1" style={{ color: "var(--color-ln-navy)" }}>{ps.scenario}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Promotion readiness */}
+                  {(profile.promotionReadiness ?? []).length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <TrendingUp size={14} style={{ color: "var(--color-ln-navy)" }} />
+                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>Promotion Readiness Assessment</p>
+                      </div>
+                      <div className="space-y-2">
+                        {(profile.promotionReadiness ?? []).map((pr: any) => (
+                          <div key={pr.id} className="rounded-lg p-3" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.03)" }}>
+                            <p className="text-xs font-semibold mb-1" style={{ color: "var(--color-ln-navy)" }}>{pr.label}</p>
+                            <p className="text-[11px]" style={{ color: "oklch(50% 0.02 248.6)" }}>{pr.readinessAssessment}</p>
+                            <p className="text-[10px] mt-1" style={{ color: "var(--color-ln-gold)" }}>Focus: {pr.developmentFocus}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="recommendations" className="w-full">

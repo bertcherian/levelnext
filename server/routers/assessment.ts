@@ -42,6 +42,7 @@ import {
   NII_QUESTIONS, NII_DIMENSIONS,
   scoreNii,
 } from "../../shared/modules/niiData";
+import { autoRegisterAndExecuteRules } from "./intelligenceCoreHelpers";
 
 const CI_MODULE_CODES = ["CPI", "CRS", "CMK", "CST", "CAO", "AIR"] as const;
 type CiModuleCode = typeof CI_MODULE_CODES[number];
@@ -400,6 +401,13 @@ export const assessmentRouter = router({
       // Update the Leadership Graph (LI modules only)
       if (!isCiModule(input.moduleType)) {
         await updateLeadershipGraph(ctx.user.id, input.moduleType as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII", scored);
+      }
+
+      // Auto-register with Intelligence Core and execute judgment rules
+      try {
+        await autoRegisterAndExecuteRules(report.id, ctx.user.id);
+      } catch (err) {
+        console.error("[Assessment] Intelligence Core auto-registration failed:", err);
       }
 
       return {

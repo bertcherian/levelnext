@@ -159,6 +159,9 @@ export default function IntelligenceCoreDashboard() {
             <p className="text-sm text-muted-foreground">
               Platform-wide intelligence engine analytics and audit trail
             </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Privacy threshold: N ≥ 5 (groups with fewer than 5 entries are suppressed)
+            </p>
           </div>
         </div>
 
@@ -237,12 +240,16 @@ export default function IntelligenceCoreDashboard() {
               <p className="text-sm text-muted-foreground">No recommendations yet.</p>
             ) : (
               <div className="space-y-2">
-                {recByStatus.map((item) => (
+                {recByStatus.map((item: any) => (
                   <div key={item.status} className="flex items-center justify-between">
                     <Badge className={STATUS_COLORS[item.status] ?? "bg-slate-100"}>
                       {item.status}
                     </Badge>
-                    <span className="font-semibold">{item.count}</span>
+                    {item.suppressed ? (
+                      <span className="text-xs text-muted-foreground italic">&lt; 5 (suppressed)</span>
+                    ) : (
+                      <span className="font-semibold">{item.count}</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -259,12 +266,16 @@ export default function IntelligenceCoreDashboard() {
               <p className="text-sm text-muted-foreground">No actions yet.</p>
             ) : (
               <div className="space-y-2">
-                {actionByStatus.map((item) => (
+                {actionByStatus.map((item: any) => (
                   <div key={item.status} className="flex items-center justify-between">
                     <Badge className={STATUS_COLORS[item.status] ?? "bg-slate-100"}>
                       {item.status}
                     </Badge>
-                    <span className="font-semibold">{item.count}</span>
+                    {item.suppressed ? (
+                      <span className="text-xs text-muted-foreground italic">&lt; 5 (suppressed)</span>
+                    ) : (
+                      <span className="font-semibold">{item.count}</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -281,12 +292,16 @@ export default function IntelligenceCoreDashboard() {
               <p className="text-sm text-muted-foreground">No outcomes recorded yet.</p>
             ) : (
               <div className="space-y-2">
-                {outcomeByImpact.map((item) => (
+                {outcomeByImpact.map((item: any) => (
                   <div key={item.impactLevel} className="flex items-center justify-between">
                     <Badge className={IMPACT_COLORS[item.impactLevel] ?? "bg-slate-100"}>
                       {item.impactLevel}
                     </Badge>
-                    <span className="font-semibold">{item.count}</span>
+                    {item.suppressed ? (
+                      <span className="text-xs text-muted-foreground italic">&lt; 5 (suppressed)</span>
+                    ) : (
+                      <span className="font-semibold">{item.count}</span>
+                    )}
                   </div>
                 ))}
               </div>

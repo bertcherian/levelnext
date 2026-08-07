@@ -49,3 +49,12 @@
 - [x] Add impact distribution bar chart to Outcomes tab
 - [x] Add summary stats (total actions, completed, outcomes recorded, avg impact)
 - [x] Save checkpoint and verify
+
+## Phase 10: ECI Spec Wiring, Auto-Execution, Privacy Thresholding
+- [x] Add tRPC procedure to surface ECI Judgement Spec data (archetypes, pathways, practice scenarios) to frontend
+- [x] Update /intelligence page to show user's archetype, 90-day pathway, and practice scenarios
+- [x] Wire archetype data into recommendation generation flow
+- [x] Auto-execute rules when assessment report is created (integrate registerDiagnostic + executeRules into report flow)
+- [x] Implement N=5 cohort suppression in getAnalytics admin endpoint
+- [x] Write tests for privacy thresholding and auto-execution (54 tests passing)
+- [x] Save checkpoint and deploy

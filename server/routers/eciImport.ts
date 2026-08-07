@@ -423,6 +423,14 @@ export const eciImportRouter = router({
       // Update the Leadership Graph so the platform treats this as a completed ECI
       await updateLeadershipGraph(ctx.user.id, "ECI", scoredForGraph);
 
+      // Auto-register with Intelligence Core and execute judgment rules
+      try {
+        const { autoRegisterAndExecuteRules } = await import("./intelligenceCoreHelpers");
+        await autoRegisterAndExecuteRules(report.id, ctx.user.id);
+      } catch (err) {
+        console.error("[ECI Import] Intelligence Core auto-registration failed:", err);
+      }
+
       return {
         reportId: report.id,
         slug,

@@ -1018,7 +1018,162 @@ export const intelligenceCoreRouter = router({
     return { outcomes: result };
   }),
 
-  // ─── 7. Admin Analytics ────────────────────────────────────────────────────
+  // ─── 7. ECI Judgement Spec Profile ──────────────────────────────────────────
+
+  /**
+   * Get the ECI Judgement Spec profile for the current user.
+   * Returns archetype details, development priorities, practice scenarios,
+   * coaching interventions, and promotion readiness assessment based on
+   * the user's most recent ECI diagnostic.
+   */
+  getEciProfile: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Find the user's most recent ECI diagnostic instance
+    const [instance] = await db
+      .select()
+      .from(icDiagnosticInstances)
+      .where(and(
+        eq(icDiagnosticInstances.userId, ctx.user.id),
+        eq(icDiagnosticInstances.moduleType, "ECI"),
+      ))
+      .orderBy(desc(icDiagnosticInstances.completedAt))
+      .limit(1);
+
+    if (!instance) {
+      return { hasEciDiagnostic: false };
+    }
+
+    // Import ECI Judgement Spec data
+    const {
+      ECI_EXTENDED_ARCHETYPES,
+      ECI_COACHING_INTERVENTIONS,
+      ECI_PRACTICE_SCENARIOS,
+      ECI_PROMOTION_READINESS_RULES,
+      ECI_EXECUTIVE_RISKS,
+      ECI_OUTCOME_DOMAINS,
+      ECI_SCORE_BANDS,
+      getScoreBand,
+    } = await import("../../shared/modules/eciJudgementSpec");
+
+    // Map the original archetype ID to the extended archetype data
+    const archetypeId = instance.archetype ?? "";
+    const extendedArchetype = ECI_EXTENDED_ARCHETYPES.find(a => a.id === archetypeId) ?? null;
+
+    // Evaluate promotion readiness rules against the user's dimension scores
+    const dimScores = (instance.dimensionScores as Record<string, number> | null) ?? {};
+    const promotionReadiness = ECI_PROMOTION_READINESS_RULES.filter(rule => {
+      return rule.conditions.every(cond => {
+        const actual = dimScores[cond.field];
+        if (actual === undefined) return false;
+        switch (cond.operator) {
+          case ">": return actual > cond.value;
+          case ">=": return actual >= cond.value;
+          case "<": return actual < cond.value;
+          case "<=": return actual <= cond.value;
+          default: return false;
+        }
+      });
+    }).map(rule => ({
+      id: rule.id,
+      label: rule.label,
+      readinessAssessment: rule.readinessAssessment,
+      developmentFocus: rule.developmentFocus,
+    }));
+
+    // Find practice scenarios for the user's lowest-scoring dimensions
+    const sortedDims = Object.entries(dimScores)
+      .filter(([k]) => k !== "edgeScore")
+      .sort(([, a], [, b]) => a - b);
+    const lowestDimIds = sortedDims.slice(0, 3).map(([id]) => id);
+    const recommendedScenarios = ECI_PRACTICE_SCENARIOS
+      .filter(ps => lowestDimIds.includes(ps.dimensionId))
+      .slice(0, 6);
+
+    // Find coaching interventions for the user's lowest dimensions
+    // Map dimension IDs to intervention IDs
+    const dimToInterventionMap: Record<string, string> = {
+      strategic_clarity: "authority_language_coaching",
+      executive_framing: "authority_language_coaching",
+      gravitas_composure: "executive_presence_development",
+      confidence_authority: "authority_language_coaching",
+      stakeholder_influence: "political_intelligence_development",
+      political_intelligence: "political_intelligence_development",
+      storytelling_vision: "storytelling_development",
+      executive_visibility: "visibility_building",
+      accountability_conversations: "accountability_conversation_coaching",
+      trust_alignment: "accountability_conversation_coaching",
+    };
+    const recommendedInterventionIds = new Set(
+      lowestDimIds.map(id => dimToInterventionMap[id]).filter(Boolean),
+    );
+    const recommendedInterventions = Array.from(recommendedInterventionIds)
+      .map(id => ECI_COACHING_INTERVENTIONS[id])
+      .filter(Boolean);
+
+    // Find triggered executive risks
+    const triggeredRisks = ECI_EXECUTIVE_RISKS.filter(risk => {
+      // Check if any of the risk's trigger conditions match the user's scores
+      // We check if the dimension mentioned in triggerConditions has a low score
+      return risk.triggerConditions.some(cond => {
+        const match = cond.match(/([a-z_]+)\s*[<>]\s*(\d+)/);
+        if (!match) return false;
+        const [, dim, threshold] = match;
+        const score = dimScores[dim];
+        if (score === undefined) return false;
+        if (cond.includes("<")) return score < parseInt(threshold);
+        if (cond.includes(">")) return score > parseInt(threshold);
+        return false;
+      });
+    });
+
+    // Get score bands for each dimension
+    const dimensionBands = Object.entries(dimScores).map(([id, score]) => ({
+      dimensionId: id,
+      score,
+      band: getScoreBand(score),
+    }));
+
+    return {
+      hasEciDiagnostic: true,
+      diagnosticInstanceId: instance.id,
+      archetype: extendedArchetype ? {
+        id: extendedArchetype.id,
+        label: extendedArchetype.label,
+        description: extendedArchetype.description,
+        coreStrengths: extendedArchetype.coreStrengths,
+        blindSpots: extendedArchetype.blindSpots,
+        executiveRisks: extendedArchetype.executiveRisks,
+        developmentPriorities: extendedArchetype.developmentPriorities,
+        idealEnvironments: extendedArchetype.idealEnvironments,
+        promotionRisks: extendedArchetype.promotionRisks,
+      } : null,
+      edgeScore: instance.edgeScore,
+      dimensionBands,
+      promotionReadiness,
+      recommendedScenarios,
+      recommendedInterventions: recommendedInterventions.map(i => ({
+        id: i.id,
+        objective: i.objective,
+        practiceExercises: i.practiceExercises,
+        aiSimulations: i.aiSimulations,
+        reflectionQuestions: i.reflectionQuestions,
+        suggestedDurationWeeks: i.suggestedDurationWeeks,
+        successMetrics: i.successMetrics,
+      })),
+      triggeredRisks: triggeredRisks.map(r => ({
+        id: r.id,
+        label: r.label,
+        behaviouralIndicators: r.behaviouralIndicators,
+        businessConsequences: r.businessConsequences,
+        coachingPriorities: r.coachingPriorities,
+      })),
+      outcomeDomains: ECI_OUTCOME_DOMAINS,
+    };
+  }),
+
+  // ─── 8. Admin Analytics ────────────────────────────────────────────────────
 
   /**
    * Get Intelligence Core analytics (admin only).
@@ -1027,6 +1182,18 @@ export const intelligenceCoreRouter = router({
   getAnalytics: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Privacy threshold: suppress any grouped result with fewer than 5 entries
+    const PRIVACY_THRESHOLD = 5;
+    function applyPrivacyThreshold<T extends { count: number }>(
+      rows: T[],
+    ): T[] {
+      return rows.map(row =>
+        row.count < PRIVACY_THRESHOLD
+          ? { ...row, count: 0, suppressed: true as const }
+          : row,
+      );
+    }
 
     // Total diagnostic instances
     const [diagCount] = await db
@@ -1048,32 +1215,35 @@ export const intelligenceCoreRouter = router({
       .select({ count: count() })
       .from(icOutcomeObservations);
 
-    // Recommendations by status
-    const recByStatus = await db
+    // Recommendations by status (with privacy thresholding)
+    const recByStatusRaw = await db
       .select({
         status: icRecommendations.status,
         count: count(),
       })
       .from(icRecommendations)
       .groupBy(icRecommendations.status);
+    const recByStatus = applyPrivacyThreshold(recByStatusRaw);
 
-    // Actions by status
-    const actionByStatus = await db
+    // Actions by status (with privacy thresholding)
+    const actionByStatusRaw = await db
       .select({
         status: icRecommendationActions.status,
         count: count(),
       })
       .from(icRecommendationActions)
       .groupBy(icRecommendationActions.status);
+    const actionByStatus = applyPrivacyThreshold(actionByStatusRaw);
 
-    // Outcomes by impact level
-    const outcomeByImpact = await db
+    // Outcomes by impact level (with privacy thresholding)
+    const outcomeByImpactRaw = await db
       .select({
         impactLevel: icOutcomeObservations.impactLevel,
         count: count(),
       })
       .from(icOutcomeObservations)
       .groupBy(icOutcomeObservations.impactLevel);
+    const outcomeByImpact = applyPrivacyThreshold(outcomeByImpactRaw);
 
     // Active rules count
     const [ruleCount] = await db
@@ -1092,6 +1262,7 @@ export const intelligenceCoreRouter = router({
       recommendationsByStatus: recByStatus,
       actionsByStatus: actionByStatus,
       outcomesByImpact: outcomeByImpact,
+      privacyThreshold: PRIVACY_THRESHOLD,
     };
   }),
 
