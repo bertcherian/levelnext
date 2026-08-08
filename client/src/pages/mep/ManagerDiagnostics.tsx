@@ -274,6 +274,10 @@ export default function ManagerDiagnostics() {
                   Analysing responses and preparing AI insights. This takes a few seconds.
                 </p>
               </div>
+              {/* Shimmer progress bar */}
+              <div className="w-full max-w-xs mt-2 h-1 rounded-full bg-muted overflow-hidden">
+                <div className="h-full w-1/3 rounded-full bg-primary/40 animate-[shimmer_1.5s_ease-in-out_infinite]" />
+              </div>
             </div>
           )}
 

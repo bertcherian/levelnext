@@ -26,6 +26,10 @@ const DEV_ORIGINS = [
   "http://127.0.0.1:3000",
 ];
 
+// In dev mode, also allow manus.computer preview domains
+const isManusPreview = (origin: string) =>
+  /^https:\/\/[\w-]+\.manus\.(computer|space)$/.test(origin);
+
 const allowedOrigins = process.env.NODE_ENV === "production"
   ? PRODUCTION_ORIGINS
   : [...PRODUCTION_ORIGINS, ...DEV_ORIGINS];
@@ -109,7 +113,7 @@ async function startServer() {
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (curl, server-to-server, same-origin)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || (process.env.NODE_ENV !== "production" && isManusPreview(origin))) {
         callback(null, true);
       } else {
         callback(new Error(`Origin ${origin} not allowed by CORS`));

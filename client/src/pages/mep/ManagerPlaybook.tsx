@@ -21,6 +21,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { LLMProcessingSkeleton } from "@/components/SkeletonLoader";
 
 // ── Playbook type definitions ─────────────────────────────────────────────────
 const PLAYBOOK_TYPES = [
@@ -340,6 +341,18 @@ export default function ManagerPlaybook() {
               )}
             </Button>
           </div>
+
+          {/* Generating skeleton */}
+          {generating && (
+            <div className="rounded-2xl" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
+              <LLMProcessingSkeleton
+                title="Generating your management play…"
+                subtitle="Our AI is crafting a tailored playbook for your situation. This takes 10–20 seconds."
+                steps={["Analysing situation", "Identifying key dynamics", "Drafting action steps", "Preparing coaching tips"]}
+                className="min-h-[300px]"
+              />
+            </div>
+          )}
         </div>
       </div>
     );

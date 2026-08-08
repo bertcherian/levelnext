@@ -9,6 +9,7 @@ import {
   CheckCircle2, Circle, Lightbulb, MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
+import { ReportSkeleton, LLMProcessingSkeleton } from "@/components/SkeletonLoader";
 // Types inlined from server/routers/cpiReport.ts
 type CpiDimensionAnalysis = {
   dimensionId: string;
@@ -192,8 +193,20 @@ export default function CpiReport() {
 
   if (reportLoading || analysisLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: IVORY }}>
-        <Loader2 className="animate-spin" size={28} style={{ color: INDIGO }} />
+      <div className="min-h-screen" style={{ background: IVORY }}>
+        <ReportSkeleton />
+      </div>
+    );
+  }
+
+  if (generating) {
+    return (
+      <div className="min-h-screen" style={{ background: IVORY }}>
+        <LLMProcessingSkeleton
+          title="Generating your Career Positioning analysis…"
+          subtitle="Our AI is analysing your responses to create personalised career insights. This takes 15–30 seconds."
+          steps={["Scoring your dimensions", "Identifying your archetype", "Generating coaching narrative", "Preparing action plan"]}
+        />
       </div>
     );
   }

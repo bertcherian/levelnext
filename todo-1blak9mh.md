@@ -36,3 +36,18 @@
   - [x] Global handler respects per-mutation onError (no duplicate toasts)
 - [x] Write tests and verify TypeScript compilation
 - [x] Save checkpoint
+
+- [x] Implement automatic retry mechanism for rate-limited mutations
+  - [x] Create useRetryMutation hook that detects 429 errors and auto-retries with exponential backoff
+  - [x] Add visual feedback during retry countdown (toast with retry indicator)
+  - [x] Reusable hook can be applied to any LLM-heavy mutation call
+- [x] Create dedicated error boundary component with user-friendly fallback UI
+  - [x] Build ErrorBoundary component with recovery options (reload, go home, go back)
+  - [x] Replaced existing ErrorBoundary in App.tsx (already wired)
+  - [x] Added collapsible error details and chunk-load error detection
+- [x] Create visual skeleton loaders for LLM-heavy endpoints
+  - [x] Build reusable SkeletonLoader and LLMProcessingSkeleton components
+  - [x] Apply to LLM-heavy pages (CiReport, CpiReport, LiReport, NiiReport, ManagerDiagnostics, ManagerBrief, ManagerPlaybook, AccessPaths)
+  - [x] Fix CORS to allow manus.computer and manus.space preview domains in dev
+- [x] Write tests and verify TypeScript compilation (73 tests pass, 0 TS errors)
+- [x] Save checkpoint

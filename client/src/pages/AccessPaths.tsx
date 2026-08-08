@@ -4,6 +4,7 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { LLMProcessingSkeleton } from "@/components/SkeletonLoader";
 import {
   Route, Zap, ChevronDown, ChevronUp, Copy, Building2,
   Target, Users, Mail, Linkedin, AlertCircle, CheckCircle2,
@@ -221,7 +222,11 @@ export default function AccessPaths() {
               <p className="text-xs text-gray-400 mt-0.5">Select a company to generate access paths</p>
             </div>
             {oppsLoading ? (
-              <div className="p-4 text-center text-sm text-gray-400">Loading...</div>
+              <div className="p-4 space-y-3">
+                <div className="h-4 rounded bg-gray-100 animate-pulse" />
+                <div className="h-4 rounded bg-gray-100 animate-pulse w-3/4" />
+                <div className="h-4 rounded bg-gray-100 animate-pulse w-1/2" />
+              </div>
             ) : activeOpps.length === 0 ? (
               <div className="p-6 text-center">
                 <Building2 className="w-8 h-8 text-gray-300 mx-auto mb-2" />
@@ -363,6 +368,16 @@ export default function AccessPaths() {
                     </div>
                   )}
                 </div>
+
+                {/* Generating skeleton */}
+                {generatingId === selectedOpp?.id && !selectedPath && (
+                  <LLMProcessingSkeleton
+                    title="Generating access paths…"
+                    subtitle="Our AI is identifying decision makers, mutual connections, and outreach strategies."
+                    steps={["Researching company", "Identifying decision makers", "Mapping connections", "Drafting outreach"]}
+                    className="min-h-[300px]"
+                  />
+                )}
 
                 {selectedPath && (
                   <>

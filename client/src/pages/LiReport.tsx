@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import InfinityLoader from "@/components/InfinityLoader";
+import { ReportSkeleton, LLMProcessingSkeleton } from "@/components/SkeletonLoader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -478,7 +479,23 @@ export default function LiReport() {
 
   // ── Loading ──
   if (reportLoading) {
-    return <InfinityLoader visible={true} label="Loading your report…" />;
+    return (
+      <div className="min-h-screen" style={{ background: IVORY }}>
+        <ReportSkeleton />
+      </div>
+    );
+  }
+
+  if (generating) {
+    return (
+      <div className="min-h-screen" style={{ background: IVORY }}>
+        <LLMProcessingSkeleton
+          title="Generating your Leadership Intelligence analysis…"
+          subtitle="Our AI is analysing your responses to create personalised leadership insights."
+          steps={["Scoring dimensions", "Identifying archetype", "Generating coaching narrative"]}
+        />
+      </div>
+    );
   }
 
   if (!report) {

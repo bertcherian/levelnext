@@ -6,6 +6,7 @@ import {
   Zap, MessageSquare, Users, BookOpen, AlertTriangle, Star,
 } from "lucide-react";
 import { toast } from "sonner";
+import { LLMProcessingSkeleton } from "@/components/SkeletonLoader";
 
 // ── Type matching the server response ─────────────────────────────────────────
 interface DailyBrief {
@@ -116,7 +117,7 @@ export default function ManagerBrief() {
         </div>
 
         {/* No brief yet */}
-        {!hasContent && (
+        {!hasContent && !generating && (
           <div
             className="rounded-2xl px-6 py-10 text-center"
             style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
@@ -133,8 +134,20 @@ export default function ManagerBrief() {
               disabled={generating}
               style={{ background: "#a78bfa", color: "white" }}
             >
-              {generating ? <><Loader2 size={14} className="mr-2 animate-spin" /> Generating…</> : "Generate Today's Brief"}
+              Generate Today's Brief
             </Button>
+          </div>
+        )}
+
+        {/* Generating skeleton */}
+        {!hasContent && generating && (
+          <div className="rounded-2xl" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
+            <LLMProcessingSkeleton
+              title="Generating your daily brief…"
+              subtitle="Our AI is analysing your team context to prepare today's management priorities."
+              steps={["Reviewing team pulse", "Identifying priorities", "Crafting coaching question"]}
+              className="min-h-[300px]"
+            />
           </div>
         )}
 

@@ -10,6 +10,7 @@ import {
   Download, FileText
 } from "lucide-react";
 import { toast } from "sonner";
+import { ReportSkeleton, LLMProcessingSkeleton } from "@/components/SkeletonLoader";
 
 // ── Sample PDF CDN link for NII ───────────────────────────────────────────────────────────────
 const NII_SAMPLE_PDF = "/manus-storage/nii_sample_report_placeholder.pdf";
@@ -408,8 +409,20 @@ export default function NiiReport() {
 
   if (reportLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: IVORY }}>
-        <Loader2 className="animate-spin" style={{ color: GOLD }} size={32} />
+      <div className="min-h-screen" style={{ background: IVORY }}>
+        <ReportSkeleton />
+      </div>
+    );
+  }
+
+  if (generating) {
+    return (
+      <div className="min-h-screen" style={{ background: IVORY }}>
+        <LLMProcessingSkeleton
+          title="Generating your Network Intelligence analysis…"
+          subtitle="Our AI is analysing your responses to create personalised networking insights."
+          steps={["Scoring dimensions", "Identifying archetype", "Generating coaching narrative"]}
+        />
       </div>
     );
   }

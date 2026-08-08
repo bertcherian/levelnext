@@ -311,3 +311,9 @@
   50%       { box-shadow: 0 0 0 8px rgba(26, 111, 212, 0); }
 }
 .li-node-pulse { animation: li-node-pulse 2s ease-in-out infinite; }
+
+/* ── Skeleton shimmer animation ──────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
