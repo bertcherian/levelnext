@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, ChevronRight, BarChart3, Clock, Lock } from "lucide-react";
+import { CheckCircle2, ChevronRight, BarChart3, Clock, Lock, Loader2, History, RotateCw, TrendingUp, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import DiagnosticRadarChart from "@/components/DiagnosticRadarChart";
 
@@ -14,7 +14,7 @@ const SCORE_LABELS: Record<number, string> = {
   4: "Neutral", 5: "Somewhat Agree", 6: "Agree", 7: "Strongly Agree",
 };
 
-type ViewMode = "hub" | "taking" | "results";
+type ViewMode = "hub" | "taking" | "results" | "history";
 
 export default function ManagerDiagnostics() {
   const [, navigate] = useLocation();
@@ -26,6 +26,9 @@ export default function ManagerDiagnostics() {
   const [latestResult, setLatestResult] = useState<any>(null);
   const [latestDiagCode, setLatestDiagCode] = useState<string | null>(null);
   const [showReflection, setShowReflection] = useState(false);
+  const [historyResult, setHistoryResult] = useState<any>(null);
+  // Store the last submission payload so we can retry on failure
+  const lastSubmissionRef = useRef<{ code: string; responses: Record<string, number> } | null>(null);
 
   const { data: diagnostics } = trpc.mep.getDiagnostics.useQuery();
   const { data: myResults, refetch: refetchResults } = trpc.mep.getMyResults.useQuery();
@@ -33,6 +36,7 @@ export default function ManagerDiagnostics() {
     { code: activeDiagCode! },
     { enabled: !!activeDiagCode && view === "taking" }
   );
+
   const submitMutation = trpc.mep.submitDiagnostic.useMutation({
     onSuccess: (data) => {
       setLatestResult({ ...data, diagnosticCode: activeDiagCode });
@@ -43,10 +47,21 @@ export default function ManagerDiagnostics() {
     },
     onError: (err: any) => {
       console.error("[MEP] submitDiagnostic error:", err);
-      const msg = err?.message?.includes("max") || err?.message?.includes("expected")
+      const isValidation = err?.message?.includes("max") || err?.message?.includes("expected");
+      const msg = isValidation
         ? "Invalid response value. Please contact support."
         : "Could not submit diagnostic. Please try again.";
-      toast.error(msg);
+      toast.error(msg, {
+        duration: 10000,
+        action: {
+          label: "Retry",
+          onClick: () => {
+            if (lastSubmissionRef.current) {
+              handleSubmitWithPayload(lastSubmissionRef.current.code, lastSubmissionRef.current.responses);
+            }
+          },
+        },
+      });
     },
   });
 
@@ -65,6 +80,15 @@ export default function ManagerDiagnostics() {
     }
   };
 
+  const handleSubmitWithPayload = useCallback(async (code: string, responses: Record<string, number>) => {
+    setSubmitting(true);
+    try {
+      await submitMutation.mutateAsync({ code, responses });
+    } finally {
+      setSubmitting(false);
+    }
+  }, [submitMutation]);
+
   const handleSubmit = async () => {
     if (!activeDiagCode || !diagDetail) return;
     const missing = diagDetail.questions.filter((q: any) => !answers[q.id]);
@@ -72,15 +96,8 @@ export default function ManagerDiagnostics() {
       toast.error(`Please answer all ${missing.length} remaining questions.`);
       return;
     }
-    setSubmitting(true);
-    try {
-      await submitMutation.mutateAsync({
-        code: activeDiagCode,
-        responses: answers,
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    lastSubmissionRef.current = { code: activeDiagCode, responses: answers };
+    handleSubmitWithPayload(activeDiagCode, answers);
   };
 
   const getResultForDiag = (code: string) =>
@@ -90,6 +107,18 @@ export default function ManagerDiagnostics() {
     if (score >= 75) return "#34d399";
     if (score >= 50) return "#f59e0b";
     return "#f87171";
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 80) return "Excellent";
+    if (score >= 65) return "Strong";
+    if (score >= 50) return "Developing";
+    return "Needs Focus";
+  };
+
+  const formatDate = (dateStr: string | Date) => {
+    const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   // ── Hub view ──────────────────────────────────────────────────────────────
@@ -128,6 +157,19 @@ export default function ManagerDiagnostics() {
                 <BarChart3 size={32} style={{ color: "#34d399", opacity: 0.6 }} />
               </div>
             </div>
+          )}
+
+          {/* History button */}
+          {myResults && myResults.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs font-semibold"
+              onClick={() => setView("history")}
+            >
+              <History size={14} className="mr-1.5" />
+              View Diagnostic History ({myResults.length} completed)
+            </Button>
           )}
 
           {/* Diagnostic cards */}
@@ -217,42 +259,62 @@ export default function ManagerDiagnostics() {
             <Progress value={progress} className="h-1.5" />
           </div>
 
-          {/* Current question */}
-          <div
-            className="rounded-2xl p-6"
-            style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
-          >
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#34d399" }}>
-              Question {currentQ + 1} of {questions.length}
-            </p>
-            <p className="text-sm font-medium mb-6 leading-relaxed" style={{ color: "var(--color-ln-navy)" }}>
-              {q.text}
-            </p>
-            <div className="grid grid-cols-7 gap-1.5">
-              {[1, 2, 3, 4, 5, 6, 7].map((val) => {
-                const isSelected = answers[q.id] === val;
-                return (
-                  <button
-                    key={val}
-                    onClick={() => handleAnswer(q.id, val)}
-                    className="flex flex-col items-center gap-1 rounded-xl py-3 transition-all duration-150"
-                    style={{
-                      background: isSelected ? "#34d399" : "oklch(96% 0.01 248.6)",
-                      border: `1px solid ${isSelected ? "#34d399" : "oklch(88% 0.01 248.6)"}`,
-                    }}
-                  >
-                    <span className="text-sm font-bold" style={{ color: isSelected ? "var(--color-ln-navy)" : "oklch(45% 0.02 248.6)" }}>
-                      {val}
-                    </span>
-                  </button>
-                );
-              })}
+          {/* Submitting overlay — full-card spinner */}
+          {submitting && (
+            <div
+              className="rounded-2xl p-8 flex flex-col items-center justify-center gap-4"
+              style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+            >
+              <Loader2 size={36} className="animate-spin" style={{ color: "var(--color-ln-navy)" }} />
+              <div className="text-center">
+                <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+                  Generating your diagnostic report…
+                </p>
+                <p className="text-xs mt-1" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                  Analysing responses and preparing AI insights. This takes a few seconds.
+                </p>
+              </div>
             </div>
-            <div className="flex justify-between mt-2">
-              <span className="text-[10px]" style={{ color: "oklch(55% 0.02 248.6)" }}>Strongly Disagree</span>
-              <span className="text-[10px]" style={{ color: "oklch(55% 0.02 248.6)" }}>Strongly Agree</span>
+          )}
+
+          {/* Current question — hidden while submitting */}
+          {!submitting && (
+            <div
+              className="rounded-2xl p-6"
+              style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#34d399" }}>
+                Question {currentQ + 1} of {questions.length}
+              </p>
+              <p className="text-sm font-medium mb-6 leading-relaxed" style={{ color: "var(--color-ln-navy)" }}>
+                {q.text}
+              </p>
+              <div className="grid grid-cols-7 gap-1.5">
+                {[1, 2, 3, 4, 5, 6, 7].map((val) => {
+                  const isSelected = answers[q.id] === val;
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => handleAnswer(q.id, val)}
+                      className="flex flex-col items-center gap-1 rounded-xl py-3 transition-all duration-150"
+                      style={{
+                        background: isSelected ? "#34d399" : "oklch(96% 0.01 248.6)",
+                        border: `1px solid ${isSelected ? "#34d399" : "oklch(88% 0.01 248.6)"}`,
+                      }}
+                    >
+                      <span className="text-sm font-bold" style={{ color: isSelected ? "var(--color-ln-navy)" : "oklch(45% 0.02 248.6)" }}>
+                        {val}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between mt-2">
+                <span className="text-[10px]" style={{ color: "oklch(55% 0.02 248.6)" }}>Strongly Disagree</span>
+                <span className="text-[10px]" style={{ color: "oklch(55% 0.02 248.6)" }}>Strongly Agree</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Navigation */}
           <div className="flex items-center justify-between gap-3">
@@ -260,7 +322,7 @@ export default function ManagerDiagnostics() {
               variant="outline"
               size="sm"
               onClick={() => setCurrentQ((q) => Math.max(0, q - 1))}
-              disabled={currentQ === 0}
+              disabled={currentQ === 0 || submitting}
             >
               Previous
             </Button>
@@ -269,6 +331,7 @@ export default function ManagerDiagnostics() {
                 <button
                   key={i}
                   onClick={() => setCurrentQ(i)}
+                  disabled={submitting}
                   className="w-6 h-6 rounded-full text-[10px] font-bold transition-all"
                   style={{
                     background: answers[questions[i].id]
@@ -287,6 +350,7 @@ export default function ManagerDiagnostics() {
               <Button
                 size="sm"
                 onClick={() => setCurrentQ((q) => q + 1)}
+                disabled={submitting}
                 style={{ background: "var(--color-ln-navy)", color: "white" }}
               >
                 Next
@@ -298,7 +362,14 @@ export default function ManagerDiagnostics() {
                 disabled={!allAnswered || submitting}
                 style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
               >
-                {submitting ? "Analysing…" : "Submit"}
+                {submitting ? (
+                  <>
+                    <Loader2 size={14} className="mr-1.5 animate-spin" />
+                    Analysing…
+                  </>
+                ) : (
+                  "Submit"
+                )}
               </Button>
             )}
           </div>
@@ -307,6 +378,7 @@ export default function ManagerDiagnostics() {
             className="text-xs text-center w-full"
             style={{ color: "oklch(55% 0.02 248.6)" }}
             onClick={() => { setView("hub"); setActiveDiagCode(null); }}
+            disabled={submitting}
           >
             ← Back to Diagnostics
           </button>
@@ -315,15 +387,198 @@ export default function ManagerDiagnostics() {
     );
   }
 
+  // ── History view ──────────────────────────────────────────────────────────
+  if (view === "history") {
+    const sortedResults = [...(myResults ?? [])].sort(
+      (a: any, b: any) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+    );
+
+    return (
+      <div className="min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold mb-1" style={{ color: "var(--color-ln-navy)" }}>
+                Diagnostic History
+              </h1>
+              <p className="text-sm" style={{ color: "oklch(45% 0.02 248.6)" }}>
+                Your past Manager Effectiveness diagnostic scores and reports.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("hub")}
+            >
+              ← Back to Diagnostics
+            </Button>
+          </div>
+
+          {/* Summary stats */}
+          {sortedResults.length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              <div
+                className="rounded-2xl p-4 text-center"
+                style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+              >
+                <TrendingUp size={18} className="mx-auto mb-1" style={{ color: "var(--color-ln-navy)" }} />
+                <p className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
+                  {Math.round(sortedResults.reduce((s: number, r: any) => s + r.overallScore, 0) / sortedResults.length)}
+                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                  Avg Score
+                </p>
+              </div>
+              <div
+                className="rounded-2xl p-4 text-center"
+                style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+              >
+                <CheckCircle2 size={18} className="mx-auto mb-1" style={{ color: "#34d399" }} />
+                <p className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>
+                  {sortedResults.length}
+                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                  Completed
+                </p>
+              </div>
+              <div
+                className="rounded-2xl p-4 text-center"
+                style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+              >
+                <Calendar size={18} className="mx-auto mb-1" style={{ color: "#f59e0b" }} />
+                <p className="text-sm font-bold mt-2" style={{ color: "var(--color-ln-navy)" }}>
+                  {formatDate(sortedResults[0].completedAt)}
+                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                  Most Recent
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* History list */}
+          <div className="space-y-3">
+            {sortedResults.length === 0 && (
+              <div
+                className="rounded-2xl p-8 text-center"
+                style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+              >
+                <History size={32} className="mx-auto mb-3" style={{ color: "oklch(70% 0.01 248.6)" }} />
+                <p className="text-sm font-medium" style={{ color: "oklch(45% 0.02 248.6)" }}>
+                  No diagnostics completed yet. Take your first diagnostic to see your scores here.
+                </p>
+                <Button
+                  size="sm"
+                  className="mt-4"
+                  style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
+                  onClick={() => setView("hub")}
+                >
+                  Browse Diagnostics
+                </Button>
+              </div>
+            )}
+
+            {sortedResults.map((r: any) => {
+              const diag = diagnostics?.find((d: any) => d.code === r.diagnosticCode);
+              const dimArray = r.dimensionScores
+                ? (Array.isArray(r.dimensionScores)
+                    ? r.dimensionScores
+                    : Object.entries(r.dimensionScores).map(([dim, score]: [string, any]) => ({ dimension: dim, score: typeof score === "number" ? score : Number(score) })))
+                : [];
+              return (
+                <div
+                  key={r.id}
+                  className="rounded-2xl p-5"
+                  style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
+                >
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(55% 0.02 248.6)" }}>
+                          {formatDate(r.completedAt)}
+                        </span>
+                        {r.zone && (
+                          <span
+                            className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                            style={{
+                              background: getScoreColor(r.overallScore) + "15",
+                              color: getScoreColor(r.overallScore),
+                            }}
+                          >
+                            {r.zone}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+                        {diag?.title ?? r.diagnosticCode}
+                      </h3>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold" style={{ color: getScoreColor(r.overallScore) }}>
+                        {r.overallScore}
+                        <span className="text-xs font-normal ml-0.5" style={{ color: "oklch(55% 0.02 248.6)" }}>/100</span>
+                      </p>
+                      <p className="text-[10px] font-semibold" style={{ color: getScoreColor(r.overallScore) }}>
+                        {getScoreLabel(r.overallScore)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Dimension mini-bars */}
+                  {dimArray.length > 0 && (
+                    <div className="space-y-1.5 mt-3">
+                      {dimArray.map((d: any) => (
+                        <div key={d.dimension} className="flex items-center gap-2">
+                          <span className="text-[10px] w-28 truncate" style={{ color: "oklch(45% 0.02 248.6)" }}>
+                            {d.dimension}
+                          </span>
+                          <Progress value={d.score} className="h-1 flex-1" />
+                          <span className="text-[10px] font-bold w-8 text-right" style={{ color: getScoreColor(d.score) }}>
+                            {d.score}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* AI insight headline preview */}
+                  {r.llmAnalysis?.headline && (
+                    <p className="text-xs italic mt-3 pt-3" style={{ color: "oklch(45% 0.02 248.6)", borderTop: "1px solid oklch(92% 0.01 248.6)" }}>
+                      "{r.llmAnalysis.headline}"
+                    </p>
+                  )}
+
+                  {/* View full report button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-3 text-xs font-semibold"
+                    onClick={() => {
+                      setHistoryResult(r);
+                      setView("results");
+                    }}
+                  >
+                    View Full Report
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Results view ──────────────────────────────────────────────────────────
-  if (view === "results" && latestResult) {
-    const diag = diagnostics?.find((d: any) => d.code === latestResult.diagnosticCode);
-    const getScoreLabel = (score: number) => {
-      if (score >= 80) return "Excellent";
-      if (score >= 65) return "Strong";
-      if (score >= 50) return "Developing";
-      return "Needs Focus";
-    };
+  const displayResult = historyResult || latestResult;
+  if (view === "results" && displayResult) {
+    const diag = diagnostics?.find((d: any) => d.code === displayResult.diagnosticCode);
+    const dimArray = displayResult.dimensionScores
+      ? (Array.isArray(displayResult.dimensionScores)
+          ? displayResult.dimensionScores
+          : Object.entries(displayResult.dimensionScores).map(([dim, score]: [string, any]) => ({ dimension: dim, score: typeof score === "number" ? score : Number(score) })))
+      : [];
 
     return (
       <div className="min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
@@ -338,17 +593,17 @@ export default function ManagerDiagnostics() {
             <p className="text-sm mb-4" style={{ color: "oklch(70% 0.02 248.6)" }}>
               {diag?.title ?? "Management Diagnostic"}
             </p>
-            <div className="text-4xl font-bold mb-1" style={{ color: getScoreColor(latestResult.overallScore) }}>
-              {latestResult.overallScore}
+            <div className="text-4xl font-bold mb-1" style={{ color: getScoreColor(displayResult.overallScore) }}>
+              {displayResult.overallScore}
               <span className="text-lg font-normal ml-1 text-white/50">/100</span>
             </div>
-            <p className="text-sm font-semibold" style={{ color: getScoreColor(latestResult.overallScore) }}>
-              {getScoreLabel(latestResult.overallScore)}
+            <p className="text-sm font-semibold" style={{ color: getScoreColor(displayResult.overallScore) }}>
+              {getScoreLabel(displayResult.overallScore)}
             </p>
           </div>
 
           {/* Dimension scores — radar chart + bar breakdown */}
-          {latestResult.dimensionScores && latestResult.dimensionScores.length > 0 && (
+          {dimArray.length > 0 && (
             <div
               className="rounded-2xl p-5"
               style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
@@ -360,14 +615,14 @@ export default function ManagerDiagnostics() {
               {/* Radar chart */}
               <div className="mb-6">
                 <DiagnosticRadarChart
-                  dimensions={latestResult.dimensionScores}
+                  dimensions={dimArray}
                   height={260}
                 />
               </div>
 
               {/* Bar breakdown */}
               <div className="space-y-3">
-                {latestResult.dimensionScores.map((d: any) => (
+                {dimArray.map((d: any) => (
                   <div key={d.dimension}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium" style={{ color: "var(--color-ln-navy)" }}>{d.dimension}</span>
@@ -381,7 +636,7 @@ export default function ManagerDiagnostics() {
           )}
 
           {/* AI Insights */}
-          {latestResult.llmAnalysis?.headline && (
+          {displayResult.llmAnalysis?.headline && (
             <div
               className="rounded-2xl p-5"
               style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}
@@ -390,12 +645,12 @@ export default function ManagerDiagnostics() {
                 AI Insights
               </h2>
               <p className="text-sm leading-relaxed font-medium mb-3" style={{ color: "oklch(25% 0.02 248.6)" }}>
-                {latestResult.llmAnalysis.headline}
+                {displayResult.llmAnalysis.headline}
               </p>
-              {latestResult.llmAnalysis.coachQuestion && (
+              {displayResult.llmAnalysis.coachQuestion && (
                 <div className="rounded-xl px-4 py-3 mt-3" style={{ background: "oklch(from #34d399 l c h / 0.06)", border: "1px solid oklch(from #34d399 l c h / 0.15)" }}>
                   <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#34d399" }}>Coaching Question</p>
-                  <p className="text-sm italic" style={{ color: "oklch(35% 0.02 248.6)" }}>"{latestResult.llmAnalysis.coachQuestion}"</p>
+                  <p className="text-sm italic" style={{ color: "oklch(35% 0.02 248.6)" }}>"{displayResult.llmAnalysis.coachQuestion}"</p>
                 </div>
               )}
             </div>
@@ -403,11 +658,11 @@ export default function ManagerDiagnostics() {
 
           {/* Top strengths & growth areas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {latestResult.llmAnalysis?.strengths && latestResult.llmAnalysis.strengths.length > 0 && (
+            {displayResult.llmAnalysis?.strengths && displayResult.llmAnalysis.strengths.length > 0 && (
               <div className="rounded-2xl p-5" style={{ background: "oklch(from #34d399 l c h / 0.06)", border: "1px solid oklch(from #34d399 l c h / 0.2)" }}>
                 <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#34d399" }}>Top Strengths</h3>
                 <ul className="space-y-2">
-                  {latestResult.llmAnalysis.strengths.slice(0, 3).map((s: any, i: number) => (
+                  {displayResult.llmAnalysis.strengths.slice(0, 3).map((s: any, i: number) => (
                     <li key={i} className="text-xs" style={{ color: "oklch(30% 0.02 248.6)" }}>
                       <span className="font-semibold" style={{ color: "#34d399" }}>✓ {s.title}</span><br />{s.description}
                     </li>
@@ -415,11 +670,11 @@ export default function ManagerDiagnostics() {
                 </ul>
               </div>
             )}
-            {latestResult.llmAnalysis?.risks && latestResult.llmAnalysis.risks.length > 0 && (
+            {displayResult.llmAnalysis?.risks && displayResult.llmAnalysis.risks.length > 0 && (
               <div className="rounded-2xl p-5" style={{ background: "oklch(from #f59e0b l c h / 0.06)", border: "1px solid oklch(from #f59e0b l c h / 0.2)" }}>
                 <h3 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#f59e0b" }}>Growth Areas</h3>
                 <ul className="space-y-2">
-                  {latestResult.llmAnalysis.risks.slice(0, 3).map((s: any, i: number) => (
+                  {displayResult.llmAnalysis.risks.slice(0, 3).map((s: any, i: number) => (
                     <li key={i} className="text-xs" style={{ color: "oklch(30% 0.02 248.6)" }}>
                       <span className="font-semibold" style={{ color: "#f59e0b" }}>→ {s.title}</span><br />{s.description}
                     </li>
@@ -431,12 +686,23 @@ export default function ManagerDiagnostics() {
 
           <div className="flex gap-3">
             <Button
+              variant="outline"
+              className="flex-1 font-semibold"
+              onClick={() => {
+                setHistoryResult(null);
+                setView("history");
+              }}
+            >
+              ← Back to History
+            </Button>
+            <Button
               className="flex-1 font-semibold"
               style={{ background: "#34d399", color: "var(--color-ln-navy)" }}
               onClick={() => {
-                if (latestResult?.llmAnalysis?.coachQuestion) {
+                if (displayResult?.llmAnalysis?.coachQuestion && !historyResult) {
                   setShowReflection(true);
                 } else {
+                  setHistoryResult(null);
                   navigate("/manager");
                 }
               }}
@@ -446,7 +712,7 @@ export default function ManagerDiagnostics() {
           </div>
 
           {/* Reflection modal overlay */}
-          {showReflection && latestResult?.llmAnalysis?.coachQuestion && (
+          {showReflection && displayResult?.llmAnalysis?.coachQuestion && (
             <div
               className="fixed inset-0 z-50 flex items-center justify-center px-4"
               style={{ background: "oklch(0% 0 0 / 0.6)" }}
@@ -461,7 +727,7 @@ export default function ManagerDiagnostics() {
                   Before you go, sit with this question:
                 </p>
                 <p className="text-base italic leading-relaxed mb-6" style={{ color: "oklch(80% 0.02 248.6)" }}>
-                  "{latestResult.llmAnalysis.coachQuestion}"
+                  "{displayResult.llmAnalysis.coachQuestion}"
                 </p>
                 <p className="text-xs mb-6" style={{ color: "oklch(55% 0.02 248.6)" }}>
                   Take 60 seconds to reflect before moving on.

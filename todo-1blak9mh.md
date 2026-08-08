@@ -7,3 +7,7 @@
   - [x] Update normalization from `(avg - 1) / 4` to `(avg - 1) / 6`
   - [x] Add server-side error logging for easier future debugging
   - [x] Write vitest test for the fix
+
+- [x] Add loading spinner and disable submit button while diagnostic report is being generated
+- [x] Create dashboard section for viewing past MEI diagnostic scores and reports
+- [x] Enhance error handling with retry button on submission failure toast
