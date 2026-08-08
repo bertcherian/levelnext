@@ -288,11 +288,14 @@ export const mepRouter = router({
   submitDiagnostic: protectedProcedure
     .input(z.object({
       code: z.string(),
-      responses: z.record(z.string(), z.number().min(1).max(5)),
+      responses: z.record(z.string(), z.number().min(1).max(7)),
     }))
     .mutation(async ({ ctx, input }) => {
       const diag = getMepDiagnostic(input.code);
-      if (!diag) throw new TRPCError({ code: "NOT_FOUND", message: "Diagnostic not found" });
+      if (!diag) {
+        console.error(`[MEP] submitDiagnostic: diagnostic not found for code "${input.code}" (user ${ctx.user.id})`);
+        throw new TRPCError({ code: "NOT_FOUND", message: "Diagnostic not found" });
+      }
 
       const { dimensionScores, overallScore, zone } = scoreMepDiagnostic(diag, input.responses);
 
@@ -362,18 +365,26 @@ Return a JSON object with these exact keys:
       }
 
       const db = await getDb();
-  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const [inserted] = await db.insert(mepDiagnosticResults).values({
-        userId: ctx.user.id,
-        diagnosticCode: input.code,
-        responses: input.responses,
-        dimensionScores,
-        overallScore,
-        zone,
-        llmAnalysis,
-      }).$returningId();
+      if (!db) {
+        console.error(`[MEP] submitDiagnostic: database unavailable (user ${ctx.user.id}, code ${input.code})`);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      }
+      try {
+        const [inserted] = await db.insert(mepDiagnosticResults).values({
+          userId: ctx.user.id,
+          diagnosticCode: input.code,
+          responses: input.responses,
+          dimensionScores,
+          overallScore,
+          zone,
+          llmAnalysis,
+        }).$returningId();
 
-      return { id: inserted.id, dimensionScores, overallScore, zone, llmAnalysis };
+        return { id: inserted.id, dimensionScores, overallScore, zone, llmAnalysis };
+      } catch (insertErr) {
+        console.error(`[MEP] submitDiagnostic: DB insert failed (user ${ctx.user.id}, code ${input.code}):`, insertErr);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to save diagnostic results" });
+      }
     }),
 
   getMyResults: protectedProcedure.query(async ({ ctx }) => {

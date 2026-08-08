@@ -41,7 +41,13 @@ export default function ManagerDiagnostics() {
       refetchResults();
       toast.success("Diagnostic complete! Your results are ready.");
     },
-    onError: () => toast.error("Could not submit diagnostic. Please try again."),
+    onError: (err: any) => {
+      console.error("[MEP] submitDiagnostic error:", err);
+      const msg = err?.message?.includes("max") || err?.message?.includes("expected")
+        ? "Invalid response value. Please contact support."
+        : "Could not submit diagnostic. Please try again.";
+      toast.error(msg);
+    },
   });
 
   const startDiagnostic = (code: string) => {

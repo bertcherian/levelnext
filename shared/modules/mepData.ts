@@ -2,7 +2,7 @@
  * Manager Effectiveness Platform — Diagnostic Data
  *
  * 10 scientifically-grounded management diagnostics.
- * Each uses a 5-point Likert scale (1 = Never, 5 = Always).
+ * Each uses a 7-point Likert scale (1 = Strongly Disagree, 7 = Strongly Agree).
  * Scores are normalised to 0–100.
  *
  * Diagnostic codes:
@@ -22,7 +22,7 @@ export interface MepQuestion {
   id: string;
   text: string;
   dimensionId: string;
-  reversed?: boolean; // if true, score is (6 - raw) before averaging
+  reversed?: boolean; // if true, score is (8 - raw) before averaging (7-point scale)
 }
 
 export interface MepDimension {
@@ -803,12 +803,12 @@ export function scoreMepDiagnostic(
 
     const total = dimQuestions.reduce((sum, q) => {
       const raw = responses[q.id] ?? 3;
-      const score = q.reversed ? 6 - raw : raw;
+      const score = q.reversed ? 8 - raw : raw;
       return sum + score;
     }, 0);
 
-    const avg = total / dimQuestions.length; // 1–5
-    dimensionScores[dim.id] = Math.round(((avg - 1) / 4) * 100); // normalise to 0–100
+    const avg = total / dimQuestions.length; // 1–7
+    dimensionScores[dim.id] = Math.round(((avg - 1) / 6) * 100); // normalise to 0–100 (7-point scale)
   }
 
   const dimValues = Object.values(dimensionScores);
