@@ -28,6 +28,7 @@ import {
   icProcessingPermissions,
   icPermissionEvents,
   icAuditEvents,
+  icPracticeProgress,
   icOutboxEvents,
   reports,
   tenantUsers,
@@ -1274,17 +1275,192 @@ export const intelligenceCoreRouter = router({
       limit: z.number().int().min(1).max(100).default(50),
       offset: z.number().int().min(0).default(0),
     }))
-    .query(async ({ input }) => {
+        .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
       const result = await db
         .select()
         .from(icAuditEvents)
         .orderBy(desc(icAuditEvents.occurredAt))
         .limit(input.limit)
         .offset(input.offset);
-
       return { events: result };
+    }),
+
+  // ─── 9. Practice Scenario Progress ──────────────────────────────────────────
+
+  /**
+   * Get the user's practice scenario progress for their latest ECI diagnostic.
+   */
+  getPracticeProgress: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const [instance] = await db
+      .select()
+      .from(icDiagnosticInstances)
+      .where(and(
+        eq(icDiagnosticInstances.userId, ctx.user.id),
+        eq(icDiagnosticInstances.moduleType, "ECI"),
+      ))
+      .orderBy(desc(icDiagnosticInstances.completedAt))
+      .limit(1);
+
+    if (!instance) return { items: [] };
+
+    const progress = await db
+      .select()
+      .from(icPracticeProgress)
+      .where(and(
+        eq(icPracticeProgress.userId, ctx.user.id),
+        eq(icPracticeProgress.diagnosticInstanceId, instance.id),
+      ));
+
+    return { items: progress };
+  }),
+
+  /**
+   * Toggle a practice scenario's completion status.
+   */
+  togglePracticeProgress: protectedProcedure
+    .input(z.object({
+      scenarioId: z.string(),
+      dimensionId: z.string(),
+      completed: z.boolean(),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Find the user's latest ECI diagnostic instance
+      const [instance] = await db
+        .select()
+        .from(icDiagnosticInstances)
+        .where(and(
+          eq(icDiagnosticInstances.userId, ctx.user.id),
+          eq(icDiagnosticInstances.moduleType, "ECI"),
+        ))
+        .orderBy(desc(icDiagnosticInstances.completedAt))
+        .limit(1);
+
+      if (!instance) throw new TRPCError({ code: "NOT_FOUND", message: "No ECI diagnostic found" });
+
+      // Check if a progress record already exists
+      const [existing] = await db
+        .select()
+        .from(icPracticeProgress)
+        .where(and(
+          eq(icPracticeProgress.userId, ctx.user.id),
+          eq(icPracticeProgress.diagnosticInstanceId, instance.id),
+          eq(icPracticeProgress.scenarioId, input.scenarioId),
+        ))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(icPracticeProgress)
+          .set({
+            completed: input.completed,
+            completedAt: input.completed ? new Date() : null,
+            notes: input.notes ?? existing.notes,
+            updatedAt: new Date(),
+          })
+          .where(eq(icPracticeProgress.id, existing.id));
+        return { success: true };
+      }
+
+      await db.insert(icPracticeProgress).values({
+        userId: ctx.user.id,
+        diagnosticInstanceId: instance.id,
+        scenarioId: input.scenarioId,
+        dimensionId: input.dimensionId,
+        completed: input.completed,
+        completedAt: input.completed ? new Date() : null,
+        notes: input.notes ?? null,
+      });
+
+      return { success: true };
+    }),
+
+  // ─── 10. ECI Archetype Chat ──────────────────────────────────────────────────
+
+  /**
+   * Ask a question about the user's ECI archetype and pathways.
+   * Uses the LLM gateway with a system prompt built from the user's ECI profile.
+   */
+  askEciQuestion: protectedProcedure
+    .input(z.object({
+      question: z.string().min(1).max(500),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Find the user's most recent ECI diagnostic instance
+      const [instance] = await db
+        .select()
+        .from(icDiagnosticInstances)
+        .where(and(
+          eq(icDiagnosticInstances.userId, ctx.user.id),
+          eq(icDiagnosticInstances.moduleType, "ECI"),
+        ))
+        .orderBy(desc(icDiagnosticInstances.completedAt))
+        .limit(1);
+
+      if (!instance) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No ECI diagnostic found. Please complete an ECI assessment first." });
+      }
+
+      // Import ECI Judgement Spec data for the system prompt
+      const {
+        ECI_EXTENDED_ARCHETYPES,
+        ECI_COACHING_INTERVENTIONS,
+        ECI_EXECUTIVE_RISKS,
+      } = await import("../../shared/modules/eciJudgementSpec");
+
+      const archetypeId = instance.archetype ?? "";
+      const archetype = ECI_EXTENDED_ARCHETYPES.find(a => a.id === archetypeId);
+      const dimScores = (instance.dimensionScores as Record<string, number> | null) ?? {};
+
+      // Build the system prompt with the user's ECI context
+      const systemPrompt = `You are the LevelNext Intelligence Core, an AI coaching assistant specialized in Executive Communication Intelligence (ECI). You help users understand their communication archetype, development pathways, and practice scenarios.
+
+User Context:
+- Archetype: ${archetype?.label ?? "Unknown"}
+- Archetype Description: ${archetype?.description ?? "N/A"}
+- Core Strengths: ${(archetype?.coreStrengths ?? []).join(", ")}
+- Blind Spots: ${(archetype?.blindSpots ?? []).join(", ")}
+- Development Priorities: ${(archetype?.developmentPriorities ?? []).join(", ")}
+- Dimension Scores: ${Object.entries(dimScores).map(([k, v]) => `${k}: ${v}`).join(", ")}
+- Edge Score: ${instance.edgeScore ?? "N/A"}
+
+Guidelines:
+- Answer questions about the user's archetype, strengths, blind spots, and development pathways.
+- Provide specific, actionable advice grounded in the user's actual dimension scores.
+- Reference practice scenarios and coaching interventions when relevant.
+- Keep responses concise (max 300 words) and conversational.
+- If the user asks about something outside ECI scope, gently redirect to communication development topics.
+- Do not make up scores or assessments that aren't in the context.`;
+
+      try {
+        const { invokeLLM } = await import("../_core/llm");
+        const response = await invokeLLM({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: input.question },
+          ],
+          maxTokens: 500,
+        });
+
+        const answer = response.choices?.[0]?.message?.content;
+        const answerText = typeof answer === "string" ? answer : "I couldn't generate a response. Please try again.";
+
+        return { answer: answerText };
+      } catch (error) {
+        console.error("[IC] ECI chat error:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to generate response" });
+      }
     }),
 });

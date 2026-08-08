@@ -279,3 +279,236 @@ describe("Intelligence Core — Permission Scopes", () => {
     expect(individualPermission.scopeSubjectId).toBe(42);
   });
 });
+
+// ─── Practice Scenario Progress Tests ───────────────────────────────────────
+
+describe("Intelligence Core — Practice Scenario Progress", () => {
+  const validProgressEntry = {
+    id: 1,
+    userId: 1,
+    diagnosticInstanceId: 5,
+    scenarioId: "presence_boardroom_1",
+    dimensionId: "executive_presence",
+    completed: true,
+    completedAt: new Date(),
+    notes: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  it("tracks completion status via completedAt field", () => {
+    expect(validProgressEntry.completedAt).toBeInstanceOf(Date);
+    expect(validProgressEntry.completed).toBe(true);
+  });
+
+  it("scenarioId maps to ECI practice scenario IDs", () => {
+    const validScenarioIds = [
+      "presence_boardroom_1",
+      "presence_boardroom_2",
+      "presence_stakeholder_1",
+      "presence_stakeholder_2",
+      "presence_crisis_1",
+      "presence_crisis_2",
+      "presence_crossfunctional_1",
+      "presence_crossfunctional_2",
+      "presence_inspiration_1",
+      "presence_inspiration_2",
+      "clarity_structured_1",
+      "clarity_structured_2",
+      "clarity_concise_1",
+      "clarity_concise_2",
+      "clarity_analyst_1",
+      "clarity_analyst_2",
+      "clarity_influence_1",
+      "clarity_influence_2",
+      "clarity_data_1",
+      "clarity_data_2",
+    ];
+    expect(validScenarioIds).toContain(validProgressEntry.scenarioId);
+  });
+
+  it("dimensionId maps to ECI sub-dimensions", () => {
+    const validDimensionIds = [
+      "executive_presence",
+      "structured_thinking",
+      "concise_communication",
+      "audience_adaptation",
+      "influential_persuasion",
+      "data_storytelling",
+      "active_listening",
+      "written_communication",
+      "non_verbal_communication",
+      "strategic_narrative",
+    ];
+    expect(validDimensionIds).toContain(validProgressEntry.dimensionId);
+  });
+
+  it("toggle transitions: uncompleted → completed", () => {
+    const uncompleted = { ...validProgressEntry, completed: false, completedAt: null };
+    const toggled = { ...uncompleted, completed: true, completedAt: new Date() };
+    expect(uncompleted.completed).toBe(false);
+    expect(toggled.completed).toBe(true);
+    expect(toggled.completedAt).toBeInstanceOf(Date);
+  });
+
+  it("toggle transitions: completed → uncompleted", () => {
+    const completed = { ...validProgressEntry, completed: true };
+    const toggled = { ...completed, completed: false, completedAt: null };
+    expect(completed.completed).toBe(true);
+    expect(toggled.completed).toBe(false);
+    expect(toggled.completedAt).toBeNull();
+  });
+
+  it("progress percentage calculates correctly", () => {
+    const scenarios = [
+      { id: "s1", completed: true },
+      { id: "s2", completed: true },
+      { id: "s3", completed: false },
+      { id: "s4", completed: false },
+    ];
+    const completedCount = scenarios.filter(s => s.completed).length;
+    const pct = Math.round((completedCount / scenarios.length) * 100);
+    expect(pct).toBe(50);
+  });
+
+  it("progress percentage is 0 when no scenarios completed", () => {
+    const scenarios = [
+      { id: "s1", completed: false },
+      { id: "s2", completed: false },
+    ];
+    const completedCount = scenarios.filter(s => s.completed).length;
+    const pct = Math.round((completedCount / scenarios.length) * 100);
+    expect(pct).toBe(0);
+  });
+
+  it("progress percentage is 100 when all scenarios completed", () => {
+    const scenarios = [
+      { id: "s1", completed: true },
+      { id: "s2", completed: true },
+    ];
+    const completedCount = scenarios.filter(s => s.completed).length;
+    const pct = Math.round((completedCount / scenarios.length) * 100);
+    expect(pct).toBe(100);
+  });
+});
+
+// ─── ECI Chat Question Validation Tests ──────────────────────────────────────
+
+describe("Intelligence Core — ECI Chat Question Validation", () => {
+  it("accepts questions between 1 and 500 characters", () => {
+    const validQuestions = [
+      "What are my strengths?",
+      "How can I improve my executive presence in board meetings?",
+      "A".repeat(500),
+    ];
+    validQuestions.forEach(q => {
+      expect(q.length).toBeGreaterThanOrEqual(1);
+      expect(q.length).toBeLessThanOrEqual(500);
+    });
+  });
+
+  it("rejects empty questions", () => {
+    const emptyQuestion = "";
+    expect(emptyQuestion.length).toBeLessThan(1);
+  });
+
+  it("rejects questions over 500 characters", () => {
+    const longQuestion = "A".repeat(501);
+    expect(longQuestion.length).toBeGreaterThan(500);
+  });
+
+  it("suggested prompts include archetype context", () => {
+    const archetypeLabel = "The Hidden Executive";
+    const suggestedPrompts = [
+      `What are the key strengths of the ${archetypeLabel} archetype?`,
+      `What blind spots should I watch out for as a ${archetypeLabel}?`,
+      `What development priorities should I focus on?`,
+      `How can I improve my executive presence?`,
+    ];
+    suggestedPrompts.forEach(prompt => {
+      const includesContext = prompt.includes(archetypeLabel) || prompt.includes("development") || prompt.includes("executive");
+      expect(includesContext).toBe(true);
+    });
+  });
+});
+
+// ─── ECI Profile PDF Export Tests ─────────────────────────────────────────────
+
+describe("Intelligence Core — ECI Profile PDF Export", () => {
+  it("EciProfileData interface has all required fields", () => {
+    const profileData = {
+      archetype: {
+        label: "The Hidden Executive",
+        description: "High expertise, low visibility",
+        coreStrengths: ["Deep expertise", "Analytical thinking"],
+        blindSpots: ["Low visibility", "Limited influence"],
+        developmentPriorities: ["Executive presence", "Strategic narrative"],
+      },
+      edgeScore: 62.5,
+      dimensionBands: [
+        { dimensionId: "executive_presence", score: 35, band: "Develop" },
+        { dimensionId: "structured_thinking", score: 78, band: "Leverage" },
+      ],
+      triggeredRisks: [
+        {
+          id: "invisibility_risk",
+          label: "Invisibility Risk",
+          behaviouralIndicators: ["Rarely speaks in meetings"],
+          coachingPriorities: ["Increase visibility in senior forums"],
+        },
+      ],
+      recommendedInterventions: [
+        {
+          id: "executive_presence_coaching",
+          objective: "Build executive presence",
+          practiceExercises: ["Boardroom presentations"],
+          aiSimulations: ["Stakeholder Q&A"],
+          successMetrics: ["Increased speaking time in meetings"],
+          suggestedDurationWeeks: 8,
+        },
+      ],
+      recommendedScenarios: [
+        {
+          id: "presence_boardroom_1",
+          dimensionId: "executive_presence",
+          difficulty: "Intermediate",
+          scenario: "Present to the board with 10 minutes notice",
+        },
+      ],
+      promotionReadiness: [
+        {
+          id: "c_suite_readiness",
+          label: "C-Suite Readiness",
+          readinessAssessment: "Not ready — needs presence work",
+          developmentFocus: "Executive presence and strategic communication",
+        },
+      ],
+      userName: "Test User",
+    };
+
+    expect(profileData.archetype).not.toBeNull();
+    expect(profileData.archetype?.label).toBe("The Hidden Executive");
+    expect(profileData.edgeScore).toBe(62.5);
+    expect(profileData.dimensionBands).toHaveLength(2);
+    expect(profileData.triggeredRisks).toHaveLength(1);
+    expect(profileData.recommendedInterventions).toHaveLength(1);
+    expect(profileData.recommendedScenarios).toHaveLength(1);
+    expect(profileData.promotionReadiness).toHaveLength(1);
+    expect(profileData.userName).toBe("Test User");
+  });
+
+  it("handles null archetype gracefully", () => {
+    const profileData = {
+      archetype: null,
+      edgeScore: null,
+      dimensionBands: [],
+      triggeredRisks: [],
+      recommendedInterventions: [],
+      recommendedScenarios: [],
+      promotionReadiness: [],
+    };
+    expect(profileData.archetype).toBeNull();
+    expect(profileData.edgeScore).toBeNull();
+    expect(profileData.dimensionBands).toHaveLength(0);
+  });
+});

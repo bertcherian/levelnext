@@ -10,7 +10,7 @@
  * It connects diagnostic scores → recommendations → actions → outcomes.
  */
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,10 +45,17 @@ import {
   AlertTriangle,
   BookOpen,
   Zap,
+  MessageCircle,
+  Send,
+  Download,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PlatformLayout from "@/components/PlatformLayout";
+import { AIChatBox, type Message } from "@/components/AIChatBox";
+import { exportEciProfilePdf } from "@/lib/eciProfilePdf";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 // ── Status badge helpers ──────────────────────────────────────────────────────
 
@@ -817,11 +824,163 @@ function OutcomesTab() {
   );
 }
 
+// ── Practice Scenarios with Interactive Progress ─────────────────────────────
+
+function PracticeScenarios({ scenarios, diagnosticInstanceId }: {
+  scenarios: { id: string; dimensionId: string; difficulty: string; scenario: string }[];
+  diagnosticInstanceId: number;
+}) {
+  const utils = trpc.useUtils();
+  const { data: progressData } = trpc.intelligenceCore.getPracticeProgress.useQuery();
+  const toggleMutation = trpc.intelligenceCore.togglePracticeProgress.useMutation({
+    onSuccess: () => utils.intelligenceCore.getPracticeProgress.invalidate(),
+  });
+
+  const progressItems = progressData?.items ?? [];
+  const completedMap = new Map(
+    progressItems.map(p => [p.scenarioId, p.completedAt != null]),
+  );
+  const completedCount = Array.from(completedMap.values()).filter(Boolean).length;
+  const totalCount = scenarios.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <Zap size={14} style={{ color: "var(--color-ln-gold)" }} />
+        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-gold)" }}>
+          Practice Scenarios for Your Weakest Dimensions
+        </p>
+      </div>
+
+      {/* Progress bar */}
+      <div className="mb-3">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px]" style={{ color: "oklch(55% 0.02 248.6)" }}>
+            {completedCount} of {totalCount} completed
+          </span>
+          <span className="text-[10px] font-semibold" style={{ color: "var(--color-ln-gold)" }}>
+            {progressPct}%
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "oklch(90% 0.01 248.6)" }}>
+          <div
+            className="h-full rounded-full transition-all duration-300"
+            style={{
+              width: `${progressPct}%`,
+              background: progressPct === 100
+                ? "#059669"
+                : "var(--color-ln-gold)",
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {scenarios.map((ps) => {
+          const isDone = completedMap.get(ps.id) ?? false;
+          return (
+            <div
+              key={ps.id}
+              className="rounded-lg p-3 cursor-pointer transition-all"
+              style={{
+                background: isDone ? "oklch(from #34d399 l c h / 0.06)" : "oklch(98% 0.005 248.6)",
+                border: `1px solid ${isDone ? "oklch(from #34d399 l c h / 0.3)" : "oklch(90% 0.01 248.6)"}`,
+              }}
+              onClick={() => {
+                toggleMutation.mutate({ scenarioId: ps.id, dimensionId: ps.dimensionId, completed: !isDone });
+              }}
+            >
+              <div className="flex items-start gap-2">
+                <button
+                  className="mt-0.5 flex-shrink-0"
+                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                >
+                  {isDone ? (
+                    <CheckCircle2 size={16} style={{ color: "#059669" }} />
+                  ) : (
+                    <Circle size={16} style={{ color: "oklch(70% 0.01 248.6)" }} />
+                  )}
+                </button>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[9px] font-bold uppercase tracking-wider" style={{
+                    color: isDone ? "#059669" : "var(--color-ln-gold)",
+                  }}>
+                    {ps.difficulty}
+                  </span>
+                  <p className="text-[11px] mt-1" style={{
+                    color: "var(--color-ln-navy)",
+                    textDecoration: isDone ? "line-through" : "none",
+                    opacity: isDone ? 0.6 : 1,
+                  }}>
+                    {ps.scenario}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── ECI Chat Widget ───────────────────────────────────────────────────────────
+
+function EciChatWidget({ archetypeLabel }: { archetypeLabel: string }) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const askQuestion = trpc.intelligenceCore.askEciQuestion.useMutation({
+    onSuccess: (data) => {
+      setMessages(prev => [...prev, { role: "assistant", content: data.answer }]);
+      setIsLoading(false);
+    },
+    onError: () => {
+      toast.error("Failed to get a response. Please try again.");
+      setIsLoading(false);
+    },
+  });
+
+  const handleSend = useCallback((content: string) => {
+    setMessages(prev => [...prev, { role: "user", content }]);
+    setIsLoading(true);
+    askQuestion.mutate({ question: content });
+  }, [messages, askQuestion]);
+
+  const suggestedPrompts = [
+    `What are the key strengths of the ${archetypeLabel} archetype?`,
+    `What blind spots should I watch out for as a ${archetypeLabel}?`,
+    `What development priorities should I focus on?`,
+    `How can I improve my executive presence?`,
+  ];
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
+      <div className="px-4 py-3 flex items-center gap-2" style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.03)", borderBottom: "1px solid oklch(90% 0.01 248.6)" }}>
+        <MessageCircle size={16} style={{ color: "var(--color-ln-gold)" }} />
+        <span className="text-xs font-semibold" style={{ color: "var(--color-ln-navy)" }}>AI Coach — Ask about your archetype</span>
+      </div>
+      <AIChatBox
+        messages={messages}
+        onSendMessage={handleSend}
+        isLoading={isLoading}
+        height={400}
+        placeholder="Ask about your archetype, pathways, risks, or development priorities…"
+        suggestedPrompts={suggestedPrompts}
+        emptyStateMessage="Ask me anything about your ECI profile, archetype, or development pathways."
+      />
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function Intelligence() {
+  const { user } = useAuth();
   const { data: eciProfile, isLoading: profileLoading } = trpc.intelligenceCore.getEciProfile.useQuery();
   const [profileExpanded, setProfileExpanded] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   const hasProfile = eciProfile && "hasEciDiagnostic" in eciProfile && eciProfile.hasEciDiagnostic;
   const profile = hasProfile ? eciProfile : null;
@@ -1009,22 +1168,12 @@ export default function Intelligence() {
                     </div>
                   )}
 
-                  {/* Practice scenarios */}
+                  {/* Practice scenarios with interactive progress */}
                   {(profile.recommendedScenarios ?? []).length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Zap size={14} style={{ color: "var(--color-ln-gold)" }} />
-                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-gold)" }}>Practice Scenarios for Your Weakest Dimensions</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(profile.recommendedScenarios ?? []).map((ps: any) => (
-                          <div key={ps.id} className="rounded-lg p-3" style={{ background: "oklch(98% 0.005 248.6)", border: "1px solid oklch(90% 0.01 248.6)" }}>
-                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-gold)" }}>{ps.difficulty}</span>
-                            <p className="text-[11px] mt-1" style={{ color: "var(--color-ln-navy)" }}>{ps.scenario}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <PracticeScenarios
+                      scenarios={profile.recommendedScenarios ?? []}
+                      diagnosticInstanceId={profile.diagnosticInstanceId ?? 0}
+                    />
                   )}
 
                   {/* Promotion readiness */}
@@ -1048,6 +1197,81 @@ export default function Intelligence() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Action bar: PDF Export + AI Chat toggle */}
+        {hasProfile && profile && (
+          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5"
+              onClick={() => {
+                const profileData = {
+                  archetype: profile.archetype ? {
+                    label: profile.archetype.label,
+                    description: profile.archetype.description,
+                    coreStrengths: profile.archetype.coreStrengths ?? [],
+                    blindSpots: profile.archetype.blindSpots ?? [],
+                    developmentPriorities: profile.archetype.developmentPriorities ?? [],
+                  } : null,
+                  edgeScore: profile.edgeScore ?? null,
+                  dimensionBands: (profile.dimensionBands ?? []).map((db: any) => ({
+                    dimensionId: db.dimensionId,
+                    score: db.score,
+                    band: String(db.band),
+                  })),
+                  triggeredRisks: (profile.triggeredRisks ?? []).map((r: any) => ({
+                    id: r.id,
+                    label: r.label,
+                    behaviouralIndicators: r.behaviouralIndicators ?? [],
+                    coachingPriorities: r.coachingPriorities ?? [],
+                  })),
+                  recommendedInterventions: (profile.recommendedInterventions ?? []).map((i: any) => ({
+                    id: i.id,
+                    objective: i.objective,
+                    practiceExercises: i.practiceExercises ?? [],
+                    aiSimulations: i.aiSimulations ?? [],
+                    successMetrics: i.successMetrics ?? [],
+                    suggestedDurationWeeks: i.suggestedDurationWeeks ?? 4,
+                  })),
+                  recommendedScenarios: (profile.recommendedScenarios ?? []).map((ps: any) => ({
+                    id: ps.id,
+                    dimensionId: ps.dimensionId,
+                    difficulty: ps.difficulty,
+                    scenario: ps.scenario,
+                  })),
+                  promotionReadiness: (profile.promotionReadiness ?? []).map((pr: any) => ({
+                    id: pr.id,
+                    label: pr.label,
+                    readinessAssessment: pr.readinessAssessment,
+                    developmentFocus: pr.developmentFocus,
+                  })),
+                  userName: user?.name ?? undefined,
+                };
+                exportEciProfilePdf(profileData).catch(() => toast.error("Failed to generate PDF"));
+              }}
+            >
+              <Download size={14} />
+              Export ECI Profile PDF
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5"
+              onClick={() => setShowChat(v => !v)}
+            >
+              <MessageCircle size={14} />
+              {showChat ? "Hide" : "Ask"} AI Coach
+            </Button>
+          </div>
+        )}
+
+        {/* AI Chat Widget */}
+        {hasProfile && showChat && (
+          <div className="max-w-3xl mx-auto px-4 pb-4">
+            <EciChatWidget archetypeLabel={profile?.archetype?.label ?? "your archetype"} />
           </div>
         )}
 

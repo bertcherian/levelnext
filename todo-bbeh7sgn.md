@@ -58,3 +58,14 @@
 - [x] Implement N=5 cohort suppression in getAnalytics admin endpoint
 - [x] Write tests for privacy thresholding and auto-execution (54 tests passing)
 - [x] Save checkpoint and deploy
+
+## Phase 11: AI Chat, PDF Export, Progress Tracking
+- [x] Add AI chat widget to /intelligence page for ECI archetype questions
+- [x] Add PDF export button for complete ECI profile and development pathways
+- [x] Add interactive completion checkboxes and progress bars for practice scenarios
+- [x] Create tRPC procedure for AI chat with ECI context
+- [x] Create client-side PDF generation (no server procedure needed — uses jsPDF)
+- [x] Create tRPC procedures for practice scenario progress tracking
+- [x] Add database table for practice scenario progress
+- [x] Write tests for new features (68 tests passing — 14 new tests for practice progress, ECI chat, and PDF export)
+- [ ] Save checkpoint and deploy

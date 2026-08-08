@@ -2695,3 +2695,19 @@ export const icOutboxEvents = mysqlTable("ic_outbox_events", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type IcOutboxEvent = typeof icOutboxEvents.$inferSelect;
+
+// ─── Intelligence Core: Practice Scenario Progress ─────────────────────────────
+export const icPracticeProgress = mysqlTable("ic_practice_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  diagnosticInstanceId: int("diagnosticInstanceId").notNull(),
+  scenarioId: varchar("scenarioId", { length: 120 }).notNull(),
+  dimensionId: varchar("dimensionId", { length: 80 }).notNull(),
+  completed: boolean("completed").default(false).notNull(),
+  completedAt: timestamp("completedAt"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IcPracticeProgress = typeof icPracticeProgress.$inferSelect;
+export type InsertIcPracticeProgress = typeof icPracticeProgress.$inferInsert;
