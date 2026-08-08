@@ -3,7 +3,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { launchCareerCompass, launchUserProgress } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 
 // ─── Career Compass Question Bank ────────────────────────────────────────────
 // 4 dimensions × 4 questions = 16 questions total
@@ -157,7 +157,7 @@ Return a JSON object with this exact structure:
     });
     const rawContent = result?.choices?.[0]?.message?.content;
     const content = typeof rawContent === "string" ? rawContent : "";
-      directionCard = JSON.parse(content);
+      directionCard = safeJsonParse<Record<string, any>>(content, {}, "launchCareerCompass.complete");
       narrative = (directionCard.narrative as string) ?? "";
       primaryDirection = (directionCard.primaryDirection as string) ?? "Career path being discovered";
       secondaryDirection = (directionCard.secondaryDirection as string) ?? "";

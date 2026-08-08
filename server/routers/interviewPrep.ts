@@ -3,7 +3,7 @@ import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 import {
   interviewPrepSessions,
   careerProfiles,
@@ -175,7 +175,7 @@ ${ciContext}`;
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not parse LLM response" });
       }
 
-      const prepData = JSON.parse(jsonMatch[0]);
+      const prepData = safeJsonParse<Record<string, any>>(jsonMatch[0], {}, "interviewPrep.generate");
 
       const [inserted] = await db
         .insert(interviewPrepSessions)

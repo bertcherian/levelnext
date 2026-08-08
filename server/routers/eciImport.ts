@@ -21,7 +21,7 @@ const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: str
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { reports } from "../../drizzle/schema";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 import { storagePut } from "../storage";
 import { updateLeadershipGraph } from "./leadershipGraph";
 import { eq, and } from "drizzle-orm";
@@ -234,7 +234,7 @@ All scores are out of 100. Use null for any field you cannot find.`;
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return parsed;
 
-    const extracted = JSON.parse(jsonMatch[0]);
+    const extracted = safeJsonParse<Record<string, any>>(jsonMatch[0], {}, "eciImport.enrichWithLLM");
 
     // Merge LLM results into parsed, only filling gaps
     const merged = { ...parsed };

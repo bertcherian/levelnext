@@ -23,7 +23,7 @@ const AdmZip = require("adm-zip") as new (buffer: Buffer) => {
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { conversationIntelligence } from "../../drizzle/schema";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 import { eq } from "drizzle-orm";
 import type { ConversationIntelligenceTheme } from "../../drizzle/schema";
 
@@ -230,7 +230,7 @@ function detectZipSource(zipBuffer: Buffer): "chatgpt" | "claude" | "unknown" {
       if (convEntry) {
         const zip2 = new AdmZip(zipBuffer);
         const raw = zip2.getEntries().find((e) => e.entryName.endsWith("conversations.json"))?.getData().toString("utf-8") ?? "[]";
-        const parsed = JSON.parse(raw);
+        const parsed = safeJsonParse<unknown[]>(raw, [], "chatgptImport.detectFormat");
         if (Array.isArray(parsed) && parsed.length > 0) {
           const first = parsed[0] as Record<string, unknown>;
           if (first.chat_messages !== undefined) return "claude";
@@ -308,7 +308,7 @@ Rules:
     };
   }
 
-  const parsed = JSON.parse(jsonMatch[0]);
+  const parsed = safeJsonParse<{ overallSynthesis?: string; themes?: ConversationIntelligenceTheme[] }>(jsonMatch[0], { overallSynthesis: "", themes: [] }, "chatgptImport.synthesiseFromZip");
   return {
     overallSynthesis: parsed.overallSynthesis ?? "",
     themes: (parsed.themes ?? []) as ConversationIntelligenceTheme[],
@@ -372,7 +372,7 @@ Rules:
     };
   }
 
-  const parsed = JSON.parse(jsonMatch[0]);
+  const parsed = safeJsonParse<{ overallSynthesis?: string; themes?: ConversationIntelligenceTheme[] }>(jsonMatch[0], { overallSynthesis: "", themes: [] }, "chatgptImport.synthesiseFromText");
   return {
     overallSynthesis: parsed.overallSynthesis ?? "",
     themes: (parsed.themes ?? []) as ConversationIntelligenceTheme[],

@@ -16,7 +16,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { reports } from "../../drizzle/schema";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 import {
   CPI_DIMENSIONS,
   CPI_ZONES,
@@ -246,7 +246,7 @@ For coachFocusAreas, identify the 3 most important areas for the Career Transiti
         });
         const raw = (llmResult as any)?.content ?? (llmResult as any)?.choices?.[0]?.message?.content ?? "{}";
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-        analysis = JSON.parse(cleaned) as CpiAnalysis;
+        analysis = safeJsonParse<CpiAnalysis>(cleaned, buildFallbackAnalysis(report.participantName, report.edgeScore, dimScores, zoneLabel, archetypeData), "cpiReport.generateAnalysis");
       } catch (err) {
         // Fallback analysis if LLM fails
         analysis = buildFallbackAnalysis(report.participantName, report.edgeScore, dimScores, zoneLabel, archetypeData);

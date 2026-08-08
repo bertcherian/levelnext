@@ -18,7 +18,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { reports } from "../../drizzle/schema";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 import {
   getCiDimensions,
   getCiZone,
@@ -319,7 +319,14 @@ For coachFocusAreas, identify the 3 most important areas for the Career Transiti
           (llmResult as any)?.choices?.[0]?.message?.content ??
           "{}";
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-        analysis = JSON.parse(cleaned) as CiAnalysis;
+        analysis = safeJsonParse<CiAnalysis>(cleaned, buildFallbackAnalysis(
+          moduleCode,
+          report.participantName,
+          report.edgeScore ?? 50,
+          dimScores,
+          zone.label,
+          archetypeLabel
+        ), "ciReport.generateAnalysis");
       } catch {
         analysis = buildFallbackAnalysis(
           moduleCode,

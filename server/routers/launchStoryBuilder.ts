@@ -3,7 +3,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { launchBrandKit, launchUserProgress } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 
 export const launchStoryBuilderRouter = router({
   // Get or create the user's Brand Kit
@@ -140,7 +140,7 @@ Return JSON:
         });
         const rawContent = result?.choices?.[0]?.message?.content;
         if (typeof rawContent === "string") {
-          const parsed = JSON.parse(rawContent);
+          const parsed = safeJsonParse<{ valueProposition?: string; linkedinHeadline?: string }>(rawContent, {}, "launchStoryBuilder.generateValueProp");
           valueProposition = parsed.valueProposition ?? "";
           linkedinHeadline = parsed.linkedinHeadline ?? "";
         }
@@ -235,7 +235,7 @@ Return JSON:
         });
         const rawContent = result?.choices?.[0]?.message?.content;
         if (typeof rawContent === "string") {
-          const parsed = JSON.parse(rawContent);
+          const parsed = safeJsonParse<{ pitch30?: string; pitch60?: string; linkedinAbout?: string }>(rawContent, {}, "launchStoryBuilder.generatePitch");
           pitch30 = parsed.pitch30 ?? "";
           pitch60 = parsed.pitch60 ?? "";
           linkedinAbout = parsed.linkedinAbout ?? "";

@@ -3,6 +3,9 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 import { registerOAuthRoutes } from "./oauth";
 import { registerMagicLinkVerifyRoute } from "../routers/emailAuth";
 import { registerStorageProxy } from "./storageProxy";
@@ -10,6 +13,41 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { weeklySummaryHandler, momentumCheckinHandler, icFollowUpReminderHandler, icOutboxPublisherHandler } from "../scheduledHandlers";
+
+// ── Allowed origins for CORS ──────────────────────────────────────────────────
+const PRODUCTION_ORIGINS = [
+  "https://levelnext.coach",
+  "https://www.levelnext.coach",
+  "https://levelnextai-m9hb5g5z.manus.space",
+];
+
+const DEV_ORIGINS = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+];
+
+const allowedOrigins = process.env.NODE_ENV === "production"
+  ? PRODUCTION_ORIGINS
+  : [...PRODUCTION_ORIGINS, ...DEV_ORIGINS];
+
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+// General API rate limiter — applies to all /api/trpc requests
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please slow down." },
+});
+
+// Strict rate limiter for LLM-heavy mutations — prevents API cost abuse
+const llmLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20, // 20 requests per minute per IP for LLM endpoints
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many AI requests, please wait a moment." },
+});
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,9 +76,58 @@ async function startServer() {
   // returns false and the session cookie is set without Secure=true, which
   // causes browsers to silently drop it when SameSite=None is set.
   app.set('trust proxy', 1);
+
+  // ── Security middleware ─────────────────────────────────────────────────────
+  // Helmet sets secure HTTP headers: CSP, X-Frame-Options, X-Content-Type-Options,
+  // Strict-Transport-Security, etc. In development we relax CSP to allow Vite HMR.
+  const isDev = process.env.NODE_ENV === "development";
+  app.use(helmet({
+    contentSecurityPolicy: isDev ? false : {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://api.manus.im"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        connectSrc: [
+          "'self'",
+          "https://api.manus.im",
+          "https://levelnext.coach",
+          "https://www.levelnext.coach",
+        ],
+        frameAncestors: ["'none'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // Required for third-party resources
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow S3 resources
+  }));
+
+  // CORS — restrict to known production domains + localhost in dev
+  app.use(cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, server-to-server, same-origin)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
+    credentials: true, // Required for cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-N8N-API-KEY"],
+  }));
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // ── Rate limiting ───────────────────────────────────────────────────────────
+  // General limiter on all API routes
+  app.use("/api/", apiLimiter);
+
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   await registerMagicLinkVerifyRoute(app);
@@ -50,7 +137,8 @@ async function startServer() {
   app.post("/api/scheduled/icFollowUpReminder", icFollowUpReminderHandler);
   app.post("/api/scheduled/icOutboxPublisher", icOutboxPublisherHandler);
 
-  // tRPC API
+  // tRPC API — strict limiter applied before the tRPC handler
+  app.use("/api/trpc", llmLimiter);
   app.use(
     "/api/trpc",
     createExpressMiddleware({

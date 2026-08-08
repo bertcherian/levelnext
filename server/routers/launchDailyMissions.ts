@@ -3,7 +3,7 @@ import { eq, and } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { launchDailyMissions, launchUserProgress } from "../../drizzle/schema";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 
 // ─── Mission Templates (fallback if LLM fails) ────────────────────────────────
 const MISSION_TEMPLATES = [
@@ -70,12 +70,7 @@ Example format:
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (!jsonMatch) return null;
 
-    const missions = JSON.parse(jsonMatch[0]) as Array<{
-      title: string;
-      description: string;
-      xp: number;
-      missionArea: string;
-    }>;
+    const missions = safeJsonParse<Array<{ title: string; description: string; xp: number; missionArea: string; }>>(jsonMatch[0], [], "launchDailyMissions.generate");
 
     if (!Array.isArray(missions) || missions.length !== 3) return null;
 

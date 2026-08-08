@@ -452,3 +452,60 @@ export async function listLLMModels(): Promise<ModelsResponse> {
 
   return (await response.json()) as ModelsResponse;
 }
+
+// ── Safe JSON Parse Utility ───────────────────────────────────────────────────
+/**
+ * Safely parse a JSON string from an LLM response.
+ * Returns the parsed value on success, or the provided fallback on failure.
+ * Logs the error for debugging without crashing the request.
+ */
+export function safeJsonParse<T>(
+  raw: string,
+  fallback: T,
+  context?: string
+): T {
+  try {
+    return JSON.parse(raw) as T;
+  } catch (err) {
+    const label = context ? `[${context}]` : "[safeJsonParse]";
+    console.error(`${label} JSON.parse failed:`, err);
+    console.error(`${label} raw (truncated):`, raw.slice(0, 200));
+    return fallback;
+  }
+}
+
+/**
+ * Extract the first JSON object ({...}) from an LLM text response and safely parse it.
+ * Returns the parsed value on success, or the fallback if no match or parse fails.
+ */
+export function extractJsonObject<T>(
+  text: string,
+  fallback: T,
+  context?: string
+): T {
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    const label = context ? `[${context}]` : "[extractJsonObject]";
+    console.error(`${label} no JSON object found in text`);
+    return fallback;
+  }
+  return safeJsonParse(jsonMatch[0], fallback, context);
+}
+
+/**
+ * Extract the first JSON array ([...]) from an LLM text response and safely parse it.
+ * Returns the parsed value on success, or the fallback if no match or parse fails.
+ */
+export function extractJsonArray<T>(
+  text: string,
+  fallback: T,
+  context?: string
+): T {
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) {
+    const label = context ? `[${context}]` : "[extractJsonArray]";
+    console.error(`${label} no JSON array found in text`);
+    return fallback;
+  }
+  return safeJsonParse(jsonMatch[0], fallback, context);
+}

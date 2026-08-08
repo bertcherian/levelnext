@@ -28,7 +28,7 @@ import {
   tenantUsers,
   orgContext as orgContextTable,
 } from "../../drizzle/schema";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 import { getMepDiagnostic, scoreMepDiagnostic, MEP_DIAGNOSTICS } from "../../shared/modules/mepData";
 
 // ─── Helper: extract text from LLM result ────────────────────────────────────
@@ -359,7 +359,7 @@ Return a JSON object with these exact keys:
         });
         const raw = extractText(result);
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) llmAnalysis = JSON.parse(jsonMatch[0]);
+        if (jsonMatch) llmAnalysis = safeJsonParse(jsonMatch[0], {}, "mep.submitDiagnostic");
       } catch (e) {
         console.error("[MEP] LLM analysis failed:", e);
       }
@@ -565,7 +565,7 @@ Return a JSON object with these exact keys:
         });
         const raw = extractText(result);
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) playbook = JSON.parse(jsonMatch[0]);
+        if (jsonMatch) playbook = safeJsonParse(jsonMatch[0], {}, "mep.generatePlaybook");
       } catch (e) {
         console.error("[MEP Playbook] LLM failed:", e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not generate playbook" });
@@ -737,7 +737,7 @@ Return a JSON object with these exact keys:
       });
       const raw = extractText(result);
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (jsonMatch) brief = JSON.parse(jsonMatch[0]);
+      if (jsonMatch) brief = safeJsonParse(jsonMatch[0], {}, "mep.getDailyBrief");
     } catch (e) {
       console.error("[MEP Brief] LLM failed:", e);
       brief = {
@@ -944,7 +944,7 @@ Return coaching feedback as JSON:
         });
         const raw = extractText(result);
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) feedback = JSON.parse(jsonMatch[0]);
+        if (jsonMatch) feedback = safeJsonParse(jsonMatch[0], { overallRating: 3, headline: "Practice session completed.", strengths: [], improvements: [], keyMoment: "", nextPractice: "", coachingInsight: "" }, "mep.submitCommitmentFeedback");
       } catch (e) {
         // use default
       }
@@ -1135,7 +1135,7 @@ Provide a 2-3 sentence coaching response that acknowledges their effort, reinfor
       try {
         const raw = extractText(result);
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) insight = JSON.parse(jsonMatch[0]);
+        if (jsonMatch) insight = safeJsonParse(jsonMatch[0], { summary: "", strengths: [], watchOuts: [], recommendedActions: [] }, "mep.generateTeamMemberInsight");
       } catch (e) { /* use default */ }
 
       await db
@@ -1207,7 +1207,7 @@ Rules:
       const raw = extractText(result);
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+        const parsed = safeJsonParse<{ suggestions?: any[] }>(jsonMatch[0], { suggestions: [] }, "mep.suggestCommitments");
         suggestions = parsed.suggestions ?? [];
       }
     } catch (e) { /* use defaults */ }

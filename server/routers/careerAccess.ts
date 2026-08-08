@@ -3,7 +3,7 @@ import { eq, desc, and } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse, extractJsonObject, extractJsonArray } from "../_core/llm";
 import {
   careerProfiles,
   careerStrategyStatements,
@@ -252,7 +252,7 @@ ${diagnosticContext}`;
     if (!jsonMatch) {
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not parse AI response." });
     }
-    const strategyData = JSON.parse(jsonMatch[0]);
+    const strategyData = safeJsonParse<Record<string, any>>(jsonMatch[0], {}, "careerAccess.generateCareerStrategy");
 
     // Deactivate previous strategies
     await db
@@ -263,7 +263,7 @@ ${diagnosticContext}`;
     // Save new strategy
     await db.insert(careerStrategyStatements).values({
       userId: ctx.user.id,
-      strategyData,
+      strategyData: strategyData as any,
       profileVersion: 1,
       isActive: true,
     });
@@ -387,7 +387,7 @@ Generate 15-20 organisations across all required categories. Be specific and rea
     if (!jsonMatch) {
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not parse AI response." });
     }
-    const organisations = JSON.parse(jsonMatch[0]) as Array<Record<string, unknown>>;
+    const organisations = extractJsonArray<Array<Record<string, unknown>>>(jsonMatch[0], [], "careerAccess.generateOpportunityUniverse");
 
     // Generate a batch ID (timestamp-based)
     const batchId = Date.now();
@@ -557,7 +557,7 @@ Generate 15-20 organisations across all required categories. Be specific and rea
       if (!contact) throw new TRPCError({ code: "NOT_FOUND" });
       const scoreResult = await scoreRelationshipWithAI(contact);
       if (scoreResult) {
-        await db.update(relationshipContacts).set({ ...scoreResult, updatedAt: new Date() })
+        await db.update(relationshipContacts).set({ ...(scoreResult as Record<string, any>), updatedAt: new Date() } as any)
           .where(eq(relationshipContacts.id, input.id));
       }
       return { success: true, scores: scoreResult };
@@ -685,7 +685,7 @@ Generate the most strategic access path for this leader to create access to ${op
       }
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not parse AI response." });
-      const pathData = JSON.parse(jsonMatch[0]);
+      const pathData = safeJsonParse<Record<string, any>>(jsonMatch[0], {}, "careerAccess.generateAccessPath");
 
       // Upsert the access path
       const [existing] = await db.select({ id: accessPaths.id }).from(accessPaths)
@@ -693,7 +693,7 @@ Generate the most strategic access path for this leader to create access to ${op
         .limit(1);
 
       if (existing) {
-        await db.update(accessPaths).set({ ...pathData, updatedAt: new Date() })
+        await db.update(accessPaths).set({ ...pathData, updatedAt: new Date() } as any)
           .where(eq(accessPaths.id, existing.id));
       } else {
         await db.insert(accessPaths).values({
@@ -702,7 +702,7 @@ Generate the most strategic access path for this leader to create access to ${op
           companyName: opp.companyName,
           targetRole: opp.potentialRole ?? profile?.targetRole ?? "Senior Leadership",
           ...pathData,
-        });
+        } as any);
       }
       return { success: true, pathData };
     }),
@@ -807,12 +807,12 @@ Key achievements: ${profile?.keyAchievements ? "Documented" : "Not documented"}`
     if (!rawText || typeof rawText !== "string") throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Score generation failed." });
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Invalid score response." });
-    const scoreData = JSON.parse(jsonMatch[0]);
+    const scoreData = safeJsonParse<Record<string, any>>(jsonMatch[0], {}, "careerAccess.computeCareerAccessScore");
 
     await db.insert(careerAccessScoreSnapshots).values({
       userId: ctx.user.id,
       ...scoreData,
-    });
+    } as any);
     return scoreData;
   }),
 
@@ -918,12 +918,12 @@ Today's date: ${today}`;
     if (!rawText || typeof rawText !== "string") throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Briefing generation failed." });
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Invalid briefing response." });
-    const briefData = JSON.parse(jsonMatch[0]);
+    const briefData = safeJsonParse(jsonMatch[0], null, "careerAccess.generateChiefOfStaffBriefing");
 
     await db.insert(careerAccessBriefings).values({
       userId: ctx.user.id,
       briefDate: today,
-      brief: briefData,
+      brief: briefData as any,
     });
     return briefData;
   }),
@@ -1148,12 +1148,7 @@ Return ONLY valid JSON:
       });
 
       const llmContent = (result.choices?.[0]?.message?.content as string) ?? "{}";
-      let parsed: { questions: Array<{ category: string; question: string; coachingTip: string; competency: string }> };
-      try {
-        parsed = JSON.parse(llmContent);
-      } catch {
-        throw new Error("Failed to parse mock questions from AI response");
-      }
+      const parsed = safeJsonParse<{ questions: Array<{ category: string; question: string; coachingTip: string; competency: string }> }>(llmContent, { questions: [] }, "careerAccess.generateMockQuestions");
 
       return {
         questions: parsed.questions ?? [],
@@ -1208,7 +1203,7 @@ Shared History: ${contact.sharedHistory ?? "Not specified"}`;
     if (!rawText || typeof rawText !== "string") return null;
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
-    return JSON.parse(jsonMatch[0]);
+    return safeJsonParse<Record<string, any> | null>(jsonMatch[0], null, "careerAccess.scoreRelationshipWithAI");
   } catch {
     return null;
   }

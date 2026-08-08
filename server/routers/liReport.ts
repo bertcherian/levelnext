@@ -13,7 +13,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { reports } from "../../drizzle/schema";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 
 // ─── Module Metadata ──────────────────────────────────────────────────────────
 
@@ -384,7 +384,7 @@ For coachFocusAreas, identify the 3 most important areas for the ${meta.coachLab
         });
         const raw = (llmResult as any)?.content ?? (llmResult as any)?.choices?.[0]?.message?.content ?? "{}";
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-        analysis = JSON.parse(cleaned) as Record<string, unknown>;
+        analysis = safeJsonParse<Record<string, unknown>>(cleaned, {}, "liReport.generateAnalysis");
       } catch (err) {
         console.error(`[LI Report] LLM error for ${moduleType}:`, err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to generate analysis" });
