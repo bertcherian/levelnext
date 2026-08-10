@@ -123,7 +123,8 @@ export const productsRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-      // Verify the user is enrolled in the target product
+      // Verify the user is enrolled in the target product (admins bypass enrollment check)
+      const isAdmin = ctx.user.role === "admin";
       const [enrollment] = await db
         .select()
         .from(userProductEnrollments)
@@ -136,10 +137,21 @@ export const productsRouter = router({
         )
         .limit(1);
 
-      if (!enrollment) {
+      if (!enrollment && !isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You are not enrolled in this product.",
+        });
+      }
+
+      // If admin has no enrollment, auto-enroll them so switching works seamlessly
+      if (!enrollment && isAdmin) {
+        await db.insert(userProductEnrollments).values({
+          userId: ctx.user.id,
+          productId: input.productId,
+          enrolledBy: ctx.user.id,
+          isActive: true,
+          lastActiveAt: new Date(),
         });
       }
 

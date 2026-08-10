@@ -15,7 +15,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import { ChevronDown, Briefcase, Brain, Check, Loader2, Users, Rocket } from "lucide-react";
+import { ChevronDown, Briefcase, Brain, Check, Loader2, Users, Rocket, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -58,6 +58,14 @@ const PRODUCT_CONFIG: Record<string, {
     color: "#3B82F6",
     description: "Your career launch starts here",
     homeRoute: "/launch/home",
+  },
+  professional_effectiveness: {
+    label: "Professional Effectiveness",
+    shortLabel: "Professional",
+    icon: Award,
+    color: "#d4af37",
+    description: "Elevate your professional impact",
+    homeRoute: "/pe",
   },
 };
 

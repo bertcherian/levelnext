@@ -123,7 +123,7 @@ function PostLoginProductActivator() {
     onSuccess: (data) => {
       utils.products.getActiveProduct.invalidate();
       utils.products.getEnrolledProducts.invalidate();
-      const dest = data.productId === "career_intelligence" ? "/career" : data.productId === "manager_effectiveness" ? "/manager" : data.productId === "launch_intelligence" ? "/launch/home" : "/home";
+      const dest = data.productId === "career_intelligence" ? "/career" : data.productId === "manager_effectiveness" ? "/manager" : data.productId === "launch_intelligence" ? "/launch/home" : data.productId === "professional_effectiveness" ? "/pe" : "/home";
       window.location.replace(dest);
     },
   });
