@@ -19,7 +19,7 @@ import { ChevronDown, Briefcase, Brain, Check, Loader2, Users, Rocket, Award } f
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const PRODUCT_CONFIG: Record<string, {
+export const PRODUCT_CONFIG: Record<string, {
   label: string;
   shortLabel: string;
   icon: React.ElementType;

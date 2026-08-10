@@ -5,4 +5,6 @@
 - [x] Update PostLoginProductActivator navigation in App.tsx to route to `/pe` for professional_effectiveness
 - [x] Verify the platform appears as the fifth item in the ALL PLATFORMS dropdown
 - [x] Add admin bypass for product switching (auto-enroll admin on switch)
-- [ ] Test the ProductSwitcher end-to-end to confirm Professional Effectiveness appears as 5th platform
+- [x] Test the ProductSwitcher end-to-end to confirm Professional Effectiveness appears as 5th platform
+- [x] Add automated coverage confirming Professional Effectiveness is the fifth platform and opens `/pe`
+- [x] Run the focused product catalogue test and the full test suite (full suite passed on retry after unrelated Sarvam TTS timeout)
