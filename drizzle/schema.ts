@@ -2232,6 +2232,22 @@ export const launchApplicationReminders = mysqlTable("launch_application_reminde
 });
 export type LaunchApplicationReminder = typeof launchApplicationReminders.$inferSelect;
 
+// ─── User Preferences (theme, avatar, notifications, accessibility) ───────────
+export const launchUserPreferences = mysqlTable("launch_user_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  accentColor: varchar("accentColor", { length: 20 }).notNull().default("cyan"),
+  avatar: varchar("avatar", { length: 255 }).notNull().default("🚀"),
+  notifyDailyMissions: boolean("notifyDailyMissions").default(true).notNull(),
+  notifyStreaks: boolean("notifyStreaks").default(true).notNull(),
+  notifyAchievements: boolean("notifyAchievements").default(true).notNull(),
+  notifyReminders: boolean("notifyReminders").default(true).notNull(),
+  reducedMotion: boolean("reducedMotion").default(false).notNull(),
+  highContrast: boolean("highContrast").default(false).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LaunchUserPreferences = typeof launchUserPreferences.$inferSelect;
+
 // ─── XP History (for dashboard charts) ───────────────────────────────────────
 export const launchXpHistory = mysqlTable("launch_xp_history", {
   id: int("id").autoincrement().primaryKey(),

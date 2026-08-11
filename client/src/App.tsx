@@ -91,6 +91,7 @@ import LaunchApplicationTracker from "@/pages/launch/LaunchApplicationTracker";
 import LaunchInterviewIntelligence from "@/pages/launch/LaunchInterviewIntelligence";
 import LaunchNegotiationSimulator from "@/pages/launch/LaunchNegotiationSimulator";
 import LaunchDashboard from "@/pages/launch/LaunchDashboard";
+import LaunchSettings from "@/pages/launch/LaunchSettings";
 import JoinProduct from "@/pages/JoinProduct";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -247,6 +248,7 @@ function Router() {
       <Route path="/launch/interview" component={LaunchInterviewIntelligence} />
       <Route path="/launch/negotiate" component={LaunchNegotiationSimulator} />
       <Route path="/launch/dashboard" component={LaunchDashboard} />
+      <Route path="/launch/settings" component={LaunchSettings} />
       {/* Professional Effectiveness Intelligence */}
       <Route path="/pe/onboarding" component={PEOnboarding} />
       <Route path="/pe">{() => <PELayout><PEHome /></PELayout>}</Route>

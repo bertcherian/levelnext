@@ -317,3 +317,310 @@
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(300%); }
 }
+
+/* ─── Launch Intelligence — Dark Mode Neon Neo-Brutalism ─────────────────────── */
+/* Scoped to .launch-dark — applied on Launch Intelligence pages */
+.launch-dark {
+  /* ── Base Background ── */
+  --ld-bg-base:      #0A0F1E;
+  --ld-bg-gradient:  linear-gradient(135deg, #0A0F1E 0%, #0D1B2A 40%, #0A1628 70%, #060D1A 100%);
+  --ld-surface:      rgba(15, 23, 42, 0.6);
+  --ld-surface-hover: rgba(30, 41, 59, 0.8);
+  --ld-surface-solid: #0F172A;
+  --ld-border:       rgba(148, 163, 184, 0.12);
+  --ld-border-hover:  rgba(148, 163, 184, 0.25);
+
+  /* ── Text ── */
+  --ld-text:         #F8FAFC;
+  --ld-text-muted:   rgba(248, 250, 252, 0.6);
+  --ld-text-dim:     rgba(248, 250, 252, 0.35);
+
+  /* ── Neon Accents ── */
+  --ld-cyan:         #22D3EE;
+  --ld-cyan-glow:    rgba(34, 211, 238, 0.4);
+  --ld-cyan-soft:    rgba(34, 211, 238, 0.12);
+  --ld-pink:         #F472B6;
+  --ld-pink-glow:    rgba(244, 114, 182, 0.4);
+  --ld-pink-soft:    rgba(244, 114, 182, 0.12);
+  --ld-green:        #4ADE80;
+  --ld-green-glow:   rgba(74, 222, 128, 0.4);
+  --ld-green-soft:   rgba(74, 222, 128, 0.12);
+  --ld-orange:       #FB923C;
+  --ld-orange-glow:  rgba(251, 146, 60, 0.4);
+  --ld-orange-soft:  rgba(251, 146, 60, 0.12);
+  --ld-purple:       #A78BFA;
+  --ld-purple-glow:  rgba(167, 139, 250, 0.4);
+  --ld-purple-soft:  rgba(167, 139, 250, 0.12);
+
+  /* ── Mission Area Colors ── */
+  --ld-discover:     #22D3EE;
+  --ld-brand:       #A78BFA;
+  --ld-skills:      #4ADE80;
+  --ld-apply:       #FB923C;
+  --ld-negotiate:   #F472B6;
+  --ld-track:       #94A3B8;
+
+  /* ── Gradients ── */
+  --ld-gradient-primary:  linear-gradient(135deg, #22D3EE 0%, #F472B6 100%);
+  --ld-gradient-success:  linear-gradient(135deg, #4ADE80 0%, #22D3EE 100%);
+  --ld-gradient-warm:      linear-gradient(135deg, #FB923C 0%, #F472B6 100%);
+  --ld-gradient-level:    linear-gradient(90deg, #22D3EE, #4ADE80);
+
+  /* ── Glassmorphic Cards ── */
+  --ld-card-bg:      rgba(15, 23, 42, 0.5);
+  --ld-card-border:  rgba(148, 163, 184, 0.1);
+  --ld-card-hover:   rgba(30, 41, 59, 0.7);
+  --ld-card-radius:  16px;
+
+  /* ── Shadows ── */
+  --ld-shadow-sm:    0 2px 8px rgba(0, 0, 0, 0.3);
+  --ld-shadow-md:    0 4px 16px rgba(0, 0, 0, 0.4);
+  --ld-shadow-lg:    0 8px 32px rgba(0, 0, 0, 0.5);
+  --ld-shadow-cyan:  0 0 20px rgba(34, 211, 238, 0.3);
+  --ld-shadow-pink:  0 0 20px rgba(244, 114, 182, 0.3);
+  --ld-shadow-green: 0 0 20px rgba(74, 222, 128, 0.3);
+
+  /* ── Typography ── */
+  --ld-font-heading: 'Space Grotesk', sans-serif;
+  --ld-font-body:    'Manrope', sans-serif;
+
+  /* ── Spacing ── */
+  --ld-space-xs:  4px;
+  --ld-space-sm:  8px;
+  --ld-space-md:  16px;
+  --ld-space-lg:  24px;
+  --ld-space-xl:  32px;
+  --ld-space-2xl: 48px;
+
+  /* ── Transitions ── */
+  --ld-ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ld-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ld-transition:  200ms var(--ld-ease-out);
+}
+
+/* ── Launch Dark: Text overrides ─────────────────────────────────────────────── */
+.launch-dark h1, .launch-dark h2, .launch-dark h3, .launch-dark h4, .launch-dark h5, .launch-dark h6 {
+  font-family: var(--ld-font-heading);
+  color: var(--ld-text);
+  letter-spacing: -0.02em;
+}
+
+.launch-dark p, .launch-dark span, .launch-dark div {
+  color: var(--ld-text);
+}
+
+.launch-dark .ld-muted { color: var(--ld-text-muted); }
+.launch-dark .ld-dim { color: var(--ld-text-dim); }
+
+/* ── Launch Dark: Component utilities ────────────────────────────────────────── */
+.launch-dark .ld-card {
+  background: var(--ld-card-bg);
+  border: 1px solid var(--ld-card-border);
+  border-radius: var(--ld-card-radius);
+  backdrop-filter: blur(12px);
+  transition: background var(--ld-transition), border-color var(--ld-transition), transform var(--ld-transition);
+}
+.launch-dark .ld-card:hover {
+  background: var(--ld-card-hover);
+  border-color: var(--ld-border-hover);
+}
+
+.launch-dark .ld-card-glow-cyan {
+  border-color: rgba(34, 211, 238, 0.3);
+  box-shadow: var(--ld-shadow-cyan);
+}
+.launch-dark .ld-card-glow-pink {
+  border-color: rgba(244, 114, 182, 0.3);
+  box-shadow: var(--ld-shadow-pink);
+}
+.launch-dark .ld-card-glow-green {
+  border-color: rgba(74, 222, 128, 0.3);
+  box-shadow: var(--ld-shadow-green);
+}
+
+/* ── Launch Dark: Button styles ──────────────────────────────────────────────── */
+.launch-dark .ld-btn-primary {
+  background: var(--ld-gradient-primary);
+  color: #0A0F1E;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: transform var(--ld-transition), box-shadow var(--ld-transition);
+  box-shadow: var(--ld-shadow-cyan);
+}
+.launch-dark .ld-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px rgba(34, 211, 238, 0.5);
+}
+.launch-dark .ld-btn-primary:active {
+  transform: scale(0.97);
+}
+
+.launch-dark .ld-btn-ghost {
+  background: transparent;
+  color: var(--ld-text-muted);
+  border: 1px solid var(--ld-border);
+  border-radius: 12px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all var(--ld-transition);
+}
+.launch-dark .ld-btn-ghost:hover {
+  background: var(--ld-surface);
+  color: var(--ld-text);
+  border-color: var(--ld-border-hover);
+}
+
+/* ── Launch Dark: Badge styles ────────────────────────────────────────────────── */
+.launch-dark .ld-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--ld-font-heading);
+}
+.launch-dark .ld-badge-cyan {
+  background: var(--ld-cyan-soft);
+  color: var(--ld-cyan);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+}
+.launch-dark .ld-badge-pink {
+  background: var(--ld-pink-soft);
+  color: var(--ld-pink);
+  border: 1px solid rgba(244, 114, 182, 0.25);
+}
+.launch-dark .ld-badge-green {
+  background: var(--ld-green-soft);
+  color: var(--ld-green);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+.launch-dark .ld-badge-orange {
+  background: var(--ld-orange-soft);
+  color: var(--ld-orange);
+  border: 1px solid rgba(251, 146, 60, 0.25);
+}
+
+/* ── Launch Dark: Progress bar ────────────────────────────────────────────────── */
+.launch-dark .ld-progress-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(148, 163, 184, 0.15);
+  overflow: hidden;
+}
+.launch-dark .ld-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ld-gradient-level);
+  transition: width 500ms var(--ld-ease-out);
+}
+
+/* ── Launch Dark: Animations ─────────────────────────────────────────────────── */
+@keyframes ld-pulse-glow {
+  0%, 100% { box-shadow: 0 0 12px rgba(34, 211, 238, 0.3); }
+  50%       { box-shadow: 0 0 24px rgba(34, 211, 238, 0.6); }
+}
+.launch-dark .ld-pulse { animation: ld-pulse-glow 2s ease-in-out infinite; }
+
+@keyframes ld-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.launch-dark .ld-slide-up { animation: ld-slide-up 300ms var(--ld-ease-out) both; }
+
+@keyframes ld-scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.launch-dark .ld-scale-in { animation: ld-scale-in 200ms var(--ld-ease-out) both; }
+
+@keyframes ld-bounce-in {
+  0%   { opacity: 0; transform: scale(0.8); }
+  60%  { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.launch-dark .ld-bounce-in { animation: ld-bounce-in 400ms var(--ld-ease-out) both; }
+
+/* ── Launch Dark: Stagger delays ─────────────────────────────────────────────── */
+.launch-dark .ld-stagger-1 { animation-delay: 40ms; }
+.launch-dark .ld-stagger-2 { animation-delay: 80ms; }
+.launch-dark .ld-stagger-3 { animation-delay: 120ms; }
+.launch-dark .ld-stagger-4 { animation-delay: 160ms; }
+.launch-dark .ld-stagger-5 { animation-delay: 200ms; }
+.launch-dark .ld-stagger-6 { animation-delay: 240ms; }
+
+/* ── Launch Dark: Bottom nav (mobile) ────────────────────────────────────────── */
+.launch-dark .ld-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(10, 15, 30, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--ld-border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0 env(safe-area-inset-bottom, 8px);
+}
+
+.launch-dark .ld-bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--ld-font-heading);
+  color: var(--ld-text-dim);
+  transition: color var(--ld-transition);
+}
+.launch-dark .ld-bottom-nav-item.active {
+  color: var(--ld-cyan);
+}
+.launch-dark .ld-bottom-nav-item:active {
+  transform: scale(0.95);
+}
+
+/* ── Launch Dark: High contrast mode ──────────────────────────────────────────── */
+.launch-dark.ld-high-contrast {
+  --ld-text:         #FFFFFF;
+  --ld-text-muted:   rgba(255, 255, 255, 0.85);
+  --ld-text-dim:     rgba(255, 255, 255, 0.6);
+  --ld-border:       rgba(255, 255, 255, 0.2);
+  --ld-border-hover:  rgba(255, 255, 255, 0.4);
+  --ld-card-border:  rgba(255, 255, 255, 0.15);
+  --ld-cyan:         #67E8F9;
+  --ld-pink:         #F9A8D4;
+  --ld-green:        #86EFAC;
+  --ld-orange:       #FDBA74;
+  --ld-purple:       #C4B5FD;
+}
+
+/* ── Launch Dark: Reduced motion ─────────────────────────────────────────────── */
+.launch-dark.ld-reduced-motion *,
+.launch-dark.ld-reduced-motion *::before,
+.launch-dark.ld-reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-dark:not(.ld-reduced-motion) *,
+  .launch-dark:not(.ld-reduced-motion) *::before,
+  .launch-dark:not(.ld-reduced-motion) *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

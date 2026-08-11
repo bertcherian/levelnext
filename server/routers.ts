@@ -55,6 +55,7 @@ import { launchApplicationsRouter } from "./routers/launchApplications";
 import { launchInterviewRouter } from "./routers/launchInterview";
 import { launchNegotiationRouter } from "./routers/launchNegotiation";
 import { launchRemindersRouter } from "./routers/launchReminders";
+import { launchUserPreferencesRouter } from "./routers/launchUserPreferences";
 import { peiRouter } from "./routers/pei";
 import { intelligenceCoreRouter } from "./routers/intelligenceCore";
 
@@ -121,6 +122,7 @@ export const appRouter = router({
   launchInterview: launchInterviewRouter,
   launchNegotiation: launchNegotiationRouter,
   launchReminders: launchRemindersRouter,
+  launchUserPreferences: launchUserPreferencesRouter,
   pei: peiRouter,
   intelligenceCore: intelligenceCoreRouter,
 });
