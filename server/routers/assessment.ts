@@ -1,11 +1,17 @@
 import { TRPCError } from "@trpc/server";
 import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { assessmentSessions, reports } from "../../drizzle/schema";
 import { nanoid } from "nanoid";
 import { updateLeadershipGraph } from "./leadershipGraph";
+import {
+  ASSESSMENT_MODULE_TYPES,
+  assertAssessmentModuleAccess,
+  assertOwnedActiveSession,
+  assertReportOwner,
+} from "./assessmentAccess";
 
 // Import all three module data sets
 import {
@@ -160,9 +166,12 @@ function scoreEci(responses: Record<string, number>) {
 
 export const assessmentRouter = router({
   // Get questions for a module
-  getQuestions: publicProcedure
-    .input(z.object({ moduleType: z.string() }))
-    .query(({ input }) => {
+  getQuestions: protectedProcedure
+    .input(z.object({ moduleType: z.enum(ASSESSMENT_MODULE_TYPES) }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertAssessmentModuleAccess(db, ctx.user.id, input.moduleType);
       // Career Intelligence modules
       if (isCiModule(input.moduleType)) {
         const questions = getCiQuestions(input.moduleType);
@@ -229,10 +238,12 @@ export const assessmentRouter = router({
 
   // Start or resume an assessment session
   startSession: protectedProcedure
-    .input(z.object({ moduleType: z.string() }))
+    .input(z.object({ moduleType: z.enum(ASSESSMENT_MODULE_TYPES) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await assertAssessmentModuleAccess(db, ctx.user.id, input.moduleType);
 
       // Check for existing in-progress session
       const existing = await db
@@ -271,6 +282,12 @@ export const assessmentRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [session] = await db
+        .select({ userId: assessmentSessions.userId, moduleType: assessmentSessions.moduleType, status: assessmentSessions.status })
+        .from(assessmentSessions)
+        .where(eq(assessmentSessions.id, input.sessionId))
+        .limit(1);
+      assertOwnedActiveSession(session, ctx.user.id);
       await db
         .update(assessmentSessions)
         .set({ responses: input.responses, currentQuestionIndex: input.currentQuestionIndex })
@@ -283,7 +300,7 @@ export const assessmentRouter = router({
     .input(
       z.object({
         sessionId: z.number(),
-        moduleType: z.string(),
+        moduleType: z.enum(ASSESSMENT_MODULE_TYPES),
         responses: z.record(z.string(), z.number()),
         participantName: z.string(),
         participantEmail: z.string().email(),
@@ -294,6 +311,19 @@ export const assessmentRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await assertAssessmentModuleAccess(db, ctx.user.id, input.moduleType);
+      const [session] = await db
+        .select({
+          userId: assessmentSessions.userId,
+          moduleType: assessmentSessions.moduleType,
+          status: assessmentSessions.status,
+          tenantId: assessmentSessions.tenantId,
+        })
+        .from(assessmentSessions)
+        .where(eq(assessmentSessions.id, input.sessionId))
+        .limit(1);
+      assertOwnedActiveSession(session, ctx.user.id, input.moduleType);
 
       // Score the responses
       let scored: { edgeScore: number; dimensionScores: Record<string, number>; zone: string; archetype: string; [key: string]: unknown };
@@ -378,6 +408,7 @@ export const assessmentRouter = router({
         .values({
           sessionId: input.sessionId,
           userId: ctx.user.id,
+          tenantId: session.tenantId,
           moduleType: input.moduleType as any,
           slug,
           participantName: input.participantName,
@@ -396,7 +427,7 @@ export const assessmentRouter = router({
       await db
         .update(assessmentSessions)
         .set({ status: "completed", completedAt: new Date(), responses: input.responses })
-        .where(eq(assessmentSessions.id, input.sessionId));
+        .where(and(eq(assessmentSessions.id, input.sessionId), eq(assessmentSessions.userId, ctx.user.id)));
 
       // Update the Leadership Graph (LI modules only)
       if (!isCiModule(input.moduleType)) {
@@ -439,13 +470,15 @@ export const assessmentRouter = router({
       .orderBy(desc(reports.createdAt));
   }),
 
-  // Get a specific report by slug
-  getReport: publicProcedure
+  // Get a specific report by slug for its owner.
+  getReport: protectedProcedure
     .input(z.object({ slug: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return null;
       const result = await db.select().from(reports).where(eq(reports.slug, input.slug)).limit(1);
-      return result[0] ?? null;
+      const report = result[0];
+      assertReportOwner(report, ctx.user.id);
+      return report ?? null;
     }),
 });

@@ -1,19 +1,22 @@
 import { TRPCError } from "@trpc/server";
 import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { reports, tenantUsers } from "../../drizzle/schema";
+import { assertReportOwner } from "./assessmentAccess";
 
 export const reportRouter = router({
-  // Get a report by slug (public — shareable link)
-  bySlug: publicProcedure
+  // Get a report by slug for its owner. Public sharing must use an explicit share token.
+  bySlug: protectedProcedure
     .input(z.object({ slug: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return null;
       const result = await db.select().from(reports).where(eq(reports.slug, input.slug)).limit(1);
-      return result[0] ?? null;
+      const report = result[0];
+      assertReportOwner(report, ctx.user.id);
+      return report ?? null;
     }),
 
   // Get all reports for the current user
