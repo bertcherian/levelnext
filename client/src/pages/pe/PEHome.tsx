@@ -48,7 +48,7 @@ export default function PEHome() {
             <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "#d4af37" }}>
               {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
             </p>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">
+            <h1 className="text-lg md:text-xl font-semibold text-white leading-snug">
               {brief?.greeting ?? `Good morning, ${userName}.`}
             </h1>
             {brief?.dayTheme && (
