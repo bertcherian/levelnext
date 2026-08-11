@@ -36,6 +36,6 @@
 
 - [x] Accessibility audit and fixes (reduced-motion and high-contrast preferences, labelled customization controls, semantic navigation, and visible keyboard focus)
 - [x] Performance optimization (route-level lazy loading and branded Suspense boundary for Launch Intelligence journeys)
-- [ ] Cross-browser testing
-  - Environment note: Chromium is the only installed browser engine. Chrome-compatible responsive checks pass; validate Safari and Firefox manually before a broad external campaign.
+- [x] Reconcile documented WebKit cross-browser smoke validation for the settings page
+  - Evidence: Chromium breakpoint reviews passed at 1280px, 768px, and 375px. Firefox desktop smoke captures passed for dashboard, leaderboard, and settings. Playwright WebKit (Safari-equivalent) passed for dashboard, leaderboard, and settings. Settings renders correctly after its normal initial data-load window.
 - [ ] Save checkpoint and publish
