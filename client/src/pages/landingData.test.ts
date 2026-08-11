@@ -21,6 +21,12 @@ describe("LevelNext landing page content model", () => {
     expect(careerStages.every((stage) => stage.href.startsWith("/"))).toBe(true);
     expect(getCareerStage(defaultStageIndex).name).toBe("Professional");
     expect(getCareerStage(-1).name).toBe("Professional");
+    expect(careerStages.map((stage) => stage.audience)).toEqual([
+      "Freshers & Early Career",
+      "Individual contributors",
+      "Managers & People Leaders",
+      "Strategic & Business Leaders",
+    ]);
   });
 
   it("uses a closed intelligence loop from diagnosis through adaptation", () => {

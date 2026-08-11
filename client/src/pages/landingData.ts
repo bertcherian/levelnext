@@ -13,7 +13,7 @@ export const careerStages: CareerStage[] = [
     number: "01",
     name: "Launch",
     tagline: "Welcome to work.",
-    audience: "Students · Graduates · Early Career",
+    audience: "Freshers & Early Career",
     description:
       "College taught you how to get the job. LevelNext helps you succeed in it—with the confidence, communication and judgement work asks for.",
     href: "/launch",
@@ -33,7 +33,7 @@ export const careerStages: CareerStage[] = [
     number: "03",
     name: "Manager",
     tagline: "Your job changed. Did the way you work?",
-    audience: "Managers and people leaders",
+    audience: "Managers & People Leaders",
     description:
       "Make the shift from individual output to team performance—by learning to enable, coach and create accountability through others.",
     href: "/manager-effectiveness",
@@ -43,7 +43,7 @@ export const careerStages: CareerStage[] = [
     number: "04",
     name: "Leader",
     tagline: "Leadership begins where authority stops being enough.",
-    audience: "Senior managers and emerging leaders",
+    audience: "Strategic & Business Leaders",
     description:
       "Navigate complexity, influence across boundaries and create outcomes through an organisation—not just a team.",
     href: "/signup?experience=leader",

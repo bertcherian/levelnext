@@ -14,4 +14,8 @@
 - [x] Make quick-filter navigation menu sticky at top of screen while scrolling career stages
 - [x] Add subtle pulse animation to 'Start your diagnosis' CTA button
 - [x] Add hover tooltip/expandable text on narrative cards for more context
-- [ ] Create reusable skill from this landing page enhancement process using skill-creator
+- [x] Create reusable skill from this landing page enhancement process using skill-creator
+- [x] Update Launch audience label from “Students” to “Freshers & Early Career”
+- [x] Update Manager audience label from “Managers and People Leaders” to “Managers & People Leaders”
+- [x] Update Leader audience label from “Senior Managers and Emerging Leaders” to “Strategic & Business Leaders”
+- [x] Verify the updated talent-pipeline labels and publish the landing page copy refinement
