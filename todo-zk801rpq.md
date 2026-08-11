@@ -16,8 +16,8 @@
 - [x] Refactor LaunchDashboard to use dark-mode design system (LaunchDarkLayout, neon cards, XP charts, mission progress, stats)
 - [x] Build LaunchSettings page (accent color picker, avatar selection, notification toggles, accessibility controls)
 - [x] Add /launch/settings route to App.tsx
-- [ ] Build AchievementUnlockedModal component (celebration + share buttons)
-- [ ] Build Leaderboard page and components
+- [x] Build AchievementUnlockedModal component (celebration + share buttons)
+- [x] Build Leaderboard page and components
 
 ## Phase 3: Integration
 
