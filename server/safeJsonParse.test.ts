@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { safeJsonParse, extractJsonObject, extractJsonArray } from "./_core/llm";
+import { parseInferredScenarioResponse } from "./routers/simulator";
 
 describe("safeJsonParse", () => {
   it("parses valid JSON objects correctly", () => {
@@ -101,5 +102,39 @@ describe("extractJsonArray", () => {
     const fallback: string[] = [];
     const result = extractJsonArray("[bad array", fallback, "test");
     expect(result).toEqual(fallback);
+  });
+});
+
+describe("parseInferredScenarioResponse", () => {
+  it("accepts a manager accountability scenario with a preamble and markdown fence", () => {
+    const response = `Here is the scenario:\n\n\`\`\`json
+{
+  "conversationType": "Accountability Conversation",
+  "stakeholder": "An underperforming direct report",
+  "objective": "Reset expectations and agree a measurable improvement plan.",
+  "expectedChallenge": "The employee is likely to blame workload and question the feedback.",
+  "difficulty": 3,
+  "estimatedMinutes": 6,
+  "characterName": "Rohan",
+  "characterStyle": "Defensive at first but open to concrete examples.",
+  "followUpQuestion": null
+}
+\`\`\``;
+
+    expect(parseInferredScenarioResponse(response)).toEqual({
+      conversationType: "Accountability Conversation",
+      stakeholder: "An underperforming direct report",
+      objective: "Reset expectations and agree a measurable improvement plan.",
+      expectedChallenge: "The employee is likely to blame workload and question the feedback.",
+      difficulty: 3,
+      estimatedMinutes: 6,
+      characterName: "Rohan",
+      characterStyle: "Defensive at first but open to concrete examples.",
+      followUpQuestion: null,
+    });
+  });
+
+  it("returns null when the model response does not include a JSON object", () => {
+    expect(parseInferredScenarioResponse("I need more information before creating a scenario.")).toBeNull();
   });
 });

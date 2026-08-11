@@ -3,7 +3,7 @@ import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { invokeLLM } from "../_core/llm";
+import { extractJsonObject, invokeLLM } from "../_core/llm";
 import { simSessions } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 
@@ -36,6 +36,57 @@ function extractContent(raw: string | Array<{ text?: string } | unknown>): strin
   return "";
 }
 
+type InferredScenario = {
+  conversationType: string;
+  stakeholder: string;
+  objective: string;
+  expectedChallenge: string;
+  difficulty: number;
+  estimatedMinutes: number;
+  characterName: string;
+  characterStyle: string;
+  followUpQuestion: string | null;
+};
+
+function scenarioText(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : fallback;
+}
+
+function scenarioInteger(value: unknown, fallback: number, min: number, max: number): number {
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric)
+    ? Math.round(Math.min(max, Math.max(min, numeric)))
+    : fallback;
+}
+
+/**
+ * Normalises an LLM scenario response, including responses that contain a
+ * markdown fence or a brief preamble before the requested JSON object.
+ */
+export function parseInferredScenarioResponse(raw: string): InferredScenario | null {
+  const parsed = extractJsonObject<Record<string, unknown> | null>(
+    raw,
+    null,
+    "simulator.inferScenario"
+  );
+
+  if (!parsed || Array.isArray(parsed)) return null;
+
+  return {
+    conversationType: scenarioText(parsed.conversationType, "Leadership Conversation"),
+    stakeholder: scenarioText(parsed.stakeholder, "Your counterpart"),
+    objective: scenarioText(parsed.objective, "Achieve a positive outcome"),
+    expectedChallenge: scenarioText(parsed.expectedChallenge, "Expect pushback and probing questions"),
+    difficulty: scenarioInteger(parsed.difficulty, 3, 1, 5),
+    estimatedMinutes: scenarioInteger(parsed.estimatedMinutes, 6, 4, 10),
+    characterName: scenarioText(parsed.characterName, "Alex"),
+    characterStyle: scenarioText(parsed.characterStyle, "Professional and direct"),
+    followUpQuestion: typeof parsed.followUpQuestion === "string" && parsed.followUpQuestion.trim().length > 0
+      ? parsed.followUpQuestion.trim()
+      : null,
+  };
+}
+
 export const simulatorRouter = router({
 
   inferScenario: protectedProcedure
@@ -47,6 +98,7 @@ export const simulatorRouter = router({
       const ctx_platform = PLATFORM_CONTEXT[input.platform];
       const result = await invokeLLM({
         model: "claude-haiku-4-5",
+        maxTokens: 500,
         messages: [
           {
             role: "system",
@@ -72,26 +124,48 @@ followUpQuestion: if you genuinely need one clarification, include a short quest
           },
           { role: "user", content: `I want to practise: "${input.prompt}"` },
         ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "practice_scenario",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                conversationType: { type: "string" },
+                stakeholder: { type: "string" },
+                objective: { type: "string" },
+                expectedChallenge: { type: "string" },
+                difficulty: { type: "integer", minimum: 1, maximum: 5 },
+                estimatedMinutes: { type: "integer", minimum: 4, maximum: 10 },
+                characterName: { type: "string" },
+                characterStyle: { type: "string" },
+                followUpQuestion: { type: ["string", "null"] },
+              },
+              required: [
+                "conversationType",
+                "stakeholder",
+                "objective",
+                "expectedChallenge",
+                "difficulty",
+                "estimatedMinutes",
+                "characterName",
+                "characterStyle",
+                "followUpQuestion",
+              ],
+              additionalProperties: false,
+            },
+          },
+        },
       });
 
-      try {
-        const text = extractContent(result.choices[0].message.content ?? "{}");
-        const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-        const parsed = JSON.parse(clean);
-        return {
-          conversationType: parsed.conversationType ?? "Leadership Conversation",
-          stakeholder: parsed.stakeholder ?? "Your counterpart",
-          objective: parsed.objective ?? "Achieve a positive outcome",
-          expectedChallenge: parsed.expectedChallenge ?? "Expect pushback and probing questions",
-          difficulty: Math.round(Math.min(5, Math.max(1, parsed.difficulty ?? 3))),
-          estimatedMinutes: Math.round(Math.min(10, Math.max(4, parsed.estimatedMinutes ?? 6))),
-          characterName: parsed.characterName ?? "Alex",
-          characterStyle: parsed.characterStyle ?? "Professional and direct",
-          followUpQuestion: parsed.followUpQuestion ?? null,
-        };
-      } catch {
+      const text = extractContent(result.choices[0]?.message?.content ?? "");
+      const scenario = parseInferredScenarioResponse(text);
+      if (!scenario) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not generate scenario" });
       }
+
+      return scenario;
     }),
 
   startSession: protectedProcedure
