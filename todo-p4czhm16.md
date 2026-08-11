@@ -9,3 +9,9 @@
 - [x] Add smooth hover animations to the interactive Professional Intelligence narrative cards on the landing page
 - [x] Implement a quick-filter navigation menu for the responsive career-stage experiences
 - [x] Add a clear CTA button at the end of the Professional Intelligence narrative to encourage sign-ups
+
+- [x] Fix unreadable 'LevelNext for Professionals' footer link — black text on navy, change to readable colour
+- [x] Make quick-filter navigation menu sticky at top of screen while scrolling career stages
+- [x] Add subtle pulse animation to 'Start your diagnosis' CTA button
+- [x] Add hover tooltip/expandable text on narrative cards for more context
+- [ ] Create reusable skill from this landing page enhancement process using skill-creator

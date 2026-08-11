@@ -257,9 +257,9 @@ export default function Landing() {
             ))}
           </div>
           <div className="ln-loop__capabilities">
-            <article><span>01</span><h3>Diagnostics</h3><p>Understand what’s really happening.</p></article>
-            <article><span>02</span><h3>AI Coaching &amp; Practice</h3><p>Turn insight into better decisions and behaviours.</p></article>
-            <article><span>03</span><h3>Outcomes</h3><p>See whether change is actually happening.</p></article>
+            <article data-tip="Pinpoint exactly where to focus first"><span>01</span><h3>Diagnostics</h3><p>Understand what’s really happening.</p></article>
+            <article data-tip="Practise real conversations before they happen"><span>02</span><h3>AI Coaching &amp; Practice</h3><p>Turn insight into better decisions and behaviours.</p></article>
+            <article data-tip="Track whether behaviours are actually changing"><span>03</span><h3>Outcomes</h3><p>See whether change is actually happening.</p></article>
           </div>
         </div>
       </section>
@@ -297,11 +297,11 @@ export default function Landing() {
           </div>
           <div className="ln-value-grid">
             {[
-              ["Know", "Where capability gaps actually exist."],
-              ["Act", "Give each person the right intervention at the right moment."],
-              ["Develop", "Turn everyday work into development."],
-              ["Measure", "Understand whether behaviours and outcomes are changing."],
-            ].map(([label, copy], index) => <article key={label}><span>{String(index + 1).padStart(2, "0")}</span><h3>{label}</h3><p>{copy}</p></article>)}
+              ["Know", "Where capability gaps actually exist.", "Surface hidden capability gaps across your pipeline"],
+              ["Act", "Give each person the right intervention at the right moment.", "Deliver the right development at the right time"],
+              ["Develop", "Turn everyday work into development.", "Make growth a byproduct of doing the job"],
+              ["Measure", "Understand whether behaviours and outcomes are changing.", "Prove ROI with behavioural data, not just feedback"],
+            ].map(([label, copy, tip], index) => <article key={label} data-tip={tip}><span>{String(index + 1).padStart(2, "0")}</span><h3>{label}</h3><p>{copy}</p></article>)}
           </div>
           <div className="ln-enterprise__actions">
             <a className="ln-button" href={organisationConversationUrl} target="_blank" rel="noreferrer">Explore LevelNext for Organisations <ArrowRight size={17} /></a>
