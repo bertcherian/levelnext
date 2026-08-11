@@ -1,585 +1,364 @@
-import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
-import { ArrowRight, CheckCircle2, Quote, Zap, Target, TrendingUp, Brain, Clock, Shield, Download, FileText } from "lucide-react";
+import * as React from "react";
+import { useState, type CSSProperties, type PointerEvent } from "react";
+import {
+  ArrowRight,
+  ChevronDown,
+  Menu,
+  MoveUpRight,
+  Sparkles,
+  X,
+} from "lucide-react";
+import {
+  careerStages,
+  defaultStageIndex,
+  getCareerStage,
+  getPersonalisationAnswer,
+  intelligenceCore,
+  intelligenceLoop,
+  personalisationLevels,
+  type PersonalisationLevel,
+} from "./landingData";
+import "./landing.css";
 
-const LOGO_URL = "/logo.png";
-const VIDEO_URL = "/manus-storage/levelnext_explainer_v5_a20a9a42.mp4";
-const POSTER_URL = "/manus-storage/video_poster_9c31f573.jpg";
+const organisationConversationUrl =
+  "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=organisation";
 
-const SOCIAL_PROOF = [
-  {
-    quote: "I finally understand exactly where my leadership is strong and where I'm leaving influence on the table. The ECI diagnostic alone changed how I show up in board meetings.",
-    name: "Priya M.",
-    title: "VP Engineering, Global Tech MNC",
-  },
-  {
-    quote: "Every leadership programme I've done gave me a framework and left me alone. LevelNext's Guide actually coaches me through applying it — daily, in my context.",
-    name: "Rajesh K.",
-    title: "GCC Head, Fortune 500 Company",
-  },
-  {
-    quote: "The Leadership Influence diagnostic surfaced a blind spot my 360 feedback never caught. Three weeks in, my team noticed the difference.",
-    name: "Ananya S.",
-    title: "Director, People & Culture",
-  },
-];
-
-const TRANSFORMATION_STEPS = [
-  {
-    icon: Brain,
-    step: "01",
-    title: "Diagnose your Edge",
-    desc: "Six precision diagnostics reveal your exact leadership strengths, blind spots, and growth opportunities — no generic frameworks.",
-  },
-  {
-    icon: TrendingUp,
-    step: "02",
-    title: "Build your Intelligence Profile",
-    desc: "Your Leadership Edge score compounds with every diagnostic. A living profile that grows richer as you do.",
-  },
-  {
-    icon: Target,
-    step: "03",
-    title: "Get coached daily",
-    desc: "Guide — your personal AI coach — knows your exact profile and gives you specific, actionable Missions every day.",
-  },
-  {
-    icon: Zap,
-    step: "04",
-    title: "Practise in real scenarios",
-    desc: "The AI Practice Coach puts you in live leadership conversations. Rehearse, get feedback, and build your muscle before it counts.",
-  },
-];
-
-const DIAGNOSTICS = [
-  { code: "ECI", name: "Executive Communication", desc: "How you land influence in the room" },
-  { code: "TII", name: "Time Intelligence", desc: "How you invest your leadership attention" },
-  { code: "LII", name: "Leadership Influence", desc: "How you shape decisions and culture" },
-  { code: "GCC", name: "GCC Readiness", desc: "How ready you are to lead at global scale" },
-  { code: "LDI", name: "Derailment Intelligence", desc: "What could silently stall your career" },
-  { code: "STI", name: "Strategic Thinking", desc: "How you think at the level above your role" },
-];
-
-const SAMPLE_MODULES = [
-  { code: "ECI", name: "Executive Communication Intelligence", desc: "How you land influence in the room", path: "/manus-storage/eci_sample_report_c8069499.pdf" },
-  { code: "LII", name: "Leadership Influence Intelligence", desc: "How you shape decisions and culture", path: "/manus-storage/lii_sample_report_35396687.pdf" },
-  { code: "STI", name: "Strategic Thinking Intelligence", desc: "How you think at the level above your role", path: "/manus-storage/sti_sample_report_f8e5b386.pdf" },
-];
+function sectionLink(id: string) {
+  return `#${id}`;
+}
 
 export default function Landing() {
-  const { isAuthenticated, loading } = useAuth();
-  const [, navigate] = useLocation();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [leadEmail, setLeadEmail] = useState("");
-  const [leadName, setLeadName] = useState("");
-  const [selectedModule, setSelectedModule] = useState(SAMPLE_MODULES[0]);
-  const [leadSubmitted, setLeadSubmitted] = useState(false);
-  const [leadError, setLeadError] = useState("");
-  const captureMutation = trpc.leads.captureEmail.useMutation({
-    onSuccess: () => {
-      setLeadSubmitted(true);
-      const link = document.createElement("a");
-      link.href = selectedModule.path;
-      link.download = `LevelNext_${selectedModule.code}_Sample_Report.pdf`;
-      link.target = "_blank";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    },
-    onError: (err) => setLeadError(err.message),
-  });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeStage, setActiveStage] = useState(defaultStageIndex);
+  const [activeLevel, setActiveLevel] = useState<PersonalisationLevel>("Professional");
+  const [pointer, setPointer] = useState({ x: 68, y: 46 });
 
-  useEffect(() => {
-    if (!loading && isAuthenticated) {
-      navigate("/home");
-    }
-  }, [isAuthenticated, loading, navigate]);
+  const updateHeroPointer = (event: PointerEvent<HTMLElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setPointer({
+      x: ((event.clientX - rect.left) / rect.width) * 100,
+      y: ((event.clientY - rect.top) / rect.height) * 100,
+    });
+  };
 
-  // While auth is resolving (e.g. immediately after clicking a magic link),
-  // show a minimal loading screen instead of flashing the marketing landing page.
-  // This prevents the double-sign-in UX where the user clicks the magic link,
-  // lands on the landing page, and thinks they need to sign in again.
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-navy)" }}>
-        <div className="flex flex-col items-center gap-4">
-          <img src="/logo.png" alt="LevelNext" className="h-14 object-contain animate-pulse" />
-          <p className="text-sm" style={{ color: "oklch(65% 0.02 248.6)" }}>Signing you in…</p>
-        </div>
-      </div>
-    );
-  }
+  const heroStyle = {
+    "--pointer-x": `${pointer.x}%`,
+    "--pointer-y": `${pointer.y}%`,
+  } as CSSProperties;
 
-  function handlePlay() {
-    setPlaying(true);
-    videoRef.current?.play();
-  }
+  const stage = getCareerStage(activeStage);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--color-ln-navy)", color: "white" }}>
+    <main className="ln-landing" id="top">
+      <header className="ln-nav">
+        <a className="ln-brand" href="/" aria-label="LevelNext home">
+          <img src="/logo.png" alt="LevelNext" />
+        </a>
 
-      {/* ── Sticky Header ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 px-6 md:px-10 py-4"
-        style={{
-          background: "oklch(from var(--color-ln-navy) l c h / 0.95)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid oklch(from white 30% 0 0 / 0.08)"
-        }}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <img src={LOGO_URL} alt="LevelNext" className="h-14 w-auto" />
-          <div className="flex items-center gap-3">
-            <a href="/career-intelligence" className="hidden md:block text-sm text-white/60 hover:text-white transition-colors font-medium">
-              Career Intelligence
-            </a>
-            <a href="/login?returnTo=%2Fhome">
-              <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10 text-sm">
-                Sign In
-              </Button>
-            </a>
-            <a href="/signup">
-              <Button size="sm" className="font-semibold text-sm px-5"
-                style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-                Sign Up Free →
-              </Button>
-            </a>
-          </div>
+        <nav className="ln-nav__links" aria-label="Primary navigation">
+          <a href={sectionLink("platform")}>Platform</a>
+          <a href={sectionLink("solutions")}>Solutions</a>
+          <a href={sectionLink("organisations")}>For Organisations</a>
+          <a href={sectionLink("how-it-works")}>How It Works</a>
+          <a href={sectionLink("resources")}>Resources</a>
+        </nav>
+
+        <div className="ln-nav__actions">
+          <a className="ln-login" href="/login?returnTo=%2Fhome">Login</a>
+          <a className="ln-button ln-button--small" href={sectionLink("platform")}>
+            Explore LevelNext <ArrowRight size={15} />
+          </a>
         </div>
+
+        <button
+          type="button"
+          className="ln-menu-toggle"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
+          aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+        >
+          {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </header>
 
-      {/* ── HERO: Split layout — text left, video right ───────────────────────── */}
-      <section className="relative overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 60% 80% at 0% 50%, oklch(from var(--color-ln-yellow) l c h / 0.06) 0%, transparent 60%)"
-        }} />
+      {mobileMenuOpen && (
+        <nav className="ln-mobile-nav" id="mobile-navigation" aria-label="Mobile navigation">
+          <a href={sectionLink("platform")} onClick={() => setMobileMenuOpen(false)}>Platform</a>
+          <a href={sectionLink("solutions")} onClick={() => setMobileMenuOpen(false)}>Solutions</a>
+          <a href={sectionLink("organisations")} onClick={() => setMobileMenuOpen(false)}>For Organisations</a>
+          <a href={sectionLink("how-it-works")} onClick={() => setMobileMenuOpen(false)}>How It Works</a>
+          <a href={sectionLink("resources")} onClick={() => setMobileMenuOpen(false)}>Resources</a>
+          <a href="/login?returnTo=%2Fhome" onClick={() => setMobileMenuOpen(false)}>Login</a>
+        </nav>
+      )}
 
-        {/* Mobile: video on top, text below */}
-        {/* Desktop: text left, video right — both above the fold */}
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 py-10 md:py-0 md:min-h-[calc(100vh-65px)] flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
+      <section className="ln-hero" onPointerMove={updateHeroPointer} style={heroStyle}>
+        <div className="ln-grid" aria-hidden="true" />
+        <div className="ln-hero__spotlight" aria-hidden="true" />
+        <div className="ln-hero__content">
+          <p className="ln-eyebrow ln-eyebrow--gold"><span /> Professional Intelligence</p>
+          <h1>Whatever your next level,<br /><em>be ready for it.</em></h1>
+          <p className="ln-hero__copy">
+            LevelNext understands what you need to succeed, turns that intelligence into action, and adapts as your career changes.
+          </p>
+          <div className="ln-hero__actions">
+            <a className="ln-button" href={sectionLink("platform")}>Explore LevelNext <ArrowRight size={17} /></a>
+            <a className="ln-text-link ln-text-link--light" href={sectionLink("organisations")}>LevelNext for Organisations <ArrowRight size={16} /></a>
+          </div>
+        </div>
 
-          {/* ── Left: Text + CTA ──────────────────────────────────────────────── */}
-          <div className="flex flex-col items-start text-left md:w-[52%] md:py-6 order-2 md:order-1">
-
-            {/* Headline */}
-            <h1 className="font-bold leading-[1.1] mb-4">
-              <span className="block text-4xl sm:text-5xl md:text-5xl text-white" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, letterSpacing: "-0.02em" }}>Find your Gaps. Fix them.</span>
-              <span className="block text-xl sm:text-2xl md:text-2xl" style={{ color: "var(--color-ln-yellow)" }}>Increase your Leadership Intelligence.</span>
-            </h1>
-
-            {/* Sub-headline */}
-            <p className="text-sm md:text-base leading-relaxed mb-3 text-white/80 max-w-lg">
-              Most leaders plateau — from gaps they're ignoring or don't even know.
-              The <strong style={{ color: "var(--color-ln-yellow)" }}>LevelNext Leadership Intelligence System</strong> gives you
-              precision diagnostics, daily AI coaching, and practice to close the gap.
-            </p>
-
-            {/* Friction reducer */}
-            <p className="text-xs mb-5 text-white/50">
-              Free to start · First diagnostic in 10 minutes · No credit card
-            </p>
-
-            {/* CTA — above the fold */}
-            <a href="/signup?utm_source=landing&utm_medium=hero&utm_campaign=signup">
-              <Button size="lg" className="h-13 px-8 text-base font-bold rounded-xl shadow-lg"
-                style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-                Sign Up Free
-                <ArrowRight size={18} className="ml-2" />
-              </Button>
-            </a>
-
-            {/* Secondary CTA — Book a discovery call */}
-            <a
-              href="https://tidycal.com/metaresults/pilot?utm_source=landing&utm_medium=hero_secondary&utm_campaign=pilot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3"
-            >
-              <Button
-                size="lg"
-                variant="outline"
-                className="h-13 px-8 text-base font-semibold rounded-xl"
-                style={{
-                  borderColor: "oklch(from var(--color-ln-yellow) l c h / 0.5)",
-                  color: "var(--color-ln-yellow)",
-                  background: "transparent",
-                }}
+        <div className="ln-journey ln-journey--hero" aria-label="The LevelNext professional journey">
+          <div className="ln-journey__line" aria-hidden="true"><i /></div>
+          <div className="ln-journey__stages">
+            {careerStages.map((item, index) => (
+              <button
+                type="button"
+                key={item.name}
+                className={`ln-journey-node ${index === activeStage ? "is-active" : ""}`}
+                onMouseEnter={() => setActiveStage(index)}
+                onFocus={() => setActiveStage(index)}
+                onClick={() => setActiveStage(index)}
               >
-                Book a Discovery Call
-              </Button>
-            </a>
+                <span className="ln-journey-node__point"><i /></span>
+                <span className="ln-journey-node__name">{item.name}</span>
+                <span className="ln-journey-node__tagline">{item.tagline.replace("Welcome to work.", "Learn how work works.").replace("Become exceptional at getting work done.", "Become exceptional at your work.").replace("Your job changed. Did the way you work?", "Succeed through others.").replace("Leadership begins where authority stops being enough.", "Succeed through the organisation.")}</span>
+              </button>
+            ))}
+          </div>
+          <div className="ln-transition-branch">
+            <span className="ln-transition-branch__line" aria-hidden="true" />
+            <p>Career paths aren’t always linear.</p>
+            <a href="/career-intelligence">Career Transition <MoveUpRight size={14} /></a>
+          </div>
+        </div>
+      </section>
 
-            {/* Anxiety counter */}
-            <p className="text-sm mt-3 text-white/50">
-              Not another personality test. Real intelligence, built on your actual leadership data.
-            </p>
+      <section className="ln-problem" aria-labelledby="problem-title">
+        <div className="ln-section-frame ln-problem__frame">
+          <p className="ln-eyebrow">The problem</p>
+          <h2 id="problem-title">Work keeps changing.</h2>
+          <div className="ln-problem__statements">
+            <p>The challenge changes when you start work.</p>
+            <p>It changes when you become responsible for outcomes.</p>
+            <p>It changes again when you become responsible for people.</p>
+            <p>And again when you begin leading across an organisation.</p>
+          </div>
+          <div className="ln-problem__answer">
+            <strong>Why should your development stay the same?</strong>
+            <p>Traditional learning platforms start with content. <b>LevelNext starts with the individual.</b></p>
+          </div>
+        </div>
+      </section>
 
-            {/* Trust badges */}
-            <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6">
-              {["IBM", "Volvo", "Broadridge", "Texas Instruments", "Syngenta"].map((co) => (
-                <span key={co} className="text-xs font-semibold tracking-wide"
-                  style={{ color: "oklch(55% 0.02 248.6)" }}>
-                  {co}
-                </span>
+      <section className="ln-stages" id="platform" aria-labelledby="journey-title">
+        <div className="ln-section-frame">
+          <div className="ln-section-heading">
+            <p className="ln-eyebrow ln-eyebrow--gold"><span /> The journey</p>
+            <h2 id="journey-title">One career.<br /><em>Different challenges.</em></h2>
+            <p>LevelNext reads the moment you are in, then helps you move through it with the right intelligence.</p>
+          </div>
+          <div className="ln-stage-picker" role="tablist" aria-label="LevelNext experiences">
+            {careerStages.map((item, index) => (
+              <button
+                type="button"
+                role="tab"
+                key={item.name}
+                aria-selected={activeStage === index}
+                className={activeStage === index ? "is-selected" : ""}
+                onClick={() => setActiveStage(index)}
+              >
+                <span>{item.number}</span>{item.name}
+              </button>
+            ))}
+          </div>
+
+          <article className={`ln-stage-showcase ln-stage-showcase--${stage.name.toLowerCase()}`}>
+            <div className="ln-stage-showcase__copy">
+              <p className="ln-stage-showcase__number">{stage.number} / {stage.name}</p>
+              <h3>{stage.tagline}</h3>
+              <p className="ln-stage-showcase__description">{stage.description}</p>
+              <p className="ln-stage-showcase__audience">For {stage.audience}</p>
+              <div className="ln-stage-showcase__focus">
+                {stage.focus.map((item) => <span key={item}>{item}</span>)}
+              </div>
+              <a className="ln-text-link" href={stage.href}>Explore LevelNext {stage.name} <ArrowRight size={16} /></a>
+            </div>
+            <StageVisual name={stage.name} />
+          </article>
+        </div>
+      </section>
+
+      <section className="ln-transition" id="solutions" aria-labelledby="transition-title">
+        <div className="ln-section-frame ln-transition__frame">
+          <p className="ln-eyebrow">For individuals</p>
+          <div className="ln-transition__copy">
+            <h2 id="transition-title">Careers don’t always move<br /><em>in straight lines.</em></h2>
+            <p className="ln-transition__question">Sometimes the question isn’t “How do I get to the next level?”<br />It’s “What do I do next?”</p>
+            <h3>LevelNext Transition</h3>
+            <p>Career Transition Intelligence for people preparing for—or navigating—career change.</p>
+            <a className="ln-text-link" href="/career-intelligence">Explore Career Transition <MoveUpRight size={16} /></a>
+          </div>
+          <div className="ln-transition__steps" aria-label="Career transition areas">
+            {["Understand where you are", "Explore possibilities", "Clarify your positioning", "Build your transition strategy", "Prepare for conversations", "Build momentum"].map((item, index) => (
+              <div key={item}><span>{String(index + 1).padStart(2, "0")}</span><p>{item}</p></div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="ln-difference" id="how-it-works" aria-labelledby="difference-title">
+        <div className="ln-section-frame">
+          <p className="ln-eyebrow ln-eyebrow--gold"><span /> Why LevelNext</p>
+          <h2 id="difference-title"><span>Learning tells you what to learn.</span><em>LevelNext figures out what<br />you need next.</em></h2>
+          <div className="ln-difference__divider" aria-hidden="true"><i /></div>
+          <p className="ln-difference__closing">Insight is useful. <b>Action changes things.</b></p>
+        </div>
+      </section>
+
+      <section className="ln-loop" aria-labelledby="loop-title">
+        <div className="ln-section-frame ln-loop__frame">
+          <div className="ln-loop__intro">
+            <p className="ln-eyebrow">The intelligence loop</p>
+            <h2 id="loop-title">Intelligence that<br /><em>turns into action.</em></h2>
+            <p>LevelNext continuously turns insight into action—and action into better intelligence.</p>
+          </div>
+          <div className="ln-loop__visual" aria-label="LevelNext intelligence loop">
+            <div className="ln-loop__orbit ln-loop__orbit--outer" />
+            <div className="ln-loop__orbit ln-loop__orbit--inner" />
+            <div className="ln-loop__centre"><Sparkles size={20} /><span>Level<br />Next</span></div>
+            {intelligenceLoop.map((step, index) => (
+              <span className={`ln-loop__step ln-loop__step--${index + 1}`} key={step}>{step}</span>
+            ))}
+          </div>
+          <div className="ln-loop__capabilities">
+            <article><span>01</span><h3>Diagnostics</h3><p>Understand what’s really happening.</p></article>
+            <article><span>02</span><h3>AI Coaching &amp; Practice</h3><p>Turn insight into better decisions and behaviours.</p></article>
+            <article><span>03</span><h3>Outcomes</h3><p>See whether change is actually happening.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section className="ln-core" aria-labelledby="core-title">
+        <div className="ln-section-frame">
+          <div className="ln-section-heading ln-section-heading--center">
+            <p className="ln-eyebrow">The architecture</p>
+            <h2 id="core-title">Different challenges.<br /><em>One Intelligence Core.</em></h2>
+            <p>Every experience adapts to the stage, while drawing on a common intelligence architecture.</p>
+          </div>
+          <div className="ln-core__visual" aria-label="LevelNext Intelligence Core visualisation">
+            <div className="ln-core__products">
+              {careerStages.map((item) => <span key={item.name}>{item.name}</span>)}
+            </div>
+            <div className="ln-core__signals" aria-hidden="true"><i /><i /><i /><i /></div>
+            <div className="ln-core__base">
+              <p>LevelNext <b>Intelligence Core</b></p>
+              <div>{intelligenceCore.map((item) => <span key={item}>{item}</span>)}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="ln-enterprise" id="organisations" aria-labelledby="enterprise-title">
+        <div className="ln-section-frame ln-enterprise__frame">
+          <div className="ln-enterprise__heading">
+            <p className="ln-eyebrow ln-eyebrow--gold"><span /> For organisations</p>
+            <h2 id="enterprise-title">One platform.<br /><em>Across your talent pipeline.</em></h2>
+            <p>Develop capability across levels without stitching together disconnected programmes, diagnostics, coaching tools and learning platforms.</p>
+          </div>
+          <div className="ln-enterprise__pipeline" aria-label="Organisational talent pipeline">
+            {careerStages.map((item) => <div key={item.name}><span>{item.audience.split(" · ")[0].toUpperCase()}</span><b>{item.name}</b></div>)}
+            <div className="ln-enterprise__core-label"><span>LevelNext Intelligence Core</span><b>Organisational Intelligence</b></div>
+          </div>
+          <div className="ln-value-grid">
+            {[
+              ["Know", "Where capability gaps actually exist."],
+              ["Act", "Give each person the right intervention at the right moment."],
+              ["Develop", "Turn everyday work into development."],
+              ["Measure", "Understand whether behaviours and outcomes are changing."],
+            ].map(([label, copy], index) => <article key={label}><span>{String(index + 1).padStart(2, "0")}</span><h3>{label}</h3><p>{copy}</p></article>)}
+          </div>
+          <div className="ln-enterprise__actions">
+            <a className="ln-button" href={organisationConversationUrl} target="_blank" rel="noreferrer">Explore LevelNext for Organisations <ArrowRight size={17} /></a>
+            <a className="ln-text-link ln-text-link--light" href={organisationConversationUrl} target="_blank" rel="noreferrer">Talk to us <ArrowRight size={16} /></a>
+          </div>
+        </div>
+      </section>
+
+      <section className="ln-personalisation" aria-labelledby="personalisation-title">
+        <div className="ln-section-frame ln-personalisation__frame">
+          <div>
+            <p className="ln-eyebrow">Personalisation</p>
+            <h2 id="personalisation-title">The same situation.<br /><em>A different answer at every level.</em></h2>
+          </div>
+          <div className="ln-personalisation__scenario">
+            <p className="ln-personalisation__caption">The situation</p>
+            <h3>“A critical project is falling behind.”</h3>
+            <div className="ln-personalisation__tabs" role="tablist" aria-label="Professional intelligence by career level">
+              {personalisationLevels.map((level) => (
+                <button type="button" role="tab" aria-selected={activeLevel === level} onClick={() => setActiveLevel(level)} className={activeLevel === level ? "is-selected" : ""} key={level}>{level}</button>
               ))}
             </div>
+            <div className="ln-personalisation__answer"><span>LevelNext asks:</span><p>{getPersonalisationAnswer(activeLevel)}</p></div>
+            <p className="ln-personalisation__conclusion">That’s <b>Professional Intelligence.</b></p>
           </div>
+        </div>
+      </section>
 
-          {/* ── Right: Video ──────────────────────────────────────────────────── */}
-          <div className="md:w-[48%] order-1 md:order-2 md:py-8">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl"
-              style={{ border: "2px solid oklch(from var(--color-ln-yellow) l c h / 0.3)" }}>
-              <video
-                ref={videoRef}
-                src={VIDEO_URL}
-                poster={POSTER_URL}
-                className="w-full block"
-                style={{ aspectRatio: "16/9", objectFit: "cover" }}
-                playsInline
-                controls
-                onPlay={() => setPlaying(true)}
-                onPause={() => setPlaying(false)}
-              />
-              {/* Custom play button overlay — hidden once playing */}
-              {!playing && (
-                <button
-                  onClick={handlePlay}
-                  aria-label="Play video"
-                  className="absolute inset-0 flex items-center justify-center w-full h-full"
-                  style={{ background: "oklch(from var(--color-ln-navy) l c h / 0.35)", backdropFilter: "blur(2px)", border: "none", cursor: "pointer" }}
-                >
-                  <div className="flex items-center justify-center rounded-full"
-                    style={{
-                      width: 72, height: 72,
-                      background: "var(--color-ln-yellow)",
-                      boxShadow: "0 0 0 8px oklch(from var(--color-ln-yellow) l c h / 0.25), 0 8px 32px rgba(0,0,0,0.5)",
-                    }}
-                  >
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                      <polygon points="10,7 22,14 10,21" fill="var(--color-ln-navy)" />
-                    </svg>
-                  </div>
-                  <span className="absolute bottom-4 left-0 right-0 text-center text-xs font-semibold tracking-wide"
-                    style={{ color: "white", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-                    Watch the 85-second overview
-                  </span>
-                </button>
-              )}
+      <section className="ln-ecosystem" id="resources" aria-labelledby="ecosystem-title">
+        <div className="ln-section-frame">
+          <p className="ln-eyebrow ln-eyebrow--gold"><span /> The ecosystem</p>
+          <h2 id="ecosystem-title">Professional Intelligence<br /><em>for what’s next.</em></h2>
+          <div className="ln-ecosystem__map" aria-label="LevelNext ecosystem map">
+            <div className="ln-ecosystem__brand">LevelNext <span>Professional Intelligence</span></div>
+            <div className="ln-ecosystem__columns">
+              <div><p>Entering<br />work</p><b>Launch</b></div>
+              <div><p>Growing<br />at work</p><b>Professional</b><b>Manager</b><b>Leader</b></div>
+              <div><p>Transitioning<br />career</p><b>Transition</b></div>
             </div>
-            <p className="text-xs text-center mt-3" style={{ color: "oklch(50% 0.02 248.6)" }}>
-              See LevelNext in action — 85 seconds
-            </p>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── SOCIAL PROOF ─────────────────────────────────────────────────────── */}
-      <section className="px-6 py-12 md:py-16" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)" }}>
-        <div className="max-w-5xl mx-auto">
-          <p className="text-center text-sm font-bold uppercase tracking-widest mb-10" style={{ color: "var(--color-ln-yellow)" }}>
-            What leaders are saying
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {SOCIAL_PROOF.map((sp) => (
-              <div key={sp.name} className="rounded-2xl p-6 flex flex-col gap-4"
-                style={{ background: "oklch(from white 12% 0 0 / 0.06)", border: "1px solid oklch(from white 30% 0 0 / 0.08)" }}>
-                <Quote size={20} style={{ color: "var(--color-ln-yellow)", opacity: 0.6 }} />
-                <p className="text-base leading-relaxed flex-1 text-white">"{sp.quote}"</p>
-                <div>
-                  <p className="text-base font-bold text-white">{sp.name}</p>
-                  <p className="text-sm mt-0.5" style={{ color: "oklch(65% 0.02 248.6)" }}>{sp.title}</p>
-                </div>
-              </div>
-            ))}
+            <div className="ln-ecosystem__foundation"><span>LevelNext Intelligence Core</span><b>Organisational Intelligence</b></div>
           </div>
         </div>
       </section>
 
-      {/* ── THE PROBLEM ──────────────────────────────────────────────────────── */}
-      <section className="px-6 py-12 md:py-20 text-center">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-white">
-            Leadership development is broken.<br />
-            <span style={{ color: "var(--color-ln-yellow)" }}>Here's why yours hasn't stuck.</span>
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 text-left">
-            {[
-              {
-                icon: Clock,
-                problem: "Generic frameworks",
-                detail: "Off-the-shelf programmes give you models that weren't built for your context, your role, or your actual gaps.",
-              },
-              {
-                icon: Brain,
-                problem: "No continuity",
-                detail: "A two-day workshop fades in two weeks. Without daily reinforcement, insight doesn't become behaviour.",
-              },
-              {
-                icon: Target,
-                problem: "No precision",
-                detail: "You can't improve what you can't measure. Most leaders have never seen a real diagnostic of their leadership.",
-              },
-            ].map((item) => (
-              <div key={item.problem} className="rounded-2xl p-6"
-                style={{ background: "oklch(from white 12% 0 0 / 0.04)", border: "1px solid oklch(from white 30% 0 0 / 0.07)" }}>
-                <item.icon size={22} className="mb-4" style={{ color: "var(--color-ln-yellow)" }} />
-                <h3 className="text-lg font-bold text-white mb-2">{item.problem}</h3>
-                <p className="text-base leading-relaxed" style={{ color: "oklch(72% 0.02 248.6)" }}>{item.detail}</p>
-              </div>
-            ))}
+      <section className="ln-final-cta">
+        <div className="ln-grid" aria-hidden="true" />
+        <div className="ln-section-frame ln-final-cta__frame">
+          <p className="ln-eyebrow ln-eyebrow--gold"><span /> Your next level</p>
+          <h2>Your people already have a next level.<br /><em>Help them get ready for it.</em></h2>
+          <div className="ln-final-cta__actions">
+            <a className="ln-button" href={sectionLink("platform")}>Explore LevelNext <ArrowRight size={17} /></a>
+            <a className="ln-text-link ln-text-link--light" href={organisationConversationUrl} target="_blank" rel="noreferrer">Talk to us <ArrowRight size={16} /></a>
           </div>
+          <p className="ln-final-cta__individual">Starting your career? <a href="/launch">LevelNext Launch <MoveUpRight size={14} /></a><span /> Changing careers? <a href="/career-intelligence">LevelNext Transition <MoveUpRight size={14} /></a></p>
         </div>
       </section>
 
-      {/* ── THE SOLUTION ─────────────────────────────────────────────────────── */}
-      <section className="px-6 py-16 md:py-24" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)" }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--color-ln-yellow)" }}>
-              The LevelNext Leadership Intelligence System
-            </p>
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight text-white">
-              Four steps from insight to{" "}
-              <span style={{ color: "var(--color-ln-yellow)" }}>measurable leadership growth.</span>
-            </h2>
+      <footer className="ln-footer">
+        <div className="ln-section-frame ln-footer__frame">
+          <div className="ln-footer__brand"><img src="/logo.png" alt="LevelNext" /><p>Professional Intelligence for what’s next.</p></div>
+          <div className="ln-footer__links">
+            <div><p>Platform</p><a href="/pe">Professional</a><a href="/manager-effectiveness">Manager</a><a href="/signup?experience=leader">Leader</a></div>
+            <div><p>Experiences</p><a href="/launch">Launch</a><a href="/career-intelligence">Career Transition</a></div>
+            <div><p>Organisations</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Enterprise</a><a href={sectionLink("how-it-works")}>Diagnostics</a><a href={sectionLink("how-it-works")}>AI Coaching</a></div>
+            <div><p>Company</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">About</a><a href={sectionLink("resources")}>Insights</a><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Contact</a></div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {TRANSFORMATION_STEPS.map((step) => (
-              <div key={step.step} className="rounded-2xl p-6 flex gap-5"
-                style={{ background: "oklch(from white 12% 0 0 / 0.05)", border: "1px solid oklch(from white 30% 0 0 / 0.08)" }}>
-                <div className="flex-shrink-0">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center"
-                    style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.25)" }}>
-                    <step.icon size={20} style={{ color: "var(--color-ln-yellow)" }} />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "oklch(50% 0.02 248.6)" }}>Step {step.step}</p>
-                  <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
-                  <p className="text-base leading-relaxed" style={{ color: "oklch(72% 0.02 248.6)" }}>{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className="ln-footer__meta">LevelNext — A Meta Results Platform <a href="#top">Back to top <ChevronDown size={13} /></a></p>
         </div>
-      </section>
-
-      {/* ── DIAGNOSTICS ──────────────────────────────────────────────────────── */}
-      <section className="px-6 py-16 md:py-24">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--color-ln-yellow)" }}>
-              Six precision diagnostics
-            </p>
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight text-white">
-              Know exactly where you stand.{" "}
-              <span style={{ color: "var(--color-ln-yellow)" }}>In every dimension that matters.</span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {DIAGNOSTICS.map((d) => (
-              <div key={d.code} className="rounded-xl p-5 flex items-start gap-4"
-                style={{ background: "oklch(from white 12% 0 0 / 0.04)", border: "1px solid oklch(from white 30% 0 0 / 0.07)" }}>
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold"
-                  style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", color: "var(--color-ln-yellow)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.2)" }}>
-                  {d.code}
-                </div>
-                <div>
-                  <p className="text-base font-bold text-white">{d.name}</p>
-                  <p className="text-sm mt-0.5" style={{ color: "oklch(65% 0.02 248.6)" }}>{d.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── ANXIETY COUNTER ──────────────────────────────────────────────────── */}
-      <section className="px-6 py-16 md:py-20" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)" }}>
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-10 text-white">
-            Not what you're thinking.
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              {
-                fear: "\"It's just another MBTI.\"",
-                counter: "LevelNext diagnostics are built for leadership behaviour in context — not personality archetypes. Your Edge score is grounded in how you actually lead.",
-              },
-              {
-                fear: "\"I don't have time for this.\"",
-                counter: "Each diagnostic takes 10 minutes. Guide fits into your day in 2-minute coaching moments. The AI Practice Coach works around your schedule.",
-              },
-              {
-                fear: "\"My company already does this.\"",
-                counter: "LevelNext is your personal leadership intelligence — independent of your employer. It travels with you, compounds over time, and belongs to you.",
-              },
-            ].map((item) => (
-              <div key={item.fear} className="rounded-2xl p-6 text-left"
-                style={{ background: "oklch(from white 12% 0 0 / 0.05)", border: "1px solid oklch(from white 30% 0 0 / 0.08)" }}>
-                <div className="flex items-center gap-2 mb-3">
-                  <Shield size={16} style={{ color: "var(--color-ln-yellow)" }} />
-                  <p className="text-base font-semibold text-white">{item.fear}</p>
-                </div>
-                <p className="text-base leading-relaxed" style={{ color: "oklch(78% 0.02 248.6)" }}>{item.counter}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SAMPLE REPORT LEAD MAGNET ─────────────────────────────────────── */}
-      <section className="px-6 py-16 md:py-24">
-        <div className="max-w-4xl mx-auto">
-          <div className="rounded-2xl overflow-hidden" style={{ background: "oklch(from var(--color-ln-navy) calc(l - 0.03) c h)", border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.2)" }}>
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              {/* Left: copy + module selector */}
-              <div className="p-8 md:p-10">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText size={16} style={{ color: "var(--color-ln-yellow)" }} />
-                  <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-ln-yellow)" }}>Free Sample Report</span>
-                </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 leading-tight">
-                  See what a LevelNext diagnostic report actually looks like.
-                </h2>
-                <p className="text-base leading-relaxed mb-6" style={{ color: "oklch(72% 0.02 248.6)" }}>
-                  Pick a diagnostic, enter your email, and download a sample report instantly — so you know exactly what you're signing up for.
-                </p>
-                <div className="flex flex-col gap-2">
-                  {SAMPLE_MODULES.map((m) => (
-                    <button key={m.code}
-                      onClick={() => { setSelectedModule(m); setLeadSubmitted(false); setLeadError(""); }}
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all"
-                      style={{
-                        background: selectedModule.code === m.code ? "oklch(from var(--color-ln-yellow) l c h / 0.12)" : "oklch(from white 12% 0 0 / 0.04)",
-                        border: `1px solid ${selectedModule.code === m.code ? "oklch(from var(--color-ln-yellow) l c h / 0.4)" : "oklch(from white 20% 0 0 / 0.06)"}`,
-                      }}>
-                      <span className="text-xs font-bold px-2 py-1 rounded flex-shrink-0" style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)", color: "var(--color-ln-yellow)" }}>{m.code}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white">{m.name}</p>
-                        <p className="text-xs" style={{ color: "oklch(60% 0.02 248.6)" }}>{m.desc}</p>
-                      </div>
-                      {selectedModule.code === m.code && <CheckCircle2 size={14} className="flex-shrink-0" style={{ color: "var(--color-ln-yellow)" }} />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/* Right: email capture form */}
-              <div className="p-8 md:p-10 flex flex-col justify-center" style={{ background: "oklch(from white 8% 0 0 / 0.04)", borderLeft: "1px solid oklch(from white 20% 0 0 / 0.06)" }}>
-                {leadSubmitted ? (
-                  <div className="text-center">
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.15)" }}>
-                      <Download size={24} style={{ color: "var(--color-ln-yellow)" }} />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Your report is downloading!</h3>
-                    <p className="text-sm mb-4" style={{ color: "oklch(65% 0.02 248.6)" }}>
-                      If it didn't start automatically,{" "}
-                      <a href={selectedModule.path} target="_blank" rel="noreferrer" className="underline" style={{ color: "var(--color-ln-yellow)" }}>click here to download</a>.
-                    </p>
-                    <p className="text-xs mb-4" style={{ color: "oklch(50% 0.02 248.6)" }}>Ready to get your own personalised report?</p>
-                    <a href="/apply">
-                      <Button size="sm" style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>Apply for a Pilot →</Button>
-                    </a>
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="text-lg font-bold text-white mb-1">Get the {selectedModule.code} Sample Report</h3>
-                    <p className="text-sm mb-5" style={{ color: "oklch(60% 0.02 248.6)" }}>Enter your details and download instantly — no spam, ever.</p>
-                    <div className="flex flex-col gap-3">
-                      <input
-                        type="text"
-                        placeholder="Your name"
-                        value={leadName}
-                        onChange={(e) => setLeadName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                        style={{ background: "oklch(from white 12% 0 0 / 0.06)", border: "1px solid oklch(from white 25% 0 0 / 0.1)", color: "white" }}
-                      />
-                      <input
-                        type="email"
-                        placeholder="Your work email"
-                        value={leadEmail}
-                        onChange={(e) => setLeadEmail(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter" && leadEmail) captureMutation.mutate({ email: leadEmail, name: leadName || undefined, moduleCode: selectedModule.code }); }}
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                        style={{ background: "oklch(from white 12% 0 0 / 0.06)", border: "1px solid oklch(from white 25% 0 0 / 0.1)", color: "white" }}
-                      />
-                      {leadError && <p className="text-xs text-red-400">{leadError}</p>}
-                      <Button
-                        disabled={!leadEmail || captureMutation.isPending}
-                        onClick={() => captureMutation.mutate({ email: leadEmail, name: leadName || undefined, moduleCode: selectedModule.code })}
-                        className="w-full h-12 font-bold text-sm"
-                        style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-                        {captureMutation.isPending ? "Preparing..." : (<><Download size={15} className="mr-2" />Download Free Sample Report</>)}
-                      </Button>
-                      <p className="text-xs text-center" style={{ color: "oklch(45% 0.02 248.6)" }}>No spam. Unsubscribe anytime.</p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FINAL CTA ────────────────────────────────────────────────────────── */}
-      <section className="px-6 py-20 md:py-28 text-center relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 60% 60% at 50% 100%, oklch(from var(--color-ln-yellow) l c h / 0.07) 0%, transparent 70%)"
-        }} />
-        <div className="max-w-2xl mx-auto relative">
-          <p className="text-sm font-semibold uppercase tracking-widest mb-5" style={{ color: "var(--color-ln-yellow)" }}>
-            Start building your edge today
-          </p>
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-white">
-            Your next level of leadership{" "}
-            <span style={{ color: "var(--color-ln-yellow)" }}>starts with one diagnostic.</span>
-          </h2>
-          <p className="text-lg mb-10 leading-relaxed text-white/70">
-            In 10 minutes, you'll have a personalised Leadership Edge score,
-            a clear picture of your strengths and growth edges, and your first
-            coaching mission from Guide — completely free.
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-10">
-            {["Free to start", "10-minute first diagnostic", "Instant personalised result", "No credit card required"].map((item) => (
-              <div key={item} className="flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: "var(--color-ln-yellow)" }} />
-                <span className="text-sm" style={{ color: "oklch(65% 0.02 248.6)" }}>{item}</span>
-              </div>
-            ))}
-          </div>
-
-          <a href="/apply">
-            <Button size="lg" className="h-14 px-12 text-base font-bold rounded-xl shadow-xl"
-              style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}>
-              Apply for a Pilot
-              <ArrowRight size={18} className="ml-2" />
-            </Button>
-          </a>
-
-          <p className="text-xs mt-5" style={{ color: "oklch(40% 0.02 248.6)" }}>
-            Trusted by senior leaders across GCCs, MNCs, and high-growth companies.
-          </p>
-        </div>
-      </section>
-
-      {/* ── Footer ───────────────────────────────────────────────────────────── */}
-      <footer className="px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4"
-        style={{ borderTop: "1px solid oklch(from white 20% 0 0 / 0.08)" }}>
-        <img src={LOGO_URL} alt="LevelNext" className="h-12 w-auto opacity-70" />
-        <p className="text-sm text-center" style={{ color: "oklch(40% 0.02 248.6)" }}>
-          © 2026 LevelNext · Powered by Meta Results Pvt. Ltd.
-        </p>
-        <a href="/login?returnTo=%2Fhome">
-          <Button variant="ghost" size="sm" className="text-white/40 hover:text-white/70 text-xs">
-            Sign In →
-          </Button>
-        </a>
       </footer>
-    </div>
+    </main>
   );
+}
+
+function StageVisual({ name }: { name: string }) {
+  if (name === "Launch") {
+    return <div className="ln-launch-visual" aria-label="Preview of LevelNext Launch"><span>Work mode</span><b>Hello, career.</b><div><i>01</i><i>02</i><i>03</i></div><p>A distinctly different LevelNext experience.</p></div>;
+  }
+  if (name === "Manager") {
+    return <div className="ln-manager-visual" aria-label="The management transition from tasks to people and outcomes"><div className="ln-manager-visual__before"><b>Me</b><span>Tasks</span></div><div className="ln-manager-visual__arrow">→</div><div className="ln-manager-visual__after"><b>Manager</b><span>People</span><span>Outcomes</span></div></div>;
+  }
+  if (name === "Leader") {
+    return <div className="ln-leader-visual" aria-label="An expanding organisational network"><span className="ln-leader-visual__centre">Leader</span><i className="ln-leader-visual__node ln-leader-visual__node--1">Team</i><i className="ln-leader-visual__node ln-leader-visual__node--2">Functions</i><i className="ln-leader-visual__node ln-leader-visual__node--3">Stakeholders</i><i className="ln-leader-visual__node ln-leader-visual__node--4">Enterprise</i></div>;
+  }
+  return <div className="ln-professional-visual" aria-label="Professional effectiveness focus areas"><span>Communication</span><span>Ownership</span><span>Execution</span><span>Collaboration</span><span>Judgement</span><span>Influence</span><span>Adaptability</span><i /></div>;
 }

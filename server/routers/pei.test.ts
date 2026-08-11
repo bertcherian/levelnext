@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { vi } from "vitest";
 import { appRouter } from "../routers";
 import type { TrpcContext } from "../_core/context";
 
@@ -163,31 +164,43 @@ describe("peiRouter", () => {
   });
 
   describe("tts", () => {
-    it("throws PRECONDITION_FAILED when OpenAI key is missing for non-Sarvam voice", async () => {
+    it("uses a local OpenAI provider mock for non-Sarvam voices", async () => {
       const { ctx } = createAuthContext();
       const caller = appRouter.createCaller(ctx);
+      const fetchMock = vi.fn().mockResolvedValue(new Response("mock-openai-audio", { status: 200 }));
+      vi.stubGlobal("fetch", fetchMock);
 
-      // The tts procedure requires a valid API key. In test env, keys may be absent.
-      // We verify the procedure exists and handles the error gracefully.
       try {
-        await caller.pei.tts({ text: "Hello world", voice: "nova" });
-        // If it succeeds, that means keys are configured — that's fine
-        expect(true).toBe(true);
+        const result = await caller.pei.tts({ text: "Hello world", voice: "nova" });
+        expect(result.mimeType).toBe("audio/mpeg");
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://api.openai.com/v1/audio/speech",
+          expect.objectContaining({ method: "POST" }),
+        );
       } catch (e: any) {
-        // Should be a precondition error about missing API key
         expect(e.code).toBe("PRECONDITION_FAILED");
+      } finally {
+        vi.unstubAllGlobals();
       }
     });
 
-    it("accepts Sarvam voices", async () => {
+    it("uses a local Sarvam provider mock for Sarvam voices", async () => {
       const { ctx } = createAuthContext();
       const caller = appRouter.createCaller(ctx);
+      const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ audios: ["mock-sarvam-audio"] }), { status: 200 }));
+      vi.stubGlobal("fetch", fetchMock);
 
       try {
-        await caller.pei.tts({ text: "Namaste", voice: "shubh" });
-        expect(true).toBe(true);
+        const result = await caller.pei.tts({ text: "Namaste", voice: "shubh" });
+        expect(result).toEqual({ audioBase64: "mock-sarvam-audio", mimeType: "audio/wav" });
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://api.sarvam.ai/text-to-speech",
+          expect.objectContaining({ method: "POST" }),
+        );
       } catch (e: any) {
         expect(e.code).toBe("PRECONDITION_FAILED");
+      } finally {
+        vi.unstubAllGlobals();
       }
     });
   });
