@@ -38,4 +38,13 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain('aria-label="Professional intelligence by career level"');
     expect(page).toContain("How do I take ownership, communicate risk and get the work back on track?");
   });
+
+  it("renders the quick-filter navigation and the narrative-end sign-up CTA", () => {
+    const page = renderToStaticMarkup(createElement(Landing));
+
+    expect(page).toContain('aria-label="Quick filter to your career stage"');
+    expect(page).toContain("Find your stage:");
+    expect(page).toContain("Start your diagnosis");
+    expect(page).toContain("/signup?platform=leadership");
+  });
 });

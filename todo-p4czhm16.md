@@ -5,3 +5,7 @@
 - [x] Enforce module unlock progression, valid module types, session ownership, and session/module consistency in assessment mutations
 - [x] Add router-level regression tests covering report privacy and diagnostic session integrity
 - [x] Verify secured flows, run the full quality suite, and publish the P0 remediation
+
+- [x] Add smooth hover animations to the interactive Professional Intelligence narrative cards on the landing page
+- [x] Implement a quick-filter navigation menu for the responsive career-stage experiences
+- [x] Add a clear CTA button at the end of the Professional Intelligence narrative to encourage sign-ups

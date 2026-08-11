@@ -158,6 +158,31 @@ export default function Landing() {
             <h2 id="journey-title">One career.<br /><em>Different challenges.</em></h2>
             <p>LevelNext reads the moment you are in, then helps you move through it with the right intelligence.</p>
           </div>
+          <div className="ln-stage-quickfilter" aria-label="Quick filter to your career stage">
+            <p className="ln-stage-quickfilter__label">Find your stage:</p>
+            <div className="ln-stage-quickfilter__chips">
+              {careerStages.map((item, index) => (
+                <button
+                  type="button"
+                  key={item.name}
+                  aria-pressed={activeStage === index}
+                  className={`ln-stage-quickfilter__chip ${activeStage === index ? "is-active" : ""}`}
+                  onClick={() => {
+                    setActiveStage(index);
+                    if (typeof document !== "undefined") {
+                      const el = document.getElementById("platform");
+                      if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                  }}
+                >
+                  <span className="ln-stage-quickfilter__chip-num">{item.number}</span>
+                  <span className="ln-stage-quickfilter__chip-name">{item.name}</span>
+                  <span className="ln-stage-quickfilter__chip-audience">{item.audience.split(" · ")[0]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="ln-stage-picker" role="tablist" aria-label="LevelNext experiences">
             {careerStages.map((item, index) => (
               <button
@@ -301,6 +326,10 @@ export default function Landing() {
             </div>
             <div className="ln-personalisation__answer"><span>LevelNext asks:</span><p>{getPersonalisationAnswer(activeLevel)}</p></div>
             <p className="ln-personalisation__conclusion">That’s <b>Professional Intelligence.</b></p>
+            <div className="ln-personalisation__cta">
+              <a className="ln-button ln-button--gold" href="/signup?platform=leadership&utm_source=landing&utm_medium=narrative_cta&utm_campaign=signup">Start your diagnosis <ArrowRight size={16} /></a>
+              <a className="ln-text-link" href={sectionLink("platform")}>Explore the platform <ArrowRight size={15} /></a>
+            </div>
           </div>
         </div>
       </section>

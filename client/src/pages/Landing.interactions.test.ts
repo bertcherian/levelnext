@@ -36,4 +36,23 @@ describe("LevelNext landing page interactions", () => {
       screen.getByText("How do I diagnose what’s blocking the team, delegate effectively and restore accountability?"),
     ).toBeTruthy();
   });
+
+  it("updates the stage showcase when a quick-filter chip is clicked", async () => {
+    const user = userEvent.setup();
+    render(createElement(Landing));
+
+    const quickFilter = screen.getByLabelText("Quick filter to your career stage");
+    const launchChip = within(quickFilter).getByText("Launch").closest("button")!;
+    await user.click(launchChip);
+
+    expect(screen.getByText(/Welcome to work\./)).toBeTruthy();
+  });
+
+  it("renders a sign-up CTA at the end of the Professional Intelligence narrative", () => {
+    render(createElement(Landing));
+
+    const cta = screen.getByText("Start your diagnosis");
+    expect(cta).toBeTruthy();
+    expect(cta.closest("a")?.getAttribute("href")).toContain("/signup");
+  });
 });
