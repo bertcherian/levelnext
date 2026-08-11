@@ -38,4 +38,4 @@
 - [x] Performance optimization (route-level lazy loading and branded Suspense boundary for Launch Intelligence journeys)
 - [x] Reconcile documented WebKit cross-browser smoke validation for the settings page
   - Evidence: Chromium breakpoint reviews passed at 1280px, 768px, and 375px. Firefox desktop smoke captures passed for dashboard, leaderboard, and settings. Playwright WebKit (Safari-equivalent) passed for dashboard, leaderboard, and settings. Settings renders correctly after its normal initial data-load window.
-- [ ] Save checkpoint and publish
+- [x] Save checkpoint and publish
