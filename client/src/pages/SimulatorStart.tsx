@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Zap, ArrowRight, Loader2, ChevronRight, Target, Clock, BarChart2, User, Volume2, Gauge } from "lucide-react";
+import { Mic, Zap, ArrowRight, Loader2, ChevronRight, Target, Clock, BarChart2, User, Volume2, Gauge, RefreshCw, Sparkles, MessageSquareText } from "lucide-react";
 import { toast } from "sonner";
 
 // SVG avatar components — distinct illustrated faces per voice
@@ -147,10 +147,64 @@ const AvatarFable = ({ size = 48, selected = false, accent = "#D4AF37" }) => (
   </svg>
 );
 
-const VOICE_AVATAR_MAP: Record<string, React.FC<{ size?: number; selected?: boolean; accent?: string }>> = {
-  shubh: AvatarShubh, sumit: AvatarSumit, simran: AvatarSimran, ishita: AvatarIshita,
-  nova: AvatarNova, shimmer: AvatarShimmer, alloy: AvatarAlloy, fable: AvatarFable,
+type AvatarProps = { size?: number; selected?: boolean; accent?: string };
+
+type AvatarAppearance = {
+  skin: string;
+  hair: string;
+  outfit: string;
+  backdrop: string;
+  style: "short" | "side-part" | "long" | "bun" | "waves" | "curls" | "silver";
+  accessory?: "glasses" | "earrings" | "none";
 };
+
+function AvatarPortrait({ appearance, size = 64, selected = false, accent = "#D4AF37" }: AvatarProps & { appearance: AvatarAppearance }) {
+  const hairPaths = {
+    short: <path d="M25 43c1-18 14-27 24-27s23 9 23 27c-7-8-14-11-23-11s-17 3-24 11Z" fill={appearance.hair} />,
+    "side-part": <path d="M24 43c0-17 13-28 25-28 9 0 19 6 22 18-8-6-16-8-23-8-10 0-17 6-24 18Z" fill={appearance.hair} />,
+    long: <><path d="M23 47c0-19 12-31 26-31s26 12 26 31v24H65V45c-5-8-10-12-16-12s-11 4-16 12v26H23V47Z" fill={appearance.hair} /><path d="M29 42c6-12 12-17 20-17 9 0 15 5 20 17-7-6-13-8-20-8-7 0-13 2-20 8Z" fill={appearance.hair} /></>,
+    bun: <><circle cx="50" cy="17" r="10" fill={appearance.hair} /><path d="M26 44c0-17 11-28 23-28 13 0 24 11 24 28-7-7-15-11-24-11-8 0-16 4-23 11Z" fill={appearance.hair} /></>,
+    waves: <><path d="M23 45c1-19 13-30 26-30 14 0 26 11 27 30-7-7-13-11-18-11v34H40V34c-5 0-10 4-17 11Z" fill={appearance.hair} /><path d="M25 38c7-15 15-19 24-19 10 0 17 4 24 19-8-5-16-7-24-7-8 0-16 2-24 7Z" fill={appearance.hair} /></>,
+    curls: <><path d="M22 46c2-17 12-29 27-29s25 12 27 29c-8-8-17-12-27-12-9 0-18 4-27 12Z" fill={appearance.hair} /><circle cx="29" cy="24" r="7" fill={appearance.hair} /><circle cx="39" cy="17" r="8" fill={appearance.hair} /><circle cx="52" cy="16" r="8" fill={appearance.hair} /><circle cx="65" cy="23" r="7" fill={appearance.hair} /></>,
+    silver: <path d="M24 44c1-17 13-28 25-28 13 0 24 11 25 28-7-7-15-11-25-11-9 0-17 4-25 11Z" fill={appearance.hair} />,
+  };
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="48" cy="48" r="46" fill={appearance.backdrop} />
+      <circle cx="48" cy="48" r="44" stroke={selected ? accent : "rgba(255,255,255,0.10)"} strokeWidth={selected ? 3 : 1} />
+      <circle cx="76" cy="21" r="10" fill={accent} opacity={selected ? 0.25 : 0.12} />
+      <path d="M17 94c2-20 16-31 31-31 16 0 30 11 32 31H17Z" fill={appearance.outfit} />
+      <path d="M42 56h14v16H42z" fill={appearance.skin} />
+      <ellipse cx="49" cy="45" rx="20" ry="24" fill={appearance.skin} />
+      {hairPaths[appearance.style]}
+      <ellipse cx="41.5" cy="46" rx="2.2" ry="2.7" fill="#172235" />
+      <ellipse cx="56.5" cy="46" rx="2.2" ry="2.7" fill="#172235" />
+      <path d="M43 56c4 3.5 8 3.5 12 0" stroke="#9C5A49" strokeWidth="1.8" strokeLinecap="round" />
+      {appearance.accessory === "glasses" && <><rect x="35" y="40" width="12" height="9" rx="3" stroke="#CEB164" strokeWidth="1.7" /><rect x="51" y="40" width="12" height="9" rx="3" stroke="#CEB164" strokeWidth="1.7" /><path d="M47 44.5h4" stroke="#CEB164" strokeWidth="1.7" /></>}
+      {appearance.accessory === "earrings" && <><circle cx="29.5" cy="52" r="2" fill={accent} /><circle cx="68.5" cy="52" r="2" fill={accent} /></>}
+      <path d="M39 65c6 4 13 4 20 0" stroke="white" strokeOpacity="0.34" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+const AVATAR_APPEARANCES: Record<string, AvatarAppearance> = {
+  shubh: { skin: "#B9784E", hair: "#1E1613", outfit: "#244D72", backdrop: "#1D3046", style: "short" },
+  sumit: { skin: "#8C593E", hair: "#17110E", outfit: "#3B355A", backdrop: "#242B42", style: "side-part", accessory: "glasses" },
+  simran: { skin: "#D49774", hair: "#261512", outfit: "#8B3B4A", backdrop: "#382844", style: "long", accessory: "earrings" },
+  ishita: { skin: "#A76648", hair: "#201411", outfit: "#6B445B", backdrop: "#2C324B", style: "bun", accessory: "earrings" },
+  nova: { skin: "#D9A27E", hair: "#B56A3F", outfit: "#6C4D95", backdrop: "#32294A", style: "waves", accessory: "earrings" },
+  shimmer: { skin: "#8D5B43", hair: "#351F2B", outfit: "#2E6B67", backdrop: "#193A46", style: "long", accessory: "earrings" },
+  alloy: { skin: "#B98062", hair: "#8993A4", outfit: "#46566E", backdrop: "#253447", style: "silver", accessory: "glasses" },
+  fable: { skin: "#ECC4A7", hair: "#6B473D", outfit: "#74518B", backdrop: "#332A40", style: "curls" },
+};
+
+const VOICE_AVATAR_MAP: Record<string, React.FC<AvatarProps>> = Object.fromEntries(
+  Object.entries(AVATAR_APPEARANCES).map(([voiceId, appearance]) => [
+    voiceId,
+    (props: AvatarProps) => <AvatarPortrait {...props} appearance={appearance} />,
+  ])
+);
 
 const VOICES_INDIAN = [
   { id: "shubh",   label: "Shubh",   desc: "Confident, clear",    sample: "That's an interesting perspective. Can you walk me through your reasoning?" },
@@ -232,6 +286,18 @@ interface ScenarioCard {
   followUpQuestion: string | null;
 }
 
+function isTransientGenerationError(error: unknown): boolean {
+  const message = typeof (error as { message?: unknown })?.message === "string"
+    ? (error as { message: string }).message
+    : "";
+  const code = (error as { data?: { code?: string; httpStatus?: number } })?.data?.code;
+  const httpStatus = (error as { data?: { httpStatus?: number } })?.data?.httpStatus;
+
+  return code === "TOO_MANY_REQUESTS" || code === "TIMEOUT" ||
+    httpStatus === 429 || (typeof httpStatus === "number" && httpStatus >= 500) ||
+    /temporar|timeout|network|connection|rate limit|too many requests|unavailable/i.test(message);
+}
+
 export default function SimulatorStart() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -250,7 +316,9 @@ export default function SimulatorStart() {
   const [followUpAnswer, setFollowUpAnswer] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<VoiceId>("shubh");
   const [previewingVoice, setPreviewingVoice] = useState<VoiceId | null>(null);
-  const previewAudioRef = { current: null as HTMLAudioElement | null };
+  const [lastScenarioPrompt, setLastScenarioPrompt] = useState("");
+  const [scenarioError, setScenarioError] = useState<{ message: string; retryable: boolean } | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const ttsMutation = trpc.simulator.tts.useMutation({
     onSuccess: (data) => {
       if (previewAudioRef.current) { previewAudioRef.current.pause(); }
@@ -272,7 +340,19 @@ export default function SimulatorStart() {
   const [selectedSpeed, setSelectedSpeed] = useState<number>(1.0);
 
   const inferMutation = trpc.simulator.inferScenario.useMutation({
-    onSuccess: (data) => setScenario(data),
+    onSuccess: (data) => {
+      setScenario(data);
+      setScenarioError(null);
+    },
+    onError: (error) => {
+      const retryable = isTransientGenerationError(error);
+      setScenarioError({
+        retryable,
+        message: retryable
+          ? "The scenario service is taking longer than usual. Your description is still here — please try again."
+          : "We could not turn that description into a practice scenario. Add a little more context and try again.",
+      });
+    },
   });
 
   const [startingLabel, setStartingLabel] = useState("Starting...");
@@ -295,9 +375,18 @@ export default function SimulatorStart() {
   }, [startMutation.isPending]);
 
   const handleInfer = (text: string) => {
-    if (!text.trim()) return;
+    const trimmedPrompt = text.trim();
+    if (!trimmedPrompt) return;
+    setLastScenarioPrompt(trimmedPrompt);
     setScenario(null);
-    inferMutation.mutate({ prompt: text, platform });
+    setFollowUpAnswer("");
+    setScenarioError(null);
+    inferMutation.reset();
+    inferMutation.mutate({ prompt: trimmedPrompt, platform });
+  };
+
+  const retryScenarioGeneration = () => {
+    if (lastScenarioPrompt) handleInfer(lastScenarioPrompt);
   };
 
   const handleStart = () => {
@@ -371,19 +460,31 @@ export default function SimulatorStart() {
           </p>
         </div>
 
-        {/* Prompt Input */}
+        {/* Custom scenario composer */}
         <div className="mb-5">
+          <label htmlFor="custom-scenario" className="flex items-center gap-2 text-sm font-semibold text-white mb-2">
+            <MessageSquareText className="w-4 h-4" style={{ color: meta.accent }} />
+            Create a custom scenario
+          </label>
+          <p id="custom-scenario-help" className="text-white/45 text-xs mb-3">
+            Include the person involved, the context, and the outcome you want to practise. We will create the character and challenge.
+          </p>
           <Textarea
+            id="custom-scenario"
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={(e) => {
+              setPrompt(e.target.value);
+              if (scenarioError) setScenarioError(null);
+            }}
             placeholder="e.g. I need to have a difficult conversation with my manager about being passed over for a promotion..."
             className="w-full min-h-[100px] bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/40 resize-none text-base"
+            aria-describedby="custom-scenario-help"
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleInfer(prompt);
             }}
           />
           <div className="flex justify-between items-center mt-2">
-            <span className="text-white/30 text-xs">Cmd+Enter to generate</span>
+            <span className="text-white/30 text-xs">Cmd/Ctrl + Enter to generate</span>
             <Button
               onClick={() => handleInfer(prompt)}
               disabled={!prompt.trim() || inferMutation.isPending}
@@ -399,10 +500,11 @@ export default function SimulatorStart() {
           </div>
         </div>
 
-        {/* Quick-start chips */}
+        {/* Common scenario shortcuts */}
         {!scenario && !inferMutation.isPending && (
           <div className="mb-8">
-            <p className="text-white/40 text-xs uppercase tracking-wider mb-3">Or pick a common scenario</p>
+            <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Need a starting point?</p>
+            <p className="text-white/50 text-sm mb-3">Choose a common scenario, then tailor it in your own words if needed.</p>
             <div className="flex flex-wrap gap-2">
               {meta.chips.map((chip) => (
                 <button
@@ -423,6 +525,28 @@ export default function SimulatorStart() {
           <div className="text-center py-8">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" style={{ color: meta.accent }} />
             <p className="text-white/60">Designing your scenario...</p>
+          </div>
+        )}
+
+        {scenarioError && !inferMutation.isPending && (
+          <div role="alert" aria-live="polite" className="mb-8 rounded-2xl border px-5 py-4" style={{ borderColor: "rgba(244, 140, 140, 0.46)", background: "rgba(172, 51, 51, 0.16)" }}>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-white font-semibold text-sm">We couldn’t generate your scenario</p>
+                <p className="text-white/65 text-sm mt-1">{scenarioError.message}</p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                {scenarioError.retryable && (
+                  <Button onClick={retryScenarioGeneration} disabled={!lastScenarioPrompt} className="font-semibold" style={{ background: meta.accent, color: meta.color }}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Retry
+                  </Button>
+                )}
+                <button onClick={() => { setScenarioError(null); inferMutation.reset(); }} className="text-sm text-white/65 hover:text-white transition-colors">
+                  Edit scenario
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -524,77 +648,100 @@ export default function SimulatorStart() {
             </div>
 
             {/* Voice picker */}
-            <div className="px-6 py-4 border-t" style={{ borderColor: meta.accent + "20" }}>
-              <p className="text-xs uppercase tracking-wider mb-3" style={{ color: meta.accent + "99" }}>Choose AI Voice</p>
-              {/* Indian English group */}
-              <p className="text-[10px] font-semibold mb-2 opacity-60 tracking-wide">🇮🇳 Indian English</p>
-              <div className="grid grid-cols-4 gap-2 mb-4">
-                {VOICES_INDIAN.map((v) => {
-                  const AvatarComp = VOICE_AVATAR_MAP[v.id];
-                  const isSelected = selectedVoice === v.id;
-                  return (
-                    <div key={v.id} className="flex flex-col items-center gap-1">
-                      <button
-                        onClick={() => setSelectedVoice(v.id)}
-                        className={`w-full flex flex-col items-center rounded-xl pt-3 pb-2 px-1 transition-all border ${
-                          isSelected ? "text-white" : "border-white/10 text-white/50 hover:text-white/80 hover:border-white/30"
-                        }`}
-                        style={isSelected ? { borderColor: meta.accent, background: meta.accent + "18" } : {}}
-                      >
-                        <div className="mb-1.5">
-                          <AvatarComp size={56} selected={isSelected} accent={meta.accent} />
-                        </div>
-                        <p className="text-xs font-semibold leading-tight">{v.label}</p>
-                        <p className="text-[9px] opacity-50 leading-tight text-center mt-0.5">{v.desc}</p>
-                      </button>
-                      <button
-                        onClick={() => handlePreview(v.id)}
-                        className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-white/10 hover:border-white/30 text-white/40 hover:text-white/70 transition-colors"
-                        title={`Preview ${v.label}`}
-                      >
-                        {previewingVoice === v.id
-                          ? <Loader2 className="w-2.5 h-2.5 animate-spin" style={{ color: meta.accent }} />
-                          : <Volume2 className="w-2.5 h-2.5" />}
-                        <span>Preview</span>
-                      </button>
-                    </div>
-                  );
-                })}
+            <div className="px-6 py-5 border-t" style={{ borderColor: meta.accent + "20" }}>
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-4 h-4" style={{ color: meta.accent }} />
+                <p className="text-xs uppercase tracking-wider" style={{ color: meta.accent + "CC" }}>Choose your AI voice</p>
               </div>
-              {/* International group */}
-              <p className="text-[10px] font-semibold mb-2 opacity-60 tracking-wide">🌐 International</p>
-              <div className="grid grid-cols-4 gap-2">
-                {VOICES_INTERNATIONAL.map((v) => {
-                  const AvatarComp = VOICE_AVATAR_MAP[v.id];
-                  const isSelected = selectedVoice === v.id;
-                  return (
-                    <div key={v.id} className="flex flex-col items-center gap-1">
-                      <button
-                        onClick={() => setSelectedVoice(v.id)}
-                        className={`w-full flex flex-col items-center rounded-xl pt-3 pb-2 px-1 transition-all border ${
-                          isSelected ? "text-white" : "border-white/10 text-white/50 hover:text-white/80 hover:border-white/30"
-                        }`}
-                        style={isSelected ? { borderColor: meta.accent, background: meta.accent + "18" } : {}}
-                      >
-                        <div className="mb-1.5">
-                          <AvatarComp size={56} selected={isSelected} accent={meta.accent} />
-                        </div>
-                        <p className="text-xs font-semibold leading-tight">{v.label}</p>
-                        <p className="text-[9px] opacity-50 leading-tight text-center mt-0.5">{v.desc}</p>
-                      </button>
-                      <button
-                        onClick={() => handlePreview(v.id)}
-                        className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-white/10 hover:border-white/30 text-white/40 hover:text-white/70 transition-colors"
-                        title={`Preview ${v.label}`}
-                      >
-                        {previewingVoice === v.id
-                          ? <Loader2 className="w-2.5 h-2.5 animate-spin" style={{ color: meta.accent }} />
-                          : <Volume2 className="w-2.5 h-2.5" />}
-                        <span>Preview</span>
-                      </button>
+              <div className="rounded-2xl border p-3 mb-5" style={{ borderColor: "rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.025)" }}>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <span role="img" aria-label="India" className="flex h-10 w-10 items-center justify-center rounded-xl text-2xl bg-white/10 border border-white/10">🇮🇳</span>
+                    <div>
+                      <p className="text-white text-sm font-semibold">Indian English</p>
+                      <p className="text-white/45 text-[11px]">Natural Indian English voices</p>
                     </div>
-                  );
-                })}
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider text-white/40">4 voices</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {VOICES_INDIAN.map((v) => {
+                    const AvatarComp = VOICE_AVATAR_MAP[v.id];
+                    const isSelected = selectedVoice === v.id;
+                    return (
+                      <div key={v.id} className="flex flex-col items-center gap-1">
+                        <button
+                          onClick={() => setSelectedVoice(v.id)}
+                          className={`w-full flex flex-col items-center rounded-xl pt-3 pb-2 px-1 transition-all border ${
+                            isSelected ? "text-white" : "border-white/10 text-white/50 hover:text-white/80 hover:border-white/30"
+                          }`}
+                          style={isSelected ? { borderColor: meta.accent, background: meta.accent + "18" } : {}}
+                        >
+                          <div className="mb-2 rounded-full shadow-lg shadow-black/20">
+                            <AvatarComp size={66} selected={isSelected} accent={meta.accent} />
+                          </div>
+                          <p className="text-xs font-semibold leading-tight">{v.label}</p>
+                          <p className="text-[9px] opacity-50 leading-tight text-center mt-0.5">{v.desc}</p>
+                        </button>
+                        <button
+                          onClick={() => handlePreview(v.id)}
+                          className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-white/10 hover:border-white/30 text-white/40 hover:text-white/70 transition-colors"
+                          title={`Preview ${v.label}`}
+                        >
+                          {previewingVoice === v.id
+                            ? <Loader2 className="w-2.5 h-2.5 animate-spin" style={{ color: meta.accent }} />
+                            : <Volume2 className="w-2.5 h-2.5" />}
+                          <span>Preview</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="rounded-2xl border p-3" style={{ borderColor: "rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.025)" }}>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <span role="img" aria-label="United States" className="flex h-10 w-10 items-center justify-center rounded-xl text-2xl bg-white/10 border border-white/10">🇺🇸</span>
+                    <div>
+                      <p className="text-white text-sm font-semibold">International English</p>
+                      <p className="text-white/45 text-[11px]">International voices using US English</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider text-white/40">4 voices</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {VOICES_INTERNATIONAL.map((v) => {
+                    const AvatarComp = VOICE_AVATAR_MAP[v.id];
+                    const isSelected = selectedVoice === v.id;
+                    return (
+                      <div key={v.id} className="flex flex-col items-center gap-1">
+                        <button
+                          onClick={() => setSelectedVoice(v.id)}
+                          className={`w-full flex flex-col items-center rounded-xl pt-3 pb-2 px-1 transition-all border ${
+                            isSelected ? "text-white" : "border-white/10 text-white/50 hover:text-white/80 hover:border-white/30"
+                          }`}
+                          style={isSelected ? { borderColor: meta.accent, background: meta.accent + "18" } : {}}
+                        >
+                          <div className="mb-2 rounded-full shadow-lg shadow-black/20">
+                            <AvatarComp size={66} selected={isSelected} accent={meta.accent} />
+                          </div>
+                          <p className="text-xs font-semibold leading-tight">{v.label}</p>
+                          <p className="text-[9px] opacity-50 leading-tight text-center mt-0.5">{v.desc}</p>
+                        </button>
+                        <button
+                          onClick={() => handlePreview(v.id)}
+                          className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-white/10 hover:border-white/30 text-white/40 hover:text-white/70 transition-colors"
+                          title={`Preview ${v.label}`}
+                        >
+                          {previewingVoice === v.id
+                            ? <Loader2 className="w-2.5 h-2.5 animate-spin" style={{ color: meta.accent }} />
+                            : <Volume2 className="w-2.5 h-2.5" />}
+                          <span>Preview</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Playback speed slider */}
