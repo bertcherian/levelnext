@@ -80,6 +80,10 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
     <div className={wrapperClass} style={{
       fontFamily: "var(--ld-font-body)",
       minHeight: "100vh",
+      width: "100vw",
+      maxWidth: "100%",
+      minWidth: 0,
+      overflowX: "clip",
       color: "var(--ld-text)",
       background: "var(--ld-bg-gradient)",
       position: "relative",
@@ -119,13 +123,14 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
           </button>
 
           {/* Desktop Nav */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }} className="hidden md:flex">
+          <div style={{ alignItems: "center", gap: 4 }} className="hidden lg:flex">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = location === href || (href !== "/launch/home" && location.startsWith(href));
               return (
                 <button
                   key={href}
                   onClick={() => navigate(href)}
+                  aria-current={active ? "page" : undefined}
                   style={{
                     display: "flex", alignItems: "center", gap: 6,
                     padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -142,7 +147,7 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
           </div>
 
           {/* Right: XP + Streak + Settings + Logout */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }} className="hidden md:flex">
+          <div style={{ alignItems: "center", gap: 8 }} className="hidden lg:flex">
             <span className="ld-badge ld-badge-cyan">
               ⚡ {xp} XP
             </span>
@@ -153,6 +158,7 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
             )}
             <button
               onClick={() => navigate("/launch/settings")}
+              aria-label="Open Launch settings"
               style={{ background: "none", border: "none", cursor: "pointer", padding: 6, borderRadius: 6, color: "var(--ld-text-dim)", display: "flex", alignItems: "center", transition: "color 200ms var(--ld-ease-out)" }}
               title="Settings"
             >
@@ -160,6 +166,7 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
             </button>
             <button
               onClick={() => logoutMutation.mutate()}
+              aria-label="Sign out"
               style={{ background: "none", border: "none", cursor: "pointer", padding: 6, borderRadius: 6, color: "var(--ld-text-dim)", display: "flex", alignItems: "center", transition: "color 200ms var(--ld-ease-out)" }}
               title="Sign out"
             >
@@ -169,8 +176,10 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
 
           {/* Mobile toggle */}
           <button
-            className="md:hidden"
+            className="lg:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileOpen}
             style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ld-text-muted)", padding: 6 }}
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -201,6 +210,7 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
                 <button
                   key={href}
                   onClick={() => { navigate(href); setMobileOpen(false); }}
+                  aria-current={active ? "page" : undefined}
                   style={{
                     display: "flex", alignItems: "center", gap: 10, width: "100%",
                     padding: "10px 12px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -243,6 +253,7 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
                 key={href}
                 className={`ld-bottom-nav-item ${active ? "active" : ""}`}
                 onClick={() => navigate(href)}
+                aria-current={active ? "page" : undefined}
               >
                 <Icon size={20} />
                 {label}

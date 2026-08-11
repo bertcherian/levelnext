@@ -3,6 +3,7 @@ import { eq, and } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { launchDailyMissions, launchUserProgress } from "../../drizzle/schema";
+import { awardLaunchXp } from "./launchProgress";
 import { invokeLLM, safeJsonParse } from "../_core/llm";
 
 // ─── Mission Templates (fallback if LLM fails) ────────────────────────────────
@@ -168,6 +169,20 @@ export const launchDailyMissionsRouter = router({
 
       if (!record) throw new Error("No missions found for today");
 
+      const existingMission = (record.missions as Array<{
+        id: string;
+        title: string;
+        description: string;
+        xp: number;
+        missionArea: string;
+        status: "pending" | "complete";
+        completedAt?: string;
+      }>).find((mission) => mission.id === input.missionId);
+      if (!existingMission) throw new Error("Mission not found");
+      if (existingMission.status === "complete") {
+        return { xpEarned: 0, allComplete: record.missions.every((mission) => mission.status === "complete"), missions: record.missions, alreadyComplete: true, newAchievements: [] };
+      }
+
       const missions = (record.missions as Array<{
         id: string;
         title: string;
@@ -189,11 +204,18 @@ export const launchDailyMissionsRouter = router({
 
       const completedMission = missions.find((m) => m.id === input.missionId);
       const allComplete = missions.every((m) => m.status === "complete");
+      const xpResult = await awardLaunchXp(ctx.user.id, "daily_mission_complete", {
+        missionId: input.missionId,
+        missionArea: completedMission?.missionArea ?? "General",
+      }, completedMission?.xp ?? 25);
 
       return {
-        xpEarned: completedMission?.xp ?? 25,
+        xpEarned: xpResult.xpEarned,
         allComplete,
         missions,
+        alreadyComplete: false,
+        newAchievements: xpResult.newAchievements,
+        leveledUp: xpResult.leveledUp,
       };
     }),
 

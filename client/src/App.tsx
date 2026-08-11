@@ -79,20 +79,6 @@ import LSOSWorkspace from "@/pages/LSOSWorkspace";
 import NextChapterPortfolio from "@/pages/NextChapterPortfolio";
 import IdentityClarityAssessment from "@/pages/IdentityClarityAssessment";
 import JoinPage from "@/pages/JoinPage";
-import LaunchHome from "@/pages/launch/LaunchHome";
-import LaunchLanding from "@/pages/launch/LaunchLanding";
-import LaunchOnboarding from "@/pages/launch/LaunchOnboarding";
-import LaunchJourneyMap from "@/pages/launch/LaunchJourneyMap";
-import LaunchCareerCompass from "@/pages/launch/LaunchCareerCompass";
-import LaunchStoryBuilder from "@/pages/launch/LaunchStoryBuilder";
-import LaunchSkillSprint from "@/pages/launch/LaunchSkillSprint";
-import LaunchResumeMakeover from "@/pages/launch/LaunchResumeMakeover";
-import LaunchApplicationTracker from "@/pages/launch/LaunchApplicationTracker";
-import LaunchInterviewIntelligence from "@/pages/launch/LaunchInterviewIntelligence";
-import LaunchNegotiationSimulator from "@/pages/launch/LaunchNegotiationSimulator";
-import LaunchDashboard from "@/pages/launch/LaunchDashboard";
-import LaunchSettings from "@/pages/launch/LaunchSettings";
-import LaunchLeaderboard from "@/pages/launch/LaunchLeaderboard";
 import JoinProduct from "@/pages/JoinProduct";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -110,11 +96,39 @@ import Intelligence from "./pages/Intelligence";
 import SimulatorStart from "./pages/SimulatorStart";
 import SimulatorSession from "./pages/SimulatorSession";
 import SimulatorDebrief from "./pages/SimulatorDebrief";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useAuth } from "./_core/hooks/useAuth";
 import { trpc } from "./lib/trpc";
 
 const LS_KEY = "levelnext_join_product";
+
+// Launch Intelligence is a self-contained experience. Loading its journeys on
+// demand keeps the platform's initial bundle focused on the page a learner chose.
+const LaunchHome = lazy(() => import("@/pages/launch/LaunchHome"));
+const LaunchLanding = lazy(() => import("@/pages/launch/LaunchLanding"));
+const LaunchOnboarding = lazy(() => import("@/pages/launch/LaunchOnboarding"));
+const LaunchJourneyMap = lazy(() => import("@/pages/launch/LaunchJourneyMap"));
+const LaunchCareerCompass = lazy(() => import("@/pages/launch/LaunchCareerCompass"));
+const LaunchStoryBuilder = lazy(() => import("@/pages/launch/LaunchStoryBuilder"));
+const LaunchSkillSprint = lazy(() => import("@/pages/launch/LaunchSkillSprint"));
+const LaunchResumeMakeover = lazy(() => import("@/pages/launch/LaunchResumeMakeover"));
+const LaunchApplicationTracker = lazy(() => import("@/pages/launch/LaunchApplicationTracker"));
+const LaunchInterviewIntelligence = lazy(() => import("@/pages/launch/LaunchInterviewIntelligence"));
+const LaunchNegotiationSimulator = lazy(() => import("@/pages/launch/LaunchNegotiationSimulator"));
+const LaunchDashboard = lazy(() => import("@/pages/launch/LaunchDashboard"));
+const LaunchSettings = lazy(() => import("@/pages/launch/LaunchSettings"));
+const LaunchLeaderboard = lazy(() => import("@/pages/launch/LaunchLeaderboard"));
+
+function LaunchRouteFallback() {
+  return (
+    <div className="launch-dark min-h-screen grid place-items-center bg-[#0A0F1E] text-[#F8FAFC]" role="status" aria-live="polite">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="h-11 w-11 animate-spin rounded-full border-2 border-cyan-300 border-t-transparent" aria-hidden="true" />
+        <p className="font-semibold">Preparing your next move…</p>
+      </div>
+    </div>
+  );
+}
 
 // Handles the case where user was redirected to OAuth from /join-product
 // and lands back at "/" after login — we pick up the pending product from localStorage.
@@ -280,7 +294,9 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster richColors position="top-right" />
-          <Router />
+          <Suspense fallback={<LaunchRouteFallback />}>
+            <Router />
+          </Suspense>
           <PostLoginProductActivator />
           <PWAInstallBanner />
         </TooltipProvider>

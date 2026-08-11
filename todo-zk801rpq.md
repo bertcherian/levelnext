@@ -21,13 +21,21 @@
 
 ## Phase 3: Integration
 
-- [ ] Refactor remaining Launch pages to use LaunchDarkLayout (LaunchHome, LaunchOnboarding, LaunchJourneyMap, LaunchApplicationTracker, etc.)
-- [ ] Add achievement sharing integration
-- [ ] Responsive design testing across breakpoints
+- [x] Refactor remaining Launch pages to use LaunchDarkLayout through backward-compatible shared-shell adapters (LaunchHome, LaunchJourneyMap, LaunchApplicationTracker, Career Compass, Interview, Negotiation, Resume, Skill Sprint, and Story Builder)
+- [x] Add achievement sharing integration
+- [x] Replace simulated leaderboard content with live, privacy-preserving tRPC rankings and real weekly activity aggregates
+- [x] Centralize daily-mission XP awards in the server, add a ledger entry, update level/streak state, and show unlocked achievement celebrations
+- [x] Add XP progression regression tests (4 tests)
+- [x] Visually verify the Interview Intelligence and Negotiation Simulator setup journeys render as dark neon experiences through the shared shell
+- [x] Re-verify full-width mobile dark-shell rendering after overflow hardening
+  - Evidence: manual review of the repaired 375×812 dashboard capture confirmed that the dark surface fills the viewport with no blank canvas or horizontal overflow.
+- [x] Complete responsive verification after fixing the desktop bottom-navigation regression
+  - Evidence: desktop navigation passes at 1280px with no mobile bottom bar; tablet uses a compact header at 768px without a collision; and final 375px captures show the mobile bottom navigation, a full-width dark shell, and a readable “Earn XP to rank” helper next to the compact CTA.
 
 ## Phase 4: Polish
 
-- [ ] Accessibility audit and fixes (contrast, keyboard nav, screen reader)
-- [ ] Performance optimization (lazy loading, code splitting)
+- [x] Accessibility audit and fixes (reduced-motion and high-contrast preferences, labelled customization controls, semantic navigation, and visible keyboard focus)
+- [x] Performance optimization (route-level lazy loading and branded Suspense boundary for Launch Intelligence journeys)
 - [ ] Cross-browser testing
+  - Environment note: Chromium is the only installed browser engine. Chrome-compatible responsive checks pass; validate Safari and Firefox manually before a broad external campaign.
 - [ ] Save checkpoint and publish

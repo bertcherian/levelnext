@@ -97,26 +97,26 @@ export default function LaunchInterviewIntelligence() {
 
   return (
     <LaunchLayout>
-      <div className="min-h-screen" style={{ background: "var(--launch-white, #FAFBFC)" }}>
+      <div className="min-h-screen" style={{ background: "transparent", color: "var(--ld-text)" }}>
         <div className="max-w-2xl mx-auto px-4 py-6">
 
           {/* Setup Phase */}
           {phase === "setup" && (
             <div>
-              <button onClick={() => navigate("/launch/journey")} className="text-sm mb-4 flex items-center gap-1" style={{ color: "#718096" }}>
+              <button onClick={() => navigate("/launch/journey")} className="text-sm mb-4 flex items-center gap-1" style={{ color: "var(--ld-text-muted)" }}>
                 ← Back to Journey
               </button>
               <div className="text-center mb-6">
                 <div className="text-4xl mb-2">🎤</div>
-                <h1 className="text-2xl font-bold" style={{ color: "var(--launch-slate, #2D3748)", fontFamily: "Space Grotesk, sans-serif" }}>
+                <h1 className="text-2xl font-bold" style={{ color: "var(--ld-text)", fontFamily: "Space Grotesk, sans-serif" }}>
                   Interview Intelligence
                 </h1>
-                <p className="text-sm mt-1" style={{ color: "#718096" }}>Practice with an AI interviewer and get real-time coaching feedback</p>
+                <p className="text-sm mt-1" style={{ color: "var(--ld-text-muted)" }}>Practice with an AI interviewer and get real-time coaching feedback</p>
               </div>
 
               {/* Interview Type */}
               <div className="mb-5">
-                <h2 className="text-sm font-semibold mb-3" style={{ color: "#4A5568" }}>Choose Interview Type</h2>
+                <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--ld-text)" }}>Choose Interview Type</h2>
                 <div className="grid grid-cols-1 gap-2">
                   {INTERVIEW_TYPES.map((type) => (
                     <button
@@ -124,17 +124,17 @@ export default function LaunchInterviewIntelligence() {
                       onClick={() => setSelectedType(type.id)}
                       className="flex items-center gap-3 p-3 rounded-xl text-left transition-all"
                       style={{
-                        background: selectedType === type.id ? `${type.color}15` : "white",
-                        border: `1.5px solid ${selectedType === type.id ? type.color : "#E2E8F0"}`,
+                        background: selectedType === type.id ? `${type.color}18` : "var(--ld-card-bg)",
+                        border: `1.5px solid ${selectedType === type.id ? type.color : "var(--ld-card-border)"}`,
                       }}
                     >
                       <span className="text-2xl">{type.icon}</span>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold" style={{ color: "var(--launch-slate, #2D3748)" }}>{type.label}</span>
+                          <span className="text-sm font-semibold" style={{ color: "var(--ld-text)" }}>{type.label}</span>
                           <Badge className="text-xs" style={{ background: `${type.color}20`, color: type.color, border: "none" }}>+{type.xp} XP</Badge>
                         </div>
-                        <p className="text-xs" style={{ color: "#718096" }}>{type.description}</p>
+                        <p className="text-xs" style={{ color: "var(--ld-text-muted)" }}>{type.description}</p>
                       </div>
                       {selectedType === type.id && <span style={{ color: type.color }}>✓</span>}
                     </button>
@@ -144,7 +144,7 @@ export default function LaunchInterviewIntelligence() {
 
               {/* Difficulty */}
               <div className="mb-5">
-                <h2 className="text-sm font-semibold mb-3" style={{ color: "#4A5568" }}>Difficulty Level</h2>
+                <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--ld-text)" }}>Difficulty Level</h2>
                 <div className="grid grid-cols-3 gap-2">
                   {DIFFICULTY_OPTIONS.map((d) => (
                     <button
@@ -152,12 +152,12 @@ export default function LaunchInterviewIntelligence() {
                       onClick={() => setDifficulty(d.id as "beginner" | "intermediate" | "advanced")}
                       className="p-3 rounded-xl text-center transition-all"
                       style={{
-                        background: difficulty === d.id ? `${accentColor}15` : "white",
-                        border: `1.5px solid ${difficulty === d.id ? accentColor : "#E2E8F0"}`,
+                        background: difficulty === d.id ? `${accentColor}18` : "var(--ld-card-bg)",
+                        border: `1.5px solid ${difficulty === d.id ? accentColor : "var(--ld-card-border)"}`,
                       }}
                     >
-                      <div className="text-sm font-semibold" style={{ color: difficulty === d.id ? accentColor : "var(--launch-slate, #2D3748)" }}>{d.label}</div>
-                      <div className="text-xs mt-0.5" style={{ color: "#A0AEC0" }}>{d.description}</div>
+                      <div className="text-sm font-semibold" style={{ color: difficulty === d.id ? accentColor : "var(--ld-text)" }}>{d.label}</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--ld-text-muted)" }}>{d.description}</div>
                     </button>
                   ))}
                 </div>
@@ -166,12 +166,12 @@ export default function LaunchInterviewIntelligence() {
               {/* Optional context */}
               <div className="mb-6 grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium block mb-1" style={{ color: "#4A5568" }}>Target Role (optional)</label>
-                  <input value={targetRole} onChange={(e) => setTargetRole(e.target.value)} placeholder="e.g. Product Manager" className="w-full px-3 py-2 rounded-lg text-sm border" style={{ borderColor: "#E2E8F0", outline: "none" }} />
+                  <label className="text-xs font-medium block mb-1" style={{ color: "var(--ld-text)" }}>Target Role (optional)</label>
+                  <input value={targetRole} onChange={(e) => setTargetRole(e.target.value)} placeholder="e.g. Product Manager" className="w-full px-3 py-2 rounded-lg text-sm border" style={{ background: "var(--ld-surface-solid)", borderColor: "var(--ld-border)", color: "var(--ld-text)", outline: "none" }} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium block mb-1" style={{ color: "#4A5568" }}>Target Company (optional)</label>
-                  <input value={targetCompany} onChange={(e) => setTargetCompany(e.target.value)} placeholder="e.g. Google" className="w-full px-3 py-2 rounded-lg text-sm border" style={{ borderColor: "#E2E8F0", outline: "none" }} />
+                  <label className="text-xs font-medium block mb-1" style={{ color: "var(--ld-text)" }}>Target Company (optional)</label>
+                  <input value={targetCompany} onChange={(e) => setTargetCompany(e.target.value)} placeholder="e.g. Google" className="w-full px-3 py-2 rounded-lg text-sm border" style={{ background: "var(--ld-surface-solid)", borderColor: "var(--ld-border)", color: "var(--ld-text)", outline: "none" }} />
                 </div>
               </div>
 
@@ -200,10 +200,10 @@ export default function LaunchInterviewIntelligence() {
             <div>
               {/* Progress */}
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium" style={{ color: "#718096" }}>Question {questionNumber} of {totalQuestions}</span>
+                <span className="text-sm font-medium" style={{ color: "var(--ld-text-muted)" }}>Question {questionNumber} of {totalQuestions}</span>
                 <Badge style={{ background: `${accentColor}15`, color: accentColor, border: "none" }}>{selectedTypeConfig?.label}</Badge>
               </div>
-              <div className="h-2 rounded-full mb-6" style={{ background: "#EDF2F7" }}>
+              <div className="h-2 rounded-full mb-6" style={{ background: "rgba(148, 163, 184, 0.15)" }}>
                 <div className="h-full rounded-full transition-all" style={{ width: `${((questionNumber - 1) / totalQuestions) * 100}%`, background: accentColor }} />
               </div>
 
@@ -213,7 +213,7 @@ export default function LaunchInterviewIntelligence() {
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ background: accentColor }}>AI</div>
                   <span className="text-sm font-semibold" style={{ color: accentColor }}>Interviewer</span>
                 </div>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--launch-slate, #2D3748)" }}>{lastInterviewerMsg.content}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--ld-text)" }}>{lastInterviewerMsg.content}</p>
               </div>
 
               {/* Answer */}
@@ -224,9 +224,9 @@ export default function LaunchInterviewIntelligence() {
                   placeholder="Type your answer here... Take your time and be specific."
                   rows={5}
                   className="rounded-xl text-sm"
-                  style={{ borderColor: "#E2E8F0", resize: "none" }}
+                  style={{ background: "var(--ld-surface-solid)", borderColor: "var(--ld-border)", color: "var(--ld-text)", resize: "none" }}
                 />
-                <p className="text-xs mt-1" style={{ color: "#A0AEC0" }}>Tip: Use specific examples and be concise.</p>
+                <p className="text-xs mt-1" style={{ color: "var(--ld-text-muted)" }}>Tip: Use specific examples and be concise.</p>
               </div>
 
               <Button
@@ -253,10 +253,10 @@ export default function LaunchInterviewIntelligence() {
               />
 
               {/* Score */}
-              <div className="rounded-2xl p-5 mb-4" style={{ background: "white", border: "1px solid #E2E8F0" }}>
+              <div className="rounded-2xl p-5 mb-4" style={{ background: "var(--ld-card-bg)", border: "1px solid var(--ld-card-border)" }}>
                 <div className="text-center mb-4">
                   <div className="text-5xl font-bold mb-1" style={{ color: accentColor, fontFamily: "Space Grotesk, sans-serif" }}>{overallScore}</div>
-                  <div className="text-sm" style={{ color: "#718096" }}>Overall Score / 100</div>
+                  <div className="text-sm" style={{ color: "var(--ld-text-muted)" }}>Overall Score / 100</div>
                 </div>
 
                 {/* Strengths */}
@@ -264,7 +264,7 @@ export default function LaunchInterviewIntelligence() {
                   <h3 className="text-sm font-semibold mb-2" style={{ color: "#276749" }}>✅ Strengths</h3>
                   <ul className="space-y-1">
                     {feedback.strengths.map((s, i) => (
-                      <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--launch-slate, #2D3748)" }}>
+                      <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--ld-text)" }}>
                         <span style={{ color: "#3DDC97" }}>•</span>{s}
                       </li>
                     ))}
@@ -276,7 +276,7 @@ export default function LaunchInterviewIntelligence() {
                   <h3 className="text-sm font-semibold mb-2" style={{ color: "#C0392B" }}>🎯 Areas to Improve</h3>
                   <ul className="space-y-1">
                     {feedback.improvements.map((s, i) => (
-                      <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--launch-slate, #2D3748)" }}>
+                      <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--ld-text)" }}>
                         <span style={{ color: "#FC8181" }}>•</span>{s}
                       </li>
                     ))}
@@ -288,7 +288,7 @@ export default function LaunchInterviewIntelligence() {
                   <h3 className="text-sm font-semibold mb-2" style={{ color: "#2B6CB0" }}>🚀 Next Steps</h3>
                   <ul className="space-y-1">
                     {feedback.nextSteps.map((s, i) => (
-                      <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--launch-slate, #2D3748)" }}>
+                      <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--ld-text)" }}>
                         <span style={{ color: accentColor }}>→</span>{s}
                       </li>
                     ))}

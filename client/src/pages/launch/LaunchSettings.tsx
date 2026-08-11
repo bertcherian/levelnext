@@ -105,6 +105,8 @@ export default function LaunchSettings() {
                 setSelectedAvatar(av);
                 updateAvatar.mutate({ avatar: av as "🚀" });
               }}
+              aria-label={`Use ${av} as your avatar`}
+              aria-pressed={avatar === av}
               className="ld-card p-2 text-center"
               style={{
                 fontSize: 24,
@@ -132,6 +134,8 @@ export default function LaunchSettings() {
                 setSelectedColor(c.id);
                 updateAccentColor.mutate({ accentColor: c.id as "cyan" });
               }}
+              aria-label={`Use ${c.label} as the Launch accent color`}
+              aria-pressed={accentColor === c.id}
               style={{
                 width: 48, height: 48, borderRadius: 12, cursor: "pointer",
                 background: c.color,
@@ -164,6 +168,8 @@ export default function LaunchSettings() {
                 </div>
                 <button
                   onClick={() => updateNotifications.mutate({ [key]: !checked } as { notifyDailyMissions?: boolean })}
+                  aria-label={`${checked ? "Disable" : "Enable"} ${label}`}
+                  aria-pressed={checked}
                   style={{
                     width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
                     background: checked ? "var(--ld-cyan)" : "rgba(148,163,184,0.2)",
@@ -173,7 +179,7 @@ export default function LaunchSettings() {
                 >
                   <div style={{
                     position: "absolute", top: 2, left: checked ? 22 : 2,
-                    width: 20, height: 20, borderRadius: "50%", background: "white",
+                    width: 20, height: 20, borderRadius: "50%", background: "var(--ld-text)",
                     transition: "left 200ms var(--ld-ease-out)",
                   }} />
                 </button>
@@ -194,6 +200,8 @@ export default function LaunchSettings() {
             </div>
             <button
               onClick={() => updateAccessibility.mutate({ reducedMotion: !(prefs?.reducedMotion ?? false) })}
+              aria-label={`${prefs?.reducedMotion ?? false ? "Disable" : "Enable"} reduced motion`}
+              aria-pressed={prefs?.reducedMotion ?? false}
               style={{
                 width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
                 background: (prefs?.reducedMotion ?? false) ? "var(--ld-cyan)" : "rgba(148,163,184,0.2)",
@@ -203,7 +211,7 @@ export default function LaunchSettings() {
             >
               <div style={{
                 position: "absolute", top: 2, left: (prefs?.reducedMotion ?? false) ? 22 : 2,
-                width: 20, height: 20, borderRadius: "50%", background: "white",
+                width: 20, height: 20, borderRadius: "50%", background: "var(--ld-text)",
                 transition: "left 200ms var(--ld-ease-out)",
               }} />
             </button>
@@ -215,6 +223,8 @@ export default function LaunchSettings() {
             </div>
             <button
               onClick={() => updateAccessibility.mutate({ highContrast: !(prefs?.highContrast ?? false) })}
+              aria-label={`${prefs?.highContrast ?? false ? "Disable" : "Enable"} high contrast`}
+              aria-pressed={prefs?.highContrast ?? false}
               style={{
                 width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
                 background: (prefs?.highContrast ?? false) ? "var(--ld-cyan)" : "rgba(148,163,184,0.2)",
@@ -224,7 +234,7 @@ export default function LaunchSettings() {
             >
               <div style={{
                 position: "absolute", top: 2, left: (prefs?.highContrast ?? false) ? 22 : 2,
-                width: 20, height: 20, borderRadius: "50%", background: "white",
+                width: 20, height: 20, borderRadius: "50%", background: "var(--ld-text)",
                 transition: "left 200ms var(--ld-ease-out)",
               }} />
             </button>

@@ -128,6 +128,65 @@ async function checkAndAwardAchievements(
   return toAward;
 }
 
+export async function awardLaunchXp(
+  userId: number,
+  action: string,
+  metadata: Record<string, unknown> = {},
+  xpOverride?: number,
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+
+  const xpEarned = xpOverride ?? XP_VALUES[action] ?? 10;
+  const progress = await getOrCreateProgress(userId);
+  const newXp = progress.totalXp + xpEarned;
+  const newLevel = getLevelForXp(newXp).name;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  let newStreak = progress.currentStreak;
+  if (progress.lastActiveDate === yesterday) {
+    newStreak = progress.currentStreak + 1;
+  } else if (progress.lastActiveDate !== today) {
+    newStreak = 1;
+  }
+  const newLongest = Math.max(progress.longestStreak, newStreak);
+
+  let bonusXp = 0;
+  if (newStreak === 7) bonusXp = XP_VALUES.streak_7_bonus ?? 50;
+  if (newStreak === 30) bonusXp = XP_VALUES.streak_30_bonus ?? 150;
+  const finalXp = newXp + bonusXp;
+  const levelInfo = getLevelForXp(finalXp);
+
+  await db.update(launchUserProgress)
+    .set({
+      totalXp: finalXp,
+      currentLevel: levelInfo.name,
+      currentStreak: newStreak,
+      longestStreak: newLongest,
+      lastActiveDate: today,
+    })
+    .where(eq(launchUserProgress.userId, userId));
+
+  await db.insert(launchXpLedger).values({
+    userId,
+    action,
+    xpEarned: xpEarned + bonusXp,
+    metadata,
+  });
+
+  const newAchievements = await checkAndAwardAchievements(userId, finalXp, newStreak, levelInfo.name);
+
+  return {
+    xpEarned: xpEarned + bonusXp,
+    totalXp: finalXp,
+    newLevel: levelInfo,
+    leveledUp: newLevel !== progress.currentLevel,
+    newAchievements,
+    newStreak,
+  };
+}
+
 // ─── Router ───────────────────────────────────────────────────────────────────
 export const launchProgressRouter = router({
   // Get full progress state for the current user
@@ -155,61 +214,11 @@ export const launchProgressRouter = router({
       action: z.string(),
       metadata: z.record(z.string(), z.unknown()).optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
-      const xpEarned = XP_VALUES[input.action] ?? 10;
-      const progress = await getOrCreateProgress(ctx.user.id);
-      const newXp = progress.totalXp + xpEarned;
-      const newLevel = getLevelForXp(newXp).name;
-
-      // Update streak
-      const today = new Date().toISOString().slice(0, 10);
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-      let newStreak = progress.currentStreak;
-      if (progress.lastActiveDate === yesterday) {
-        newStreak = progress.currentStreak + 1;
-      } else if (progress.lastActiveDate !== today) {
-        newStreak = 1;
-      }
-      const newLongest = Math.max(progress.longestStreak, newStreak);
-
-      // Add streak bonus if applicable
-      let bonusXp = 0;
-      if (newStreak === 7)  bonusXp = XP_VALUES.streak_7_bonus ?? 50;
-      if (newStreak === 30) bonusXp = XP_VALUES.streak_30_bonus ?? 150;
-      const finalXp = newXp + bonusXp;
-
-      await db.update(launchUserProgress)
-        .set({
-          totalXp: finalXp,
-          currentLevel: getLevelForXp(finalXp).name,
-          currentStreak: newStreak,
-          longestStreak: newLongest,
-          lastActiveDate: today,
-        })
-        .where(eq(launchUserProgress.userId, ctx.user.id));
-
-      await db.insert(launchXpLedger).values({
-        userId: ctx.user.id,
-        action: input.action,
-        xpEarned: xpEarned + bonusXp,
-        metadata: (input.metadata ?? {}) as Record<string, unknown>,
-      });
-
-      const newAchievements = await checkAndAwardAchievements(
-        ctx.user.id, finalXp, newStreak, getLevelForXp(finalXp).name
-      );
-
-      return {
-        xpEarned: xpEarned + bonusXp,
-        totalXp: finalXp,
-        newLevel: getLevelForXp(finalXp),
-        leveledUp: newLevel !== progress.currentLevel,
-        newAchievements,
-        newStreak,
-      };
-    }),
+    .mutation(({ ctx, input }) => awardLaunchXp(
+      ctx.user.id,
+      input.action,
+      (input.metadata ?? {}) as Record<string, unknown>,
+    )),
 
   // Complete onboarding
   completeOnboarding: protectedProcedure

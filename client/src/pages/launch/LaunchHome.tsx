@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import LaunchLayout from "@/components/LaunchLayout";
+import AchievementUnlockedModal from "@/components/AchievementUnlockedModal";
 import {
   CheckCircle2, Circle, Zap, Flame, Trophy, ChevronRight,
   Sparkles, RefreshCw, Map, Rocket, Target, Star
@@ -180,23 +181,24 @@ export default function LaunchHome() {
   const [, navigate] = useLocation();
   const [completing, setCompleting] = useState<string | null>(null);
   const [justEarned, setJustEarned] = useState<number | null>(null);
+  const [unlockedAchievementCode, setUnlockedAchievementCode] = useState<string | null>(null);
 
   const progressQuery = trpc.launchProgress.getProgress.useQuery(undefined, { staleTime: 30_000 });
   const missionsQuery = trpc.launchDailyMissions.getToday.useQuery(undefined, { staleTime: 30_000 });
+  const achievementDefsQuery = trpc.launchProgress.getAchievementDefs.useQuery(undefined, { staleTime: 300_000 });
   const utils = trpc.useUtils();
 
   const completeMission = trpc.launchDailyMissions.completeMission.useMutation({
     onSuccess: (data) => {
       setJustEarned(data.xpEarned);
       setTimeout(() => setJustEarned(null), 3000);
+      if (data.newAchievements[0]) setUnlockedAchievementCode(data.newAchievements[0]);
       utils.launchDailyMissions.getToday.invalidate();
       utils.launchProgress.getProgress.invalidate();
       setCompleting(null);
     },
     onError: () => setCompleting(null),
   });
-
-  const awardXp = trpc.launchProgress.awardXp.useMutation();
 
   const progress = progressQuery.data?.progress;
   const missions = (missionsQuery.data?.missions ?? []) as Mission[];
@@ -206,8 +208,9 @@ export default function LaunchHome() {
   const handleComplete = (missionId: string) => {
     setCompleting(missionId);
     completeMission.mutate({ missionId });
-    awardXp.mutate({ action: "complete_daily_mission" });
   };
+
+  const unlockedAchievement = achievementDefsQuery.data?.find((achievement) => achievement.code === unlockedAchievementCode);
 
   const firstName = user?.name?.split(" ")[0] ?? "there";
   const hour = new Date().getHours();
@@ -412,6 +415,16 @@ export default function LaunchHome() {
           </div>
         </div>
       </div>
+      <AchievementUnlockedModal
+        achievement={unlockedAchievement ? {
+          id: String(unlockedAchievement.id),
+          title: unlockedAchievement.name,
+          description: unlockedAchievement.description ?? "You are building real career momentum.",
+          icon: unlockedAchievement.icon ?? "🏅",
+          xp: unlockedAchievement.xpBonus,
+        } : null}
+        onClose={() => setUnlockedAchievementCode(null)}
+      />
     </LaunchLayout>
   );
 }

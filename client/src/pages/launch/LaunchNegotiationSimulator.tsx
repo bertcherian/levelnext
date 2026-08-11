@@ -76,25 +76,25 @@ export default function LaunchNegotiationSimulator() {
 
   return (
     <LaunchLayout>
-      <div className="min-h-screen" style={{ background: "var(--launch-white, #FAFBFC)" }}>
+      <div className="min-h-screen" style={{ background: "transparent", color: "var(--ld-text)" }}>
         <div className="max-w-2xl mx-auto px-4 py-6">
 
           {/* Setup Phase */}
           {phase === "setup" && (
             <div>
-              <button onClick={() => navigate("/launch/journey")} className="text-sm mb-4 flex items-center gap-1" style={{ color: "#718096" }}>
+              <button onClick={() => navigate("/launch/journey")} className="text-sm mb-4 flex items-center gap-1" style={{ color: "var(--ld-text-muted)" }}>
                 ← Back to Journey
               </button>
               <div className="text-center mb-6">
                 <div className="text-4xl mb-2">⚖️</div>
-                <h1 className="text-2xl font-bold" style={{ color: "var(--launch-slate, #2D3748)", fontFamily: "Space Grotesk, sans-serif" }}>
+                <h1 className="text-2xl font-bold" style={{ color: "var(--ld-text)", fontFamily: "Space Grotesk, sans-serif" }}>
                   Negotiation Simulator
                 </h1>
-                <p className="text-sm mt-1" style={{ color: "#718096" }}>Practice salary negotiation with an AI employer and get expert coaching</p>
+                <p className="text-sm mt-1" style={{ color: "var(--ld-text-muted)" }}>Practice salary negotiation with an AI employer and get expert coaching</p>
               </div>
 
               <div className="mb-6">
-                <h2 className="text-sm font-semibold mb-3" style={{ color: "#4A5568" }}>Choose Your Scenario</h2>
+                <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--ld-text)" }}>Choose Your Scenario</h2>
                 <div className="space-y-2">
                   {(scenarios || []).map((scenario) => {
                     const diffColor = DIFFICULTY_COLORS[scenario.difficulty] || "#A0AEC0";
@@ -104,18 +104,18 @@ export default function LaunchNegotiationSimulator() {
                         onClick={() => setSelectedScenarioId(scenario.id)}
                         className="w-full flex items-start gap-3 p-4 rounded-xl text-left transition-all"
                         style={{
-                          background: selectedScenarioId === scenario.id ? `${accentColor}10` : "white",
-                          border: `1.5px solid ${selectedScenarioId === scenario.id ? accentColor : "#E2E8F0"}`,
+                          background: selectedScenarioId === scenario.id ? `${accentColor}18` : "var(--ld-card-bg)",
+                          border: `1.5px solid ${selectedScenarioId === scenario.id ? accentColor : "var(--ld-card-border)"}`,
                         }}
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-semibold" style={{ color: "var(--launch-slate, #2D3748)" }}>{scenario.title}</span>
+                            <span className="text-sm font-semibold" style={{ color: "var(--ld-text)" }}>{scenario.title}</span>
                             <Badge className="text-xs capitalize" style={{ background: `${diffColor}20`, color: diffColor, border: "none" }}>{scenario.difficulty}</Badge>
                           </div>
-                          <p className="text-xs mb-1" style={{ color: "#718096" }}>{scenario.description}</p>
-                          <div className="flex items-center gap-3 text-xs" style={{ color: "#A0AEC0" }}>
-                            <span>Starting: <strong style={{ color: "#4A5568" }}>{scenario.initialOffer}</strong></span>
+                          <p className="text-xs mb-1" style={{ color: "var(--ld-text-muted)" }}>{scenario.description}</p>
+                          <div className="flex items-center gap-3 text-xs" style={{ color: "var(--ld-text-muted)" }}>
+                            <span>Starting: <strong style={{ color: "var(--ld-text)" }}>{scenario.initialOffer}</strong></span>
                             <span>Target: <strong style={{ color: "#3DDC97" }}>{scenario.targetOffer}</strong></span>
                           </div>
                         </div>
@@ -150,14 +150,14 @@ export default function LaunchNegotiationSimulator() {
           {phase === "negotiation" && lastEmployerMsg && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium" style={{ color: "#718096" }}>Exchange {exchangeCount + 1} of ~5</span>
+                <span className="text-sm font-medium" style={{ color: "var(--ld-text-muted)" }}>Exchange {exchangeCount + 1} of ~5</span>
                 <Badge style={{ background: `${accentColor}15`, color: accentColor, border: "none" }}>⚖️ {selectedScenario?.title}</Badge>
               </div>
 
               {/* Context bar */}
-              <div className="rounded-xl p-3 mb-4 flex items-center justify-between" style={{ background: "#F7FAFC", border: "1px solid #E2E8F0" }}>
-                <span className="text-xs" style={{ color: "#718096" }}>Offer on table: <strong style={{ color: "#4A5568" }}>{selectedScenario?.initialOffer}</strong></span>
-                <span className="text-xs" style={{ color: "#718096" }}>Your target: <strong style={{ color: "#3DDC97" }}>{selectedScenario?.targetOffer}</strong></span>
+              <div className="rounded-xl p-3 mb-4 flex items-center justify-between" style={{ background: "var(--ld-surface)", border: "1px solid var(--ld-border)" }}>
+                <span className="text-xs" style={{ color: "var(--ld-text-muted)" }}>Offer on table: <strong style={{ color: "var(--ld-text)" }}>{selectedScenario?.initialOffer}</strong></span>
+                <span className="text-xs" style={{ color: "var(--ld-text-muted)" }}>Your target: <strong style={{ color: "var(--ld-green)" }}>{selectedScenario?.targetOffer}</strong></span>
               </div>
 
               {/* Conversation */}
@@ -167,9 +167,9 @@ export default function LaunchNegotiationSimulator() {
                     <div
                       className="max-w-xs rounded-2xl px-4 py-3 text-sm"
                       style={{
-                        background: msg.role === "candidate" ? accentColor : "white",
-                        color: msg.role === "candidate" ? "white" : "var(--launch-slate, #2D3748)",
-                        border: msg.role === "employer" ? "1px solid #E2E8F0" : "none",
+                        background: msg.role === "candidate" ? accentColor : "var(--ld-card-bg)",
+                        color: msg.role === "candidate" ? "#FFFFFF" : "var(--ld-text)",
+                        border: msg.role === "employer" ? "1px solid var(--ld-card-border)" : "none",
                       }}
                     >
                       {msg.content}
@@ -186,9 +186,9 @@ export default function LaunchNegotiationSimulator() {
                   placeholder="Type your negotiation response..."
                   rows={3}
                   className="rounded-xl text-sm"
-                  style={{ borderColor: "#E2E8F0", resize: "none" }}
+                  style={{ background: "var(--ld-surface-solid)", borderColor: "var(--ld-border)", color: "var(--ld-text)", resize: "none" }}
                 />
-                <p className="text-xs mt-1" style={{ color: "#A0AEC0" }}>Tip: Be confident, justify your ask with value, and stay professional.</p>
+                <p className="text-xs mt-1" style={{ color: "var(--ld-text-muted)" }}>Tip: Be confident, justify your ask with value, and stay professional.</p>
               </div>
 
               <Button
@@ -214,24 +214,24 @@ export default function LaunchNegotiationSimulator() {
                 continueLabel="View Coaching Debrief"
               />
 
-              <div className="rounded-2xl p-5 mb-4" style={{ background: "white", border: "1px solid #E2E8F0" }}>
+              <div className="rounded-2xl p-5 mb-4" style={{ background: "var(--ld-card-bg)", border: "1px solid var(--ld-card-border)" }}>
                 <div className="text-center mb-4">
                   <div className="text-5xl font-bold mb-1" style={{ color: accentColor, fontFamily: "Space Grotesk, sans-serif" }}>{outcomeScore}</div>
-                  <div className="text-sm" style={{ color: "#718096" }}>Negotiation Score / 100</div>
-                  {finalOutcome && <p className="text-sm mt-2 font-medium" style={{ color: "var(--launch-slate, #2D3748)" }}>{finalOutcome}</p>}
+                  <div className="text-sm" style={{ color: "var(--ld-text-muted)" }}>Negotiation Score / 100</div>
+                  {finalOutcome && <p className="text-sm mt-2 font-medium" style={{ color: "var(--ld-text)" }}>{finalOutcome}</p>}
                 </div>
 
                 <div className="mb-4">
                   <h3 className="text-sm font-semibold mb-2" style={{ color: "#276749" }}>✅ What You Did Well</h3>
-                  <ul className="space-y-1">{feedback.strengths.map((s, i) => <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--launch-slate, #2D3748)" }}><span style={{ color: "#3DDC97" }}>•</span>{s}</li>)}</ul>
+                  <ul className="space-y-1">{feedback.strengths.map((s, i) => <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--ld-text)" }}><span style={{ color: "#3DDC97" }}>•</span>{s}</li>)}</ul>
                 </div>
                 <div className="mb-4">
                   <h3 className="text-sm font-semibold mb-2" style={{ color: "#C0392B" }}>🎯 Areas to Improve</h3>
-                  <ul className="space-y-1">{feedback.improvements.map((s, i) => <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--launch-slate, #2D3748)" }}><span style={{ color: "#FC8181" }}>•</span>{s}</li>)}</ul>
+                  <ul className="space-y-1">{feedback.improvements.map((s, i) => <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--ld-text)" }}><span style={{ color: "#FC8181" }}>•</span>{s}</li>)}</ul>
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold mb-2" style={{ color: "#2B6CB0" }}>💡 Negotiation Tactics to Use Next Time</h3>
-                  <ul className="space-y-1">{feedback.tactics.map((s, i) => <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--launch-slate, #2D3748)" }}><span style={{ color: accentColor }}>→</span>{s}</li>)}</ul>
+                  <ul className="space-y-1">{feedback.tactics.map((s, i) => <li key={i} className="text-sm flex items-start gap-2" style={{ color: "var(--ld-text)" }}><span style={{ color: accentColor }}>→</span>{s}</li>)}</ul>
                 </div>
               </div>
 
