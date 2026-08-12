@@ -5,8 +5,15 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   earlyCareerCommitments,
+  earlyCareerCoachMessages,
+  earlyCareerCoachSessions,
+  earlyCareerDiagnosticResults,
+  earlyCareerDiagnosticSessions,
   earlyCareerEvidence,
   earlyCareerManagerNudges,
+  earlyCareerNudgeConfigs,
+  earlyCareerNudgeDeliveries,
+  earlyCareerPracticeSessions,
   earlyCareerProfiles,
   tenantUsers,
   users,
@@ -20,6 +27,16 @@ import {
   type EarlyCareerCapabilityId,
   type EarlyCareerStageId,
 } from "../../shared/modules/earlyCareerData";
+import {
+  EARLY_CAREER_COACH_STARTERS,
+  EARLY_CAREER_DIAGNOSTIC_DISCLAIMER,
+  EARLY_CAREER_DIAGNOSTIC_QUESTIONS,
+  EARLY_CAREER_PRACTICE_SCENARIOS,
+  EARLY_CAREER_RESPONSE_SCALE,
+  getEarlyCareerDevelopmentGuidance,
+  scoreEarlyCareerDiagnostic,
+} from "../../shared/modules/earlyCareerDiagnostic";
+import { invokeLLM } from "../_core/llm";
 
 const stages = ["orient", "deliver", "connect", "navigate", "grow", "contribute", "accelerate"] as const;
 const capabilities = [
@@ -51,7 +68,272 @@ function stageIdFrom(value: string | null | undefined): EarlyCareerStageId {
   return stages.includes(value as EarlyCareerStageId) ? (value as EarlyCareerStageId) : "orient";
 }
 
+function extractLlmText(result: Awaited<ReturnType<typeof invokeLLM>>): string {
+  const content = result.choices[0]?.message?.content ?? "";
+  return typeof content === "string" ? content : "";
+}
+
+async function buildEarlyCareerPrivateContext(userId: number) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+  const [profile, latestResult, commitments] = await Promise.all([
+    db.select().from(earlyCareerProfiles).where(eq(earlyCareerProfiles.userId, userId)).limit(1),
+    db.select().from(earlyCareerDiagnosticResults).where(eq(earlyCareerDiagnosticResults.userId, userId)).orderBy(desc(earlyCareerDiagnosticResults.createdAt)).limit(1),
+    db.select().from(earlyCareerCommitments).where(and(eq(earlyCareerCommitments.userId, userId), inArray(earlyCareerCommitments.status, ["planned", "in_progress"]))).limit(4),
+  ]);
+  const lines = ["Private Early Career development context:"];
+  if (profile[0]) lines.push(`Role: ${profile[0].roleTitle ?? "not specified"}; journey stage: ${profile[0].journeyStage}.`);
+  if (latestResult[0]) lines.push(`Latest private reflection: ${latestResult[0].developmentalBand}; development focus: ${latestResult[0].recommendedCapabilityId}.`);
+  if (commitments.length) lines.push(`Active commitments: ${commitments.map((item) => item.title).join("; ")}.`);
+  lines.push("This context is private to the employee. Never imply it is shared with a manager or HR.");
+  return lines.join("\n");
+}
+
+const EARLY_CAREER_COACH_GUARDRAIL = "You are the LevelNext Early Career Guide. Help an early-career employee clarify a workplace moment, practise a constructive action, and choose one proportionate next step. Be warm, direct, and specific. Do not score, rank, label, diagnose, or make performance/employment judgements. Do not claim facts not supplied. Do not offer legal, medical, or mental-health diagnosis. Never say private conversations are shared. Keep responses under 220 words and ask one useful question before advice when the situation is unclear.";
+
 export const earlyCareerRouter = router({
+  getDiagnostic: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [inProgress, latestResult] = await Promise.all([
+      db
+        .select()
+        .from(earlyCareerDiagnosticSessions)
+        .where(and(eq(earlyCareerDiagnosticSessions.userId, ctx.user.id), eq(earlyCareerDiagnosticSessions.status, "in_progress")))
+        .orderBy(desc(earlyCareerDiagnosticSessions.updatedAt))
+        .limit(1),
+      db
+        .select()
+        .from(earlyCareerDiagnosticResults)
+        .where(eq(earlyCareerDiagnosticResults.userId, ctx.user.id))
+        .orderBy(desc(earlyCareerDiagnosticResults.createdAt))
+        .limit(1),
+    ]);
+    return {
+      disclaimer: EARLY_CAREER_DIAGNOSTIC_DISCLAIMER,
+      capabilities: EARLY_CAREER_CAPABILITIES,
+      questions: EARLY_CAREER_DIAGNOSTIC_QUESTIONS,
+      responseScale: EARLY_CAREER_RESPONSE_SCALE,
+      inProgress: inProgress[0] ?? null,
+      latestResult: latestResult[0]
+        ? { ...latestResult[0], developmentGuidance: getEarlyCareerDevelopmentGuidance(latestResult[0].recommendedCapabilityId as EarlyCareerCapabilityId) }
+        : null,
+    };
+  }),
+
+  startDiagnostic: protectedProcedure
+    .input(z.object({ consent: z.literal(true) }))
+    .mutation(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const [existing] = await db
+        .select()
+        .from(earlyCareerDiagnosticSessions)
+        .where(and(eq(earlyCareerDiagnosticSessions.userId, ctx.user.id), eq(earlyCareerDiagnosticSessions.status, "in_progress")))
+        .orderBy(desc(earlyCareerDiagnosticSessions.updatedAt))
+        .limit(1);
+      if (existing) return { sessionId: existing.id, responses: existing.responses, currentQuestionIndex: existing.currentQuestionIndex };
+      const tenantId = await getTenantIdForUser(ctx.user.id);
+      const [created] = await db
+        .insert(earlyCareerDiagnosticSessions)
+        .values({ userId: ctx.user.id, tenantId, responses: {}, currentQuestionIndex: 0, consentedAt: new Date() })
+        .$returningId();
+      return { sessionId: created.id, responses: {}, currentQuestionIndex: 0 };
+    }),
+
+  submitDiagnosticResponse: protectedProcedure
+    .input(z.object({ sessionId: z.number().int().positive(), questionId: z.string().min(3).max(100), response: z.number().int().min(1).max(5) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      if (!EARLY_CAREER_DIAGNOSTIC_QUESTIONS.some((question) => question.id === input.questionId)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown diagnostic question." });
+      }
+      const [session] = await db
+        .select()
+        .from(earlyCareerDiagnosticSessions)
+        .where(and(eq(earlyCareerDiagnosticSessions.id, input.sessionId), eq(earlyCareerDiagnosticSessions.userId, ctx.user.id)))
+        .limit(1);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Diagnostic session not found." });
+      if (session.status === "completed") throw new TRPCError({ code: "BAD_REQUEST", message: "This diagnostic has already been completed." });
+
+      const responses = { ...(session.responses as Record<string, number>), [input.questionId]: input.response };
+      const answeredCount = EARLY_CAREER_DIAGNOSTIC_QUESTIONS.filter((question) => typeof responses[question.id] === "number").length;
+      const isComplete = answeredCount === EARLY_CAREER_DIAGNOSTIC_QUESTIONS.length;
+      const currentQuestionIndex = Math.min(answeredCount, EARLY_CAREER_DIAGNOSTIC_QUESTIONS.length - 1);
+
+      await db
+        .update(earlyCareerDiagnosticSessions)
+        .set({ responses, currentQuestionIndex, status: isComplete ? "completed" : "in_progress", completedAt: isComplete ? new Date() : null })
+        .where(eq(earlyCareerDiagnosticSessions.id, session.id));
+
+      if (!isComplete) return { isComplete: false, currentQuestionIndex, answeredCount };
+
+      const scored = scoreEarlyCareerDiagnostic(responses);
+      const [result] = await db
+        .insert(earlyCareerDiagnosticResults)
+        .values({
+          sessionId: session.id,
+          userId: ctx.user.id,
+          tenantId: session.tenantId,
+          overallScore: scored.overallScore,
+          capabilityScores: scored.capabilityScores,
+          developmentalBand: scored.band.label,
+          recommendedCapabilityId: scored.recommendedCapability,
+        })
+        .$returningId();
+      return {
+        isComplete: true,
+        resultId: result.id,
+        ...scored,
+        developmentGuidance: getEarlyCareerDevelopmentGuidance(scored.recommendedCapability),
+      };
+    }),
+
+  getLatestDiagnosticResult: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [result] = await db
+      .select()
+      .from(earlyCareerDiagnosticResults)
+      .where(eq(earlyCareerDiagnosticResults.userId, ctx.user.id))
+      .orderBy(desc(earlyCareerDiagnosticResults.createdAt))
+      .limit(1);
+    return result
+      ? { ...result, developmentGuidance: getEarlyCareerDevelopmentGuidance(result.recommendedCapabilityId as EarlyCareerCapabilityId) }
+      : null;
+  }),
+
+  getCoachStarters: protectedProcedure.query(() => EARLY_CAREER_COACH_STARTERS),
+
+  startCoachSession: protectedProcedure.input(z.object({ context: z.string().trim().max(1000).optional(), title: z.string().trim().max(160).optional() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const tenantId = await getTenantIdForUser(ctx.user.id);
+    const [created] = await db.insert(earlyCareerCoachSessions).values({ userId: ctx.user.id, tenantId, title: input.title || input.context?.slice(0, 120) || "Private development conversation", startingContext: input.context ?? null }).$returningId();
+    let opening = "I’m here to help you think through a real workplace moment. What feels most important to make clearer today?";
+    try {
+      const result = await invokeLLM({ model: "gpt-5-mini", messages: [{ role: "system", content: EARLY_CAREER_COACH_GUARDRAIL }, { role: "user", content: `${await buildEarlyCareerPrivateContext(ctx.user.id)}\n\nThe employee begins with: ${input.context ?? "a general development check-in"}\nWrite a warm two-sentence opening that invites reflection.` }], maxTokens: 180 });
+      opening = extractLlmText(result).trim() || opening;
+    } catch { /* private fallback */ }
+    await db.insert(earlyCareerCoachMessages).values({ sessionId: created.id, role: "assistant", content: opening });
+    return { sessionId: created.id, opening };
+  }),
+
+  sendCoachMessage: protectedProcedure.input(z.object({ sessionId: z.number().int().positive(), message: z.string().trim().min(1).max(2000) })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [session] = await db.select().from(earlyCareerCoachSessions).where(and(eq(earlyCareerCoachSessions.id, input.sessionId), eq(earlyCareerCoachSessions.userId, ctx.user.id))).limit(1);
+    if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Guide conversation not found." });
+    await db.insert(earlyCareerCoachMessages).values({ sessionId: session.id, role: "user", content: input.message });
+    const history = await db.select().from(earlyCareerCoachMessages).where(eq(earlyCareerCoachMessages.sessionId, session.id)).orderBy(earlyCareerCoachMessages.createdAt).limit(14);
+    let reply = "Let’s slow this down. What outcome would make this situation feel more workable, and what is one conversation or action you could take next?";
+    try {
+      const result = await invokeLLM({ model: "gpt-5-mini", messages: [{ role: "system", content: EARLY_CAREER_COACH_GUARDRAIL }, { role: "system", content: await buildEarlyCareerPrivateContext(ctx.user.id) }, ...history.map((message) => ({ role: message.role, content: message.content }))], maxTokens: 420 });
+      reply = extractLlmText(result).trim() || reply;
+    } catch { /* private fallback */ }
+    await db.insert(earlyCareerCoachMessages).values({ sessionId: session.id, role: "assistant", content: reply });
+    return { reply };
+  }),
+
+  getCoachSessions: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    return db.select().from(earlyCareerCoachSessions).where(eq(earlyCareerCoachSessions.userId, ctx.user.id)).orderBy(desc(earlyCareerCoachSessions.updatedAt)).limit(20);
+  }),
+
+  getCoachMessages: protectedProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [session] = await db.select().from(earlyCareerCoachSessions).where(and(eq(earlyCareerCoachSessions.id, input.sessionId), eq(earlyCareerCoachSessions.userId, ctx.user.id))).limit(1);
+    if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Guide conversation not found." });
+    return db.select().from(earlyCareerCoachMessages).where(eq(earlyCareerCoachMessages.sessionId, session.id)).orderBy(earlyCareerCoachMessages.createdAt);
+  }),
+
+  getPracticeScenarios: protectedProcedure.query(() => EARLY_CAREER_PRACTICE_SCENARIOS),
+
+  startPracticeSession: protectedProcedure.input(z.object({ scenarioId: z.string().min(3).max(100), difficulty: z.enum(["guided", "realistic", "stretch"]).default("realistic") })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const scenario = EARLY_CAREER_PRACTICE_SCENARIOS.find((item) => item.id === input.scenarioId);
+    if (!scenario) throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown practice scenario." });
+    const tenantId = await getTenantIdForUser(ctx.user.id);
+    let opening = `I’m the ${scenario.counterpartRole}. How would you like to begin?`;
+    try {
+      const result = await invokeLLM({ model: "claude-haiku-4-5", messages: [{ role: "system", content: `You play a ${scenario.counterpartRole} in a developmental workplace rehearsal. Stay in character, use 1–2 realistic sentences, do not coach or grade.` }, { role: "user", content: `Situation: ${scenario.situation}\nEmployee objective: ${scenario.objective}\nDifficulty: ${input.difficulty}\nCreate the opening line.` }], maxTokens: 120 });
+      opening = extractLlmText(result).trim() || opening;
+    } catch { /* practice fallback */ }
+    const messages = [{ role: "counterpart" as const, content: opening, timestamp: new Date().toISOString() }];
+    const [created] = await db.insert(earlyCareerPracticeSessions).values({ userId: ctx.user.id, tenantId, scenarioId: scenario.id, scenarioTitle: scenario.title, difficulty: input.difficulty, messages }).$returningId();
+    return { sessionId: created.id, opening };
+  }),
+
+  sendPracticeMessage: protectedProcedure.input(z.object({ sessionId: z.number().int().positive(), message: z.string().trim().min(1).max(1200) })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [session] = await db.select().from(earlyCareerPracticeSessions).where(and(eq(earlyCareerPracticeSessions.id, input.sessionId), eq(earlyCareerPracticeSessions.userId, ctx.user.id))).limit(1);
+    if (!session || session.status !== "active") throw new TRPCError({ code: "NOT_FOUND", message: "Active practice session not found." });
+    const scenario = EARLY_CAREER_PRACTICE_SCENARIOS.find((item) => item.id === session.scenarioId);
+    if (!scenario) throw new TRPCError({ code: "BAD_REQUEST", message: "Practice scenario unavailable." });
+    const messages = [...(session.messages ?? []), { role: "user" as const, content: input.message, timestamp: new Date().toISOString() }];
+    let reply = "I understand. What specifically are you proposing as the next step?";
+    try {
+      const result = await invokeLLM({ model: "claude-haiku-4-5", messages: [{ role: "system", content: `Stay in role as a ${scenario.counterpartRole}. Scenario: ${scenario.situation}. Difficulty: ${session.difficulty}. Respond in 1–3 natural sentences. Do not coach, grade, or break character.` }, ...messages.slice(-8).map((message) => ({ role: message.role === "user" ? "user" as const : "assistant" as const, content: message.content }))], maxTokens: 180 });
+      reply = extractLlmText(result).trim() || reply;
+    } catch { /* practice fallback */ }
+    messages.push({ role: "counterpart", content: reply, timestamp: new Date().toISOString() });
+    await db.update(earlyCareerPracticeSessions).set({ messages }).where(eq(earlyCareerPracticeSessions.id, session.id));
+    return { reply };
+  }),
+
+  endPracticeSession: protectedProcedure.input(z.object({ sessionId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [session] = await db.select().from(earlyCareerPracticeSessions).where(and(eq(earlyCareerPracticeSessions.id, input.sessionId), eq(earlyCareerPracticeSessions.userId, ctx.user.id))).limit(1);
+    if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Practice session not found." });
+    let feedback: Record<string, unknown> = { headline: "You completed a practice conversation.", noticed: ["You chose to rehearse a real workplace moment."], tryNext: "Choose one phrase or question to use in the next real conversation.", reflectionQuestion: "What felt more natural after practising it?" };
+    try {
+      const result = await invokeLLM({ model: "gpt-5-mini", messages: [{ role: "system", content: "You are a practice debrief coach. Give behavioural, non-evaluative feedback. Do not score, rank, label, or imply employment readiness. Return JSON only with headline, noticed (string array), tryNext, reflectionQuestion." }, { role: "user", content: `Scenario: ${session.scenarioTitle}\nConversation: ${(session.messages ?? []).map((item) => `${item.role}: ${item.content}`).join("\n")}` }], maxTokens: 420 });
+      const parsed = JSON.parse(extractLlmText(result));
+      if (parsed && typeof parsed.headline === "string") feedback = parsed;
+    } catch { /* debrief fallback */ }
+    await db.update(earlyCareerPracticeSessions).set({ status: "completed", feedback }).where(eq(earlyCareerPracticeSessions.id, session.id));
+    return feedback;
+  }),
+
+  getHRCohortIntelligence: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [membership] = await db.select().from(tenantUsers).where(and(eq(tenantUsers.userId, ctx.user.id), eq(tenantUsers.role, "owner"))).limit(1);
+    if (!membership && ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Organisation owner access is required." });
+    const tenantId = membership?.tenantId;
+    if (!tenantId) return { eligible: false, minimumCohortSize: 5, cohortSize: 0, privacyBoundary: "No individual answers, private Guide conversations, or Practice Partner records are included." };
+    const results = await db.select().from(earlyCareerDiagnosticResults).where(eq(earlyCareerDiagnosticResults.tenantId, tenantId));
+    const latest = new Map<number, typeof results[number]>(); results.forEach((item) => { if (!latest.has(item.userId)) latest.set(item.userId, item); });
+    const cohort = Array.from(latest.values());
+    if (cohort.length < 5) return { eligible: false, minimumCohortSize: 5, cohortSize: cohort.length, privacyBoundary: "Cohort metrics are withheld until at least five employees have completed the diagnostic. No individual answers, private Guide conversations, or Practice Partner records are included." };
+    const averages = Object.fromEntries(EARLY_CAREER_CAPABILITIES.map((capability) => [capability.id, Math.round(cohort.reduce((total, result) => total + Number((result.capabilityScores as Record<string, number>)[capability.id] ?? 0), 0) / cohort.length)]));
+    return { eligible: true, minimumCohortSize: 5, cohortSize: cohort.length, averageOverallScore: Math.round(cohort.reduce((total, result) => total + result.overallScore, 0) / cohort.length), capabilityAverages: averages, privacyBoundary: "Aggregate patterns only: no individual answers, private Guide conversations, Practice Partner transcripts, or employee labels are included." };
+  }),
+
+  getNudgeConfig: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [membership] = await db.select().from(tenantUsers).where(and(eq(tenantUsers.userId, ctx.user.id), eq(tenantUsers.role, "owner"))).limit(1);
+    if (!membership && ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    if (!membership) return [];
+    return db.select().from(earlyCareerNudgeConfigs).where(eq(earlyCareerNudgeConfigs.tenantId, membership.tenantId));
+  }),
+
+  saveNudgeConfig: protectedProcedure.input(z.object({ audience: z.enum(["employees", "managers"]), enabled: z.boolean(), cadence: z.enum(["weekly", "fortnightly", "monthly"]), journeyStage: z.enum(["all", ...stages]), dayOfWeek: z.number().int().min(0).max(6), hourUtc: z.number().int().min(0).max(23) })).mutation(async ({ ctx, input }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [membership] = await db.select().from(tenantUsers).where(and(eq(tenantUsers.userId, ctx.user.id), eq(tenantUsers.role, "owner"))).limit(1);
+    if (!membership && ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Organisation owner access is required." });
+    if (!membership) throw new TRPCError({ code: "BAD_REQUEST", message: "A tenant owner membership is required." });
+    const [existing] = await db.select().from(earlyCareerNudgeConfigs).where(and(eq(earlyCareerNudgeConfigs.tenantId, membership.tenantId), eq(earlyCareerNudgeConfigs.audience, input.audience))).limit(1);
+    if (existing) { await db.update(earlyCareerNudgeConfigs).set(input).where(eq(earlyCareerNudgeConfigs.id, existing.id)); return { id: existing.id }; }
+    const [created] = await db.insert(earlyCareerNudgeConfigs).values({ ...input, tenantId: membership.tenantId, createdByUserId: ctx.user.id }).$returningId(); return { id: created.id };
+  }),
+
   getHome: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });

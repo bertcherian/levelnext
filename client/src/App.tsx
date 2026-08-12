@@ -100,6 +100,10 @@ import EarlyCareerLayout from "./components/EarlyCareerLayout";
 import EarlyCareerHome from "./pages/earlyCareer/EarlyCareerHome";
 import EarlyCareerGrowth from "./pages/earlyCareer/EarlyCareerGrowth";
 import ManagerCompanion from "./pages/earlyCareer/ManagerCompanion";
+import EarlyCareerDiagnostic from "./pages/earlyCareer/EarlyCareerDiagnostic";
+import EarlyCareerCoach from "./pages/earlyCareer/EarlyCareerCoach";
+import EarlyCareerPractice from "./pages/earlyCareer/EarlyCareerPractice";
+import EarlyCareerHR from "./pages/earlyCareer/EarlyCareerHR";
 import { lazy, Suspense, useEffect } from "react";
 import { useAuth } from "./_core/hooks/useAuth";
 import { trpc } from "./lib/trpc";
@@ -284,6 +288,10 @@ function Router() {
 
       {/* Early Career Intelligence — distinct from Launch and Executive Communication Intelligence */}
       <Route path="/early-career">{() => <EarlyCareerLayout><EarlyCareerHome /></EarlyCareerLayout>}</Route>
+      <Route path="/early-career/diagnostic">{() => <EarlyCareerLayout><EarlyCareerDiagnostic /></EarlyCareerLayout>}</Route>
+      <Route path="/early-career/guide">{() => <EarlyCareerLayout><EarlyCareerCoach /></EarlyCareerLayout>}</Route>
+      <Route path="/early-career/practice">{() => <EarlyCareerLayout><EarlyCareerPractice /></EarlyCareerLayout>}</Route>
+      <Route path="/early-career/hr">{() => <EarlyCareerLayout><EarlyCareerHR /></EarlyCareerLayout>}</Route>
       <Route path="/early-career/growth">{() => <EarlyCareerLayout><EarlyCareerGrowth /></EarlyCareerLayout>}</Route>
       <Route path="/early-career/manager">{() => <EarlyCareerLayout><ManagerCompanion /></EarlyCareerLayout>}</Route>
 

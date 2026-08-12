@@ -1,8 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { BriefcaseBusiness, Compass, Home, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, ClipboardCheck, Compass, Home, MessageCircle, ShieldCheck, Sparkles, Theater, UsersRound } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/early-career", label: "Today", icon: Home, exact: true },
+  { href: "/early-career/diagnostic", label: "Diagnostic", icon: ClipboardCheck },
+  { href: "/early-career/guide", label: "Guide", icon: MessageCircle },
+  { href: "/early-career/practice", label: "Practice", icon: Theater },
+  { href: "/early-career/hr", label: "Cohort", icon: BarChart3 },
   { href: "/early-career/growth", label: "My Growth", icon: Compass },
   { href: "/early-career/manager", label: "Manager Companion", icon: UsersRound },
 ];

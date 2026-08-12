@@ -19,3 +19,20 @@
 - [x] Prove the Early Career migration applies successfully in an isolated clean-database verification run.
 - [x] Restrict tenant-level Manager Companion assignment access to organisation owners while retaining platform-admin oversight.
 - [x] Document the platform database-permission limitation and precisely scope the isolated temporary-namespace migration verification.
+- [x] Review the existing Early Career schema, API, UI, and AI integration contracts before extending the release.
+- [x] Add the eight-capability Early Career diagnostic question bank, response model, and completed assessment records.
+- [x] Implement deterministic diagnostic scoring, capability bands, and a results contract that informs development actions without creating employment ratings.
+- [x] Build the employee diagnostic flow and results experience with clear consent and privacy language.
+- [x] Implement the AI Coach with bounded context, coaching guardrails, and saved employee-private conversations.
+- [x] Implement the Practice Partner with scenario setup, structured practice turns, and behavioural feedback without performance scoring.
+- [x] Build dedicated AI Coach and Practice Partner interfaces within the Early Career product shell.
+- [x] Implement privacy-safe HR cohort intelligence using aggregate thresholds and no access to private coaching or raw answers.
+- [x] Implement organisation-owner nudge configuration, including enablement, cadence, stage, and audience controls.
+- [ ] Add loading, error, and retry recovery states to the Guide and Practice Partner interfaces.
+- [ ] Build editable owner nudge controls for enablement, cadence, stage, day, and time.
+- [ ] Wire saved Early Career nudge settings to the scheduled delivery path.
+- [ ] Add Early Career tests for diagnostic scoring, privacy thresholds, and AI prompt/context guardrails.
+- [x] Extend diagnostic results with deterministic capability guidance and a concrete private next action.
+- [x] Fix the diagnostic completion state so the completed result renders immediately after the final answer.
+- [x] Add explicit retryable mutation error feedback for starting and submitting the diagnostic.
+- [ ] Run type checks, full regression tests, visual validation, and publish the expanded Early Career release.

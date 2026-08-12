@@ -2880,3 +2880,111 @@ export const earlyCareerManagerNudges = mysqlTable("early_career_manager_nudges"
 });
 export type EarlyCareerManagerNudge = typeof earlyCareerManagerNudges.$inferSelect;
 export type InsertEarlyCareerManagerNudge = typeof earlyCareerManagerNudges.$inferInsert;
+
+// Diagnostic answers are employee-private. Only derived cohort-level aggregates
+// may be surfaced to HR when the configured minimum cohort threshold is met.
+export const earlyCareerDiagnosticSessions = mysqlTable("early_career_diagnostic_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  responses: json("responses").$type<Record<string, number>>().notNull(),
+  currentQuestionIndex: int("currentQuestionIndex").notNull().default(0),
+  status: mysqlEnum("status", ["in_progress", "completed"]).notNull().default("in_progress"),
+  consentedAt: timestamp("consentedAt").notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EarlyCareerDiagnosticSession = typeof earlyCareerDiagnosticSessions.$inferSelect;
+export type InsertEarlyCareerDiagnosticSession = typeof earlyCareerDiagnosticSessions.$inferInsert;
+
+export const earlyCareerDiagnosticResults = mysqlTable("early_career_diagnostic_results", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull().references(() => earlyCareerDiagnosticSessions.id),
+  userId: int("userId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  overallScore: float("overallScore").notNull(),
+  capabilityScores: json("capabilityScores").$type<Record<string, number>>().notNull(),
+  developmentalBand: varchar("developmentalBand", { length: 100 }).notNull(),
+  recommendedCapabilityId: varchar("recommendedCapabilityId", { length: 80 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EarlyCareerDiagnosticResult = typeof earlyCareerDiagnosticResults.$inferSelect;
+export type InsertEarlyCareerDiagnosticResult = typeof earlyCareerDiagnosticResults.$inferInsert;
+
+// AI Coach sessions and messages are private to the employee and are never
+// included in Manager Companion or HR cohort queries.
+export const earlyCareerCoachSessions = mysqlTable("early_career_coach_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  title: varchar("title", { length: 160 }).notNull(),
+  startingContext: text("startingContext"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EarlyCareerCoachSession = typeof earlyCareerCoachSessions.$inferSelect;
+export type InsertEarlyCareerCoachSession = typeof earlyCareerCoachSessions.$inferInsert;
+
+export const earlyCareerCoachMessages = mysqlTable("early_career_coach_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull().references(() => earlyCareerCoachSessions.id),
+  role: mysqlEnum("role", ["user", "assistant"]).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EarlyCareerCoachMessage = typeof earlyCareerCoachMessages.$inferSelect;
+export type InsertEarlyCareerCoachMessage = typeof earlyCareerCoachMessages.$inferInsert;
+
+export const earlyCareerPracticeSessions = mysqlTable("early_career_practice_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  scenarioId: varchar("scenarioId", { length: 100 }).notNull(),
+  scenarioTitle: varchar("scenarioTitle", { length: 255 }).notNull(),
+  difficulty: mysqlEnum("difficulty", ["guided", "realistic", "stretch"]).notNull().default("realistic"),
+  messages: json("messages").$type<Array<{ role: "user" | "counterpart"; content: string; timestamp: string }>>().notNull(),
+  status: mysqlEnum("status", ["active", "completed"]).notNull().default("active"),
+  feedback: json("feedback").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EarlyCareerPracticeSession = typeof earlyCareerPracticeSessions.$inferSelect;
+export type InsertEarlyCareerPracticeSession = typeof earlyCareerPracticeSessions.$inferInsert;
+
+// Organisation owners control nudge eligibility. Nudge delivery records never
+// include raw diagnostic answers or private coach/practice content.
+export const earlyCareerNudgeConfigs = mysqlTable(
+  "early_career_nudge_configs",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    enabled: boolean("enabled").notNull().default(false),
+    audience: mysqlEnum("audience", ["employees", "managers"]).notNull(),
+    cadence: mysqlEnum("cadence", ["weekly", "fortnightly", "monthly"]).notNull().default("weekly"),
+    journeyStage: varchar("journeyStage", { length: 40 }).notNull().default("all"),
+    dayOfWeek: int("dayOfWeek").notNull().default(1),
+    hourUtc: int("hourUtc").notNull().default(8),
+    scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [uniqueIndex("early_career_nudge_tenant_audience_unique").on(table.tenantId, table.audience)]
+);
+export type EarlyCareerNudgeConfig = typeof earlyCareerNudgeConfigs.$inferSelect;
+export type InsertEarlyCareerNudgeConfig = typeof earlyCareerNudgeConfigs.$inferInsert;
+
+export const earlyCareerNudgeDeliveries = mysqlTable("early_career_nudge_deliveries", {
+  id: int("id").autoincrement().primaryKey(),
+  configId: int("configId").notNull().references(() => earlyCareerNudgeConfigs.id),
+  recipientUserId: int("recipientUserId").notNull().references(() => users.id),
+  employeeUserId: int("employeeUserId").references(() => users.id),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  status: mysqlEnum("status", ["created", "read", "dismissed"]).notNull().default("created"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EarlyCareerNudgeDelivery = typeof earlyCareerNudgeDeliveries.$inferSelect;
+export type InsertEarlyCareerNudgeDelivery = typeof earlyCareerNudgeDeliveries.$inferInsert;
