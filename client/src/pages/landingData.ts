@@ -1,6 +1,9 @@
 export type CareerStage = {
+  key: string;
   number: string;
   name: string;
+  shortName: string;
+  journeyLabel: string;
   tagline: string;
   audience: string;
   description: string;
@@ -12,20 +15,26 @@ export type CareerStage = {
 
 export const careerStages: CareerStage[] = [
   {
+    key: "early-career",
     number: "01",
-    name: "Launch",
-    tagline: "Welcome to work.",
-    audience: "Freshers & Early Career",
+    name: "Early Career Intelligence",
+    shortName: "Early Career",
+    journeyLabel: "Build your first 1,000 days with intent.",
+    tagline: "Your first 1,000 days shape what comes next.",
+    audience: "Early Career Professionals",
     description:
-      "College taught you how to get the job. LevelNext helps you succeed in it—with the confidence, communication and judgement work asks for.",
-    pipelineMicrocopy: "Build confidence for your first 90 days at work.",
-    ctaLabel: "Start your Launch journey",
-    href: "/launch/home",
-    focus: ["Workplace confidence", "Professional judgement", "Communication"],
+      "Help early-career talent learn how work works, build professional confidence and turn their first 1,000 days into visible growth.",
+    pipelineMicrocopy: "Build workplace confidence, capability and habits from day one.",
+    ctaLabel: "Start your Early Career journey",
+    href: "/early-career",
+    focus: ["Workplace confidence", "Professional habits", "Visible growth"],
   },
   {
+    key: "professional",
     number: "02",
-    name: "Professional",
+    name: "Professional Intelligence",
+    shortName: "Professional",
+    journeyLabel: "Become exceptional at your work.",
     tagline: "Become exceptional at getting work done.",
     audience: "Individual contributors",
     description:
@@ -36,8 +45,11 @@ export const careerStages: CareerStage[] = [
     focus: ["Ownership", "Execution", "Influence"],
   },
   {
+    key: "manager",
     number: "03",
-    name: "Manager",
+    name: "Manager Effectiveness",
+    shortName: "Manager",
+    journeyLabel: "Succeed through others.",
     tagline: "Your job changed. Did the way you work?",
     audience: "Managers & People Leaders",
     description:
@@ -48,8 +60,11 @@ export const careerStages: CareerStage[] = [
     focus: ["Coaching", "Delegation", "Team performance"],
   },
   {
+    key: "leader",
     number: "04",
-    name: "Leader",
+    name: "Leader Intelligence",
+    shortName: "Leader",
+    journeyLabel: "Succeed through the organisation.",
     tagline: "Leadership begins where authority stops being enough.",
     audience: "Strategic & Business Leaders",
     description:

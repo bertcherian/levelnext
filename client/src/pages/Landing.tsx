@@ -4,7 +4,6 @@ import {
   ArrowRight,
   ChevronDown,
   Menu,
-  MoveUpRight,
   Sparkles,
   X,
 } from "lucide-react";
@@ -57,7 +56,7 @@ export default function Landing() {
 
         <nav className="ln-nav__links" aria-label="Primary navigation">
           <a href={sectionLink("platform")}>Platform</a>
-          <a href={sectionLink("solutions")}>Solutions</a>
+          <a href={sectionLink("intelligence-core")}>Intelligence Core</a>
           <a href={sectionLink("organisations")}>For Organisations</a>
           <a href={sectionLink("how-it-works")}>How It Works</a>
           <a href={sectionLink("resources")}>Resources</a>
@@ -85,7 +84,7 @@ export default function Landing() {
       {mobileMenuOpen && (
         <nav className="ln-mobile-nav" id="mobile-navigation" aria-label="Mobile navigation">
           <a href={sectionLink("platform")} onClick={() => setMobileMenuOpen(false)}>Platform</a>
-          <a href={sectionLink("solutions")} onClick={() => setMobileMenuOpen(false)}>Solutions</a>
+          <a href={sectionLink("intelligence-core")} onClick={() => setMobileMenuOpen(false)}>Intelligence Core</a>
           <a href={sectionLink("organisations")} onClick={() => setMobileMenuOpen(false)}>For Organisations</a>
           <a href={sectionLink("how-it-works")} onClick={() => setMobileMenuOpen(false)}>How It Works</a>
           <a href={sectionLink("resources")} onClick={() => setMobileMenuOpen(false)}>Resources</a>
@@ -114,22 +113,17 @@ export default function Landing() {
             {careerStages.map((item, index) => (
               <button
                 type="button"
-                key={item.name}
+                key={item.key}
                 className={`ln-journey-node ${index === activeStage ? "is-active" : ""}`}
                 onMouseEnter={() => setActiveStage(index)}
                 onFocus={() => setActiveStage(index)}
                 onClick={() => setActiveStage(index)}
               >
                 <span className="ln-journey-node__point"><i /></span>
-                <span className="ln-journey-node__name">{item.name}</span>
-                <span className="ln-journey-node__tagline">{item.tagline.replace("Welcome to work.", "Learn how work works.").replace("Become exceptional at getting work done.", "Become exceptional at your work.").replace("Your job changed. Did the way you work?", "Succeed through others.").replace("Leadership begins where authority stops being enough.", "Succeed through the organisation.")}</span>
+                <span className="ln-journey-node__name">{item.shortName}</span>
+                <span className="ln-journey-node__tagline">{item.journeyLabel}</span>
               </button>
             ))}
-          </div>
-          <div className="ln-transition-branch">
-            <span className="ln-transition-branch__line" aria-hidden="true" />
-            <p>Career paths aren’t always linear.</p>
-            <a href="/career-intelligence">Career Transition <MoveUpRight size={14} /></a>
           </div>
         </div>
       </section>
@@ -155,8 +149,8 @@ export default function Landing() {
         <div className="ln-section-frame">
           <div className="ln-section-heading">
             <p className="ln-eyebrow ln-eyebrow--gold"><span /> The journey</p>
-            <h2 id="journey-title">One career.<br /><em>Different challenges.</em></h2>
-            <p>LevelNext reads the moment you are in, then helps you move through it with the right intelligence.</p>
+            <h2 id="journey-title">One workforce.<br /><em>Four moments that matter.</em></h2>
+            <p>LevelNext reads the moment each person is in, then equips your organisation to develop the right capability at the right time.</p>
           </div>
           <div className="ln-stage-quickfilter" aria-label="Quick filter to your career stage">
             <p className="ln-stage-quickfilter__label">Find your stage:</p>
@@ -164,7 +158,7 @@ export default function Landing() {
               {careerStages.map((item, index) => (
                 <button
                   type="button"
-                  key={item.name}
+                  key={item.key}
                   aria-pressed={activeStage === index}
                   className={`ln-stage-quickfilter__chip ${activeStage === index ? "is-active" : ""}`}
                   onClick={() => {
@@ -176,7 +170,7 @@ export default function Landing() {
                   }}
                 >
                   <span className="ln-stage-quickfilter__chip-num">{item.number}</span>
-                  <span className="ln-stage-quickfilter__chip-name">{item.name}</span>
+                  <span className="ln-stage-quickfilter__chip-name">{item.shortName}</span>
                   <span className="ln-stage-quickfilter__chip-audience">{item.audience.split(" · ")[0]}</span>
                 </button>
               ))}
@@ -188,17 +182,17 @@ export default function Landing() {
               <button
                 type="button"
                 role="tab"
-                key={item.name}
+                key={item.key}
                 aria-selected={activeStage === index}
                 className={activeStage === index ? "is-selected" : ""}
                 onClick={() => setActiveStage(index)}
               >
-                <span>{item.number}</span>{item.name}
+                <span>{item.number}</span>{item.shortName}
               </button>
             ))}
           </div>
 
-          <article className={`ln-stage-showcase ln-stage-showcase--${stage.name.toLowerCase()}`}>
+          <article className={`ln-stage-showcase ln-stage-showcase--${stage.key}`}>
             <div className="ln-stage-showcase__copy">
               <p className="ln-stage-showcase__number">{stage.number} / {stage.name}</p>
               <h3>{stage.tagline}</h3>
@@ -209,26 +203,8 @@ export default function Landing() {
               </div>
               <a className="ln-text-link" href={stage.href}>{stage.ctaLabel} <ArrowRight size={16} /></a>
             </div>
-            <StageVisual name={stage.name} />
+            <StageVisual stage={stage.key} />
           </article>
-        </div>
-      </section>
-
-      <section className="ln-transition" id="solutions" aria-labelledby="transition-title">
-        <div className="ln-section-frame ln-transition__frame">
-          <p className="ln-eyebrow">For individuals</p>
-          <div className="ln-transition__copy">
-            <h2 id="transition-title">Careers don’t always move<br /><em>in straight lines.</em></h2>
-            <p className="ln-transition__question">Sometimes the question isn’t “How do I get to the next level?”<br />It’s “What do I do next?”</p>
-            <h3>LevelNext Transition</h3>
-            <p>Career Transition Intelligence for people preparing for—or navigating—career change.</p>
-            <a className="ln-text-link" href="/career-intelligence">Explore Career Transition <MoveUpRight size={16} /></a>
-          </div>
-          <div className="ln-transition__steps" aria-label="Career transition areas">
-            {["Understand where you are", "Explore possibilities", "Clarify your positioning", "Build your transition strategy", "Prepare for conversations", "Build momentum"].map((item, index) => (
-              <div key={item}><span>{String(index + 1).padStart(2, "0")}</span><p>{item}</p></div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -264,7 +240,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="ln-core" aria-labelledby="core-title">
+      <section className="ln-core" id="intelligence-core" aria-labelledby="core-title">
         <div className="ln-section-frame">
           <div className="ln-section-heading ln-section-heading--center">
             <p className="ln-eyebrow">The architecture</p>
@@ -273,7 +249,7 @@ export default function Landing() {
           </div>
           <div className="ln-core__visual" aria-label="LevelNext Intelligence Core visualisation">
             <div className="ln-core__products">
-              {careerStages.map((item) => <span key={item.name}>{item.name}</span>)}
+              {careerStages.map((item) => <span key={item.key}>{item.name}</span>)}
             </div>
             <div className="ln-core__signals" aria-hidden="true"><i /><i /><i /><i /></div>
             <div className="ln-core__base">
@@ -294,13 +270,13 @@ export default function Landing() {
           <div className="ln-enterprise__pipeline" aria-label="Organisational talent pipeline">
             {careerStages.map((item) => (
               <a
-                key={item.name}
+                key={item.key}
                 className="ln-enterprise__stage"
                 href={item.href}
                 aria-label={`${item.ctaLabel}: ${item.pipelineMicrocopy}`}
               >
                 <span>{item.audience.toUpperCase()}</span>
-                <b>{item.name}</b>
+                <b>{item.shortName}</b>
                 <p>{item.pipelineMicrocopy}</p>
               </a>
             ))}
@@ -348,13 +324,13 @@ export default function Landing() {
       <section className="ln-ecosystem" id="resources" aria-labelledby="ecosystem-title">
         <div className="ln-section-frame">
           <p className="ln-eyebrow ln-eyebrow--gold"><span /> The ecosystem</p>
-          <h2 id="ecosystem-title">Professional Intelligence<br /><em>for what’s next.</em></h2>
+          <h2 id="ecosystem-title">One B2B platform.<br /><em>Four intelligence experiences.</em></h2>
           <div className="ln-ecosystem__map" aria-label="LevelNext ecosystem map">
             <div className="ln-ecosystem__brand">LevelNext <span>Professional Intelligence</span></div>
             <div className="ln-ecosystem__columns">
-              <div><p>Entering<br />work</p><b>Launch</b></div>
-              <div><p>Growing<br />at work</p><b>Professional</b><b>Manager</b><b>Leader</b></div>
-              <div><p>Transitioning<br />career</p><b>Transition</b></div>
+              {careerStages.map((item) => (
+                <div key={item.key}><p>{item.audience}</p><b>{item.name}</b></div>
+              ))}
             </div>
             <div className="ln-ecosystem__foundation"><span>LevelNext Intelligence Core</span><b>Organisational Intelligence</b></div>
           </div>
@@ -370,7 +346,6 @@ export default function Landing() {
             <a className="ln-button" href={sectionLink("platform")}>Explore LevelNext <ArrowRight size={17} /></a>
             <a className="ln-text-link ln-text-link--light" href={organisationConversationUrl} target="_blank" rel="noreferrer">Talk to us <ArrowRight size={16} /></a>
           </div>
-          <p className="ln-final-cta__individual">Starting your career? <a href="/launch">LevelNext Launch <MoveUpRight size={14} /></a><span /> Changing careers? <a href="/career-intelligence">LevelNext Transition <MoveUpRight size={14} /></a></p>
         </div>
       </section>
 
@@ -378,8 +353,7 @@ export default function Landing() {
         <div className="ln-section-frame ln-footer__frame">
           <div className="ln-footer__brand"><img src="/logo.png" alt="LevelNext" /><p>Professional Intelligence for what’s next.</p></div>
           <div className="ln-footer__links">
-            <div><p>Platform</p><a href="/pe">Professional</a><a href="/manager-effectiveness">Manager</a><a href="/signup?experience=leader">Leader</a></div>
-            <div><p>Experiences</p><a href="/launch">Launch</a><a href="/career-intelligence">Career Transition</a></div>
+            <div><p>Platform</p><a href="/early-career">Early Career Intelligence</a><a href="/pe">Professional Intelligence</a><a href="/manager-effectiveness">Manager Effectiveness</a><a href="/signup?experience=leader">Leader Intelligence</a></div>
             <div><p>Organisations</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Enterprise</a><a href={sectionLink("how-it-works")}>Diagnostics</a><a href={sectionLink("how-it-works")}>AI Coaching</a></div>
             <div><p>Company</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">About</a><a href={sectionLink("resources")}>Insights</a><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Contact</a></div>
           </div>
@@ -390,14 +364,14 @@ export default function Landing() {
   );
 }
 
-function StageVisual({ name }: { name: string }) {
-  if (name === "Launch") {
-    return <div className="ln-launch-visual" aria-label="Preview of LevelNext Launch"><span>Work mode</span><b>Hello, career.</b><div><i>01</i><i>02</i><i>03</i></div><p>A distinctly different LevelNext experience.</p></div>;
+function StageVisual({ stage }: { stage: string }) {
+  if (stage === "early-career") {
+    return <div className="ln-early-career-visual" aria-label="Preview of LevelNext Early Career Intelligence"><span>Orient</span><span>Deliver</span><span>Connect</span><span>Grow</span><i /><b>First 1,000 Days</b><p>Real-work intelligence for the earliest stage of a career.</p></div>;
   }
-  if (name === "Manager") {
+  if (stage === "manager") {
     return <div className="ln-manager-visual" aria-label="The management transition from tasks to people and outcomes"><div className="ln-manager-visual__before"><b>Me</b><span>Tasks</span></div><div className="ln-manager-visual__arrow">→</div><div className="ln-manager-visual__after"><b>Manager</b><span>People</span><span>Outcomes</span></div></div>;
   }
-  if (name === "Leader") {
+  if (stage === "leader") {
     return <div className="ln-leader-visual" aria-label="An expanding organisational network"><span className="ln-leader-visual__centre">Leader</span><i className="ln-leader-visual__node ln-leader-visual__node--1">Team</i><i className="ln-leader-visual__node ln-leader-visual__node--2">Functions</i><i className="ln-leader-visual__node ln-leader-visual__node--3">Stakeholders</i><i className="ln-leader-visual__node ln-leader-visual__node--4">Enterprise</i></div>;
   }
   return <div className="ln-professional-visual" aria-label="Professional effectiveness focus areas"><span>Communication</span><span>Ownership</span><span>Execution</span><span>Collaboration</span><span>Judgement</span><span>Influence</span><span>Adaptability</span><i /></div>;

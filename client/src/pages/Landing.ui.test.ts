@@ -16,17 +16,21 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("Professional Intelligence");
     expect(page).toContain("One platform.");
     expect(page).toContain("Across your talent pipeline.");
-    expect(page).toContain("Career Transition");
+    expect(page).toContain("Early Career Intelligence");
+    expect(page).toContain("Manager Effectiveness");
+    expect(page).toContain("Leader Intelligence");
+    expect(page).not.toContain("Career Transition");
+    expect(page).not.toContain("LevelNext Launch");
   });
 
   it("defaults the visual journey to Professional and supports each defined stage", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(getCareerStage(defaultStageIndex).name).toBe("Professional");
-    expect(getCareerStage(0).name).toBe("Launch");
-    expect(getCareerStage(2).name).toBe("Manager");
-    expect(getCareerStage(3).name).toBe("Leader");
-    expect(getCareerStage(99).name).toBe("Professional");
+    expect(getCareerStage(defaultStageIndex).name).toBe("Professional Intelligence");
+    expect(getCareerStage(0).name).toBe("Early Career Intelligence");
+    expect(getCareerStage(2).name).toBe("Manager Effectiveness");
+    expect(getCareerStage(3).name).toBe("Leader Intelligence");
+    expect(getCareerStage(99).name).toBe("Professional Intelligence");
     expect(page).toContain('aria-selected="true"');
     expect(page).toContain("Become exceptional at getting work done.");
   });
@@ -51,12 +55,14 @@ describe("LevelNext public landing page", () => {
   it("makes every talent-pipeline stage a contextual link to its tailored diagnostic flow", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain("Build confidence for your first 90 days at work.");
+    expect(page).toContain("Build workplace confidence, capability and habits from day one.");
     expect(page).toContain("Turn individual output into accountable team performance.");
     expect(page).toContain("Lead across priorities, functions and organisational complexity.");
-    expect(page).toContain('href="/launch/home"');
+    expect(page).toContain('href="/early-career"');
     expect(page).toContain('href="/pe/assessment"');
     expect(page).toContain('href="/manager/diagnostics"');
     expect(page).toContain('href="/diagnostics/lii"');
+    expect(page).not.toContain('href="/launch');
+    expect(page).not.toContain('href="/career-intelligence"');
   });
 });

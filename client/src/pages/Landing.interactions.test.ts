@@ -42,10 +42,10 @@ describe("LevelNext landing page interactions", () => {
     render(createElement(Landing));
 
     const quickFilter = screen.getByLabelText("Quick filter to your career stage");
-    const launchChip = within(quickFilter).getByText("Launch").closest("button")!;
-    await user.click(launchChip);
+    const earlyCareerChip = within(quickFilter).getByText("Early Career").closest("button")!;
+    await user.click(earlyCareerChip);
 
-    expect(screen.getByText(/Welcome to work\./)).toBeTruthy();
+    expect(screen.getByText(/Your first 1,000 days shape what comes next\./)).toBeTruthy();
   });
 
   it("renders a sign-up CTA at the end of the Professional Intelligence narrative", () => {

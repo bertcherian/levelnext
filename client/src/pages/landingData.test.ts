@@ -13,28 +13,28 @@ import {
 describe("LevelNext landing page content model", () => {
   it("presents the professional journey in the intended progression", () => {
     expect(careerStages.map((stage) => stage.name)).toEqual([
-      "Launch",
-      "Professional",
-      "Manager",
-      "Leader",
+      "Early Career Intelligence",
+      "Professional Intelligence",
+      "Manager Effectiveness",
+      "Leader Intelligence",
     ]);
     expect(careerStages.every((stage) => stage.href.startsWith("/"))).toBe(true);
-    expect(getCareerStage(defaultStageIndex).name).toBe("Professional");
-    expect(getCareerStage(-1).name).toBe("Professional");
+    expect(getCareerStage(defaultStageIndex).name).toBe("Professional Intelligence");
+    expect(getCareerStage(-1).name).toBe("Professional Intelligence");
     expect(careerStages.map((stage) => stage.audience)).toEqual([
-      "Freshers & Early Career",
+      "Early Career Professionals",
       "Individual contributors",
       "Managers & People Leaders",
       "Strategic & Business Leaders",
     ]);
     expect(careerStages.map((stage) => stage.href)).toEqual([
-      "/launch/home",
+      "/early-career",
       "/pe/assessment",
       "/manager/diagnostics",
       "/diagnostics/lii",
     ]);
     expect(careerStages.map((stage) => stage.pipelineMicrocopy)).toEqual([
-      expect.stringMatching(/first 90 days/i),
+      expect.stringMatching(/day one/i),
       expect.stringMatching(/everyday work/i),
       expect.stringMatching(/team performance/i),
       expect.stringMatching(/organisational complexity/i),
