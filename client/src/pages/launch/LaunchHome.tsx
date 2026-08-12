@@ -5,6 +5,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import LaunchLayout from "@/components/LaunchLayout";
 import AchievementUnlockedModal from "@/components/AchievementUnlockedModal";
 import LaunchXpBurst from "@/components/LaunchXpBurst";
+import LaunchMissionReflectionPrompt from "@/components/LaunchMissionReflectionPrompt";
 import {
   CheckCircle2, Circle, Zap, Flame, Trophy, ChevronRight,
   Sparkles, RefreshCw, Map, Rocket, Target, Star
@@ -75,6 +76,7 @@ function MissionCard({ mission, onComplete, completing }: {
       }}>
       <div className="flex items-start gap-3">
         <button
+          aria-label={done ? `${mission.title} completed` : `Complete ${mission.title}`}
           onClick={() => !done && onComplete(mission.id)}
           disabled={done || completing}
           className="mt-0.5 shrink-0 transition-all duration-150"
@@ -183,6 +185,7 @@ export default function LaunchHome() {
   const [completing, setCompleting] = useState<string | null>(null);
   const [justEarned, setJustEarned] = useState<{ total: number; bonusXp: number } | null>(null);
   const [unlockedAchievementCode, setUnlockedAchievementCode] = useState<string | null>(null);
+  const [reflectionMission, setReflectionMission] = useState<Mission | null>(null);
 
   const progressQuery = trpc.launchProgress.getProgress.useQuery(undefined, { staleTime: 30_000 });
   const missionsQuery = trpc.launchDailyMissions.getToday.useQuery(undefined, { staleTime: 30_000 });
@@ -190,15 +193,24 @@ export default function LaunchHome() {
   const utils = trpc.useUtils();
 
   const completeMission = trpc.launchDailyMissions.completeMission.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       setJustEarned({ total: data.xpEarned, bonusXp: data.challengeBonusXp ?? 0 });
       setTimeout(() => setJustEarned(null), 3000);
       if (data.newAchievements[0]) setUnlockedAchievementCode(data.newAchievements[0]);
+      const completedMission = missions.find((entry) => entry.id === variables.missionId);
+      if (completedMission) setReflectionMission(completedMission);
       utils.launchDailyMissions.getToday.invalidate();
       utils.launchProgress.getProgress.invalidate();
       setCompleting(null);
     },
-    onError: () => setCompleting(null),
+    onError: () => {
+      setCompleting(null);
+      setReflectionMission(null);
+    },
+  });
+
+  const saveReflection = trpc.launchDailyMissions.saveReflection.useMutation({
+    onSuccess: () => setReflectionMission(null),
   });
 
   const progress = progressQuery.data?.progress;
@@ -428,6 +440,17 @@ export default function LaunchHome() {
         onClose={() => setUnlockedAchievementCode(null)}
       />
       {justEarned && <LaunchXpBurst earned={justEarned.total} bonusXp={justEarned.bonusXp} />}
+      {reflectionMission && (
+        <LaunchMissionReflectionPrompt
+          missionTitle={reflectionMission.title}
+          isSaving={saveReflection.isPending}
+          errorMessage={saveReflection.error ? "Your reflection could not be saved. Please try again or skip for now." : undefined}
+          onSave={(reflectionText) => saveReflection.mutate({ missionId: reflectionMission.id, reflectionText })}
+          onSkip={() => {
+            if (!saveReflection.isPending) setReflectionMission(null);
+          }}
+        />
+      )}
     </LaunchLayout>
   );
 }

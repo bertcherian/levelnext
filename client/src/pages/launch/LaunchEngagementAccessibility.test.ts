@@ -44,6 +44,6 @@ describe("Launch engagement accessibility", () => {
     await user.tab();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Join challenge" }));
     expect(screen.getByRole("main").className).toContain("ld-reduced-motion");
-    expect(screen.getByText(/name, email, and profile details are never shown/i)).toBeTruthy();
+    expect(screen.getByText(/name, email, and career goal are never shown/i)).toBeTruthy();
   });
 });

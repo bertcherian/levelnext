@@ -56,6 +56,7 @@ export default function LaunchWeeklyChallenges() {
               <div className="max-w-xl">
                 <div className="mb-3 flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "var(--ld-cyan-soft)", color: "var(--ld-cyan)", border: "1px solid rgba(34,211,238,0.3)" }}><Swords size={18} aria-hidden="true" /></span><span className="ld-badge ld-badge-cyan">{challenge.weekKey}</span></div>
                 <h2 className="text-xl font-bold" style={{ fontFamily: "var(--ld-font-heading)" }}>{challenge.title}</h2>
+                {challenge.isPersonalized && <p className="mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold" style={{ background: "rgba(167,139,250,0.14)", color: "var(--ld-purple)", border: "1px solid rgba(167,139,250,0.32)" }}>Rotated for your {challenge.focusLabel} goal</p>}
                 <p className="mt-2 text-sm" style={{ color: "var(--ld-text-muted)" }}>{challenge.description}</p>
               </div>
               <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(10,15,30,0.48)", border: "1px solid rgba(34,211,238,0.2)" }}>
@@ -72,7 +73,7 @@ export default function LaunchWeeklyChallenges() {
               </div>
             ) : (
               <div className="mt-6 flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "var(--ld-border)" }}>
-                <p className="max-w-md text-xs leading-relaxed" style={{ color: "var(--ld-text-muted)" }}>Joining shares only your challenge progress on an anonymised board. Your name, email, and profile details are never shown.</p>
+                <p className="max-w-md text-xs leading-relaxed" style={{ color: "var(--ld-text-muted)" }}>This challenge adapts privately to your goal. Joining shares only your progress on an anonymised board; your name, email, and career goal are never shown.</p>
                 <button type="button" onClick={() => enrollMutation.mutate()} disabled={enrollMutation.isPending} className="ld-btn-primary shrink-0 text-sm disabled:cursor-wait disabled:opacity-60"><Swords size={15} aria-hidden="true" />{enrollMutation.isPending ? "Joining…" : "Join challenge"}</button>
               </div>
             )}

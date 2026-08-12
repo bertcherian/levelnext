@@ -59,6 +59,7 @@ import { launchUserPreferencesRouter } from "./routers/launchUserPreferences";
 import { launchLeaderboardRouter } from "./routers/launchLeaderboard";
 import { launchMissionHistoryRouter } from "./routers/launchMissionHistory";
 import { launchWeeklyChallengesRouter } from "./routers/launchWeeklyChallenges";
+import { launchWeeklyRecapRouter } from "./routers/launchWeeklyRecap";
 import { peiRouter } from "./routers/pei";
 import { intelligenceCoreRouter } from "./routers/intelligenceCore";
 
@@ -129,6 +130,7 @@ export const appRouter = router({
   launchLeaderboard: launchLeaderboardRouter,
   launchMissionHistory: launchMissionHistoryRouter,
   launchWeeklyChallenges: launchWeeklyChallengesRouter,
+  launchWeeklyRecap: launchWeeklyRecapRouter,
   pei: peiRouter,
   intelligenceCore: intelligenceCoreRouter,
 });

@@ -8,7 +8,9 @@ vi.mock("../db", () => ({
 import { getDb } from "../db";
 import {
   anonymousPeerLabel,
+  getGoalFamily,
   getNextChallengeProgress,
+  getPersonalizedChallengeVariant,
   getWeeklyChallengeWindow,
   launchWeeklyChallengesRouter,
 } from "./launchWeeklyChallenges";
@@ -54,6 +56,19 @@ describe("launchWeeklyChallenges", () => {
   it("never exposes an enrollment user identifier in anonymous peer labels", () => {
     expect(anonymousPeerLabel(3)).toBe("Challenger #03");
     expect(anonymousPeerLabel(12)).toBe("Challenger #12");
+  });
+
+  it("selects a career-goal family and rotates its private variant by ISO week", () => {
+    expect(getGoalFamily("Product Manager", "SaaS")).toBe("product");
+    expect(getGoalFamily("Data Analyst", "Financial Services")).toBe("data");
+    expect(getGoalFamily("Unknown", "")).toBe("general");
+
+    const firstWeek = getPersonalizedChallengeVariant("2026-W01", "Product Manager", "SaaS");
+    const secondWeek = getPersonalizedChallengeVariant("2026-W02", "Product Manager", "SaaS");
+
+    expect(firstWeek.isPersonalized).toBe(true);
+    expect(firstWeek.focusLabel).toBe("Product Manager");
+    expect(firstWeek.key).not.toBe(secondWeek.key);
   });
 
   it("returns a safe empty leaderboard while database access is unavailable", async () => {

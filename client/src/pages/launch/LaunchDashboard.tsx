@@ -1,3 +1,4 @@
+import React from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import LaunchDarkLayout from "@/components/LaunchDarkLayout";
@@ -22,6 +23,48 @@ function ErrorState({ message, onRetry }: { message: string; onRetry?: () => voi
         <button onClick={onRetry} className="ld-btn-ghost text-xs">Try again</button>
       )}
     </div>
+  );
+}
+
+export type WeeklyRecapData = {
+  weekKey: string;
+  xpEarned: number;
+  completedMissions: number;
+  reflectionCount: number;
+  challenge: { progress: number; goalTarget: number; completed: boolean; title: string } | null;
+};
+
+export function WeeklyRecap({
+  isLoading,
+  error,
+  recap,
+  onRetry,
+}: {
+  isLoading: boolean;
+  error: boolean;
+  recap?: WeeklyRecapData;
+  onRetry: () => void;
+}) {
+  return (
+    <section className="ld-card mb-6 overflow-hidden p-5 ld-slide-up ld-stagger-2" aria-labelledby="weekly-recap-title" style={{ background: "linear-gradient(135deg, rgba(74,222,128,0.12), rgba(34,211,238,0.06) 55%, var(--ld-surface))" }}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="ld-eyebrow">Private weekly recap</p>
+          <h2 id="weekly-recap-title" className="mt-1 text-lg font-bold" style={{ fontFamily: "var(--ld-font-heading)" }}>Your momentum, this week</h2>
+          <p className="mt-1 text-xs" style={{ color: "var(--ld-text-muted)" }}>Only you can see this summary.</p>
+        </div>
+        {recap && <span className="ld-badge ld-badge-green">{recap.weekKey}</span>}
+      </div>
+      {isLoading ? <div className="mt-5 flex items-center gap-2 text-sm" role="status" aria-live="polite" style={{ color: "var(--ld-text-muted)" }}><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Building your recap…</div> : error ? <div className="mt-5 flex items-center justify-between gap-3 text-sm" role="alert" style={{ color: "var(--ld-text-muted)" }}><span>Your weekly recap is unavailable.</span><button type="button" className="ld-btn-ghost text-xs" onClick={onRetry} aria-label="Retry loading your weekly recap">Retry</button></div> : recap && <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { label: "XP earned", value: `+${recap.xpEarned}`, color: "var(--ld-cyan)" },
+          { label: "Missions done", value: String(recap.completedMissions), color: "var(--ld-green)" },
+          { label: "Reflections", value: String(recap.reflectionCount), color: "var(--ld-purple)" },
+          { label: "Challenge", value: recap.challenge ? `${recap.challenge.progress}/${recap.challenge.goalTarget}` : "Not joined", color: "var(--ld-orange)" },
+        ].map((metric) => <div key={metric.label} className="rounded-2xl p-3" style={{ background: "rgba(10,15,30,0.32)", border: "1px solid var(--ld-border)" }}><p className="text-lg font-bold" style={{ color: metric.color, fontFamily: "var(--ld-font-heading)" }}>{metric.value}</p><p className="mt-0.5 text-[11px]" style={{ color: "var(--ld-text-muted)" }}>{metric.label}</p></div>)}
+      </div>}
+      {recap?.challenge && <p className="mt-4 text-xs" style={{ color: "var(--ld-text-muted)" }}>{recap.challenge.completed ? `Challenge complete: ${recap.challenge.title}.` : `Keep going on ${recap.challenge.title}.`}</p>}
+    </section>
   );
 }
 
@@ -70,6 +113,9 @@ export default function LaunchDashboard() {
   const applicationsQuery = trpc.launchApplications.getAll.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
+  const weeklyRecapQuery = trpc.launchWeeklyRecap.getCurrent.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
 
   const progressData = progressQuery.data;
   const compassData = compassQuery.data;
@@ -77,6 +123,7 @@ export default function LaunchDashboard() {
   const interviewHistory = interviewQuery.data;
   const negotiationHistory = negotiationQuery.data;
   const applications = applicationsQuery.data;
+  const weeklyRecap = weeklyRecapQuery.data;
 
   const isProgressLoading = progressQuery.isLoading;
   const progressError = progressQuery.error;
@@ -166,6 +213,13 @@ export default function LaunchDashboard() {
           </div>
         ))}
       </div>
+
+      <WeeklyRecap
+        isLoading={weeklyRecapQuery.isLoading}
+        error={Boolean(weeklyRecapQuery.error)}
+        recap={weeklyRecap}
+        onRetry={() => weeklyRecapQuery.refetch()}
+      />
 
       {/* Mission Progress */}
       <div className="ld-card p-5 mb-6 ld-slide-up ld-stagger-2">

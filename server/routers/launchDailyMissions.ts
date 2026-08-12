@@ -2,7 +2,7 @@ import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { launchDailyMissions, launchUserProgress } from "../../drizzle/schema";
+import { launchDailyMissions, launchMissionReflections, launchUserProgress } from "../../drizzle/schema";
 import { awardLaunchXp } from "./launchProgress";
 import { advanceWeeklyChallengeProgress } from "./launchWeeklyChallenges";
 import { invokeLLM, safeJsonParse } from "../_core/llm";
@@ -229,6 +229,46 @@ export const launchDailyMissionsRouter = router({
             }
           : null,
       };
+    }),
+
+  // Store one optional, private reflection after a learner completes today's mission.
+  saveReflection: protectedProcedure
+    .input(z.object({ missionId: z.string(), reflectionText: z.string().trim().min(1).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      const today = getTodayDate();
+      const [record] = await db
+        .select()
+        .from(launchDailyMissions)
+        .where(and(eq(launchDailyMissions.userId, ctx.user.id), eq(launchDailyMissions.date, today)))
+        .limit(1);
+      const mission = (record?.missions as Array<{ id: string; title: string; status: "pending" | "complete" }> | undefined)
+        ?.find((entry) => entry.id === input.missionId);
+      if (!mission || mission.status !== "complete") throw new Error("Complete the mission before reflecting on it");
+
+      const [existing] = await db
+        .select()
+        .from(launchMissionReflections)
+        .where(and(
+          eq(launchMissionReflections.userId, ctx.user.id),
+          eq(launchMissionReflections.missionId, input.missionId),
+        ))
+        .limit(1);
+      if (existing) {
+        await db.update(launchMissionReflections)
+          .set({ reflectionText: input.reflectionText })
+          .where(eq(launchMissionReflections.id, existing.id));
+      } else {
+        await db.insert(launchMissionReflections).values({
+          userId: ctx.user.id,
+          missionId: input.missionId,
+          missionDate: today,
+          missionTitle: mission.title,
+          reflectionText: input.reflectionText,
+        });
+      }
+      return { success: true };
     }),
 
   // Get mission history (last 7 days)

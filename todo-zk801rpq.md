@@ -56,3 +56,18 @@
 - [x] Perform and document keyboard, focus, live-region, and reduced-motion accessibility validation for History and Challenges
 - [x] Verify History live-region and Challenge keyboard focus/reduced-motion behavior in browser-like interaction tests
 - [x] Save checkpoint and publish engagement release
+
+## Phase 6: Personalized Engagement
+
+- [x] Define the career-goal source of truth and deterministic rotating challenge-variant rules
+- [x] Add schema and protected API contracts for personalized challenge assignment and optional mission reflections
+- [x] Build an optional accessible reflection prompt in the post-mission completion flow
+- [x] Add a private weekly progress recap contract and learner-dashboard section for XP, missions, and completed challenges
+- [x] Update weekly challenges to show the goal-aware rotating variant without exposing personal goal data to peers
+- [x] Add regression coverage for variant selection, reflections, and private recap aggregation
+- [x] Validate the new flows across desktop/mobile and reduced-motion/keyboard accessibility modes
+- [x] Package the personalized-engagement workflow into the reusable Launch gamification skill
+- [x] Show the optional reflection prompt only after successful mission completion and preserve per-mission loading state
+- [x] Add explicit reflection-prompt and weekly-recap keyboard, reduced-motion, desktop, and mobile validation
+- [x] Verify the weekly recap’s non-interactive/retry states remain keyboard-safe and meaningful with reduced motion enabled
+- [x] Save checkpoint and publish personalized engagement release

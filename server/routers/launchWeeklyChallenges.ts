@@ -4,6 +4,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   launchChallengeEnrollments,
+  launchUserProgress,
   launchWeeklyChallenges,
 } from "../../drizzle/schema";
 import { awardLaunchXp } from "./launchProgress";
@@ -14,6 +15,41 @@ const CHALLENGE_TEMPLATE = {
   goalTarget: 5,
   xpBonus: 100,
 } as const;
+
+type GoalFamily = "product" | "data" | "growth" | "brand" | "leadership" | "general";
+
+const GOAL_VARIANTS: Record<GoalFamily, Array<{ key: string; title: string; focus: string }>> = {
+  product: [
+    { key: "problem-framing", title: "Problem Framing Sprint", focus: "customer insight and product judgment" },
+    { key: "portfolio-proof", title: "Portfolio Proof Sprint", focus: "evidence of your product thinking" },
+    { key: "stakeholder-signal", title: "Stakeholder Signal Sprint", focus: "clear product communication" },
+  ],
+  data: [
+    { key: "insight-loop", title: "Insight Loop Sprint", focus: "analytical proof and structured thinking" },
+    { key: "portfolio-signal", title: "Portfolio Signal Sprint", focus: "visible technical evidence" },
+    { key: "systems-story", title: "Systems Story Sprint", focus: "explaining technical impact" },
+  ],
+  growth: [
+    { key: "market-momentum", title: "Market Momentum Sprint", focus: "commercial insight and action" },
+    { key: "network-leverage", title: "Network Leverage Sprint", focus: "relationship-building momentum" },
+    { key: "proof-of-impact", title: "Proof of Impact Sprint", focus: "measurable growth stories" },
+  ],
+  brand: [
+    { key: "story-signal", title: "Story Signal Sprint", focus: "a memorable professional narrative" },
+    { key: "creative-proof", title: "Creative Proof Sprint", focus: "a stronger body of visible work" },
+    { key: "audience-connection", title: "Audience Connection Sprint", focus: "clear audience-first communication" },
+  ],
+  leadership: [
+    { key: "leadership-loop", title: "Leadership Loop Sprint", focus: "leadership presence and operating rhythm" },
+    { key: "influence-signal", title: "Influence Signal Sprint", focus: "credible stakeholder influence" },
+    { key: "execution-rhythm", title: "Execution Rhythm Sprint", focus: "reliable team and delivery habits" },
+  ],
+  general: [
+    { key: "career-momentum", title: "Career Momentum Sprint", focus: "career-ready proof and consistency" },
+    { key: "opportunity-signal", title: "Opportunity Signal Sprint", focus: "visible readiness for your next step" },
+    { key: "confidence-loop", title: "Confidence Loop Sprint", focus: "small actions that compound" },
+  ],
+};
 
 type WeeklyChallengeWindow = {
   weekKey: string;
@@ -55,7 +91,46 @@ export function getNextChallengeProgress(currentProgress: number, goalTarget: nu
   return { progress, completed: progress >= goalTarget };
 }
 
-async function getOrCreateCurrentChallenge(now = new Date()) {
+export function getGoalFamily(targetRole?: string | null, targetIndustry?: string | null): GoalFamily {
+  const goal = `${targetRole ?? ""} ${targetIndustry ?? ""}`.toLowerCase();
+  if (/(product|ux|ui|design|researcher)/.test(goal)) return "product";
+  if (/(data|analyst|engineer|developer|software|technology|ai|machine learning)/.test(goal)) return "data";
+  if (/(marketing|sales|growth|business development|revenue|consulting)/.test(goal)) return "growth";
+  if (/(brand|creative|content|media|communication|advertis)/.test(goal)) return "brand";
+  if (/(manager|leadership|operations|hr|people|finance|strategy|project)/.test(goal)) return "leadership";
+  return "general";
+}
+
+export function formatGoalLabel(value?: string | null) {
+  if (!value) return null;
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase()) || null;
+}
+
+export function getPersonalizedChallengeVariant(
+  weekKey: string,
+  targetRole?: string | null,
+  targetIndustry?: string | null,
+) {
+  const goalFamily = getGoalFamily(targetRole, targetIndustry);
+  const variants = GOAL_VARIANTS[goalFamily];
+  const weekNumber = Number.parseInt(weekKey.split("W")[1] ?? "1", 10) || 1;
+  const variant = variants[weekNumber % variants.length];
+  const focusLabel = formatGoalLabel(targetRole) ?? formatGoalLabel(targetIndustry);
+
+  return {
+    key: `${goalFamily}-${variant.key}`,
+    title: variant.title,
+    description: `Complete ${CHALLENGE_TEMPLATE.goalTarget} daily missions this week to strengthen ${variant.focus}${focusLabel ? ` for your ${focusLabel} direction` : ""}.`,
+    focusLabel,
+    isPersonalized: Boolean(focusLabel),
+  };
+}
+
+export async function getOrCreateCurrentChallenge(now = new Date()) {
   const db = await getDb();
   if (!db) return null;
 
@@ -103,7 +178,22 @@ async function getEnrollmentForUser(userId: number, challengeId: number) {
   return enrollment ?? null;
 }
 
-function toChallengeState(challenge: NonNullable<Awaited<ReturnType<typeof getOrCreateCurrentChallenge>>>, enrollment: Awaited<ReturnType<typeof getEnrollmentForUser>>) {
+async function getVariantForUser(userId: number, weekKey: string) {
+  const db = await getDb();
+  if (!db) return getPersonalizedChallengeVariant(weekKey);
+  const [progress] = await db
+    .select({ targetRole: launchUserProgress.targetRole, targetIndustry: launchUserProgress.targetIndustry })
+    .from(launchUserProgress)
+    .where(eq(launchUserProgress.userId, userId))
+    .limit(1);
+  return getPersonalizedChallengeVariant(weekKey, progress?.targetRole, progress?.targetIndustry);
+}
+
+function toChallengeState(
+  challenge: NonNullable<Awaited<ReturnType<typeof getOrCreateCurrentChallenge>>>,
+  enrollment: Awaited<ReturnType<typeof getEnrollmentForUser>>,
+  variant: ReturnType<typeof getPersonalizedChallengeVariant>,
+) {
   if (!challenge) return null;
   return {
     challenge: {
@@ -111,10 +201,13 @@ function toChallengeState(challenge: NonNullable<Awaited<ReturnType<typeof getOr
       weekKey: challenge.weekKey,
       startsAt: challenge.startsAt,
       endsAt: challenge.endsAt,
-      title: challenge.title,
-      description: challenge.description,
+      title: variant.title,
+      description: variant.description,
       goalTarget: challenge.goalTarget,
       xpBonus: challenge.xpBonus,
+      variantKey: variant.key,
+      focusLabel: variant.focusLabel,
+      isPersonalized: variant.isPersonalized,
     },
     enrollment: enrollment
       ? {
@@ -169,7 +262,8 @@ export const launchWeeklyChallengesRouter = router({
     const challenge = await getOrCreateCurrentChallenge();
     if (!challenge) return null;
     const enrollment = await getEnrollmentForUser(ctx.user.id, challenge.id);
-    return toChallengeState(challenge, enrollment);
+    const variant = await getVariantForUser(ctx.user.id, challenge.weekKey);
+    return toChallengeState(challenge, enrollment, variant);
   }),
 
   enroll: protectedProcedure.mutation(async ({ ctx }) => {
@@ -190,14 +284,16 @@ export const launchWeeklyChallengesRouter = router({
       }
       enrollment = await getEnrollmentForUser(ctx.user.id, challenge.id);
     }
-    return toChallengeState(challenge, enrollment);
+    const variant = await getVariantForUser(ctx.user.id, challenge.weekKey);
+    return toChallengeState(challenge, enrollment, variant);
   }),
 
   getMyProgress: protectedProcedure.query(async ({ ctx }) => {
     const challenge = await getOrCreateCurrentChallenge();
     if (!challenge) return null;
     const enrollment = await getEnrollmentForUser(ctx.user.id, challenge.id);
-    return toChallengeState(challenge, enrollment);
+    const variant = await getVariantForUser(ctx.user.id, challenge.weekKey);
+    return toChallengeState(challenge, enrollment, variant);
   }),
 
   getLeaderboard: protectedProcedure

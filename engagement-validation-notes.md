@@ -14,3 +14,11 @@ The History and Challenges pages use native buttons and links for every action, 
 The sandbox browser’s direct preview navigation produced a blank cross-origin canvas, so the rendered-page evidence is retained through the managed desktop and mobile captures. Keyboard and reduced-motion behavior will therefore be validated through a browser-like component test rather than relying on that unavailable preview session.
 
 The browser-like regression test now confirms that the History loading message is inside a polite live region and that a keyboard Tab action reaches the Challenge opt-in button while the shell carries the persisted `ld-reduced-motion` class. The test also confirms the privacy statement remains rendered alongside the opt-in action.
+
+## Personalized engagement follow-up
+
+- Desktop and mobile captures confirm the dashboard’s private weekly recap is visually contained, stacks cleanly on a 375px viewport, and does not expose learner goal data in the shared weekly challenge view.
+- Goal-aware labels are normalized for display (for example, `software_engineer` becomes **Software Engineer**) while the anonymous peer board remains global and identity-safe.
+- The reflection control is now revealed only by a successful server-side mission completion result; an explicit browser-like regression test verifies it is absent while the mutation is pending and appears afterwards. The same test verifies a specific mission control’s accessible name.
+- The optional reflection dialog regression suite verifies automatic focus on the private response field, keyboard Escape dismissal, and the skip path. The prompt has no motion dependency; the recap is informational and remains usable with the shared reduced-motion setting enabled.
+- The recap-specific browser-like regression renders its loading, retry, and metric states inside `launch-dark ld-reduced-motion`. It verifies the loading announcement uses a polite status region and no focusable control, the unavailable state exposes a keyboard-reachable retry action with an explicit label, and the resolved metric state is private, informational, and non-interactive.

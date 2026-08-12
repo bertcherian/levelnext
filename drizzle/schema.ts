@@ -2055,6 +2055,30 @@ export const launchDailyMissions = mysqlTable("launch_daily_missions", {
 });
 export type LaunchDailyMissions = typeof launchDailyMissions.$inferSelect;
 
+// ─── Mission Reflections ──────────────────────────────────────────────────────
+// A reflection is optional and private to the learner. One editable reflection is
+// retained per completed mission so the post-completion prompt cannot duplicate data.
+export const launchMissionReflections = mysqlTable(
+  "launch_mission_reflections",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id),
+    missionId: varchar("missionId", { length: 100 }).notNull(),
+    missionDate: varchar("missionDate", { length: 10 }).notNull(),
+    missionTitle: varchar("missionTitle", { length: 255 }).notNull(),
+    reflectionText: text("reflectionText").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => ({
+    uniqueMissionReflection: uniqueIndex("launch_mission_reflection_unique").on(
+      table.userId,
+      table.missionId,
+    ),
+  }),
+);
+export type LaunchMissionReflection = typeof launchMissionReflections.$inferSelect;
+
 // ─── Achievements ─────────────────────────────────────────────────────────────
 export const launchAchievements = mysqlTable("launch_achievements", {
   id: int("id").autoincrement().primaryKey(),
