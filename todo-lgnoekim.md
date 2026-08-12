@@ -31,4 +31,4 @@
 - [x] Save a production checkpoint for the validated Intelligence Core interaction and accessibility refinements.
 - [x] Inspect the current LevelNext hero markup and text assertions for the approved messaging replacement.
 - [x] Replace the hero headline with the approved white-and-gold copy and update the subhead exactly as provided.
-- [ ] Save a production checkpoint for the validated hero messaging update.
+- [x] Save a production checkpoint for the validated hero messaging update.
