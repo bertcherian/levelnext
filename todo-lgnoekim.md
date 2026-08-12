@@ -8,4 +8,4 @@
 - [x] Update landing-page unit and interaction tests for the four B2B offerings and B2C exclusion.
 - [x] Verify that `/launch`, `/launch/home`, and `/career-intelligence` remain registered standalone B2C routes.
 - [x] Verify that authenticated B2C product switching and home-route mappings remain intact.
-- [ ] Save the required production checkpoint for the validated homepage separation work.
+- [x] Save the required production checkpoint for the validated homepage separation work.
