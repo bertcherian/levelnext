@@ -19,3 +19,7 @@
 - [x] Inspect the existing Intelligence Loop ring and signal styling against the reported low-visibility issue.
 - [x] Make the Intelligence Loop rings and signal lines bolder and brighter while preserving the landing-page visual system.
 - [x] Save a production checkpoint for the validated Intelligence Loop visibility enhancement.
+- [x] Inspect the Why LevelNext headline and Intelligence Core architecture styles against the reported spacing, contrast, alignment, and line-visibility issues.
+- [x] Improve the Why LevelNext headline letter spacing and brighten the blue text against the navy background.
+- [x] Strengthen Intelligence Core product-card borders, vertically and horizontally centre every label, and thicken the animated signal lines.
+- [ ] Save a production checkpoint for the validated typography and Intelligence Core architecture refinements.
