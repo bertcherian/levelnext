@@ -96,6 +96,10 @@ import Intelligence from "./pages/Intelligence";
 import SimulatorStart from "./pages/SimulatorStart";
 import SimulatorSession from "./pages/SimulatorSession";
 import SimulatorDebrief from "./pages/SimulatorDebrief";
+import EarlyCareerLayout from "./components/EarlyCareerLayout";
+import EarlyCareerHome from "./pages/earlyCareer/EarlyCareerHome";
+import EarlyCareerGrowth from "./pages/earlyCareer/EarlyCareerGrowth";
+import ManagerCompanion from "./pages/earlyCareer/ManagerCompanion";
 import { lazy, Suspense, useEffect } from "react";
 import { useAuth } from "./_core/hooks/useAuth";
 import { trpc } from "./lib/trpc";
@@ -141,7 +145,7 @@ function PostLoginProductActivator() {
     onSuccess: (data) => {
       utils.products.getActiveProduct.invalidate();
       utils.products.getEnrolledProducts.invalidate();
-      const dest = data.productId === "career_intelligence" ? "/career" : data.productId === "manager_effectiveness" ? "/manager" : data.productId === "launch_intelligence" ? "/launch/home" : data.productId === "professional_effectiveness" ? "/pe" : "/home";
+      const dest = data.productId === "career_intelligence" ? "/career" : data.productId === "manager_effectiveness" ? "/manager" : data.productId === "launch_intelligence" ? "/launch/home" : data.productId === "professional_effectiveness" ? "/pe" : data.productId === "early_career_intelligence" ? "/early-career" : "/home";
       window.location.replace(dest);
     },
   });
@@ -277,6 +281,11 @@ function Router() {
       <Route path="/pe/practice">{() => <PELayout><PEPractice /></PELayout>}</Route>
       <Route path="/pe/progress">{() => <PELayout><PEProgress /></PELayout>}</Route>
       <Route path="/pe/settings">{() => <PELayout><PESettings /></PELayout>}</Route>
+
+      {/* Early Career Intelligence — distinct from Launch and Executive Communication Intelligence */}
+      <Route path="/early-career">{() => <EarlyCareerLayout><EarlyCareerHome /></EarlyCareerLayout>}</Route>
+      <Route path="/early-career/growth">{() => <EarlyCareerLayout><EarlyCareerGrowth /></EarlyCareerLayout>}</Route>
+      <Route path="/early-career/manager">{() => <EarlyCareerLayout><ManagerCompanion /></EarlyCareerLayout>}</Route>
 
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />

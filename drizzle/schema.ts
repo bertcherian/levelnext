@@ -2787,3 +2787,96 @@ export const icPracticeProgress = mysqlTable("ic_practice_progress", {
 });
 export type IcPracticeProgress = typeof icPracticeProgress.$inferSelect;
 export type InsertIcPracticeProgress = typeof icPracticeProgress.$inferInsert;
+
+// ─── Early Career Intelligence ───────────────────────────────────────────────
+// The canonical domain key for this corporate product is `early_career`.
+// `ECI` remains reserved for Executive Communication Intelligence.
+export const earlyCareerProfiles = mysqlTable(
+  "early_career_profiles",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    managerUserId: int("managerUserId").references(() => users.id),
+    joiningDate: timestamp("joiningDate"),
+    roleTitle: varchar("roleTitle", { length: 255 }),
+    functionName: varchar("functionName", { length: 150 }),
+    teamName: varchar("teamName", { length: 150 }),
+    journeyStage: mysqlEnum("journeyStage", [
+      "orient",
+      "deliver",
+      "connect",
+      "navigate",
+      "grow",
+      "contribute",
+      "accelerate",
+    ]).default("orient").notNull(),
+    onboardingComplete: boolean("onboardingComplete").default(false).notNull(),
+    privacyAcknowledgedAt: timestamp("privacyAcknowledgedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [uniqueIndex("early_career_profiles_user_unique").on(table.userId)]
+);
+export type EarlyCareerProfile = typeof earlyCareerProfiles.$inferSelect;
+export type InsertEarlyCareerProfile = typeof earlyCareerProfiles.$inferInsert;
+
+// Employee actions may remain private or be explicitly shared with a manager.
+export const earlyCareerCommitments = mysqlTable("early_career_commitments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  createdByUserId: int("createdByUserId").references(() => users.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  journeyStage: varchar("journeyStage", { length: 40 }).notNull(),
+  capabilityId: varchar("capabilityId", { length: 80 }).notNull(),
+  dueDate: timestamp("dueDate"),
+  status: mysqlEnum("status", ["planned", "in_progress", "completed", "cancelled"]).default("planned").notNull(),
+  sharingScope: mysqlEnum("sharingScope", ["private", "employee_and_manager"]).default("private").notNull(),
+  outcome: text("outcome"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EarlyCareerCommitment = typeof earlyCareerCommitments.$inferSelect;
+export type InsertEarlyCareerCommitment = typeof earlyCareerCommitments.$inferInsert;
+
+// Evidence records are intentionally separate from completion states so growth is
+// not reduced to a single activity checkbox.
+export const earlyCareerEvidence = mysqlTable("early_career_evidence", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  commitmentId: int("commitmentId").references(() => earlyCareerCommitments.id),
+  capabilityId: varchar("capabilityId", { length: 80 }).notNull(),
+  evidenceType: mysqlEnum("evidenceType", ["self_report", "shared_commitment", "practice", "manager_confirmation"]).notNull(),
+  privacyScope: mysqlEnum("privacyScope", ["private", "employee_and_manager"]).default("private").notNull(),
+  summary: text("summary").notNull(),
+  occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EarlyCareerEvidence = typeof earlyCareerEvidence.$inferSelect;
+export type InsertEarlyCareerEvidence = typeof earlyCareerEvidence.$inferInsert;
+
+// Manager nudges contain only manager-visible, approved developmental context.
+// They must never contain private coaching conversations or raw diagnostic answers.
+export const earlyCareerManagerNudges = mysqlTable("early_career_manager_nudges", {
+  id: int("id").autoincrement().primaryKey(),
+  managerUserId: int("managerUserId").notNull().references(() => users.id),
+  employeeUserId: int("employeeUserId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  nudgeCode: varchar("nudgeCode", { length: 120 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  rationale: text("rationale").notNull(),
+  conversationObjective: text("conversationObjective").notNull(),
+  suggestedQuestions: json("suggestedQuestions").$type<string[]>().notNull(),
+  privacyBoundary: text("privacyBoundary").notNull(),
+  status: mysqlEnum("status", ["suggested", "accepted", "dismissed", "completed"]).default("suggested").notNull(),
+  scheduledFor: timestamp("scheduledFor"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EarlyCareerManagerNudge = typeof earlyCareerManagerNudges.$inferSelect;
+export type InsertEarlyCareerManagerNudge = typeof earlyCareerManagerNudges.$inferInsert;

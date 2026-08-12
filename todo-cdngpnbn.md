@@ -1,0 +1,21 @@
+# Early Career Intelligence — Session TODO
+
+- [x] Inspect the canonical LevelNext route, schema, product, intelligence-core, and shared component baseline.
+- [x] Add the `early_career` canonical domain constants and preserve `ECI` as Executive Communication Intelligence only.
+- [x] Add the Early Career MVP data model for profile, journey state, shared commitments, evidence, and manager nudges.
+- [x] Apply the schema migration and verify the new tables and indexes.
+- [x] Add deterministic next-move recommendation logic for the First 1,000 Days journey.
+- [x] Expose protected Early Career tRPC procedures for the employee home, next move, workplace action, commitments, and evidence.
+- [x] Build the employee-facing First 1,000 Days home experience at a dedicated `/early-career` route.
+- [x] Build the workplace action capture and evidence flow with loading, empty, and error states.
+- [x] Build the Manager Companion foundation with manager-visible shared context only and explicit privacy boundaries.
+- [x] Reconcile the Early Career migration ledger and verify a deploy-safe migration history with the completed database schema.
+- [x] Add explicit retryable error states for Early Career home and Manager Companion queries.
+- [x] Enforce manager assignment authorization in Manager Companion procedures and expose an owner-only manager assignment path.
+- [x] Add signed-out Early Career entry states that defer protected data queries until the user has authenticated.
+- [x] Add Early Career unit tests covering namespace guardrails and recommendation logic.
+- [x] Run type checks and unit tests, visually validate the new experience, and fix findings.
+- [x] Save a checkpoint so the initial Early Career implementation is published.
+- [x] Prove the Early Career migration applies successfully in an isolated clean-database verification run.
+- [x] Restrict tenant-level Manager Companion assignment access to organisation owners while retaining platform-admin oversight.
+- [x] Document the platform database-permission limitation and precisely scope the isolated temporary-namespace migration verification.

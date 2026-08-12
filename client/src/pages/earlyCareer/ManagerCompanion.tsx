@@ -1,0 +1,65 @@
+import { useMemo, useState } from "react";
+import { Check, Clock3, LockKeyhole, MessageCircleMore, ShieldCheck, UsersRound } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Link } from "wouter";
+
+export default function ManagerCompanion() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const utils = trpc.useUtils();
+  const companion = trpc.earlyCareer.getManagerCompanion.useQuery(undefined, { enabled: isAuthenticated });
+  const assignmentDirectory = trpc.earlyCareer.getManagerAssignmentDirectory.useQuery(undefined, { enabled: isAuthenticated });
+  const [managerChoices, setManagerChoices] = useState<Record<number, string>>({});
+  const createNudge = trpc.earlyCareer.createManagerNudge.useMutation({ onSuccess: () => { utils.earlyCareer.getManagerCompanion.invalidate(); toast.success("Conversation prompt prepared."); }, onError: (error) => toast.error(error.message || "Could not prepare the nudge.") });
+  const updateNudge = trpc.earlyCareer.updateManagerNudgeStatus.useMutation({ onSuccess: () => { utils.earlyCareer.getManagerCompanion.invalidate(); toast.success("Manager Companion updated."); }, onError: (error) => toast.error(error.message || "Could not update the nudge.") });
+  const assignManager = trpc.earlyCareer.assignManager.useMutation({ onSuccess: () => { utils.earlyCareer.getManagerCompanion.invalidate(); utils.earlyCareer.getManagerAssignmentDirectory.invalidate(); toast.success("Manager assignment updated."); }, onError: (error) => toast.error(error.message || "Could not update the manager assignment.") });
+  const latestByEmployee = useMemo(() => new Map((companion.data?.nudges ?? []).map((nudge) => [nudge.employeeUserId, nudge])), [companion.data?.nudges]);
+
+  if (authLoading) return <div className="mx-auto max-w-7xl px-4 py-20 text-sm md:px-8" style={{ color: "#56616D" }}>Preparing your Manager Companion…</div>;
+  if (!isAuthenticated) return <div className="mx-auto max-w-2xl px-4 py-20 text-center md:px-8"><p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#A47618" }}>Manager Companion</p><h1 className="mt-3 text-2xl font-semibold" style={{ color: "#0A1A2F" }}>Sign in to prepare your manager conversations.</h1><p className="mt-3 text-sm leading-6" style={{ color: "#56616D" }}>The Companion only shows manager-visible context and explicitly shared commitments after authentication.</p><Link href="/login" className="mt-6 inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold" style={{ background: "#0A1A2F", color: "#F8F5F0" }}>Sign in to continue</Link></div>;
+  if (companion.isLoading) return <div className="mx-auto max-w-7xl px-4 py-20 text-sm md:px-8" style={{ color: "#56616D" }}>Preparing your Manager Companion…</div>;
+  if (companion.isError) return <div className="mx-auto max-w-2xl px-4 py-20 text-center md:px-8"><p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#A47618" }}>Manager Companion</p><h1 className="mt-3 text-2xl font-semibold" style={{ color: "#0A1A2F" }}>We could not load the manager development space.</h1><p className="mt-3 text-sm leading-6" style={{ color: "#56616D" }}>No employee information has been exposed or changed. Please retry when your connection is restored.</p><Button className="mt-6" onClick={() => companion.refetch()} style={{ background: "#0A1A2F", color: "#F8F5F0" }}>Try again</Button></div>;
+  const data = companion.data;
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-7 md:px-8 md:py-10">
+      <section className="grid gap-6 rounded-3xl p-7 md:grid-cols-[1.35fr_.65fr] md:p-9" style={{ background: "#0A1A2F" }}>
+        <div><p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "#D4AF37" }}>Manager Companion</p><h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-white md:text-4xl">Create the environment in which early-career professionals can become effective.</h1><p className="mt-4 max-w-2xl text-sm leading-6" style={{ color: "#C9D0D8" }}>The Companion prepares one timely developmental conversation. It does not expose private coaching or turn employee growth into a hidden rating system.</p></div>
+        <div className="rounded-2xl border p-5" style={{ borderColor: "rgba(212,175,55,.35)", background: "rgba(255,255,255,.05)" }}><ShieldCheck size={22} style={{ color: "#D4AF37" }} /><p className="mt-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#D4AF37" }}>Privacy boundary</p><p className="mt-2 text-sm leading-6" style={{ color: "#E1E6EB" }}>{data?.privacyBoundary}</p></div>
+      </section>
+
+      <section className="mt-6 grid gap-5 xl:grid-cols-[1.35fr_.65fr]">
+        <div className="space-y-4">
+          <div className="flex items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#A47618" }}>Your early-career team</p><h2 className="mt-2 text-2xl font-semibold" style={{ color: "#0A1A2F" }}>One useful conversation at a time.</h2></div><span className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background: "#EDE3CC", color: "#0A1A2F" }}>{data?.employees.length ?? 0} assigned employees</span></div>
+          {data?.employees.length ? data.employees.map(({ employee, profile, stage, suggestedNudge, sharedCommitments }) => {
+            const existing = latestByEmployee.get(employee.id);
+            return <article key={employee.id} className="rounded-3xl border bg-white p-5 md:p-6" style={{ borderColor: "#E1D9CE" }}>
+              <div className="flex flex-wrap items-start justify-between gap-4"><div className="flex gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl" style={{ background: "#E8EDF0", color: "#0A1A2F" }}><UsersRound size={20} /></div><div><h3 className="text-lg font-semibold" style={{ color: "#0A1A2F" }}>{employee.name || employee.email || "Team member"}</h3><p className="mt-1 text-sm" style={{ color: "#56616D" }}>{profile.roleTitle || "Early-career employee"} · {stage.name}</p></div></div><span className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background: "#F4F0E8", color: "#0A1A2F" }}>{stage.transition}</span></div>
+              <div className="mt-5 grid gap-5 border-t pt-5 md:grid-cols-[1.25fr_.75fr]" style={{ borderColor: "#EEE8DF" }}>
+                <div><p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#A47618" }}>Suggested conversation</p><h4 className="mt-2 font-semibold" style={{ color: "#0A1A2F" }}>{existing?.title || suggestedNudge.title}</h4><p className="mt-2 text-sm leading-6" style={{ color: "#56616D" }}>{existing?.rationale || suggestedNudge.rationale}</p><p className="mt-3 text-sm font-medium" style={{ color: "#0A1A2F" }}>{existing?.conversationObjective || suggestedNudge.objective}</p><div className="mt-4 flex flex-wrap gap-2">{existing ? <><Button size="sm" disabled={updateNudge.isPending || existing.status === "completed"} onClick={() => updateNudge.mutate({ id: existing.id, status: "completed" })} style={{ background: "#0A1A2F", color: "#F8F5F0" }}>{existing.status === "completed" ? <><Check size={14} className="mr-1" /> Completed</> : <><MessageCircleMore size={14} className="mr-1" /> Record conversation</>}</Button><Button size="sm" variant="outline" disabled={updateNudge.isPending || existing.status === "dismissed"} onClick={() => updateNudge.mutate({ id: existing.id, status: "dismissed" })}>Defer</Button></> : <Button size="sm" disabled={createNudge.isPending} onClick={() => createNudge.mutate({ employeeUserId: employee.id })} style={{ background: "#0A1A2F", color: "#F8F5F0" }}><MessageCircleMore size={14} className="mr-1" /> Prepare conversation</Button>}</div></div>
+                <div className="rounded-2xl p-4" style={{ background: "#F8F5F0" }}><p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#A47618" }}>Questions to ask</p><ol className="mt-3 space-y-3">{(existing?.suggestedQuestions ?? suggestedNudge.questions).map((question, index) => <li key={question} className="flex gap-2 text-sm leading-5" style={{ color: "#0A1A2F" }}><span className="font-semibold" style={{ color: "#A47618" }}>0{index + 1}</span><span>{question}</span></li>)}</ol></div>
+              </div>
+              {sharedCommitments.length > 0 && <div className="mt-5 border-t pt-4" style={{ borderColor: "#EEE8DF" }}><p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "#1F6B43" }}><Check size={14} /> Employee-shared commitments</p><div className="mt-2 space-y-1">{sharedCommitments.map((commitment) => <p key={commitment.id} className="text-sm" style={{ color: "#56616D" }}>{commitment.title}</p>)}</div></div>}
+            </article>;
+          }) : <div className="rounded-3xl border bg-white p-7 text-center" style={{ borderColor: "#E1D9CE" }}><UsersRound size={28} className="mx-auto" style={{ color: "#A47618" }} /><h3 className="mt-4 text-lg font-semibold" style={{ color: "#0A1A2F" }}>No assigned employees yet.</h3><p className="mx-auto mt-2 max-w-lg text-sm leading-6" style={{ color: "#56616D" }}>When an Early Career employee is assigned to you, this space will offer manager-visible developmental prompts and explicitly shared commitments only.</p></div>}
+        </div>
+        <aside className="space-y-5"><section className="rounded-3xl border bg-white p-5" style={{ borderColor: "#E1D9CE" }}><p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#A47618" }}>The Companion does</p><ul className="mt-4 space-y-3 text-sm leading-5" style={{ color: "#56616D" }}><li className="flex gap-2"><Clock3 size={15} className="mt-0.5 shrink-0" style={{ color: "#0A1A2F" }} />Prepare an approachable 15-minute conversation.</li><li className="flex gap-2"><Clock3 size={15} className="mt-0.5 shrink-0" style={{ color: "#0A1A2F" }} />Clarify expectations, support, and follow-up.</li><li className="flex gap-2"><Clock3 size={15} className="mt-0.5 shrink-0" style={{ color: "#0A1A2F" }} />Respect the employee’s privacy settings.</li></ul></section><section className="rounded-3xl p-5" style={{ background: "#EDE3CC" }}><LockKeyhole size={19} style={{ color: "#A47618" }} /><p className="mt-3 text-sm font-semibold leading-6" style={{ color: "#0A1A2F" }}>Managers never see private AI conversations, private reflections, raw diagnostic answers, or hidden employee labels.</p></section></aside>
+      </section>
+
+      {assignmentDirectory.data?.canManageAssignments && (
+        <section className="mt-6 rounded-3xl border bg-white p-6 md:p-7" style={{ borderColor: "#E1D9CE" }}>
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#A47618" }}>Organisation setup</p>
+          <div className="mt-2 flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-xl font-semibold" style={{ color: "#0A1A2F" }}>Assign the right manager before Manager Companion starts.</h2><p className="mt-1 text-sm leading-6" style={{ color: "#56616D" }}>Organisation owners can make this assignment; platform administrators retain oversight. Managers will then see only their assigned employees’ manager-visible context.</p></div><span className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background: "#EDE3CC", color: "#0A1A2F" }}>{assignmentDirectory.data.employees.length} employees</span></div>
+          <div className="mt-5 divide-y" style={{ borderColor: "#EEE8DF" }}>
+            {assignmentDirectory.data.employees.map(({ profile, employee }) => {
+              const managers = assignmentDirectory.data?.managers.filter((manager) => manager.tenantId === profile.tenantId && manager.user.id !== employee.id) ?? [];
+              const selected = managerChoices[employee.id] ?? String(profile.managerUserId ?? "");
+              return <div key={employee.id} className="grid gap-3 py-4 md:grid-cols-[1fr_minmax(220px,.8fr)_auto] md:items-center"><div><p className="font-medium" style={{ color: "#0A1A2F" }}>{employee.name || employee.email || "Employee"}</p><p className="mt-1 text-xs" style={{ color: "#6B6258" }}>{profile.roleTitle || "Early-career employee"}</p></div><select value={selected} onChange={(event) => setManagerChoices({ ...managerChoices, [employee.id]: event.target.value })} className="rounded-lg border bg-white px-3 py-2 text-sm" style={{ borderColor: "#D9D2C5", color: "#0A1A2F" }}><option value="">Select a manager</option>{managers.map((manager) => <option key={manager.user.id} value={manager.user.id}>{manager.user.name || manager.user.email || `User ${manager.user.id}`}</option>)}</select><Button size="sm" disabled={!selected || assignManager.isPending || Number(selected) === profile.managerUserId} onClick={() => assignManager.mutate({ employeeUserId: employee.id, managerUserId: Number(selected) })} style={{ background: "#0A1A2F", color: "#F8F5F0" }}>Save assignment</Button></div>;
+            })}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
