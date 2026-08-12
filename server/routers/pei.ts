@@ -48,6 +48,10 @@ function extractText(result: Awaited<ReturnType<typeof invokeLLM>>): string {
   return typeof raw === "string" ? raw : (raw as any[]).map((c: any) => c.text ?? "").join("");
 }
 
+export function shouldReuseDailyBrief(existingBrief: unknown, refresh: boolean): boolean {
+  return Boolean(existingBrief) && !refresh;
+}
+
 // ─── Helper: build professional context for AI prompts ────────────────────────
 async function buildProfessionalContext(userId: number): Promise<string> {
   const db = await getDb();
@@ -552,7 +556,9 @@ Return just the response text, no labels or quotes.
     return (existing?.brief as Record<string, any>) ?? null;
   }),
 
-  generateDailyBrief: protectedProcedure.mutation(async ({ ctx }) => {
+  generateDailyBrief: protectedProcedure
+    .input(z.object({ refresh: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     const today = new Date().toISOString().split("T")[0];
@@ -567,7 +573,7 @@ Return just the response text, no labels or quotes.
       ))
       .limit(1);
 
-    if (existing?.brief) return existing.brief;
+    if (shouldReuseDailyBrief(existing?.brief, input.refresh)) return existing.brief;
 
     const context = await buildProfessionalContext(ctx.user.id);
     const userRows = await db.select().from(users).where(eq(users.id, ctx.user.id));
@@ -683,11 +689,21 @@ Return a JSON object with these exact keys:
       };
     }
 
-    await db.insert(peDailyBriefs).values({
-      userId: ctx.user.id,
-      briefDate: today,
-      brief: brief as any,
-    });
+    if (existing) {
+      await db
+        .update(peDailyBriefs)
+        .set({ brief: brief as any, generatedAt: new Date() })
+        .where(and(
+          eq(peDailyBriefs.userId, ctx.user.id),
+          eq(peDailyBriefs.briefDate, today),
+        ));
+    } else {
+      await db.insert(peDailyBriefs).values({
+        userId: ctx.user.id,
+        briefDate: today,
+        brief: brief as any,
+      });
+    }
 
     return brief;
   }),

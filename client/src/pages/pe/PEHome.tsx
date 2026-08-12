@@ -4,26 +4,33 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Sun, Target, Calendar, Zap, MessageSquare, TrendingUp, CheckCircle2, ArrowRight, Sparkles, Clock, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
+import { toast } from "sonner";
 
 export default function PEHome() {
   const { user } = useAuth();
   const [briefGenerating, setBriefGenerating] = useState(false);
+  const utils = trpc.useUtils();
 
   const summary = trpc.pei.getDashboardSummary.useQuery();
   const briefSnapshot = trpc.pei.getTodayBriefSnapshot.useQuery();
   const upcomingEvents = trpc.pei.getUpcomingEvents.useQuery({ days: 7 });
   const generateBrief = trpc.pei.generateDailyBrief.useMutation({
-    onSuccess: (data) => {
-      briefSnapshot.refetch();
+    onSuccess: (data, variables) => {
+      utils.pei.getTodayBriefSnapshot.setData(undefined, data);
       summary.refetch();
       setBriefGenerating(false);
+      toast.success(variables?.refresh ? "Your daily brief has been refreshed." : "Your daily brief is ready.");
+    },
+    onError: () => {
+      setBriefGenerating(false);
+      toast.error("Could not refresh your daily brief. Please try again.");
     },
   });
 
   useEffect(() => {
     if (!briefSnapshot.data && !briefSnapshot.isLoading && !briefGenerating) {
       setBriefGenerating(true);
-      generateBrief.mutate();
+      generateBrief.mutate({ refresh: false });
     }
   }, [briefSnapshot.data, briefSnapshot.isLoading]);
 
@@ -62,7 +69,7 @@ export default function PEHome() {
             size="sm"
             onClick={() => {
               setBriefGenerating(true);
-              generateBrief.mutate();
+              generateBrief.mutate({ refresh: true });
             }}
             disabled={briefGenerating}
             style={{ borderColor: "#d4af37", color: "#d4af37", background: "transparent" }}
