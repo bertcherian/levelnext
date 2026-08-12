@@ -371,7 +371,7 @@ export default function LaunchLanding() {
           <div style={{ maxWidth: 900, margin: "0 auto", padding: "80px 1.5rem" }}>
             <div style={{ textAlign: "center", marginBottom: 48 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.1em", marginBottom: 12 }}>HOW IT WORKS</p>
-              <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 800, color: "#F8FAFC", textShadow: "0 1px 18px rgba(0,0,0,0.24)", fontFamily: "'Space Grotesk', sans-serif" }}>
                 Your AI coach, Layla, guides every step
               </h2>
             </div>
