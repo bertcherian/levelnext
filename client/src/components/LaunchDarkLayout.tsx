@@ -14,8 +14,8 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { Map, LayoutDashboard, Briefcase, LogOut, Menu, X, Rocket, Settings, Trophy } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Map, LayoutDashboard, Briefcase, LogOut, Menu, X, Rocket, Settings, Trophy, History, Swords } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_c21f58d5.png";
 
@@ -25,12 +25,24 @@ const NAV_ITEMS = [
   { href: "/launch/dashboard",    label: "Dashboard",   icon: LayoutDashboard },
   { href: "/launch/applications", label: "Tracker",     icon: Briefcase },
   { href: "/launch/leaderboard",  label: "Leaderboard", icon: Trophy },
+  { href: "/launch/challenges",   label: "Challenges",  icon: Swords },
+  { href: "/launch/history",      label: "History",     icon: History },
 ];
+
+const MOBILE_NAV_ITEMS = NAV_ITEMS.filter(({ href }) => [
+  "/launch/home",
+  "/launch/journey",
+  "/launch/challenges",
+  "/launch/history",
+  "/launch/leaderboard",
+].includes(href));
 
 export default function LaunchDarkLayout({ children, showBottomNav = true }: { children: React.ReactNode; showBottomNav?: boolean }) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [xpPulse, setXpPulse] = useState(false);
+  const previousXp = useRef<number | null>(null);
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => { window.location.href = "/"; },
@@ -63,6 +75,16 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
     purple: "#A78BFA",
   };
   const accentHex = accentColorMap[accentColor] || accentColorMap.cyan;
+
+  useEffect(() => {
+    if (previousXp.current !== null && xp > previousXp.current) {
+      setXpPulse(true);
+      const timer = window.setTimeout(() => setXpPulse(false), 760);
+      previousXp.current = xp;
+      return () => window.clearTimeout(timer);
+    }
+    previousXp.current = xp;
+  }, [xp]);
 
   // Apply accessibility classes to the wrapper
   const wrapperClass = [
@@ -192,7 +214,7 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
             <div style={{ maxWidth: 1100, margin: "0 auto", padding: "4px 1.25rem", display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ld-cyan)", minWidth: 130, fontFamily: "var(--ld-font-heading)" }}>{level}</span>
               <div className="ld-progress-track" style={{ flex: 1 }}>
-                <div className="ld-progress-fill" style={{
+                <div className={`ld-progress-fill ${xpPulse ? "ld-progress-pulse" : ""}`} style={{
                   width: `${Math.min((levelXp / 200) * 100, 100)}%`,
                 }} />
               </div>
@@ -246,7 +268,7 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
       {/* ── Mobile Bottom Nav (Gen Z pattern) ── */}
       {showBottomNav && (
         <div className="ld-bottom-nav md:hidden">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {MOBILE_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = location === href || (href !== "/launch/home" && location.startsWith(href));
             return (
               <button

@@ -118,6 +118,8 @@ const LaunchNegotiationSimulator = lazy(() => import("@/pages/launch/LaunchNegot
 const LaunchDashboard = lazy(() => import("@/pages/launch/LaunchDashboard"));
 const LaunchSettings = lazy(() => import("@/pages/launch/LaunchSettings"));
 const LaunchLeaderboard = lazy(() => import("@/pages/launch/LaunchLeaderboard"));
+const LaunchMissionHistory = lazy(() => import("@/pages/launch/LaunchMissionHistory"));
+const LaunchWeeklyChallenges = lazy(() => import("@/pages/launch/LaunchWeeklyChallenges"));
 
 function LaunchRouteFallback() {
   return (
@@ -265,6 +267,8 @@ function Router() {
       <Route path="/launch/dashboard" component={LaunchDashboard} />
       <Route path="/launch/settings" component={LaunchSettings} />
       <Route path="/launch/leaderboard" component={LaunchLeaderboard} />
+      <Route path="/launch/history" component={LaunchMissionHistory} />
+      <Route path="/launch/challenges" component={LaunchWeeklyChallenges} />
       {/* Professional Effectiveness Intelligence */}
       <Route path="/pe/onboarding" component={PEOnboarding} />
       <Route path="/pe">{() => <PELayout><PEHome /></PELayout>}</Route>

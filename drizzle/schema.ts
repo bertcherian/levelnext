@@ -8,6 +8,7 @@ import {
   float,
   json,
   boolean,
+  uniqueIndex,
 } from "drizzle-orm/mysql-core";
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -2247,6 +2248,41 @@ export const launchUserPreferences = mysqlTable("launch_user_preferences", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type LaunchUserPreferences = typeof launchUserPreferences.$inferSelect;
+
+// ─── Weekly Peer Challenges ───────────────────────────────────────────────────
+export const launchWeeklyChallenges = mysqlTable("launch_weekly_challenges", {
+  id: int("id").autoincrement().primaryKey(),
+  weekKey: varchar("weekKey", { length: 10 }).notNull().unique(),
+  startsAt: timestamp("startsAt").notNull(),
+  endsAt: timestamp("endsAt").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  goalType: mysqlEnum("goalType", ["daily_missions"]).notNull().default("daily_missions"),
+  goalTarget: int("goalTarget").notNull().default(5),
+  xpBonus: int("xpBonus").notNull().default(100),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LaunchWeeklyChallenge = typeof launchWeeklyChallenges.$inferSelect;
+
+export const launchChallengeEnrollments = mysqlTable(
+  "launch_challenge_enrollments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id),
+    challengeId: int("challengeId").notNull().references(() => launchWeeklyChallenges.id),
+    progress: int("progress").notNull().default(0),
+    status: mysqlEnum("status", ["active", "completed"]).notNull().default("active"),
+    joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+    completedAt: timestamp("completedAt"),
+  },
+  (table) => ({
+    uniqueChallengeEnrollment: uniqueIndex("launch_challenge_enrollment_unique").on(
+      table.challengeId,
+      table.userId,
+    ),
+  }),
+);
+export type LaunchChallengeEnrollment = typeof launchChallengeEnrollments.$inferSelect;
 
 // ─── XP History (for dashboard charts) ───────────────────────────────────────
 export const launchXpHistory = mysqlTable("launch_xp_history", {

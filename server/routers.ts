@@ -57,6 +57,8 @@ import { launchNegotiationRouter } from "./routers/launchNegotiation";
 import { launchRemindersRouter } from "./routers/launchReminders";
 import { launchUserPreferencesRouter } from "./routers/launchUserPreferences";
 import { launchLeaderboardRouter } from "./routers/launchLeaderboard";
+import { launchMissionHistoryRouter } from "./routers/launchMissionHistory";
+import { launchWeeklyChallengesRouter } from "./routers/launchWeeklyChallenges";
 import { peiRouter } from "./routers/pei";
 import { intelligenceCoreRouter } from "./routers/intelligenceCore";
 
@@ -125,6 +127,8 @@ export const appRouter = router({
   launchReminders: launchRemindersRouter,
   launchUserPreferences: launchUserPreferencesRouter,
   launchLeaderboard: launchLeaderboardRouter,
+  launchMissionHistory: launchMissionHistoryRouter,
+  launchWeeklyChallenges: launchWeeklyChallengesRouter,
   pei: peiRouter,
   intelligenceCore: intelligenceCoreRouter,
 });

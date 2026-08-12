@@ -526,6 +526,13 @@
   transition: width 500ms var(--ld-ease-out);
 }
 
+@keyframes ld-progress-pulse {
+  0% { filter: brightness(1); box-shadow: 0 0 0 rgba(34, 211, 238, 0); }
+  45% { filter: brightness(1.35); box-shadow: 0 0 14px var(--ld-cyan-glow); }
+  100% { filter: brightness(1); box-shadow: 0 0 0 rgba(34, 211, 238, 0); }
+}
+.launch-dark .ld-progress-pulse { animation: ld-progress-pulse 720ms var(--ld-ease-out); }
+
 /* ── Launch Dark: Animations ─────────────────────────────────────────────────── */
 @keyframes ld-pulse-glow {
   0%, 100% { box-shadow: 0 0 12px rgba(34, 211, 238, 0.3); }
@@ -551,6 +558,75 @@
   100% { opacity: 1; transform: scale(1); }
 }
 .launch-dark .ld-bounce-in { animation: ld-bounce-in 400ms var(--ld-ease-out) both; }
+
+@keyframes ld-xp-toast {
+  0% { opacity: 0; transform: translateY(8px) scale(0.96); }
+  65% { opacity: 1; transform: translateY(0) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.launch-dark .ld-xp-earned { position: relative; animation: ld-xp-toast 360ms var(--ld-ease-out) both; }
+
+@keyframes ld-xp-burst-enter {
+  0% { opacity: 0; transform: translateY(-8px) scale(0.94); }
+  65% { opacity: 1; transform: translateY(0) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ld-burst-ring {
+  0% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.42); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.35); }
+}
+.launch-dark .ld-xp-burst {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  z-index: 90;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: ld-xp-burst-enter 380ms var(--ld-ease-out) both;
+}
+.launch-dark .ld-xp-burst-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 130px;
+  padding: 10px 14px;
+  border: 1px solid rgba(34, 211, 238, 0.55);
+  border-radius: 999px;
+  color: var(--ld-cyan);
+  background: rgba(10, 15, 30, 0.94);
+  box-shadow: 0 0 22px var(--ld-cyan-glow);
+  font-family: var(--ld-font-heading);
+  font-weight: 800;
+}
+.launch-dark .ld-xp-burst-content small { color: var(--ld-green); font-size: 10px; }
+.launch-dark .ld-xp-spark { color: var(--ld-pink); font-size: 14px; }
+.launch-dark .ld-xp-burst-ring,
+.launch-dark .ld-burst-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 46px;
+  height: 46px;
+  border: 2px solid var(--ld-cyan);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: ld-burst-ring 720ms var(--ld-ease-out) both;
+}
+.launch-dark .ld-xp-burst-ring-two,
+.launch-dark .ld-achievement-ring-two { animation-delay: 120ms; }
+
+@keyframes ld-confetti-fall {
+  0% { opacity: 0; transform: translate(-50%, -42px) rotate(0deg); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--confetti-x), 142px) rotate(var(--confetti-r)); }
+}
+.launch-dark .ld-confetti-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }
+.launch-dark .ld-confetti { position: absolute; top: 35%; left: 50%; width: 7px; height: 12px; border-radius: 2px; animation: ld-confetti-fall 720ms var(--ld-ease-out) both; }
+.launch-dark .ld-achievement-sparkle { animation: ld-pulse-glow 1.4s ease-in-out both; }
+.launch-dark .ld-achievement-icon { position: relative; animation: ld-bounce-in 420ms var(--ld-ease-out) both; }
+.launch-dark .ld-achievement-icon .ld-burst-ring { width: 82px; height: 82px; top: 50%; left: 50%; }
 
 /* ── Launch Dark: Stagger delays ─────────────────────────────────────────────── */
 .launch-dark .ld-stagger-1 { animation-delay: 40ms; }

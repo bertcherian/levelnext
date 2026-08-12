@@ -39,3 +39,20 @@
 - [x] Reconcile documented WebKit cross-browser smoke validation for the settings page
   - Evidence: Chromium breakpoint reviews passed at 1280px, 768px, and 375px. Firefox desktop smoke captures passed for dashboard, leaderboard, and settings. Playwright WebKit (Safari-equivalent) passed for dashboard, leaderboard, and settings. Settings renders correctly after its normal initial data-load window.
 - [x] Save checkpoint and publish
+
+## Phase 5: Engagement Gamification
+
+- [x] Define mission-history timeline data contract backed by real XP events and mission-completion records
+- [x] Add opt-in weekly peer challenge schema, enrollment, progress, and privacy-preserving ranking procedures
+- [x] Add deterministic on-demand weekly challenge rollover using ISO week keys, so no background scheduler is required
+- [x] Build the personal mission-history timeline page and navigation entry
+- [x] Build the weekly challenge panel, opt-in flow, progress indicator, and leaderboard context
+- [x] Add dynamic XP bursts, progress transitions, and achievement-unlock micro-interactions that respect reduced-motion preferences
+- [x] Fix achievement copy sharing when the Clipboard API is unavailable or rejects the write request
+- [x] Add regression tests for timeline, challenge enrollment/progress, and XP-celebration behavior
+- [x] Complete responsive and accessibility validation for the new engagement experiences
+- [x] Package the engagement-gamification implementation workflow as a reusable skill
+- [x] Add client-side regression coverage for XP celebration rendering and clipboard fallback behavior
+- [x] Perform and document keyboard, focus, live-region, and reduced-motion accessibility validation for History and Challenges
+- [x] Verify History live-region and Challenge keyboard focus/reduced-motion behavior in browser-like interaction tests
+- [x] Save checkpoint and publish engagement release

@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import LaunchLayout from "@/components/LaunchLayout";
 import AchievementUnlockedModal from "@/components/AchievementUnlockedModal";
+import LaunchXpBurst from "@/components/LaunchXpBurst";
 import {
   CheckCircle2, Circle, Zap, Flame, Trophy, ChevronRight,
   Sparkles, RefreshCw, Map, Rocket, Target, Star
@@ -180,7 +181,7 @@ export default function LaunchHome() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [completing, setCompleting] = useState<string | null>(null);
-  const [justEarned, setJustEarned] = useState<number | null>(null);
+  const [justEarned, setJustEarned] = useState<{ total: number; bonusXp: number } | null>(null);
   const [unlockedAchievementCode, setUnlockedAchievementCode] = useState<string | null>(null);
 
   const progressQuery = trpc.launchProgress.getProgress.useQuery(undefined, { staleTime: 30_000 });
@@ -190,7 +191,7 @@ export default function LaunchHome() {
 
   const completeMission = trpc.launchDailyMissions.completeMission.useMutation({
     onSuccess: (data) => {
-      setJustEarned(data.xpEarned);
+      setJustEarned({ total: data.xpEarned, bonusXp: data.challengeBonusXp ?? 0 });
       setTimeout(() => setJustEarned(null), 3000);
       if (data.newAchievements[0]) setUnlockedAchievementCode(data.newAchievements[0]);
       utils.launchDailyMissions.getToday.invalidate();
@@ -267,10 +268,11 @@ export default function LaunchHome() {
           <div className="lg:col-span-2 flex flex-col gap-4">
             {/* XP earned toast */}
             {justEarned && (
-              <div className="px-4 py-3 rounded-2xl flex items-center gap-2 font-semibold text-sm"
+              <div className="ld-xp-earned px-4 py-3 rounded-2xl flex flex-wrap items-center gap-2 font-semibold text-sm" role="status" aria-live="polite"
                 style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", color: "#F59E0B" }}>
                 <Zap size={16} />
-                +{justEarned} XP earned! Keep going 🔥
+                +{justEarned.total} XP earned! Keep going 🔥
+                {justEarned.bonusXp > 0 && <span className="text-xs font-bold" style={{ color: "#4ADE80" }}>Challenge complete · +{justEarned.bonusXp} bonus</span>}
               </div>
             )}
 
@@ -425,6 +427,7 @@ export default function LaunchHome() {
         } : null}
         onClose={() => setUnlockedAchievementCode(null)}
       />
+      {justEarned && <LaunchXpBurst earned={justEarned.total} bonusXp={justEarned.bonusXp} />}
     </LaunchLayout>
   );
 }

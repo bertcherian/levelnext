@@ -4,6 +4,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { launchDailyMissions, launchUserProgress } from "../../drizzle/schema";
 import { awardLaunchXp } from "./launchProgress";
+import { advanceWeeklyChallengeProgress } from "./launchWeeklyChallenges";
 import { invokeLLM, safeJsonParse } from "../_core/llm";
 
 // ─── Mission Templates (fallback if LLM fails) ────────────────────────────────
@@ -208,14 +209,25 @@ export const launchDailyMissionsRouter = router({
         missionId: input.missionId,
         missionArea: completedMission?.missionArea ?? "General",
       }, completedMission?.xp ?? 25);
+      const challengeProgress = await advanceWeeklyChallengeProgress(ctx.user.id);
+      const challengeCompletion = challengeProgress?.completionXp;
 
       return {
-        xpEarned: xpResult.xpEarned,
+        xpEarned: xpResult.xpEarned + (challengeCompletion?.xpEarned ?? 0),
+        missionXpEarned: xpResult.xpEarned,
+        challengeBonusXp: challengeCompletion?.xpEarned ?? 0,
         allComplete,
         missions,
         alreadyComplete: false,
-        newAchievements: xpResult.newAchievements,
-        leveledUp: xpResult.leveledUp,
+        newAchievements: [...xpResult.newAchievements, ...(challengeCompletion?.newAchievements ?? [])],
+        leveledUp: xpResult.leveledUp || Boolean(challengeCompletion?.leveledUp),
+        challengeProgress: challengeProgress
+          ? {
+              progress: challengeProgress.progress,
+              goalTarget: challengeProgress.goalTarget,
+              completed: challengeProgress.completed,
+            }
+          : null,
       };
     }),
 
