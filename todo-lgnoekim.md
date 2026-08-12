@@ -28,4 +28,4 @@
 - [x] Synchronize the animated Intelligence Core signal lines with the active career stage selected in the journey controls.
 - [x] Complete the final decorative-line contrast pass for remaining low-alpha landing visuals and add focused regression coverage.
 - [x] Add regression coverage and validate the interactive and visual refinements across desktop and mobile.
-- [ ] Save a production checkpoint for the validated Intelligence Core interaction and accessibility refinements.
+- [x] Save a production checkpoint for the validated Intelligence Core interaction and accessibility refinements.
