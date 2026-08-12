@@ -29,4 +29,12 @@ describe("LevelNext landing architecture refinements", () => {
     expect(landingStyles).toContain(".ln-professional-visual::before { border-width: 2px;");
     expect(landingStyles).toContain(".ln-leader-visual::before, .ln-leader-visual::after { border-width: 2px;");
   });
+
+  it("centres the hero and Intelligence Core while strengthening light-surface explanatory copy", () => {
+    expect(landingStyles).toContain(".ln-hero__content { padding-right: 0; display: grid; justify-items: center; text-align: center;");
+    expect(landingStyles).toContain(".ln-hero h1 { max-width: 100%; font-size: clamp(46px, 4.9vw, 70px); white-space: nowrap;");
+    expect(landingStyles).toContain(".ln-core__base > div { justify-content: center; gap: 12px;");
+    expect(landingStyles).toContain("border: 2px solid rgba(255,255,255,.56);");
+    expect(landingStyles).toContain("color: rgba(0,0,0,.8) !important;");
+  });
 });

@@ -98,7 +98,7 @@ export default function Landing() {
         <div className="ln-hero__spotlight" aria-hidden="true" />
         <div className="ln-hero__content">
           <p className="ln-eyebrow ln-eyebrow--gold"><span /> Professional Intelligence</p>
-          <h1>Your Next Level changes<br /><em>what success demands.</em></h1>
+          <h1>Your Next Level Changes<br /><em>what success demands.</em></h1>
           <p className="ln-hero__copy">
             From early career to enterprise leadership, LevelNext builds the intelligence, judgment and everyday capabilities you need for the level you’re stepping into.
           </p>
