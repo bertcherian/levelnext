@@ -16,3 +16,6 @@
 - [x] Redesign the standalone Launch Intelligence landing page with distinct B2C messaging, conversion CTA hierarchy, and a separate acquisition journey.
 - [x] Update landing-page regression tests and validate the B2B home page plus the Launch B2C landing route across desktop and mobile.
 - [x] Save a production checkpoint for the validated enterprise messaging and Launch landing-page update.
+- [x] Inspect the existing Intelligence Loop ring and signal styling against the reported low-visibility issue.
+- [x] Make the Intelligence Loop rings and signal lines bolder and brighter while preserving the landing-page visual system.
+- [ ] Save a production checkpoint for the validated Intelligence Loop visibility enhancement.

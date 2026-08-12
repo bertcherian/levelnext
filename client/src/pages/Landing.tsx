@@ -218,7 +218,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="ln-loop" aria-labelledby="loop-title">
+      <section className="ln-loop" id="intelligence-loop" aria-labelledby="loop-title">
         <div className="ln-section-frame ln-loop__frame">
           <div className="ln-loop__intro">
             <p className="ln-eyebrow">The intelligence loop</p>
