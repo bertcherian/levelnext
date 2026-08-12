@@ -277,6 +277,7 @@ export default function Landing() {
             </div>
             <div className="ln-core__base">
               <p>LevelNext <b>Intelligence Core</b></p>
+              <p className="ln-core__cue">Select an experience above to reveal its enterprise outcome.</p>
               <div>{intelligenceCore.map((item) => <span key={item}>{item}</span>)}</div>
             </div>
           </div>

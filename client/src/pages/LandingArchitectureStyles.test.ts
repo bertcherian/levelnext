@@ -37,4 +37,10 @@ describe("LevelNext landing architecture refinements", () => {
     expect(landingStyles).toContain("border: 2px solid rgba(255,255,255,.56);");
     expect(landingStyles).toContain("color: rgba(0,0,0,.8) !important;");
   });
+
+  it("centres the visual-free final organisation CTA and styles the Intelligence Core interaction cue", () => {
+    expect(landingStyles).toContain(".ln-final-cta__frame { display: grid; justify-items: center; text-align: center;");
+    expect(landingStyles).toContain(".ln-final-cta__actions { justify-content: center;");
+    expect(landingStyles).toContain(".ln-core__cue { margin-top: 8px !important;");
+  });
 });

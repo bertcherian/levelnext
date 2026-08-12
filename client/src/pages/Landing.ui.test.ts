@@ -22,6 +22,7 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("Manager Effectiveness");
     expect(page).toContain("Leader Intelligence");
     expect(page).toContain("Enterprise outcome");
+    expect(page).toContain("Select an experience above to reveal its enterprise outcome.");
     expect(page).toContain("Illustrative organisation scenario");
     expect(page).toContain("This is an illustrative implementation scenario, not a customer case study or a claim of client results.");
     expect(page).not.toContain("Career Transition");
