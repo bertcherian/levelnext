@@ -19,3 +19,11 @@
 - [x] Update Manager audience label from “Managers and People Leaders” to “Managers & People Leaders”
 - [x] Update Leader audience label from “Senior Managers and Emerging Leaders” to “Strategic & Business Leaders”
 - [x] Verify the updated talent-pipeline labels and publish the landing page copy refinement
+- [x] Add concise audience-specific microcopy beneath the Launch, Manager, and Leader pipeline stages
+- [x] Route every career stage to its appropriate tailored diagnostic or experience flow
+- [x] Adjust mobile spacing and label wrapping for the longer career-stage audience labels
+- [x] Add regression coverage and verify the enhanced career-stage journey across desktop and mobile
+- [ ] Publish the completed career-stage journey update
+- [x] Visually verify the enhanced career-stage journey on desktop after the microcopy, links, and spacing changes
+- [x] Reviewed 375×812 mobile and 1280×900 desktop captures: pipeline cards remain legible, labels wrap without clipping, and the new microcopy and stage CTAs preserve clear spacing
+- [ ] Save a checkpoint to publish the completed career-stage journey update

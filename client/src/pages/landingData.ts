@@ -4,6 +4,8 @@ export type CareerStage = {
   tagline: string;
   audience: string;
   description: string;
+  pipelineMicrocopy: string;
+  ctaLabel: string;
   href: string;
   focus: string[];
 };
@@ -16,7 +18,9 @@ export const careerStages: CareerStage[] = [
     audience: "Freshers & Early Career",
     description:
       "College taught you how to get the job. LevelNext helps you succeed in it—with the confidence, communication and judgement work asks for.",
-    href: "/launch",
+    pipelineMicrocopy: "Build confidence for your first 90 days at work.",
+    ctaLabel: "Start your Launch journey",
+    href: "/launch/home",
     focus: ["Workplace confidence", "Professional judgement", "Communication"],
   },
   {
@@ -26,7 +30,9 @@ export const careerStages: CareerStage[] = [
     audience: "Individual contributors",
     description:
       "Understand the capabilities that matter most, see where work is getting stuck and build the behaviours that increase your effectiveness.",
-    href: "/pe",
+    pipelineMicrocopy: "Diagnose the habits that make everyday work flow.",
+    ctaLabel: "Start your PEI diagnostic",
+    href: "/pe/assessment",
     focus: ["Ownership", "Execution", "Influence"],
   },
   {
@@ -36,7 +42,9 @@ export const careerStages: CareerStage[] = [
     audience: "Managers & People Leaders",
     description:
       "Make the shift from individual output to team performance—by learning to enable, coach and create accountability through others.",
-    href: "/manager-effectiveness",
+    pipelineMicrocopy: "Turn individual output into accountable team performance.",
+    ctaLabel: "Start your Manager diagnostic",
+    href: "/manager/diagnostics",
     focus: ["Coaching", "Delegation", "Team performance"],
   },
   {
@@ -46,7 +54,9 @@ export const careerStages: CareerStage[] = [
     audience: "Strategic & Business Leaders",
     description:
       "Navigate complexity, influence across boundaries and create outcomes through an organisation—not just a team.",
-    href: "/signup?experience=leader",
+    pipelineMicrocopy: "Lead across priorities, functions and organisational complexity.",
+    ctaLabel: "Start your Leadership diagnostic",
+    href: "/diagnostics/lii",
     focus: ["Strategic thinking", "Enterprise influence", "Complexity"],
   },
 ];

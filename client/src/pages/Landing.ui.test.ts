@@ -47,4 +47,16 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("Start your diagnosis");
     expect(page).toContain("/signup?platform=leadership");
   });
+
+  it("makes every talent-pipeline stage a contextual link to its tailored diagnostic flow", () => {
+    const page = renderToStaticMarkup(createElement(Landing));
+
+    expect(page).toContain("Build confidence for your first 90 days at work.");
+    expect(page).toContain("Turn individual output into accountable team performance.");
+    expect(page).toContain("Lead across priorities, functions and organisational complexity.");
+    expect(page).toContain('href="/launch/home"');
+    expect(page).toContain('href="/pe/assessment"');
+    expect(page).toContain('href="/manager/diagnostics"');
+    expect(page).toContain('href="/diagnostics/lii"');
+  });
 });

@@ -27,6 +27,19 @@ describe("LevelNext landing page content model", () => {
       "Managers & People Leaders",
       "Strategic & Business Leaders",
     ]);
+    expect(careerStages.map((stage) => stage.href)).toEqual([
+      "/launch/home",
+      "/pe/assessment",
+      "/manager/diagnostics",
+      "/diagnostics/lii",
+    ]);
+    expect(careerStages.map((stage) => stage.pipelineMicrocopy)).toEqual([
+      expect.stringMatching(/first 90 days/i),
+      expect.stringMatching(/everyday work/i),
+      expect.stringMatching(/team performance/i),
+      expect.stringMatching(/organisational complexity/i),
+    ]);
+    expect(careerStages.every((stage) => stage.ctaLabel.startsWith("Start your"))).toBe(true);
   });
 
   it("uses a closed intelligence loop from diagnosis through adaptation", () => {

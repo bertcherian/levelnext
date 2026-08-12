@@ -207,7 +207,7 @@ export default function Landing() {
               <div className="ln-stage-showcase__focus">
                 {stage.focus.map((item) => <span key={item}>{item}</span>)}
               </div>
-              <a className="ln-text-link" href={stage.href}>Explore LevelNext {stage.name} <ArrowRight size={16} /></a>
+              <a className="ln-text-link" href={stage.href}>{stage.ctaLabel} <ArrowRight size={16} /></a>
             </div>
             <StageVisual name={stage.name} />
           </article>
@@ -292,7 +292,18 @@ export default function Landing() {
             <p>Develop capability across levels without stitching together disconnected programmes, diagnostics, coaching tools and learning platforms.</p>
           </div>
           <div className="ln-enterprise__pipeline" aria-label="Organisational talent pipeline">
-            {careerStages.map((item) => <div key={item.name}><span>{item.audience.split(" · ")[0].toUpperCase()}</span><b>{item.name}</b></div>)}
+            {careerStages.map((item) => (
+              <a
+                key={item.name}
+                className="ln-enterprise__stage"
+                href={item.href}
+                aria-label={`${item.ctaLabel}: ${item.pipelineMicrocopy}`}
+              >
+                <span>{item.audience.toUpperCase()}</span>
+                <b>{item.name}</b>
+                <p>{item.pipelineMicrocopy}</p>
+              </a>
+            ))}
             <div className="ln-enterprise__core-label"><span>LevelNext Intelligence Core</span><b>Organisational Intelligence</b></div>
           </div>
           <div className="ln-value-grid">
