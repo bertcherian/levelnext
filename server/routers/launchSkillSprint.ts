@@ -271,7 +271,7 @@ export const launchSkillSprintRouter = router({
         messages: [
           {
             role: "user",
-            content: `You are Layla, an encouraging career coach for early-career professionals on LevelNext.
+            content: `You are Navi, an encouraging career coach for early-career professionals on LevelNext.
 
 The user just completed the "${module.title}" skill module and submitted this challenge response:
 

@@ -372,13 +372,13 @@ export default function LaunchLanding() {
             <div style={{ textAlign: "center", marginBottom: 48 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.1em", marginBottom: 12 }}>HOW IT WORKS</p>
               <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 800, color: "#F8FAFC", textShadow: "0 1px 18px rgba(0,0,0,0.24)", fontFamily: "'Space Grotesk', sans-serif" }}>
-                Your AI coach, Layla, guides every step
+                Your AI coach, Navi, guides every step
               </h2>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 24 }}>
               {[
-                { step: "01", title: "Set Your Goal", desc: "Tell Layla what you're aiming for — first job, promotion, or startup. She personalises your entire journey.", color: "#3B82F6" },
+                { step: "01", title: "Set Your Goal", desc: "Tell Navi what you're aiming for — first job, promotion, or startup. She personalises your entire journey.", color: "#3B82F6" },
                 { step: "02", title: "Complete Missions", desc: "Work through AI-powered missions at your own pace. Each one builds a real, tangible career asset.", color: "#10B981" },
                 { step: "03", title: "Earn XP & Level Up", desc: "Track your progress with XP, streaks, and levels. From Career Explorer to Launch Legend.", color: "#F59E0B" },
                 { step: "04", title: "Land the Role", desc: "Walk into every interview, negotiation, and application with the confidence of someone who's prepared.", color: "#8B5CF6" },

@@ -113,7 +113,7 @@ export default function LaunchResumeMakeover() {
     return (
       <AIGeneratingScreen
         title="Analysing Your Resume"
-        subtitle="Layla is reviewing your resume for ATS compatibility, impact, and career readiness..."
+        subtitle="Navi is reviewing your resume for ATS compatibility, impact, and career readiness..."
         accentColor="#3B82F6"
         icon={<BarChart2 size={32} style={{ color: "#3B82F6" }} />}
         steps={[
@@ -132,7 +132,7 @@ export default function LaunchResumeMakeover() {
     return (
       <AIGeneratingScreen
         title="Rewriting Your Resume"
-        subtitle="Layla is crafting a stronger, ATS-optimised version of your resume..."
+        subtitle="Navi is crafting a stronger, ATS-optimised version of your resume..."
         accentColor="#8B5CF6"
         icon={<Wand2 size={32} style={{ color: "#8B5CF6" }} />}
         steps={[
@@ -164,7 +164,7 @@ export default function LaunchResumeMakeover() {
               Resume Makeover
             </h1>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)", fontFamily: "Manrope, sans-serif" }}>
-              Upload your resume and Layla will analyse it for ATS compatibility, impact, and career readiness — then rewrite it to stand out.
+              Upload your resume and Navi will analyse it for ATS compatibility, impact, and career readiness — then rewrite it to stand out.
             </p>
           </div>
 

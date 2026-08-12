@@ -340,7 +340,7 @@ export default function LaunchSkillSprint() {
     const color = CATEGORY_COLORS[module?.category ?? "Communication"] ?? "#3B82F6";
     return (
       <AIGeneratingScreen
-        title="Layla is reviewing your response..."
+        title="Navi is reviewing your response..."
         subtitle="Analysing your challenge submission and crafting personalised feedback"
         accentColor={color}
         icon={<Zap size={32} style={{ color }} />}
@@ -377,11 +377,11 @@ export default function LaunchSkillSprint() {
             <p className="text-xs" style={{ color: "#F59E0B" }}>+{xpEarned} XP earned</p>
           </div>
 
-          {/* Layla's feedback */}
+          {/* Navi's feedback */}
           <div className="p-5 rounded-2xl mb-6" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm" style={{ background: "#3B82F620" }}>🌟</div>
-              <p className="text-xs font-semibold" style={{ color: "#3B82F6" }}>Layla's Feedback</p>
+              <p className="text-xs font-semibold" style={{ color: "#3B82F6" }}>Navi's Feedback</p>
             </div>
             <p className="text-sm leading-relaxed text-white" style={{ fontFamily: "Manrope, sans-serif" }}>{feedback}</p>
           </div>

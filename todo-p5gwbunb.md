@@ -8,3 +8,6 @@
 - [x] Locate the Layla heading in the Launch landing page and identify its current contrast styles.
 - [x] Update the heading to an accessible light treatment that remains legible on the dark Launch background.
 - [x] Add focused regression coverage, verify the rendered section, and publish the contrast fix.
+- [x] Find all user-facing references to the Launch AI coach name Layla.
+- [x] Rename the Launch AI coach to Navi and add coverage preventing stale Layla copy.
+- [x] Validate the renamed Launch experience and publish the update.
