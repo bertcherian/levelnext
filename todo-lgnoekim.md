@@ -15,4 +15,4 @@
 - [x] Add a clearly labelled organisation case-study and implementation-path section beneath the enterprise CTA without fabricating customer results or testimonials.
 - [x] Redesign the standalone Launch Intelligence landing page with distinct B2C messaging, conversion CTA hierarchy, and a separate acquisition journey.
 - [x] Update landing-page regression tests and validate the B2B home page plus the Launch B2C landing route across desktop and mobile.
-- [ ] Save a production checkpoint for the validated enterprise messaging and Launch landing-page update.
+- [x] Save a production checkpoint for the validated enterprise messaging and Launch landing-page update.
