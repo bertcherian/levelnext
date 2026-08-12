@@ -29,10 +29,14 @@
 - [x] Implement privacy-safe HR cohort intelligence using aggregate thresholds and no access to private coaching or raw answers.
 - [x] Implement organisation-owner nudge configuration, including enablement, cadence, stage, and audience controls.
 - [ ] Add loading, error, and retry recovery states to the Guide and Practice Partner interfaces.
-- [ ] Build editable owner nudge controls for enablement, cadence, stage, day, and time.
-- [ ] Wire saved Early Career nudge settings to the scheduled delivery path.
+- [x] Build editable owner nudge controls for enablement, cadence, stage, day, and time.
+- [x] Wire saved Early Career nudge settings to the scheduled delivery path.
 - [ ] Add Early Career tests for diagnostic scoring, privacy thresholds, and AI prompt/context guardrails.
 - [x] Extend diagnostic results with deterministic capability guidance and a concrete private next action.
 - [x] Fix the diagnostic completion state so the completed result renders immediately after the final answer.
 - [x] Add explicit retryable mutation error feedback for starting and submitting the diagnostic.
 - [ ] Run type checks, full regression tests, visual validation, and publish the expanded Early Career release.
+- [ ] Register and validate the focused Early Career nudge callback without adding repeated progress messaging.
+- [ ] Execute the Early Career nudge callback against a controlled configuration and verify privacy-safe delivery and cadence deduplication.
+- [ ] Add automated coverage for nudge schedule registration and the employee/manager delivery boundary.
+- [ ] Save one verified checkpoint for the focused Early Career release pass.

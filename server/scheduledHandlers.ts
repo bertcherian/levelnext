@@ -24,6 +24,9 @@ import {
   icRecommendations,
   icOutcomeObservations,
   icOutboxEvents,
+  earlyCareerNudgeConfigs,
+  earlyCareerNudgeDeliveries,
+  earlyCareerProfiles,
 } from "../drizzle/schema";
 import { eq, gte, and, desc, sql } from "drizzle-orm";
 
@@ -417,6 +420,74 @@ export async function icOutboxPublisherHandler(req: Request, res: Response) {
     return res.json({ ok: true, published });
   } catch (error) {
     console.error("[IC Outbox Publisher] Error:", error);
+    return res.status(500).json({ ok: false, error: String(error) });
+  }
+}
+
+// ── Early Career Nudge Delivery ───────────────────────────────────────────────
+// Invoked hourly by a platform-managed schedule. Owner settings determine the
+// precise day/hour; deliveries retain only development-safe text and never store
+// raw diagnostic answers, Guide content, or Practice Partner transcripts.
+export async function earlyCareerNudgeDeliveryHandler(req: Request, res: Response) {
+  try {
+    const db = await getDb();
+    if (!db) return res.json({ ok: true, skipped: "no-db" });
+
+    const now = new Date();
+    const requestedConfigId = typeof req.body?.configId === "number" ? req.body.configId : null;
+    const activeConfigs = (await db
+      .select()
+      .from(earlyCareerNudgeConfigs)
+      .where(eq(earlyCareerNudgeConfigs.enabled, true)))
+      .filter((config) => requestedConfigId === null || config.id === requestedConfigId);
+
+    let created = 0;
+    for (const config of activeConfigs) {
+      if (config.dayOfWeek !== now.getUTCDay() || config.hourUtc !== now.getUTCHours()) continue;
+      const minimumIntervalDays = config.cadence === "weekly" ? 7 : config.cadence === "fortnightly" ? 14 : 28;
+      const cutoff = new Date(now.getTime() - minimumIntervalDays * 24 * 60 * 60 * 1000);
+      const profiles = await db
+        .select()
+        .from(earlyCareerProfiles)
+        .where(and(
+          eq(earlyCareerProfiles.tenantId, config.tenantId),
+          config.journeyStage === "all" ? sql`1 = 1` : eq(earlyCareerProfiles.journeyStage, config.journeyStage as "orient" | "deliver" | "connect" | "navigate" | "grow" | "contribute" | "accelerate"),
+        ));
+
+      for (const profile of profiles) {
+        const recipientUserId = config.audience === "employees" ? profile.userId : profile.managerUserId;
+        if (!recipientUserId) continue;
+        const recent = await db
+          .select({ id: earlyCareerNudgeDeliveries.id })
+          .from(earlyCareerNudgeDeliveries)
+          .where(and(
+            eq(earlyCareerNudgeDeliveries.configId, config.id),
+            eq(earlyCareerNudgeDeliveries.recipientUserId, recipientUserId),
+            gte(earlyCareerNudgeDeliveries.createdAt, cutoff),
+          ))
+          .limit(1);
+        if (recent.length) continue;
+
+        const isManager = config.audience === "managers";
+        const title = isManager ? "Early Career manager check-in" : "Your Early Career next move";
+        const body = isManager
+          ? "Set aside a short check-in that clarifies priorities, removes one obstacle, and confirms a useful next step. Private employee reflections and coaching remain private."
+          : "Choose one small workplace action this week: clarify a priority, ask for feedback, or capture evidence of progress. This is a private development nudge, not a performance rating.";
+        await db.insert(earlyCareerNudgeDeliveries).values({
+          configId: config.id,
+          recipientUserId,
+          employeeUserId: isManager ? profile.userId : null,
+          tenantId: config.tenantId,
+          title,
+          body,
+        });
+        created++;
+      }
+    }
+
+    return res.json({ ok: true, created, checked: activeConfigs.length, at: now.toISOString() });
+  } catch (error) {
+    console.error("[EarlyCareerNudgeDelivery] Error:", error);
     return res.status(500).json({ ok: false, error: String(error) });
   }
 }

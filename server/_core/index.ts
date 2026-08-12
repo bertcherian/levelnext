@@ -12,7 +12,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { weeklySummaryHandler, momentumCheckinHandler, icFollowUpReminderHandler, icOutboxPublisherHandler } from "../scheduledHandlers";
+import { weeklySummaryHandler, momentumCheckinHandler, icFollowUpReminderHandler, icOutboxPublisherHandler, earlyCareerNudgeDeliveryHandler } from "../scheduledHandlers";
 
 // ── Allowed origins for CORS ──────────────────────────────────────────────────
 const PRODUCTION_ORIGINS = [
@@ -140,6 +140,7 @@ async function startServer() {
   app.post("/api/scheduled/momentumCheckin", momentumCheckinHandler);
   app.post("/api/scheduled/icFollowUpReminder", icFollowUpReminderHandler);
   app.post("/api/scheduled/icOutboxPublisher", icOutboxPublisherHandler);
+  app.post("/api/scheduled/earlyCareerNudges", earlyCareerNudgeDeliveryHandler);
 
   // tRPC API — strict limiter applied before the tRPC handler
   app.use("/api/trpc", llmLimiter);

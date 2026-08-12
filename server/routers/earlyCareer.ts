@@ -37,6 +37,7 @@ import {
   scoreEarlyCareerDiagnostic,
 } from "../../shared/modules/earlyCareerDiagnostic";
 import { invokeLLM } from "../_core/llm";
+import { createHeartbeatJob, updateHeartbeatJob } from "../_core/heartbeat";
 
 const stages = ["orient", "deliver", "connect", "navigate", "grow", "contribute", "accelerate"] as const;
 const capabilities = [
@@ -330,8 +331,21 @@ export const earlyCareerRouter = router({
     if (!membership && ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Organisation owner access is required." });
     if (!membership) throw new TRPCError({ code: "BAD_REQUEST", message: "A tenant owner membership is required." });
     const [existing] = await db.select().from(earlyCareerNudgeConfigs).where(and(eq(earlyCareerNudgeConfigs.tenantId, membership.tenantId), eq(earlyCareerNudgeConfigs.audience, input.audience))).limit(1);
-    if (existing) { await db.update(earlyCareerNudgeConfigs).set(input).where(eq(earlyCareerNudgeConfigs.id, existing.id)); return { id: existing.id }; }
-    const [created] = await db.insert(earlyCareerNudgeConfigs).values({ ...input, tenantId: membership.tenantId, createdByUserId: ctx.user.id }).$returningId(); return { id: created.id };
+    let configId: number;
+    let taskUid = existing?.scheduleCronTaskUid ?? null;
+    if (existing) { await db.update(earlyCareerNudgeConfigs).set(input).where(eq(earlyCareerNudgeConfigs.id, existing.id)); configId = existing.id; }
+    else { const [created] = await db.insert(earlyCareerNudgeConfigs).values({ ...input, tenantId: membership.tenantId, createdByUserId: ctx.user.id }).$returningId(); configId = created.id; }
+
+    const cron = `0 0 ${input.hourUtc} * * ${input.dayOfWeek}`;
+    const schedulePatch = { cron, path: "/api/scheduled/earlyCareerNudges", method: "POST" as const, payload: { configId }, description: `Early Career ${input.audience} nudges for tenant ${membership.tenantId}`, enable: input.enabled };
+    if (taskUid) await updateHeartbeatJob(taskUid, schedulePatch, "");
+    else {
+      const createdJob = await createHeartbeatJob({ name: `early-career-${membership.tenantId}-${input.audience}`, cron, path: "/api/scheduled/earlyCareerNudges", method: "POST", payload: { configId }, description: `Early Career ${input.audience} nudges for tenant ${membership.tenantId}` }, "");
+      taskUid = createdJob.taskUid;
+      if (!input.enabled) await updateHeartbeatJob(taskUid, { enable: false }, "");
+      await db.update(earlyCareerNudgeConfigs).set({ scheduleCronTaskUid: taskUid }).where(eq(earlyCareerNudgeConfigs.id, configId));
+    }
+    return { id: configId, scheduleCronTaskUid: taskUid };
   }),
 
   getHome: protectedProcedure.query(async ({ ctx }) => {
