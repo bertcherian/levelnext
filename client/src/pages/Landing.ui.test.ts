@@ -12,7 +12,9 @@ describe("LevelNext public landing page", () => {
   it("renders the master Professional Intelligence narrative and organisation pathway", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain("Whatever your next level");
+    expect(page).toContain("Your Next Level changes");
+    expect(page).toContain("what success demands.");
+    expect(page).toContain("From early career to enterprise leadership, LevelNext builds the intelligence, judgment and everyday capabilities you need for the level you’re stepping into.");
     expect(page).toContain("Professional Intelligence");
     expect(page).toContain("One platform.");
     expect(page).toContain("Across your talent pipeline.");
