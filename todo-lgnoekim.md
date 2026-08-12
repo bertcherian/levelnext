@@ -38,4 +38,4 @@
 - [x] Centre the hero composition and CTAs, keep “Your Next Level Changes” on one smaller white line, and preserve the gold second line.
 - [x] Reproduce the Forbidden response on the custom domain and escalate the hosting-layer routing issue to Manus Help because the application is not reached.
 - [x] Add regression coverage and validate the revised landing page and custom-domain behavior before publishing.
-- [ ] Save a production checkpoint for the validated hierarchy, readability, hero, and domain work.
+- [x] Save a production checkpoint for the validated hierarchy, readability, hero, and domain work.
