@@ -13,14 +13,20 @@ const launchCoachSources = [
   "server/routers/launchSkillSprint.ts",
 ].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
 
-describe("Launch Landing Navi heading contrast", () => {
-  it("uses a light, explicit foreground treatment over the dark How It Works background", () => {
-    expect(launchLandingSource).toContain('color: "#F8FAFC", textShadow: "0 1px 18px rgba(0,0,0,0.24)"');
-    expect(launchLandingSource).toContain("Your AI coach, Navi, guides every step");
+describe("Launch Intelligence B2C acquisition page", () => {
+  it("uses a neo-brutalist visual system instead of a dark SaaS treatment", () => {
+    expect(launchLandingSource).toContain('className="launch-brutal"');
+    expect(launchLandingSource).toContain("Not another generic career course");
+    expect(launchLandingSource).toContain("Are your first");
+    expect(launchLandingSource).toContain("Start the 7-mission sprint");
+    expect(launchLandingSource).toContain('import "./launchLanding.css"');
   });
 
-  it("uses Navi consistently throughout the Launch coach experience", () => {
+  it("keeps Navi consistent and omits fabricated reviews or ratings", () => {
     expect(launchCoachSources).toContain("Navi");
     expect(launchCoachSources).not.toContain("Layla");
+    expect(launchLandingSource).not.toContain("TESTIMONIALS");
+    expect(launchLandingSource).not.toContain("Rated by early-career professionals");
+    expect(launchLandingSource).not.toContain("5.0");
   });
 });

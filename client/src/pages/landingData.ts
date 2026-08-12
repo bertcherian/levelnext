@@ -7,6 +7,7 @@ export type CareerStage = {
   tagline: string;
   audience: string;
   description: string;
+  buyerOutcome: string;
   pipelineMicrocopy: string;
   ctaLabel: string;
   href: string;
@@ -20,14 +21,15 @@ export const careerStages: CareerStage[] = [
     name: "Early Career Intelligence",
     shortName: "Early Career",
     journeyLabel: "Build your first 1,000 days with intent.",
-    tagline: "Your first 1,000 days shape what comes next.",
+    tagline: "Turn early potential into role-ready capability.",
     audience: "Early Career Professionals",
     description:
-      "Help early-career talent learn how work works, build professional confidence and turn their first 1,000 days into visible growth.",
-    pipelineMicrocopy: "Build workplace confidence, capability and habits from day one.",
+      "Give early-career cohorts a shared operating language, practical work habits and visible progress—so they become dependable contributors sooner.",
+    buyerOutcome: "Shorten the path from joining to reliable contribution.",
+    pipelineMicrocopy: "Accelerate role readiness with common work standards and clear development signals.",
     ctaLabel: "Start your Early Career journey",
     href: "/early-career",
-    focus: ["Workplace confidence", "Professional habits", "Visible growth"],
+    focus: ["Role readiness", "Cohort confidence", "Visible progress"],
   },
   {
     key: "professional",
@@ -35,14 +37,15 @@ export const careerStages: CareerStage[] = [
     name: "Professional Intelligence",
     shortName: "Professional",
     journeyLabel: "Become exceptional at your work.",
-    tagline: "Become exceptional at getting work done.",
+    tagline: "Make execution more reliable across the work that matters.",
     audience: "Individual contributors",
     description:
-      "Understand the capabilities that matter most, see where work is getting stuck and build the behaviours that increase your effectiveness.",
-    pipelineMicrocopy: "Diagnose the habits that make everyday work flow.",
+      "Help critical individual contributors take ownership, communicate risk early and move work forward with less manager intervention.",
+    buyerOutcome: "Reduce avoidable delivery friction in the work your business depends on.",
+    pipelineMicrocopy: "Strengthen ownership, execution and cross-functional follow-through.",
     ctaLabel: "Start your PEI diagnostic",
     href: "/pe/assessment",
-    focus: ["Ownership", "Execution", "Influence"],
+    focus: ["Execution reliability", "Risk visibility", "Follow-through"],
   },
   {
     key: "manager",
@@ -50,14 +53,15 @@ export const careerStages: CareerStage[] = [
     name: "Manager Effectiveness",
     shortName: "Manager",
     journeyLabel: "Succeed through others.",
-    tagline: "Your job changed. Did the way you work?",
+    tagline: "Turn managerial intent into accountable team performance.",
     audience: "Managers & People Leaders",
     description:
-      "Make the shift from individual output to team performance—by learning to enable, coach and create accountability through others.",
-    pipelineMicrocopy: "Turn individual output into accountable team performance.",
+      "Equip managers to create coaching routines, clearer delegation and earlier performance conversations across their teams.",
+    buyerOutcome: "Lift team accountability without adding another management programme.",
+    pipelineMicrocopy: "Build coaching, delegation and accountability into the manager’s operating rhythm.",
     ctaLabel: "Start your Manager diagnostic",
     href: "/manager/diagnostics",
-    focus: ["Coaching", "Delegation", "Team performance"],
+    focus: ["Coaching cadence", "Delegation clarity", "Team accountability"],
   },
   {
     key: "leader",
@@ -65,14 +69,15 @@ export const careerStages: CareerStage[] = [
     name: "Leader Intelligence",
     shortName: "Leader",
     journeyLabel: "Succeed through the organisation.",
-    tagline: "Leadership begins where authority stops being enough.",
+    tagline: "Build the alignment required to execute through complexity.",
     audience: "Strategic & Business Leaders",
     description:
-      "Navigate complexity, influence across boundaries and create outcomes through an organisation—not just a team.",
-    pipelineMicrocopy: "Lead across priorities, functions and organisational complexity.",
+      "Develop leaders who align functions around strategic choices, improve decision quality and mobilise enterprise-wide action.",
+    buyerOutcome: "Increase your organisation’s capacity to execute the decisions that matter most.",
+    pipelineMicrocopy: "Strengthen strategic alignment, enterprise influence and execution across boundaries.",
     ctaLabel: "Start your Leadership diagnostic",
     href: "/diagnostics/lii",
-    focus: ["Strategic thinking", "Enterprise influence", "Complexity"],
+    focus: ["Strategic alignment", "Decision quality", "Enterprise execution"],
   },
 ];
 

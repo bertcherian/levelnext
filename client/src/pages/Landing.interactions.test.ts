@@ -17,8 +17,8 @@ describe("LevelNext landing page interactions", () => {
     await user.click(leaderTab);
 
     expect(leaderTab.getAttribute("aria-selected")).toBe("true");
-    expect(screen.getByText("Leadership begins where authority stops being enough.")).toBeTruthy();
-    expect(screen.getByText("Enterprise influence")).toBeTruthy();
+    expect(screen.getByText("Build the alignment required to execute through complexity.")).toBeTruthy();
+    expect(screen.getByText("Enterprise execution")).toBeTruthy();
   });
 
   it("changes the intelligence prompt when a visitor chooses a different role context", async () => {
@@ -45,7 +45,7 @@ describe("LevelNext landing page interactions", () => {
     const earlyCareerChip = within(quickFilter).getByText("Early Career").closest("button")!;
     await user.click(earlyCareerChip);
 
-    expect(screen.getByText(/Your first 1,000 days shape what comes next\./)).toBeTruthy();
+    expect(screen.getByText(/Turn early potential into role-ready capability\./)).toBeTruthy();
   });
 
   it("renders a sign-up CTA at the end of the Professional Intelligence narrative", () => {

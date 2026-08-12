@@ -34,10 +34,16 @@ describe("LevelNext landing page content model", () => {
       "/diagnostics/lii",
     ]);
     expect(careerStages.map((stage) => stage.pipelineMicrocopy)).toEqual([
-      expect.stringMatching(/day one/i),
-      expect.stringMatching(/everyday work/i),
-      expect.stringMatching(/team performance/i),
-      expect.stringMatching(/organisational complexity/i),
+      expect.stringMatching(/role readiness/i),
+      expect.stringMatching(/execution/i),
+      expect.stringMatching(/accountability/i),
+      expect.stringMatching(/strategic alignment/i),
+    ]);
+    expect(careerStages.map((stage) => stage.buyerOutcome)).toEqual([
+      expect.stringMatching(/reliable contribution/i),
+      expect.stringMatching(/delivery friction/i),
+      expect.stringMatching(/team accountability/i),
+      expect.stringMatching(/capacity to execute/i),
     ]);
     expect(careerStages.every((stage) => stage.ctaLabel.startsWith("Start your"))).toBe(true);
   });

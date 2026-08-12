@@ -19,6 +19,9 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("Early Career Intelligence");
     expect(page).toContain("Manager Effectiveness");
     expect(page).toContain("Leader Intelligence");
+    expect(page).toContain("Enterprise outcome");
+    expect(page).toContain("Illustrative organisation scenario");
+    expect(page).toContain("This is an illustrative implementation scenario, not a customer case study or a claim of client results.");
     expect(page).not.toContain("Career Transition");
     expect(page).not.toContain("LevelNext Launch");
   });
@@ -32,7 +35,7 @@ describe("LevelNext public landing page", () => {
     expect(getCareerStage(3).name).toBe("Leader Intelligence");
     expect(getCareerStage(99).name).toBe("Professional Intelligence");
     expect(page).toContain('aria-selected="true"');
-    expect(page).toContain("Become exceptional at getting work done.");
+    expect(page).toContain("Make execution more reliable across the work that matters.");
   });
 
   it("renders the three role-specific personalisation controls and the default question", () => {
@@ -55,9 +58,9 @@ describe("LevelNext public landing page", () => {
   it("makes every talent-pipeline stage a contextual link to its tailored diagnostic flow", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain("Build workplace confidence, capability and habits from day one.");
-    expect(page).toContain("Turn individual output into accountable team performance.");
-    expect(page).toContain("Lead across priorities, functions and organisational complexity.");
+    expect(page).toContain("Accelerate role readiness with common work standards and clear development signals.");
+    expect(page).toContain("Build coaching, delegation and accountability into the manager’s operating rhythm.");
+    expect(page).toContain("Strengthen strategic alignment, enterprise influence and execution across boundaries.");
     expect(page).toContain('href="/early-career"');
     expect(page).toContain('href="/pe/assessment"');
     expect(page).toContain('href="/manager/diagnostics"');

@@ -197,6 +197,7 @@ export default function Landing() {
               <p className="ln-stage-showcase__number">{stage.number} / {stage.name}</p>
               <h3>{stage.tagline}</h3>
               <p className="ln-stage-showcase__description">{stage.description}</p>
+              <p className="ln-stage-showcase__outcome"><span>Enterprise outcome</span>{stage.buyerOutcome}</p>
               <p className="ln-stage-showcase__audience">For {stage.audience}</p>
               <div className="ln-stage-showcase__focus">
                 {stage.focus.map((item) => <span key={item}>{item}</span>)}
@@ -293,6 +294,42 @@ export default function Landing() {
           <div className="ln-enterprise__actions">
             <a className="ln-button" href={organisationConversationUrl} target="_blank" rel="noreferrer">Explore LevelNext for Organisations <ArrowRight size={17} /></a>
             <a className="ln-text-link ln-text-link--light" href={organisationConversationUrl} target="_blank" rel="noreferrer">Talk to us <ArrowRight size={16} /></a>
+          </div>
+        </div>
+      </section>
+
+      <section className="ln-implementation" aria-labelledby="implementation-title">
+        <div className="ln-section-frame">
+          <div className="ln-implementation__heading">
+            <p className="ln-eyebrow">Implementation path</p>
+            <h2 id="implementation-title">From a business priority<br /><em>to observable capability.</em></h2>
+            <p>Use LevelNext to connect a business-critical capability priority with targeted development, real-work practice and leadership visibility.</p>
+          </div>
+          <div className="ln-implementation__grid">
+            <article className="ln-implementation__case">
+              <span>Illustrative organisation scenario</span>
+              <h3>Prepare new managers before a fast-growing business unit changes how teams operate.</h3>
+              <p>Rather than begin with a generic programme, leaders align on the management moments that matter, establish a baseline and activate the Manager Effectiveness experience for the groups carrying the change.</p>
+              <div className="ln-implementation__signals">
+                <p>Leaders can observe</p>
+                <ul>
+                  <li>Where confidence and capability differ across the manager cohort.</li>
+                  <li>Which operating habits are gaining traction in real work.</li>
+                  <li>Where the next intervention or leadership conversation is needed.</li>
+                </ul>
+              </div>
+              <small>This is an illustrative implementation scenario, not a customer case study or a claim of client results.</small>
+            </article>
+            <ol className="ln-implementation__path" aria-label="Typical LevelNext implementation path">
+              <li><span>01</span><div><b>Align the priority</b><p>Identify the business context, critical population and the behaviours that will make a practical difference.</p></div></li>
+              <li><span>02</span><div><b>Establish the baseline</b><p>Use role-relevant diagnostics to make capability patterns visible before choosing interventions.</p></div></li>
+              <li><span>03</span><div><b>Activate in the flow of work</b><p>Give people targeted guidance, practice and action prompts that connect directly to their role.</p></div></li>
+              <li><span>04</span><div><b>Learn and tune</b><p>Review engagement and capability signals with sponsors, then adapt the next development move.</p></div></li>
+            </ol>
+          </div>
+          <div className="ln-implementation__actions">
+            <a className="ln-button ln-button--gold" href={organisationConversationUrl} target="_blank" rel="noreferrer">Map your capability priority <ArrowRight size={17} /></a>
+            <p>Designed for a focused cohort, a strategic capability initiative or an enterprise-wide talent pipeline.</p>
           </div>
         </div>
       </section>
