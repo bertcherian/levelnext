@@ -29,6 +29,7 @@ function sectionLink(id: string) {
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeStage, setActiveStage] = useState(defaultStageIndex);
+  const [activeCoreOutcome, setActiveCoreOutcome] = useState<number | null>(null);
   const [activeLevel, setActiveLevel] = useState<PersonalisationLevel>("Professional");
   const [pointer, setPointer] = useState({ x: 68, y: 46 });
 
@@ -249,10 +250,31 @@ export default function Landing() {
             <p>Every experience adapts to the stage, while drawing on a common intelligence architecture.</p>
           </div>
           <div className="ln-core__visual" aria-label="LevelNext Intelligence Core visualisation">
-            <div className="ln-core__products">
-              {careerStages.map((item) => <span key={item.key}>{item.name}</span>)}
+            <div className="ln-core__products" aria-label="LevelNext experiences and their enterprise outcomes">
+              {careerStages.map((item, index) => (
+                <button
+                  type="button"
+                  key={item.key}
+                  className={`ln-core__product-card ${activeCoreOutcome === index ? "is-outcome-open" : ""} ${activeStage === index ? "is-stage-active" : ""}`}
+                  aria-pressed={activeCoreOutcome === index}
+                  aria-label={`${item.name}: ${item.buyerOutcome}`}
+                  onMouseEnter={() => setActiveCoreOutcome(index)}
+                  onMouseLeave={() => setActiveCoreOutcome(null)}
+                  onFocus={() => setActiveCoreOutcome(index)}
+                  onBlur={() => setActiveCoreOutcome(null)}
+                  onClick={() => {
+                    setActiveStage(index);
+                    setActiveCoreOutcome(index);
+                  }}
+                >
+                  <span className="ln-core__product-name">{item.name}</span>
+                  <span className="ln-core__product-outcome"><b>Enterprise outcome</b>{item.buyerOutcome}</span>
+                </button>
+              ))}
             </div>
-            <div className="ln-core__signals" aria-hidden="true"><i /><i /><i /><i /></div>
+            <div className="ln-core__signals" aria-hidden="true">
+              {careerStages.map((item, index) => <i className={activeStage === index ? "is-active" : ""} key={item.key} />)}
+            </div>
             <div className="ln-core__base">
               <p>LevelNext <b>Intelligence Core</b></p>
               <div>{intelligenceCore.map((item) => <span key={item}>{item}</span>)}</div>

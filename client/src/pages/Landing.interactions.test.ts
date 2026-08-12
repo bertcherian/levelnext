@@ -48,6 +48,26 @@ describe("LevelNext landing page interactions", () => {
     expect(screen.getByText(/Turn early potential into role-ready capability\./)).toBeTruthy();
   });
 
+  it("reveals an enterprise outcome and synchronizes the matching Intelligence Core signal", async () => {
+    const user = userEvent.setup();
+    const { container } = render(createElement(Landing));
+
+    const earlyCareerCard = screen.getByRole("button", {
+      name: /Early Career Intelligence: Shorten the path from joining to reliable contribution/i,
+    });
+    await user.hover(earlyCareerCard);
+    expect(earlyCareerCard.className).toContain("is-outcome-open");
+
+    await user.unhover(earlyCareerCard);
+    await user.click(earlyCareerCard);
+
+    expect(earlyCareerCard.className).toContain("is-stage-active");
+    expect(earlyCareerCard.className).toContain("is-outcome-open");
+    const signalLines = container.querySelectorAll(".ln-core__signals i");
+    expect(signalLines[0]?.className).toContain("is-active");
+    expect(signalLines[1]?.className).not.toContain("is-active");
+  });
+
   it("renders a sign-up CTA at the end of the Professional Intelligence narrative", () => {
     render(createElement(Landing));
 

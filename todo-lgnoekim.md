@@ -23,3 +23,9 @@
 - [x] Improve the Why LevelNext headline letter spacing and brighten the blue text against the navy background.
 - [x] Strengthen Intelligence Core product-card borders, vertically and horizontally centre every label, and thicken the animated signal lines.
 - [x] Save a production checkpoint for the validated typography and Intelligence Core architecture refinements.
+- [x] Audit the current Intelligence Core interactions and remaining decorative landing-page lines for visibility gaps.
+- [x] Add accessible hover and keyboard-focus states that reveal the enterprise outcome for every Intelligence Core card.
+- [x] Synchronize the animated Intelligence Core signal lines with the active career stage selected in the journey controls.
+- [x] Complete the final decorative-line contrast pass for remaining low-alpha landing visuals and add focused regression coverage.
+- [x] Add regression coverage and validate the interactive and visual refinements across desktop and mobile.
+- [ ] Save a production checkpoint for the validated Intelligence Core interaction and accessibility refinements.
