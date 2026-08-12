@@ -28,7 +28,7 @@
 - [x] Build dedicated AI Coach and Practice Partner interfaces within the Early Career product shell.
 - [x] Implement privacy-safe HR cohort intelligence using aggregate thresholds and no access to private coaching or raw answers.
 - [x] Implement organisation-owner nudge configuration, including enablement, cadence, stage, and audience controls.
-- [ ] Add loading, error, and retry recovery states to the Guide and Practice Partner interfaces.
+- [x] Add loading, error, and retry recovery states to the Guide and Practice Partner interfaces.
 - [x] Build editable owner nudge controls for enablement, cadence, stage, day, and time.
 - [x] Wire saved Early Career nudge settings to the scheduled delivery path.
 - [ ] Add Early Career tests for diagnostic scoring, privacy thresholds, and AI prompt/context guardrails.
@@ -39,4 +39,7 @@
 - [ ] Register and validate the focused Early Career nudge callback without adding repeated progress messaging.
 - [ ] Execute the Early Career nudge callback against a controlled configuration and verify privacy-safe delivery and cadence deduplication.
 - [ ] Add automated coverage for nudge schedule registration and the employee/manager delivery boundary.
+- [x] Add explicit initial loading states and complete success, empty, error, and retry coverage for the Guide and Practice Partner.
+- [ ] Add and validate a clear empty state when no Practice Partner scenarios are available.
+- [ ] Exercise and test the zero-scenario Practice Partner state before the final release checkpoint.
 - [ ] Save one verified checkpoint for the focused Early Career release pass.
