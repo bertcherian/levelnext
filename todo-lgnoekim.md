@@ -42,4 +42,4 @@
 - [x] Identify organisation CTA sections eligible for centering without a right-side visual or diagram, and determine the Intelligence Core cue placement.
 - [x] Centre eligible organisation CTA compositions while preserving intentional visual-balanced layouts.
 - [x] Add a concise interaction cue above the Intelligence Core capability labels and cover it with regression tests.
-- [ ] Save a production checkpoint for the validated CTA composition and Intelligence Core interaction cue update.
+- [x] Save a production checkpoint for the validated CTA composition and Intelligence Core interaction cue update.
