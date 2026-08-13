@@ -12,6 +12,7 @@ import {
   ThumbsUp, Trophy, Zap
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ─── (AnimatedBg removed — provided by LaunchLayout) ─────────────────────────
 /*
@@ -67,24 +68,20 @@ function MissionCard({ mission, onComplete, onRate, completing, rating }: {
 
   return (
     <div
-      className="rounded-2xl p-4 transition-all duration-200"
+      className={`launch-mission-card rounded-2xl p-4 transition-all duration-200 ${done ? "is-complete" : ""}`}
       style={{
-        background: done
-          ? "rgba(16,185,129,0.08)"
-          : "rgba(255,255,255,0.04)",
-        border: done
-          ? "1.5px solid rgba(16,185,129,0.3)"
-          : "1.5px solid rgba(255,255,255,0.08)",
-        opacity: done ? 0.75 : 1,
+        background: done ? "#E0F9E8" : "#FFFDF8",
+        border: "2px solid #151515",
+        opacity: 1,
       }}>
       <div className="flex items-start gap-3">
         <button
           aria-label={done ? `${mission.title} completed` : `Complete ${mission.title}`}
           onClick={() => !done && onComplete(mission.id)}
           disabled={done || completing}
-          className="mt-0.5 shrink-0 transition-all duration-150"
-          style={{ color: done ? "#10B981" : "rgba(255,255,255,0.3)" }}>
-          {done ? <CheckCircle2 size={22} /> : <Circle size={22} />}
+          className="launch-mission-card__complete mt-0.5 shrink-0 transition-all duration-150"
+          style={{ color: "#151515" }}>
+          {done ? <CheckCircle2 size={26} /> : <Circle size={26} />}
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -97,15 +94,14 @@ function MissionCard({ mission, onComplete, onRate, completing, rating }: {
             </span>
             {done && <span className="text-[10px] font-semibold" style={{ color: "#10B981" }}>✓ Done</span>}
           </div>
-          <p className="font-semibold text-sm mb-1"
+          <p className="launch-mission-card__title font-semibold text-sm mb-1"
             style={{
-              color: done ? "#10B981" : "#fff",
               textDecoration: done ? "line-through" : "none",
               fontFamily: "Space Grotesk, sans-serif"
             }}>
             {mission.title}
           </p>
-          <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <p className="launch-mission-card__description text-xs leading-relaxed">
             {mission.description}
           </p>
           <div className="mission-feedback mt-3 flex items-center gap-1.5" aria-label={`Rate relevance of ${mission.title}`}>
@@ -192,40 +188,47 @@ function LevelRing({ level, xp }: { level: string; xp: number }) {
 }
 
 // ─── Quick Action Tile ────────────────────────────────────────────────────────
-function ActionTile({ icon: Icon, label, color, onClick }: {
-  icon: LucideIcon; label: string; color: string; onClick: () => void;
+function ActionTile({ icon: Icon, label, description, color, onClick }: {
+  icon: LucideIcon; label: string; description: string; color: string; onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      data-testid="quick-launch-tile"
-      className="rounded-xl px-3 py-4 flex flex-col items-center gap-3 text-center font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/40"
-      style={{
-        background: "#A7F3C1",
-        border: "2px solid #000000",
-        boxShadow: "5px 5px 0 #000000",
-        color: "#000000",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "#86EFAC";
-        e.currentTarget.style.boxShadow = "7px 7px 0 #000000";
-        e.currentTarget.style.transform = "translate(-2px, -2px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "#A7F3C1";
-        e.currentTarget.style.boxShadow = "5px 5px 0 #000000";
-        e.currentTarget.style.transform = "translate(0, 0)";
-      }}>
-      <span
-        className="w-14 h-14 rounded-full flex items-center justify-center"
-        style={{ background: "#F8F5F0", border: "2px solid #000000", boxShadow: `3px 3px 0 ${color}`, color: "#000000" }}
-        aria-hidden="true">
-        <Icon size={31} strokeWidth={2.4} />
-      </span>
-      <span className="text-[13px] leading-tight" style={{ color: "#000000" }}>{label}</span>
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={`${label}: ${description}`}
+          data-testid="quick-launch-tile"
+          className="rounded-xl px-3 py-4 flex flex-col items-center gap-3 text-center font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/40"
+          style={{
+            background: "#A7F3C1",
+            border: "2px solid #000000",
+            boxShadow: "5px 5px 0 #000000",
+            color: "#000000",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#86EFAC";
+            e.currentTarget.style.boxShadow = "7px 7px 0 #000000";
+            e.currentTarget.style.transform = "translate(-2px, -2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#A7F3C1";
+            e.currentTarget.style.boxShadow = "5px 5px 0 #000000";
+            e.currentTarget.style.transform = "translate(0, 0)";
+          }}>
+          <span
+            className="w-14 h-14 rounded-full flex items-center justify-center"
+            style={{ background: "#F8F5F0", border: "2px solid #000000", boxShadow: `3px 3px 0 ${color}`, color: "#000000" }}
+            aria-hidden="true">
+            <Icon size={31} strokeWidth={2.4} />
+          </span>
+          <span className="text-[13px] leading-tight" style={{ color: "#000000" }}>{label}</span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={10} className="max-w-56 border-2 border-black bg-[#FFF8E7] text-center font-semibold text-black shadow-[3px_3px_0_#000000]">
+        {description}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -302,12 +305,12 @@ export default function LaunchHome() {
   }
 
   const QUICK_ACTIONS = [
-    { icon: Map, label: "Journey Map", href: "/launch/journey", color: "#2563EB" },
-    { icon: Mic2, label: "Mock Interview", href: "/launch/interview", color: "#7C3AED" },
-    { icon: FileText, label: "Resume Makeover", href: "/launch/resume", color: "#059669" },
-    { icon: Banknote, label: "Negotiate Salary", href: "/launch/negotiate", color: "#D97706" },
-    { icon: ClipboardList, label: "Job Tracker", href: "/launch/applications", color: "#DC2626" },
-    { icon: Zap, label: "Skill Sprint", href: "/launch/mission/3", color: "#0891B2" },
+    { icon: Map, label: "Journey Map", description: "View your career-launch mission path.", href: "/launch/journey", color: "#2563EB" },
+    { icon: Mic2, label: "Mock Interview", description: "Practise answers with guided interview feedback.", href: "/launch/interview", color: "#7C3AED" },
+    { icon: FileText, label: "Resume Makeover", description: "Strengthen your résumé for target roles.", href: "/launch/resume", color: "#059669" },
+    { icon: Banknote, label: "Negotiate Salary", description: "Prepare a confident salary conversation.", href: "/launch/negotiate", color: "#D97706" },
+    { icon: ClipboardList, label: "Job Tracker", description: "Track every application and its next step.", href: "/launch/applications", color: "#DC2626" },
+    { icon: Zap, label: "Skill Sprint", description: "Build job-ready skills through focused sprints.", href: "/launch/mission/3", color: "#0891B2" },
   ];
 
   return (
@@ -365,13 +368,13 @@ export default function LaunchHome() {
             )}
 
             {/* Mission panel */}
-            <div className="rounded-3xl p-5"
+            <div className="launch-dashboard-card launch-dashboard-card--missions rounded-3xl p-5"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl flex items-center justify-center"
-                    style={{ background: "rgba(59,130,246,0.2)" }}>
-                    <Sparkles size={14} style={{ color: "#3B82F6" }} />
+                  <div className="launch-dashboard-card__icon-well"
+                    style={{ background: "#FFF3BD" }}>
+                    <Sparkles size={20} style={{ color: "#151515" }} />
                   </div>
                   <h2 className="font-bold text-base text-white" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
                     Today's Missions
@@ -412,7 +415,7 @@ export default function LaunchHome() {
             </div>
 
             {/* Quick Actions */}
-            <div className="rounded-2xl p-5"
+            <div className="launch-dashboard-card launch-dashboard-card--quick-launch rounded-2xl p-5"
               style={{ background: "#F8F5F0", border: "2px solid #000000", boxShadow: "8px 8px 0 #000000" }}>
               <h3 className="font-black text-sm mb-4" style={{ fontFamily: "Space Grotesk, sans-serif", color: "#000000" }}>
                 Quick Launch
@@ -429,7 +432,7 @@ export default function LaunchHome() {
           <div className="flex flex-col gap-4">
             {/* Level Ring */}
             {progress && (
-              <div className="rounded-3xl p-5 flex flex-col items-center"
+              <div className="launch-dashboard-card launch-dashboard-card--progress rounded-3xl p-5 flex flex-col items-center"
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}>
                 <LevelRing level={progress.currentLevel} xp={progress.totalXp} />
               </div>
@@ -437,11 +440,13 @@ export default function LaunchHome() {
 
             {/* Target Role */}
             {progress?.targetRole && (
-              <div className="rounded-3xl p-4"
+              <div className="launch-dashboard-card launch-dashboard-card--target rounded-3xl p-4"
                 style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)" }}>
                 <div className="flex items-center gap-1.5 mb-2">
-                  <Target size={12} style={{ color: "#3B82F6" }} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#3B82F6" }}>Target</span>
+                  <div className="launch-dashboard-card__icon-well launch-dashboard-card__icon-well--small" style={{ background: "#FFF8E7" }}>
+                    <Target size={18} style={{ color: "#151515" }} />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#151515" }}>Target</span>
                 </div>
                 <p className="text-sm font-bold text-white" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
                   {progress.targetRole}
@@ -454,31 +459,32 @@ export default function LaunchHome() {
 
             {/* Journey CTA */}
             <button onClick={() => navigate("/launch/journey")}
-              className="rounded-3xl p-4 flex items-center justify-between transition-all duration-200 w-full"
+              className="launch-dashboard-card launch-dashboard-card--journey rounded-3xl p-4 flex items-center justify-between transition-all duration-200 w-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/40"
               style={{
                 background: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15))",
                 border: "1px solid rgba(59,130,246,0.25)",
               }}>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-2xl flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg, #3B82F6, #8B5CF6)" }}>
-                  <Map size={16} style={{ color: "#fff" }} />
+                <div className="launch-dashboard-card__icon-well launch-dashboard-card__icon-well--journey">
+                  <Map size={24} style={{ color: "#151515" }} />
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-bold text-white" style={{ fontFamily: "Space Grotesk, sans-serif" }}>Journey Map</p>
                   <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>7 missions to launch</p>
                 </div>
               </div>
-              <ChevronRight size={16} style={{ color: "rgba(255,255,255,0.4)" }} />
+              <ChevronRight size={22} style={{ color: "#151515" }} />
             </button>
 
             {/* Achievements teaser */}
             {progressQuery.data?.achievements && progressQuery.data.achievements.length > 0 && (
-              <div className="rounded-3xl p-4"
+              <div className="launch-dashboard-card launch-dashboard-card--achievements rounded-3xl p-4"
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <div className="flex items-center gap-1.5 mb-3">
-                  <Star size={12} style={{ color: "#F59E0B" }} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#F59E0B" }}>Achievements</span>
+                  <div className="launch-dashboard-card__icon-well launch-dashboard-card__icon-well--small" style={{ background: "#FFF3BD" }}>
+                    <Star size={18} style={{ color: "#151515" }} />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#151515" }}>Achievements</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {progressQuery.data.achievements.slice(0, 4).map((a) => (

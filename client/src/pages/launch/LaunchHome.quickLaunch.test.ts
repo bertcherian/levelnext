@@ -15,4 +15,17 @@ describe("Launch Home Quick Launch", () => {
     expect(source).toContain("icon: ClipboardList");
     expect(source).toContain("icon: Zap");
   });
+
+  it("provides concise descriptions through accessible tooltips for every action", () => {
+    const source = readFileSync("client/src/pages/launch/LaunchHome.tsx", "utf8");
+
+    expect(source).toContain("<TooltipTrigger asChild>");
+    expect(source).toContain("<TooltipContent side=\"top\"");
+    expect(source).toContain("View your career-launch mission path.");
+    expect(source).toContain("Practise answers with guided interview feedback.");
+    expect(source).toContain("Strengthen your résumé for target roles.");
+    expect(source).toContain("Prepare a confident salary conversation.");
+    expect(source).toContain("Track every application and its next step.");
+    expect(source).toContain("Build job-ready skills through focused sprints.");
+  });
 });

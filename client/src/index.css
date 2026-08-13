@@ -947,6 +947,53 @@
 }
 .launch-brutal-app button[style*="#3B82F6"]:not(.launch-app-button) { background: var(--launch-blue) !important; color: #fff !important; }
 
+/* Launch Home dashboard cards share an explicit high-contrast treatment rather
+   than relying on legacy rounded-utility selectors. */
+.launch-brutal-app .launch-dashboard-card {
+  border: 3px solid var(--launch-ink) !important;
+  border-radius: 0 !important;
+  background: #fffdf8 !important;
+  box-shadow: var(--launch-shadow) !important;
+  color: var(--launch-ink) !important;
+}
+.launch-brutal-app .launch-dashboard-card--quick-launch { background: var(--launch-paper) !important; }
+.launch-brutal-app .launch-dashboard-card--target { background: #fff3bd !important; }
+.launch-brutal-app .launch-dashboard-card--journey { background: var(--launch-mint) !important; }
+.launch-brutal-app .launch-dashboard-card :is(p, span, h1, h2, h3, h4, h5, h6) { color: var(--launch-ink) !important; }
+.launch-brutal-app .launch-dashboard-card__icon-well {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--launch-ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 var(--launch-ink);
+}
+.launch-brutal-app .launch-dashboard-card__icon-well--small { width: 32px; height: 32px; }
+.launch-brutal-app .launch-dashboard-card__icon-well--journey { width: 48px; height: 48px; background: #fff8e7; }
+.launch-brutal-app .launch-dashboard-card__icon-well svg { color: var(--launch-ink) !important; }
+
+.launch-brutal-app .launch-mission-card {
+  border: 2px solid var(--launch-ink) !important;
+  border-radius: 0 !important;
+  background: #fffdf8 !important;
+  box-shadow: 4px 4px 0 var(--launch-ink) !important;
+  opacity: 1 !important;
+}
+.launch-brutal-app .launch-mission-card.is-complete { background: #e0f9e8 !important; }
+.launch-brutal-app .launch-mission-card__complete { color: var(--launch-ink) !important; }
+.launch-brutal-app .launch-mission-card__title,
+.launch-brutal-app .launch-mission-card__description {
+  color: var(--launch-ink) !important;
+}
+.launch-brutal-app .launch-mission-card__description {
+  font-size: .78rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
 @media (max-width: 767px) {
   .launch-brutal-app nav > div { height: auto !important; min-height: 66px; }
   .launch-app-onboarding-header h1 { font-size: clamp(38px, 12vw, 54px) !important; }
