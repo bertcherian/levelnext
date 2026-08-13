@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Send, Loader2, RotateCcw, Sparkles, Target, ChevronRight, BookOpen, MessageCircle, Bookmark, BookmarkCheck, Trash2, CheckCircle2, X } from "lucide-react";
 import { Streamdown } from "streamdown";
+import GuidedMirrorPanel from "@/components/GuidedMirrorPanel";
 
 // Daily prompts rotate based on day of week
 const DAILY_PROMPTS = [
@@ -268,7 +269,7 @@ export default function Guide() {
     generateFollowUp.mutate({ reportId: latestReport.id });
   };
 
-  if (loading || convLoading) {
+  if (loading) {
     return (
       <PlatformLayout title="Guide">
         <div className="flex items-center justify-center h-64">
@@ -494,6 +495,8 @@ export default function Guide() {
               )}
             </div>
           )}
+
+          <GuidedMirrorPanel enabled={isAuthenticated} />
 
           {/* Today's Suggested Conversations */}
           <div>

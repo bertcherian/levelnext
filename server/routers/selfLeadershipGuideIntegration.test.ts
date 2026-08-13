@@ -6,6 +6,10 @@ describe("Self-Leadership Intelligence cross-application wiring", () => {
     const source = readFileSync("server/routers/intelligenceCore.ts", "utf8");
     expect(source).toContain("getSelfLeadershipExample: protectedProcedure.query");
     expect(source).toContain("analyzeSelfLeadership: protectedProcedure");
+    expect(source).toContain("createGuidedMirror: protectedProcedure");
+    expect(source).toContain("rateGuidedMirror: protectedProcedure");
+    expect(source).toContain("getSelfLeadershipProgress: protectedProcedure.query");
+    expect(source).toContain("eq(icSelfLeadershipMirrors.userId, ctx.user.id)");
     expect(source).toContain("private_development_coaching");
     expect(source).toContain("self_leadership_analysis_generated");
   });

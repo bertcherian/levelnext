@@ -29,12 +29,14 @@ import {
   icPermissionEvents,
   icAuditEvents,
   icPracticeProgress,
+  icSelfLeadershipMirrors,
   icOutboxEvents,
   reports,
   tenantUsers,
 } from "../../drizzle/schema";
 import { analyseSelfLeadership } from "../selfLeadershipIntelligence";
-import { SELF_LEADERSHIP_CAREER_STAGES, SELF_LEADERSHIP_EXAMPLE_INPUT, createSelfLeadershipFallback, type SelfLeadershipAnalysisInput } from "../../shared/modules/selfLeadershipIntelligence";
+import { SELF_LEADERSHIP_CAREER_STAGES, SELF_LEADERSHIP_DIMENSIONS, SELF_LEADERSHIP_EXAMPLE_INPUT, createSelfLeadershipFallback, type SelfLeadershipAnalysisInput } from "../../shared/modules/selfLeadershipIntelligence";
+import { aggregateSelfLeadershipProgress, buildGuidedMirrorExperimentUpdate, buildGuidedMirrorFeedbackUpdate, filterGuidedMirrorsForUser } from "./selfLeadershipMirrorHelpers";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -257,6 +259,17 @@ const selfLeadershipAnalysisSchema = z.object({
   sourceApp: z.string().trim().max(80).optional(),
 });
 
+const guidedMirrorRatingSchema = z.object({
+  mirrorId: z.number().int().positive(),
+  relevance: z.enum(["up", "down"]),
+  feedbackNote: z.string().trim().max(600).optional(),
+});
+
+const guidedMirrorExperimentSchema = z.object({
+  mirrorId: z.number().int().positive(),
+  experimentStatus: z.enum(["not_started", "attempted"]),
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ROUTER
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -269,6 +282,100 @@ export const intelligenceCoreRouter = router({
     analysis: createSelfLeadershipFallback(SELF_LEADERSHIP_EXAMPLE_INPUT),
     note: "This example is deterministic and uses no model call. Applications can call analyzeSelfLeadership with a user-owned workplace situation for personalised analysis.",
   })),
+
+  // Private Guided Mirror history. Mirrors remain owned by the individual and
+  // are intentionally absent from any tenant-level dashboard procedure.
+  getGuidedMirrors: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const mirrors = await db
+      .select()
+      .from(icSelfLeadershipMirrors)
+      .where(eq(icSelfLeadershipMirrors.userId, ctx.user.id))
+      .orderBy(desc(icSelfLeadershipMirrors.createdAt))
+      .limit(12);
+    return { mirrors: filterGuidedMirrorsForUser(mirrors, ctx.user.id) };
+  }),
+
+  createGuidedMirror: protectedProcedure
+    .input(selfLeadershipAnalysisSchema.omit({ sourceApp: true }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const tenantId = await getTenantId(ctx.user.id);
+      const analysis = await analyseSelfLeadership({ ...input, sourceApp: "guide" } as SelfLeadershipAnalysisInput);
+      const [created] = await db.insert(icSelfLeadershipMirrors).values({
+        tenantId,
+        userId: ctx.user.id,
+        sourceApp: "guide",
+        careerStage: input.careerStage,
+        primaryDimension: analysis.selfLeadershipSignal.primaryDimension,
+        confidence: analysis.selfLeadershipSignal.confidence,
+        situation: input.situation,
+        observedBehaviour: input.observedBehaviour ?? null,
+        analysis,
+      });
+      const mirrorId = Number(created.insertId);
+      await writeAuditEvent({
+        tenantId,
+        actorUserId: ctx.user.id,
+        subjectUserId: ctx.user.id,
+        eventType: "guided_mirror_created",
+        resourceType: "ic_self_leadership_mirror",
+        resourceId: mirrorId,
+        processingPurpose: "private_development_coaching",
+        authorizationResult: "allowed",
+        metadata: {
+          sourceApp: "guide",
+          primaryDimension: analysis.selfLeadershipSignal.primaryDimension,
+          confidence: analysis.selfLeadershipSignal.confidence,
+        },
+      });
+      return { mirrorId, analysis };
+    }),
+
+  rateGuidedMirror: protectedProcedure
+    .input(guidedMirrorRatingSchema)
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [mirror] = await db.select().from(icSelfLeadershipMirrors)
+        .where(and(eq(icSelfLeadershipMirrors.id, input.mirrorId), eq(icSelfLeadershipMirrors.userId, ctx.user.id)))
+        .limit(1);
+      if (!mirror) throw new TRPCError({ code: "NOT_FOUND", message: "Guided Mirror not found." });
+      await db.update(icSelfLeadershipMirrors)
+        .set(buildGuidedMirrorFeedbackUpdate(input.relevance, input.feedbackNote))
+        .where(eq(icSelfLeadershipMirrors.id, mirror.id));
+      return { success: true };
+    }),
+
+  updateGuidedMirrorExperiment: protectedProcedure
+    .input(guidedMirrorExperimentSchema)
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [mirror] = await db.select().from(icSelfLeadershipMirrors)
+        .where(and(eq(icSelfLeadershipMirrors.id, input.mirrorId), eq(icSelfLeadershipMirrors.userId, ctx.user.id)))
+        .limit(1);
+      if (!mirror) throw new TRPCError({ code: "NOT_FOUND", message: "Guided Mirror not found." });
+      await db.update(icSelfLeadershipMirrors)
+        .set(buildGuidedMirrorExperimentUpdate(input.experimentStatus))
+        .where(eq(icSelfLeadershipMirrors.id, mirror.id));
+      return { success: true };
+    }),
+
+  getSelfLeadershipProgress: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const mirrors = await db.select({
+      primaryDimension: icSelfLeadershipMirrors.primaryDimension,
+      relevance: icSelfLeadershipMirrors.relevance,
+      experimentStatus: icSelfLeadershipMirrors.experimentStatus,
+    }).from(icSelfLeadershipMirrors).where(eq(icSelfLeadershipMirrors.userId, ctx.user.id));
+
+    const dimensions = aggregateSelfLeadershipProgress(mirrors);
+    return { dimensions, totalReflections: mirrors.length };
+  }),
 
   analyzeSelfLeadership: protectedProcedure
     .input(selfLeadershipAnalysisSchema)

@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { getNextLeadershipMove, LEADER_CORE_MODULES } from "@/lib/leaderExperience";
+import SelfLeadershipProgressCard from "@/components/SelfLeadershipProgressCard";
 import { toast } from "sonner";
 import {
   Activity,
@@ -210,6 +211,8 @@ export default function Home() {
             <button onClick={() => navigate("/insights")} className="mt-4 flex items-center gap-1 text-xs font-semibold hover:underline" style={{ color: "var(--color-ln-navy)" }}>Review insights & reports <ArrowRight size={13} /></button>
           </div>
         </section>
+
+        <SelfLeadershipProgressCard enabled={isAuthenticated} />
 
         <section className="rounded-2xl border bg-white p-5 sm:p-6" style={{ borderColor: "var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
           <div className="flex items-start justify-between gap-4">

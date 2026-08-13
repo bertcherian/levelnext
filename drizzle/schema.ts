@@ -8,8 +8,10 @@ import {
   float,
   json,
   boolean,
+  index,
   uniqueIndex,
 } from "drizzle-orm/mysql-core";
+import type { SelfLeadershipAnalysis, SelfLeadershipCareerStage, SelfLeadershipConfidence, SelfLeadershipDimension } from "../shared/modules/selfLeadershipIntelligence";
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 export const users = mysqlTable("users", {
@@ -2787,6 +2789,31 @@ export const icPracticeProgress = mysqlTable("ic_practice_progress", {
 });
 export type IcPracticeProgress = typeof icPracticeProgress.$inferSelect;
 export type InsertIcPracticeProgress = typeof icPracticeProgress.$inferInsert;
+
+// ─── Intelligence Core: Private Self-Leadership Mirrors ───────────────────────
+// Individual-owned coaching reflections. These records must not be surfaced in
+// organisational reporting without an explicit, purpose-specific consent flow.
+export const icSelfLeadershipMirrors = mysqlTable("ic_self_leadership_mirrors", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id),
+  sourceApp: varchar("sourceApp", { length: 80 }).notNull(),
+  careerStage: mysqlEnum("careerStage", ["early_career", "professional", "manager", "leader", "cxo"]).notNull().$type<SelfLeadershipCareerStage>(),
+  primaryDimension: mysqlEnum("primaryDimension", ["self_awareness", "authenticity", "courage", "responsibility", "other_centredness", "integrity"]).notNull().$type<SelfLeadershipDimension>(),
+  confidence: mysqlEnum("confidence", ["low", "moderate", "high"]).notNull().$type<SelfLeadershipConfidence>(),
+  situation: text("situation").notNull(),
+  observedBehaviour: text("observedBehaviour"),
+  analysis: json("analysis").$type<SelfLeadershipAnalysis>().notNull(),
+  relevance: mysqlEnum("relevance", ["up", "down"]),
+  experimentStatus: mysqlEnum("experimentStatus", ["not_started", "attempted"]).default("not_started").notNull(),
+  feedbackNote: text("feedbackNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("ic_sl_mirrors_user_created_idx").on(table.userId, table.createdAt),
+]);
+export type IcSelfLeadershipMirror = typeof icSelfLeadershipMirrors.$inferSelect;
+export type InsertIcSelfLeadershipMirror = typeof icSelfLeadershipMirrors.$inferInsert;
 
 // ─── Early Career Intelligence ───────────────────────────────────────────────
 // The canonical domain key for this corporate product is `early_career`.

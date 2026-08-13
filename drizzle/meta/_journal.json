@@ -407,6 +407,20 @@
       "when": 1786532163913,
       "tag": "0057_new_typhoid_mary",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "5",
+      "when": 1786640458071,
+      "tag": "0058_unique_maverick",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "5",
+      "when": 1786640520728,
+      "tag": "0059_lonely_daimon_hellstrom",
+      "breakpoints": true
     }
   ]
 }

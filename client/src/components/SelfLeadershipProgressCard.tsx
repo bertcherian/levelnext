@@ -1,0 +1,14 @@
+import { Activity, ArrowRight, Loader2 } from "lucide-react";
+import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
+
+export default function SelfLeadershipProgressCard({ enabled }: { enabled: boolean }) {
+  const [, navigate] = useLocation();
+  const { data, isLoading } = trpc.intelligenceCore.getSelfLeadershipProgress.useQuery(undefined, { enabled });
+  return (
+    <section className="rounded-2xl border bg-white p-5 sm:p-6" style={{ borderColor: "var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--color-ln-muted)" }}>Self-leadership growth</p><h2 className="mt-1 text-lg font-bold" style={{ color: "var(--color-ln-navy)" }}>Your six behavioural dimensions</h2><p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--color-ln-muted)" }}>Signals from your private Guided Mirrors—not a personality score.</p></div><Activity size={19} style={{ color: "var(--color-ln-yellow)" }} /></div>
+      {isLoading ? <div className="mt-5 h-24 animate-pulse rounded-xl" style={{ background: "var(--color-ln-ivory)" }} /> : data?.totalReflections ? <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{data.dimensions.map((dimension) => <div key={dimension.id} className="rounded-xl border p-3" style={{ borderColor: "var(--color-ln-border)", background: "var(--color-ln-ivory)" }}><div className="flex items-center justify-between gap-2"><p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>{dimension.label}</p><span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--color-ln-muted)" }}>{dimension.progressLabel}</span></div><div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: "white" }}><div className="h-full rounded-full" style={{ width: `${Math.min(100, dimension.reflections * 25 + dimension.experimentsAttempted * 25)}%`, background: "var(--color-ln-yellow)" }} /></div><p className="mt-2 text-xs" style={{ color: "var(--color-ln-muted)" }}>{dimension.reflections} reflection{dimension.reflections === 1 ? "" : "s"} · {dimension.experimentsAttempted} experiment{dimension.experimentsAttempted === 1 ? "" : "s"} tried</p></div>)}</div> : <div className="mt-5 rounded-xl border border-dashed p-4" style={{ borderColor: "var(--color-ln-border)", background: "var(--color-ln-ivory)" }}><p className="text-sm" style={{ color: "var(--color-ln-muted)" }}>Your progress will appear after you create a private Guided Mirror and try one experiment.</p><button onClick={() => navigate("/guide")} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold hover:underline" style={{ color: "var(--color-ln-navy)" }}>Open Guided Mirror <ArrowRight size={13} /></button></div>}
+    </section>
+  );
+}

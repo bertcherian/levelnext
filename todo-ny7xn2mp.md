@@ -20,3 +20,11 @@
 - [x] Build a shared Self-Leadership Intelligence Engine with context-aware judgment safeguards and typed coaching output.
 - [x] Expose the engine through the existing Intelligence Core so all LevelNext guides can invoke it consistently.
 - [x] Add unit coverage and an in-app example of the engine’s coaching output.
+- [x] Add an interactive, privacy-safe Guided Mirror panel to the Guide application.
+- [x] Add relevance feedback controls for self-leadership guidance from the Guide.
+- [x] Add a user-dashboard progress indicator for the six self-leadership dimensions.
+- [x] Add persistence, regression coverage, and responsive validation for the new self-leadership experience.
+- [x] Add behavioral regression coverage for private Guided Mirror feedback, experiment completion, and six-dimension aggregation.
+- [x] Revalidate the final Guided Mirror and dashboard progress experience on desktop after the Guide loading-state refinement.
+- [x] Add authenticated router-level tests for Guided Mirror creation, feedback, experiment updates, progress aggregation, and cross-user privacy enforcement.
+- [x] Add router-level read-isolation coverage proving Guided Mirror history returns only the authenticated user’s records.
