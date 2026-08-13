@@ -19,3 +19,6 @@
 - [x] Add reusable automated contrast safeguards to the Launch landing-page test suite.
 - [x] Audit dark sections across the site for inherited global text-color conflicts and fix confirmed readability issues.
 - [x] Verify the corrected Leader Intelligence route and affected dark sections at desktop and mobile sizes.
+- [x] Enhance the 404 page with a Return to Homepage action and useful navigation links.
+- [x] Add automated coverage for the 404 page navigation targets.
+- [x] Verify the enhanced 404 experience at desktop and mobile sizes.

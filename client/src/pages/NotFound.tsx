@@ -1,7 +1,14 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Home } from "lucide-react";
+import { AlertCircle, ArrowRight, BriefcaseBusiness, Home, Rocket, UsersRound } from "lucide-react";
 import { useLocation } from "wouter";
+
+const helpfulLinks = [
+  { href: "/launch", label: "Launch Intelligence", description: "Build career momentum", icon: Rocket },
+  { href: "/career-landing", label: "Career Transition", description: "Plan your next chapter", icon: BriefcaseBusiness },
+  { href: "/manager-effectiveness", label: "Manager Effectiveness", description: "Lead through others", icon: UsersRound },
+];
 
 export default function NotFound() {
   const [, setLocation] = useLocation();
@@ -33,18 +40,32 @@ export default function NotFound() {
             It may have been moved or deleted.
           </p>
 
-          <div
-            id="not-found-button-group"
-            className="flex flex-col sm:flex-row gap-3 justify-center"
-          >
+          <div id="not-found-button-group" className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
               onClick={handleGoHome}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+              className="bg-[var(--color-ln-navy)] hover:bg-[color-mix(in_oklab,var(--color-ln-navy),black_15%)] text-white px-6 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
             >
               <Home className="w-4 h-4 mr-2" />
-              Go Home
+              Return to Homepage
             </Button>
           </div>
+
+          <nav aria-label="Helpful navigation" className="mt-8 border-t border-slate-200 pt-6 text-left">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Or explore a platform</p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              {helpfulLinks.map(({ href, label, description, icon: Icon }) => (
+                <a
+                  key={href}
+                  href={href}
+                  className="group rounded-lg border border-slate-200 bg-white p-3 transition-colors hover:border-[var(--color-ln-yellow)] hover:bg-[var(--color-ln-ivory)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ln-yellow)] focus-visible:ring-offset-2"
+                >
+                  <Icon className="h-4 w-4 text-[var(--color-ln-navy)]" aria-hidden="true" />
+                  <span className="mt-2 block text-sm font-semibold text-[var(--color-ln-navy)]">{label}</span>
+                  <span className="mt-1 flex items-center gap-1 text-xs text-slate-600">{description}<ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></span>
+                </a>
+              ))}
+            </div>
+          </nav>
         </CardContent>
       </Card>
     </div>
