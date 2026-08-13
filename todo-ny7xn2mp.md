@@ -16,3 +16,7 @@
 - [x] Add thumbs-up and thumbs-down relevance feedback to each daily mission card.
 - [x] Add a mission-card skeleton state while daily missions are loading or refreshing.
 - [x] Add regression coverage and verify the enhanced mission flow on desktop and mobile.
+- [x] Extract the supplied Self-Leadership Intelligence framework into a reusable Intelligence Core specification.
+- [x] Build a shared Self-Leadership Intelligence Engine with context-aware judgment safeguards and typed coaching output.
+- [x] Expose the engine through the existing Intelligence Core so all LevelNext guides can invoke it consistently.
+- [x] Add unit coverage and an in-app example of the engine’s coaching output.

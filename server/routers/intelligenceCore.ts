@@ -33,6 +33,8 @@ import {
   reports,
   tenantUsers,
 } from "../../drizzle/schema";
+import { analyseSelfLeadership } from "../selfLeadershipIntelligence";
+import { SELF_LEADERSHIP_CAREER_STAGES, SELF_LEADERSHIP_EXAMPLE_INPUT, createSelfLeadershipFallback, type SelfLeadershipAnalysisInput } from "../../shared/modules/selfLeadershipIntelligence";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -239,11 +241,56 @@ const revokePermissionSchema = z.object({
   reason: z.string().optional(),
 });
 
+const selfLeadershipAnalysisSchema = z.object({
+  situation: z.string().trim().min(10).max(4000),
+  observedBehaviour: z.string().trim().max(3000).optional(),
+  careerStage: z.enum(SELF_LEADERSHIP_CAREER_STAGES),
+  role: z.string().trim().max(160).optional(),
+  organisationalContext: z.string().trim().max(1200).optional(),
+  authorityLevel: z.string().trim().max(160).optional(),
+  stakeholders: z.string().trim().max(1200).optional(),
+  consequences: z.string().trim().max(1200).optional(),
+  availableInformation: z.string().trim().max(1200).optional(),
+  culturalContext: z.string().trim().max(1200).optional(),
+  powerDynamics: z.string().trim().max(1200).optional(),
+  evidence: z.array(z.string().trim().min(1).max(600)).max(8).optional(),
+  sourceApp: z.string().trim().max(80).optional(),
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ROUTER
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const intelligenceCoreRouter = router({
+  // ─── Shared Self-Leadership Intelligence ───────────────────────────────────
+  // Any LevelNext application can call this protected, private analysis endpoint.
+  getSelfLeadershipExample: protectedProcedure.query(() => ({
+    input: SELF_LEADERSHIP_EXAMPLE_INPUT,
+    analysis: createSelfLeadershipFallback(SELF_LEADERSHIP_EXAMPLE_INPUT),
+    note: "This example is deterministic and uses no model call. Applications can call analyzeSelfLeadership with a user-owned workplace situation for personalised analysis.",
+  })),
+
+  analyzeSelfLeadership: protectedProcedure
+    .input(selfLeadershipAnalysisSchema)
+    .mutation(async ({ ctx, input }) => {
+      const analysis = await analyseSelfLeadership(input as SelfLeadershipAnalysisInput);
+      await writeAuditEvent({
+        actorUserId: ctx.user.id,
+        subjectUserId: ctx.user.id,
+        eventType: "self_leadership_analysis_generated",
+        resourceType: "self_leadership_analysis",
+        processingPurpose: "private_development_coaching",
+        authorizationResult: "allowed",
+        metadata: {
+          sourceApp: input.sourceApp ?? "unknown",
+          careerStage: input.careerStage,
+          primaryDimension: analysis.selfLeadershipSignal.primaryDimension,
+          confidence: analysis.selfLeadershipSignal.confidence,
+        },
+      });
+      return { analysis };
+    }),
+
   // ─── 1. Diagnostic Instances ────────────────────────────────────────────────
 
   /**

@@ -19,6 +19,7 @@ import {
 } from "../../drizzle/schema";
 import { eq, desc, and, gte } from "drizzle-orm";
 import { sortActionTimeline } from "./actionTimelineHelpers";
+import { buildSelfLeadershipGuideDirective } from "../../shared/modules/selfLeadershipIntelligence";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 async function getLeaderContext(userId: number) {
@@ -70,7 +71,8 @@ function buildLeaderContextPrompt(ctx: Awaited<ReturnType<typeof getLeaderContex
     const commitList = ctx.recentCommitments.map(c => `- ${c.text} (${c.status})`).join('\n');
     parts.push(`Recent Commitments:\n${commitList}`);
   }
-  return parts.length > 0 ? `\n\nLEADER CONTEXT:\n${parts.join('\n')}` : '';
+  const context = parts.length > 0 ? `\n\nLEADER CONTEXT:\n${parts.join('\n')}` : '';
+  return `${context}\n\n${buildSelfLeadershipGuideDirective("leader")}`;
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────

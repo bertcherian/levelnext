@@ -5,6 +5,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { guideConversations, guideSessions, users, tenantUsers, organisations, commitments, userProductEnrollments, orgContext as orgContextTable, type GuideMessage, type LeadershipGraph } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { buildSelfLeadershipGuideDirective } from "../../shared/modules/selfLeadershipIntelligence";
 
 type OrgContext = {
   legalName: string;
@@ -376,6 +377,8 @@ export const guideRouter = router({
       } else {
         systemPromptContent = GUIDE_SYSTEM_PROMPT(graph, userName, orgContext);
       }
+      const selfLeadershipStage = activeProductId === "career_intelligence" ? "professional" : "leader";
+      systemPromptContent = `${systemPromptContent}\n\n${buildSelfLeadershipGuideDirective(selfLeadershipStage)}`;
 
       // Call the LLM — prepend system prompt as a system message
       const systemMsg = { role: "system" as const, content: systemPromptContent };

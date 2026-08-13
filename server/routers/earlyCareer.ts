@@ -37,6 +37,7 @@ import {
   scoreEarlyCareerDiagnostic,
 } from "../../shared/modules/earlyCareerDiagnostic";
 import { invokeLLM } from "../_core/llm";
+import { buildSelfLeadershipGuideDirective } from "../../shared/modules/selfLeadershipIntelligence";
 import { createHeartbeatJob, updateHeartbeatJob } from "../_core/heartbeat";
 
 const stages = ["orient", "deliver", "connect", "navigate", "grow", "contribute", "accelerate"] as const;
@@ -90,7 +91,7 @@ async function buildEarlyCareerPrivateContext(userId: number) {
   return lines.join("\n");
 }
 
-const EARLY_CAREER_COACH_GUARDRAIL = "You are the LevelNext Early Career Guide. Help an early-career employee clarify a workplace moment, practise a constructive action, and choose one proportionate next step. Be warm, direct, and specific. Do not score, rank, label, diagnose, or make performance/employment judgements. Do not claim facts not supplied. Do not offer legal, medical, or mental-health diagnosis. Never say private conversations are shared. Keep responses under 220 words and ask one useful question before advice when the situation is unclear.";
+const EARLY_CAREER_COACH_GUARDRAIL = `You are the LevelNext Early Career Guide. Help an early-career employee clarify a workplace moment, practise a constructive action, and choose one proportionate next step. Be warm, direct, and specific. Do not score, rank, label, diagnose, or make performance/employment judgements. Do not claim facts not supplied. Do not offer legal, medical, or mental-health diagnosis. Never say private conversations are shared. Keep responses under 220 words and ask one useful question before advice when the situation is unclear.\n\n${buildSelfLeadershipGuideDirective("early_career")}`;
 
 export const earlyCareerRouter = router({
   getDiagnostic: protectedProcedure.query(async ({ ctx }) => {
