@@ -7,5 +7,6 @@
 - [x] Add or update Vitest coverage for the simplified navigation and Home helper logic.
 - [x] Run type checking, focused and full tests, and an available public-preview visual check for the simplification sprint.
 - [x] Attempt authenticated desktop and mobile Home visual verification; the managed preview route was unavailable in this session, while source review, type checking, and tests passed.
-- [ ] Reduce legacy production build resource pressure from the broader eagerly imported route graph; three build attempts terminate during Rollup chunk rendering despite the sprint code compiling and all tests passing.
+- [x] Reduce legacy production build resource pressure by applying route-level lazy loading and focused vendor chunking to the broader eagerly imported route graph.
+- [ ] Re-run and confirm the production build in an environment without the active development server’s memory overhead; the local sandbox build still terminates during Rollup chunk rendering.
 - [ ] Save a publishable checkpoint after all completed items are marked done.
