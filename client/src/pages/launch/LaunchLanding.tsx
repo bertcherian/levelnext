@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import React, { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
@@ -74,7 +74,9 @@ export default function LaunchLanding() {
       <nav className="launch-brutal__nav" aria-label="Launch Intelligence navigation">
         <div className="launch-brutal__shell launch-brutal__nav-inner">
           <a className="launch-brutal__brand" href="/launch" aria-label="Launch Intelligence home">
-            <img src={LOGO_URL} alt="LevelNext" />
+            <span className="launch-brutal__logo-tile" aria-hidden="true">
+              <img src={LOGO_URL} alt="LevelNext" />
+            </span>
             <span className="launch-brutal__brand-label">Launch Intelligence</span>
           </a>
           <div className="launch-brutal__nav-actions">

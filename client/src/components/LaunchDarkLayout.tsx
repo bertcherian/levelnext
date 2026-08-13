@@ -19,6 +19,24 @@ import { useState, useEffect, useRef } from "react";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_c21f58d5.png";
 
+function LaunchBrandMark() {
+  return (
+    <span aria-label="LevelNext Launch Intelligence" style={{ display: "flex", alignItems: "center", gap: 9 }}>
+      <span aria-hidden="true" style={{ width: 38, height: 32, overflow: "hidden", position: "relative", flex: "0 0 auto", borderRadius: 6, border: "1px solid rgba(34,211,238,0.55)", background: "#07111D", boxShadow: "0 0 14px rgba(34,211,238,0.16)" }}>
+        <img src={LOGO_URL} alt="" style={{ position: "absolute", height: 64, width: "auto", maxWidth: "none", top: -14, left: -6 }} />
+      </span>
+      <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1 }}>
+        <span style={{ color: "#F8FAFC", fontSize: 16, fontWeight: 800, letterSpacing: "-0.04em", fontFamily: "var(--ld-font-heading)" }}>
+          Level<span style={{ color: "var(--ld-cyan)" }}>Next</span>
+        </span>
+        <span style={{ color: "var(--ld-text-dim)", fontSize: 8, fontWeight: 700, letterSpacing: "0.15em", marginTop: 3, fontFamily: "var(--ld-font-heading)" }}>
+          LAUNCH INTELLIGENCE
+        </span>
+      </span>
+    </span>
+  );
+}
+
 const NAV_ITEMS = [
   { href: "/launch/home",         label: "Home",        icon: Rocket },
   { href: "/launch/journey",      label: "Journey",     icon: Map },
@@ -136,12 +154,10 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
           {/* Logo */}
           <button
             onClick={() => navigate("/launch/home")}
-            style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            aria-label="Go to Launch home"
+            style={{ display: "flex", alignItems: "center", background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
-            <img src={LOGO_URL} alt="LevelNext" style={{ height: 36, width: "auto", objectFit: "contain" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ld-text-dim)", fontFamily: "var(--ld-font-heading)", letterSpacing: "0.05em" }}>
-              LAUNCH
-            </span>
+            <LaunchBrandMark />
           </button>
 
           {/* Desktop Nav */}
