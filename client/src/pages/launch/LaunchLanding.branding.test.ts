@@ -36,10 +36,14 @@ describe("Launch university landing branding", () => {
     const brand = screen.getByRole("link", { name: "Launch Intelligence home" });
     const logoTile = brand.querySelector(".launch-brutal__logo-tile");
     const logo = logoTile?.querySelector("img");
+    const footerLogoTile = document.querySelector(".launch-brutal__footer .launch-brutal__logo-tile");
+    const footerLogo = footerLogoTile?.querySelector("img");
 
     expect(logoTile).toBeTruthy();
     expect(logo?.getAttribute("src")).toContain("LevelNext_logo_transparent");
     expect(logo?.getAttribute("alt")).toBe("LevelNext");
+    expect(footerLogoTile).toBeTruthy();
+    expect(footerLogo?.getAttribute("alt")).toBe("LevelNext");
   });
 
   it("defines a dark, responsive surface for the white-and-gold logo asset", () => {
@@ -47,6 +51,7 @@ describe("Launch university landing branding", () => {
 
     expect(styles).toContain(".launch-brutal__logo-tile");
     expect(styles).toContain("background: #0A1A2F");
+    expect(styles).toContain(".launch-brutal__footer-brand > .launch-brutal__logo-tile");
     expect(styles).toContain(".launch-brutal__logo-tile img { width: 48px; height: 29px;");
   });
 });

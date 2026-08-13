@@ -169,7 +169,12 @@ export default function LaunchLanding() {
 
       <footer className="launch-brutal__footer">
         <div className="launch-brutal__shell launch-brutal__footer-inner">
-          <div className="launch-brutal__footer-brand"><img src={LOGO_URL} alt="LevelNext" /><span>Launch Intelligence</span></div>
+          <div className="launch-brutal__footer-brand">
+            <span className="launch-brutal__logo-tile">
+              <img src={LOGO_URL} alt="LevelNext" />
+            </span>
+            <span>Launch Intelligence</span>
+          </div>
           <p>Built by Meta Results for ambitious early-career professionals.</p>
         </div>
       </footer>
