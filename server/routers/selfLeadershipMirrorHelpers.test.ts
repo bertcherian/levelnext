@@ -3,8 +3,9 @@ import { aggregateSelfLeadershipProgress, buildGuidedMirrorExperimentUpdate, bui
 
 describe("Guided Mirror behavioural helpers", () => {
   it("keeps a relevance rating and optional note scoped to the selected private mirror", () => {
-    expect(buildGuidedMirrorFeedbackUpdate("up", "The experiment felt practical.")).toEqual({ relevance: "up", feedbackNote: "The experiment felt practical." });
-    expect(buildGuidedMirrorFeedbackUpdate("down")).toEqual({ relevance: "down", feedbackNote: null });
+    expect(buildGuidedMirrorFeedbackUpdate("up", "The experiment felt practical.")).toEqual({ relevance: "up", feedbackNote: "The experiment felt practical.", feedbackReason: null });
+    expect(buildGuidedMirrorFeedbackUpdate("down")).toEqual({ relevance: "down", feedbackNote: null, feedbackReason: null });
+    expect(buildGuidedMirrorFeedbackUpdate("down", undefined, "not_actionable")).toEqual({ relevance: "down", feedbackNote: null, feedbackReason: "not_actionable" });
   });
 
   it("captures an experiment attempt without changing the reflection content", () => {

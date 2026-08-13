@@ -566,6 +566,8 @@ export const privacySettings = mysqlTable("privacy_settings", {
   shareWithCoach: varchar("shareWithCoach", { length: 50 }).default("nothing").notNull(), // nothing | summary | transcript | feedback | growth | selected
   shareWithOrg: boolean("shareWithOrg").default(false).notNull(),
   allowAggregateAnalytics: boolean("allowAggregateAnalytics").default(true).notNull(),
+  shareGuidedMirrorAggregateThemes: boolean("shareGuidedMirrorAggregateThemes").default(false).notNull(),
+  guidedMirrorAggregateConsentAt: timestamp("guidedMirrorAggregateConsentAt"),
   coachEmail: varchar("coachEmail", { length: 255 }),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -2805,7 +2807,10 @@ export const icSelfLeadershipMirrors = mysqlTable("ic_self_leadership_mirrors", 
   observedBehaviour: text("observedBehaviour"),
   analysis: json("analysis").$type<SelfLeadershipAnalysis>().notNull(),
   relevance: mysqlEnum("relevance", ["up", "down"]),
+  feedbackReason: varchar("feedbackReason", { length: 120 }),
   experimentStatus: mysqlEnum("experimentStatus", ["not_started", "attempted"]).default("not_started").notNull(),
+  ontologyPrimaryDistinctionId: varchar("ontologyPrimaryDistinctionId", { length: 64 }),
+  ontologySecondaryDistinctionId: varchar("ontologySecondaryDistinctionId", { length: 64 }),
   feedbackNote: text("feedbackNote"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -2814,6 +2819,20 @@ export const icSelfLeadershipMirrors = mysqlTable("ic_self_leadership_mirrors", 
 ]);
 export type IcSelfLeadershipMirror = typeof icSelfLeadershipMirrors.$inferSelect;
 export type InsertIcSelfLeadershipMirror = typeof icSelfLeadershipMirrors.$inferInsert;
+
+// ─── Intelligence Core: User-controlled Guided Mirror reminders ───────────────
+export const icGuidedMirrorReminderSettings = mysqlTable("ic_guided_mirror_reminder_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id).unique(),
+  enabled: boolean("enabled").default(false).notNull(),
+  dayOfWeek: int("dayOfWeek").default(1).notNull(),
+  hourUtc: int("hourUtc").default(3).notNull(),
+  scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+  lastReminderAt: timestamp("lastReminderAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [index("ic_gm_reminder_task_idx").on(table.scheduleCronTaskUid)]);
+export type IcGuidedMirrorReminderSettings = typeof icGuidedMirrorReminderSettings.$inferSelect;
 
 // ─── Early Career Intelligence ───────────────────────────────────────────────
 // The canonical domain key for this corporate product is `early_career`.

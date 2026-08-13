@@ -19,8 +19,8 @@ const LABELS: Record<SelfLeadershipDimension, string> = {
   integrity: "Integrity",
 };
 
-export function buildGuidedMirrorFeedbackUpdate(relevance: "up" | "down", feedbackNote?: string) {
-  return { relevance, feedbackNote: feedbackNote ?? null } as const;
+export function buildGuidedMirrorFeedbackUpdate(relevance: "up" | "down", feedbackNote?: string, feedbackReason?: string) {
+  return { relevance, feedbackNote: feedbackNote ?? null, feedbackReason: relevance === "down" ? feedbackReason ?? null : null } as const;
 }
 
 export function buildGuidedMirrorExperimentUpdate(experimentStatus: "not_started" | "attempted") {

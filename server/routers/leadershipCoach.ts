@@ -747,6 +747,7 @@ Generate a professional Coach Brief. Return ONLY valid JSON:
       shareWithCoach: z.enum(['nothing', 'summary', 'transcript', 'feedback', 'growth', 'selected']).optional(),
       shareWithOrg: z.boolean().optional(),
       allowAggregateAnalytics: z.boolean().optional(),
+      shareGuidedMirrorAggregateThemes: z.boolean().optional(),
       coachEmail: z.string().email().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -755,14 +756,16 @@ Generate a professional Coach Brief. Return ONLY valid JSON:
       const [existing] = await db.select().from(privacySettings)
         .where(eq(privacySettings.userId, ctx.user.id));
 
+      const consentedAt = input.shareGuidedMirrorAggregateThemes === undefined ? undefined : input.shareGuidedMirrorAggregateThemes ? new Date() : null;
+      const update = { ...input, ...(consentedAt !== undefined ? { guidedMirrorAggregateConsentAt: consentedAt } : {}) };
       if (existing) {
         await db.update(privacySettings)
-          .set(input)
+          .set(update)
           .where(eq(privacySettings.userId, ctx.user.id));
       } else {
         await db.insert(privacySettings).values({
           userId: ctx.user.id,
-          ...input,
+          ...update,
         });
       }
       return { success: true };

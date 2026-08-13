@@ -435,6 +435,7 @@ function PrivacySettingsScreen({ onBack }: { onBack: () => void }) {
     shareWithCoach: "nothing" as "nothing" | "summary" | "transcript" | "feedback" | "growth" | "selected",
     shareWithOrg: false,
     allowAggregateAnalytics: true,
+    shareGuidedMirrorAggregateThemes: false,
     coachEmail: "",
   });
   const [saved, setSaved] = useState(false);
@@ -445,6 +446,7 @@ function PrivacySettingsScreen({ onBack }: { onBack: () => void }) {
         shareWithCoach: settings.shareWithCoach as typeof form.shareWithCoach,
         shareWithOrg: settings.shareWithOrg,
         allowAggregateAnalytics: settings.allowAggregateAnalytics,
+        shareGuidedMirrorAggregateThemes: settings.shareGuidedMirrorAggregateThemes ?? false,
         coachEmail: settings.coachEmail ?? "",
       });
     }
@@ -523,6 +525,7 @@ function PrivacySettingsScreen({ onBack }: { onBack: () => void }) {
           {[
             { key: "shareWithOrg", label: "Share aggregate data with my organisation", desc: "Only anonymised, aggregated data — never individual sessions" },
             { key: "allowAggregateAnalytics", label: "Allow anonymous analytics to improve the platform", desc: "Helps improve the AI coaching quality for all users" },
+            { key: "shareGuidedMirrorAggregateThemes", label: "Share Guided Mirror themes with my coach cohort", desc: "Only consented aggregate themes; your situations, feedback, and identity stay private" },
           ].map((toggle) => (
             <div key={toggle.key} className="flex items-start justify-between gap-4 p-3 rounded-xl border border-gray-200 bg-white">
               <div>

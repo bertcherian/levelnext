@@ -11,7 +11,8 @@
  */
 
 import { TRPCError } from "@trpc/server";
-import { eq, desc, and, sql, count } from "drizzle-orm";
+import { eq, desc, and, sql, count, inArray } from "drizzle-orm";
+import { parse as parseCookie } from "cookie";
 import { z } from "zod";
 import { protectedProcedure, adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -30,12 +31,20 @@ import {
   icAuditEvents,
   icPracticeProgress,
   icSelfLeadershipMirrors,
+  icGuidedMirrorReminderSettings,
   icOutboxEvents,
   reports,
   tenantUsers,
+  privacySettings,
+  coaches,
+  coachAssignments,
 } from "../../drizzle/schema";
+import { COOKIE_NAME } from "../../shared/const";
+import { createHeartbeatJob, updateHeartbeatJob } from "../_core/heartbeat";
 import { analyseSelfLeadership } from "../selfLeadershipIntelligence";
 import { SELF_LEADERSHIP_CAREER_STAGES, SELF_LEADERSHIP_DIMENSIONS, SELF_LEADERSHIP_EXAMPLE_INPUT, createSelfLeadershipFallback, type SelfLeadershipAnalysisInput } from "../../shared/modules/selfLeadershipIntelligence";
+import { analyseOntology } from "../ontologyIntelligence";
+import { createOntologyFallback, type OntologyReasoningInput } from "../../shared/modules/universalOntologicalDistinctions";
 import { aggregateSelfLeadershipProgress, buildGuidedMirrorExperimentUpdate, buildGuidedMirrorFeedbackUpdate, filterGuidedMirrorsForUser } from "./selfLeadershipMirrorHelpers";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -262,12 +271,28 @@ const selfLeadershipAnalysisSchema = z.object({
 const guidedMirrorRatingSchema = z.object({
   mirrorId: z.number().int().positive(),
   relevance: z.enum(["up", "down"]),
+  feedbackReason: z.enum(["does_not_fit_my_situation", "too_generic", "not_actionable", "wrong_depth", "not_the_right_time", "other"]).optional(),
   feedbackNote: z.string().trim().max(600).optional(),
 });
 
 const guidedMirrorExperimentSchema = z.object({
   mirrorId: z.number().int().positive(),
   experimentStatus: z.enum(["not_started", "attempted"]),
+});
+
+const guidedMirrorReminderSchema = z.object({
+  enabled: z.boolean(),
+  dayOfWeek: z.number().int().min(0).max(6).default(1),
+  hourUtc: z.number().int().min(0).max(23).default(3),
+});
+
+const ontologyAnalysisSchema = z.object({
+  situation: z.string().trim().min(10).max(4000),
+  observedBehaviour: z.string().trim().max(3000).optional(),
+  evidence: z.array(z.string().trim().min(1).max(600)).max(8).optional(),
+  careerStage: z.string().trim().max(80).optional(),
+  context: z.string().trim().max(1200).optional(),
+  powerDynamics: z.string().trim().max(1200).optional(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -282,6 +307,39 @@ export const intelligenceCoreRouter = router({
     analysis: createSelfLeadershipFallback(SELF_LEADERSHIP_EXAMPLE_INPUT),
     note: "This example is deterministic and uses no model call. Applications can call analyzeSelfLeadership with a user-owned workplace situation for personalised analysis.",
   })),
+
+  analyzeOntology: protectedProcedure
+    .input(ontologyAnalysisSchema)
+    .mutation(async ({ ctx, input }) => {
+      const analysis = await analyseOntology(input as OntologyReasoningInput);
+      await writeAuditEvent({ actorUserId: ctx.user.id, subjectUserId: ctx.user.id, eventType: "ontology_reasoning_generated", resourceType: "uodl_reasoning", processingPurpose: "private_development_coaching", authorizationResult: "allowed", metadata: { primaryGap: analysis.primaryGap, primaryDistinctionId: analysis.primaryDistinctionId ?? null, confidence: analysis.confidence } });
+      return { analysis };
+    }),
+
+  getGuidedMirrorReminder: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [setting] = await db.select().from(icGuidedMirrorReminderSettings).where(eq(icGuidedMirrorReminderSettings.userId, ctx.user.id)).limit(1);
+    return setting ?? { enabled: false, dayOfWeek: 1, hourUtc: 3, scheduleCronTaskUid: null };
+  }),
+
+  saveGuidedMirrorReminder: protectedProcedure.input(guidedMirrorReminderSchema).mutation(async ({ ctx, input }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [existing] = await db.select().from(icGuidedMirrorReminderSettings).where(eq(icGuidedMirrorReminderSettings.userId, ctx.user.id)).limit(1);
+    const sessionToken = parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "";
+    const cron = `0 0 ${input.hourUtc} * * ${input.dayOfWeek}`;
+    let taskUid = existing?.scheduleCronTaskUid ?? null;
+    if (existing) await db.update(icGuidedMirrorReminderSettings).set(input).where(eq(icGuidedMirrorReminderSettings.id, existing.id));
+    else await db.insert(icGuidedMirrorReminderSettings).values({ userId: ctx.user.id, ...input });
+    const description = "Private weekly Guided Mirror reminder";
+    if (taskUid) await updateHeartbeatJob(taskUid, { cron, path: "/api/scheduled/guidedMirrorReminder", method: "POST", description, enable: input.enabled }, sessionToken);
+    else {
+      const job = await createHeartbeatJob({ name: `guided-mirror-${ctx.user.id}`, cron, path: "/api/scheduled/guidedMirrorReminder", method: "POST", description }, sessionToken);
+      taskUid = job.taskUid;
+      if (!input.enabled) await updateHeartbeatJob(taskUid, { enable: false }, sessionToken);
+      await db.update(icGuidedMirrorReminderSettings).set({ scheduleCronTaskUid: taskUid }).where(eq(icGuidedMirrorReminderSettings.userId, ctx.user.id));
+    }
+    return { enabled: input.enabled, dayOfWeek: input.dayOfWeek, hourUtc: input.hourUtc, scheduleCronTaskUid: taskUid };
+  }),
 
   // Private Guided Mirror history. Mirrors remain owned by the individual and
   // are intentionally absent from any tenant-level dashboard procedure.
@@ -304,6 +362,8 @@ export const intelligenceCoreRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const tenantId = await getTenantId(ctx.user.id);
       const analysis = await analyseSelfLeadership({ ...input, sourceApp: "guide" } as SelfLeadershipAnalysisInput);
+      const ontology = analysis.ontology ?? createOntologyFallback({ situation: input.situation, observedBehaviour: input.observedBehaviour, evidence: input.evidence, careerStage: input.careerStage, context: input.organisationalContext, powerDynamics: input.powerDynamics });
+      analysis.ontology = ontology;
       const [created] = await db.insert(icSelfLeadershipMirrors).values({
         tenantId,
         userId: ctx.user.id,
@@ -314,6 +374,8 @@ export const intelligenceCoreRouter = router({
         situation: input.situation,
         observedBehaviour: input.observedBehaviour ?? null,
         analysis,
+        ontologyPrimaryDistinctionId: ontology.primaryDistinctionId ?? null,
+        ontologySecondaryDistinctionId: ontology.secondaryDistinctionId ?? null,
       });
       const mirrorId = Number(created.insertId);
       await writeAuditEvent({
@@ -344,7 +406,7 @@ export const intelligenceCoreRouter = router({
         .limit(1);
       if (!mirror) throw new TRPCError({ code: "NOT_FOUND", message: "Guided Mirror not found." });
       await db.update(icSelfLeadershipMirrors)
-        .set(buildGuidedMirrorFeedbackUpdate(input.relevance, input.feedbackNote))
+        .set(buildGuidedMirrorFeedbackUpdate(input.relevance, input.feedbackNote, input.feedbackReason))
         .where(eq(icSelfLeadershipMirrors.id, mirror.id));
       return { success: true };
     }),
@@ -375,6 +437,31 @@ export const intelligenceCoreRouter = router({
 
     const dimensions = aggregateSelfLeadershipProgress(mirrors);
     return { dimensions, totalReflections: mirrors.length };
+  }),
+
+  isCurrentUserCoach: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [coach] = await db.select({ id: coaches.id }).from(coaches).where(eq(coaches.userId, ctx.user.id)).limit(1);
+    return { isCoach: Boolean(coach) };
+  }),
+
+  getCoachGuidedMirrorThemes: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [coach] = await db.select().from(coaches).where(eq(coaches.userId, ctx.user.id)).limit(1);
+    if (!coach) throw new TRPCError({ code: "FORBIDDEN", message: "Coach access is required." });
+    const assignments = await db.select({ clientUserId: coachAssignments.clientUserId }).from(coachAssignments).where(and(eq(coachAssignments.coachId, coach.id), eq(coachAssignments.isActive, true)));
+    const assignedIds = assignments.map((assignment) => assignment.clientUserId);
+    if (assignedIds.length === 0) return { eligible: false, minimumCohortSize: 5, cohortSize: 0, themes: [], privacyBoundary: "No assigned clients with explicit aggregate Guided Mirror consent." };
+    const consented = await db.select({ userId: privacySettings.userId }).from(privacySettings).where(and(inArray(privacySettings.userId, assignedIds), eq(privacySettings.shareGuidedMirrorAggregateThemes, true)));
+    const consentedIds = consented.map((item) => item.userId);
+    const cohortSize = consentedIds.length;
+    if (cohortSize < 5) return { eligible: false, minimumCohortSize: 5, cohortSize, themes: [], privacyBoundary: "Aggregate themes are withheld until at least five assigned clients explicitly consent. Individual reflections, situations, feedback notes, and identities are never shown." };
+    const signals = await db.select({ dimension: icSelfLeadershipMirrors.primaryDimension, distinctionId: icSelfLeadershipMirrors.ontologyPrimaryDistinctionId, experimentStatus: icSelfLeadershipMirrors.experimentStatus }).from(icSelfLeadershipMirrors).where(inArray(icSelfLeadershipMirrors.userId, consentedIds));
+    const grouped = new Map<string, { dimension: string; distinctionId: string | null; count: number; experiments: number }>();
+    signals.forEach((signal) => { const key = `${signal.dimension}:${signal.distinctionId ?? "unclassified"}`; const existing = grouped.get(key) ?? { dimension: signal.dimension, distinctionId: signal.distinctionId, count: 0, experiments: 0 }; existing.count += 1; if (signal.experimentStatus === "attempted") existing.experiments += 1; grouped.set(key, existing); });
+    const themes = Array.from(grouped.values()).filter((theme) => theme.count >= 5).sort((a, b) => b.count - a.count).map((theme) => ({ ...theme, label: `${theme.dimension.replace(/_/g, " ")} · ${theme.distinctionId ?? "emerging theme"}` }));
+    await writeAuditEvent({ actorUserId: ctx.user.id, eventType: "coach_guided_mirror_aggregate_viewed", resourceType: "guided_mirror_aggregate", processingPurpose: "consented_aggregate_coaching_themes", authorizationResult: "allowed", metadata: { cohortSize, themeCount: themes.length } });
+    return { eligible: true, minimumCohortSize: 5, cohortSize, themes, privacyBoundary: "Consented aggregate themes only. No individual reflections, situations, feedback notes, experiments, or identities are included." };
   }),
 
   analyzeSelfLeadership: protectedProcedure

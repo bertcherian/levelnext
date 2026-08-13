@@ -28,3 +28,12 @@
 - [x] Revalidate the final Guided Mirror and dashboard progress experience on desktop after the Guide loading-state refinement.
 - [x] Add authenticated router-level tests for Guided Mirror creation, feedback, experiment updates, progress aggregation, and cross-user privacy enforcement.
 - [x] Add router-level read-isolation coverage proving Guided Mirror history returns only the authenticated user’s records.
+- [x] Extract the supplied Universal Ontological Distinction Library into a reusable Intelligence Core reasoning specification.
+- [x] Build a typed ontology reasoning layer and dynamically inject it into Guide and Self-Leadership Intelligence workflows.
+- [x] Add an optional “Not yet” feedback reason to Guided Mirror relevance feedback.
+- [x] Add a user-controlled weekly Guided Mirror reminder with reliable scheduled delivery.
+- [x] Add a coach dashboard for consented, minimum-group-size aggregate reflection themes only.
+- [x] Add schema migration, privacy tests, reminder tests, and responsive validation for the Intelligence Core enhancement.
+- [x] Replace the Guided Mirror reminder’s hardcoded link with a deployment-safe runtime origin.
+- [x] Add behavioural reminder-delivery tests for enabled, disabled, recent-reflection, and idempotent resend states.
+- [x] Add procedure-level coach aggregate privacy tests for non-coach denial and below-threshold consent cohorts.

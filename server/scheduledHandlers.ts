@@ -24,11 +24,15 @@ import {
   icRecommendations,
   icOutcomeObservations,
   icOutboxEvents,
+  icGuidedMirrorReminderSettings,
+  icSelfLeadershipMirrors,
   earlyCareerNudgeConfigs,
   earlyCareerNudgeDeliveries,
   earlyCareerProfiles,
 } from "../drizzle/schema";
 import { eq, gte, and, desc, sql } from "drizzle-orm";
+import { sdk } from "./_core/sdk";
+import { decideGuidedMirrorReminder, resolveRequestOrigin } from "./guidedMirrorReminderHelpers";
 
 // ── Weekly Practice Summary ───────────────────────────────────────────────────
 export async function weeklySummaryHandler(req: Request, res: Response) {
@@ -389,6 +393,30 @@ export async function icFollowUpReminderHandler(req: Request, res: Response) {
   } catch (error) {
     console.error("[IC Follow-up Reminder] Error:", error);
     return res.status(500).json({ ok: false, error: String(error) });
+  }
+}
+
+// ── Private Guided Mirror Weekly Reminder ───────────────────────────────────────
+export async function guidedMirrorReminderHandler(req: Request, res: Response) {
+  try {
+    const cronUser = await sdk.authenticateRequest(req);
+    if (!cronUser.isCron || !cronUser.taskUid) return res.status(403).json({ error: "cron-only" });
+    const db = await getDb();
+    if (!db) return res.json({ ok: true, skipped: "no-db" });
+    const [setting] = await db.select().from(icGuidedMirrorReminderSettings).where(eq(icGuidedMirrorReminderSettings.scheduleCronTaskUid, cronUser.taskUid)).limit(1);
+    if (!setting) return res.json({ ok: true, skipped: "orphan" });
+    const [user] = await db.select().from(users).where(eq(users.id, setting.userId)).limit(1);
+    if (!user?.email) return res.json({ ok: true, skipped: "no-email" });
+    const [recentMirror] = await db.select({ createdAt: icSelfLeadershipMirrors.createdAt }).from(icSelfLeadershipMirrors).where(eq(icSelfLeadershipMirrors.userId, setting.userId)).orderBy(desc(icSelfLeadershipMirrors.createdAt)).limit(1);
+    const decision = decideGuidedMirrorReminder({ enabled: setting.enabled, lastReminderAt: setting.lastReminderAt, latestMirrorAt: recentMirror?.createdAt });
+    if (!decision.shouldSend) return res.json({ ok: true, skipped: decision.reason });
+    const guideUrl = `${resolveRequestOrigin(req)}/guide`;
+    await sendEmail({ to: user.email, subject: "A private Guided Mirror for your week", html: `<h2>Make one workplace moment useful</h2><p>Take a quiet moment to notice what happened and choose one next experiment.</p><p><a href="${guideUrl}">Open your private Guided Mirror</a></p><p style="color:#666;font-size:12px">You are receiving this because you enabled weekly Guided Mirror reminders. You can change this in Guide at any time.</p>` });
+    await db.update(icGuidedMirrorReminderSettings).set({ lastReminderAt: new Date() }).where(eq(icGuidedMirrorReminderSettings.id, setting.id));
+    return res.json({ ok: true, sent: 1 });
+  } catch (error) {
+    console.error("[GuidedMirrorReminder] Error:", error);
+    return res.status(500).json({ ok: false, error: String(error), timestamp: new Date().toISOString() });
   }
 }
 

@@ -101,7 +101,7 @@ describe("Guided Mirror protected procedures", () => {
     await caller.rateGuidedMirror({ mirrorId: 47, relevance: "up", feedbackNote: "This feels practical." });
     await caller.updateGuidedMirrorExperiment({ mirrorId: 47, experimentStatus: "attempted" });
 
-    expect(db.updateSet.mock.calls[0]?.[0]).toEqual({ relevance: "up", feedbackNote: "This feels practical." });
+    expect(db.updateSet.mock.calls[0]?.[0]).toEqual({ relevance: "up", feedbackNote: "This feels practical.", feedbackReason: null });
     expect(db.updateSet.mock.calls[1]?.[0]).toEqual({ experimentStatus: "attempted" });
   });
 
@@ -134,5 +134,25 @@ describe("Guided Mirror protected procedures", () => {
     expect(result.dimensions.find((dimension) => dimension.id === "courage")).toMatchObject({ reflections: 1, experimentsAttempted: 1, relevanceSignals: 1 });
     expect(result.dimensions.find((dimension) => dimension.id === "integrity")).toMatchObject({ reflections: 1, progressLabel: "Noticing" });
     expect(result.dimensions.find((dimension) => dimension.id === "authenticity")).toMatchObject({ reflections: 0, progressLabel: "Start noticing" });
+  });
+
+  it("denies coach aggregate themes to a user without a coach record", async () => {
+    const db = makeDb([[]]);
+    mockGetDb.mockResolvedValue(db);
+    const { intelligenceCoreRouter } = await import("./intelligenceCore");
+    await expect(intelligenceCoreRouter.createCaller(context(1)).getCoachGuidedMirrorThemes()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("withholds aggregate themes when fewer than five assigned clients explicitly consent", async () => {
+    const db = makeDb([
+      [{ id: 9, userId: 1 }],
+      [{ clientUserId: 20 }, { clientUserId: 21 }, { clientUserId: 22 }],
+      [{ userId: 20 }, { userId: 21 }, { userId: 22 }],
+    ]);
+    mockGetDb.mockResolvedValue(db);
+    const { intelligenceCoreRouter } = await import("./intelligenceCore");
+    const result = await intelligenceCoreRouter.createCaller(context(1)).getCoachGuidedMirrorThemes();
+    expect(result).toMatchObject({ eligible: false, minimumCohortSize: 5, cohortSize: 3, themes: [] });
+    expect(result.privacyBoundary).toContain("never shown");
   });
 });

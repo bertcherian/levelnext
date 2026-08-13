@@ -421,6 +421,13 @@
       "when": 1786640520728,
       "tag": "0059_lonely_daimon_hellstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "5",
+      "when": 1786658027664,
+      "tag": "0060_spicy_thaddeus_ross",
+      "breakpoints": true
     }
   ]
 }

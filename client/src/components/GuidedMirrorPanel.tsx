@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Brain, CheckCircle2, ChevronDown, Lightbulb, Loader2, Send, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Bell, Brain, CheckCircle2, ChevronDown, Lightbulb, Loader2, Send, ThumbsDown, ThumbsUp } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -13,13 +13,19 @@ const DIMENSION_LABELS: Record<string, string> = {
   integrity: "Integrity",
 };
 
+const NOT_YET_REASONS = [
+  ["does_not_fit_my_situation", "Doesn’t fit this situation"], ["too_generic", "Too general"], ["not_actionable", "Not actionable enough"], ["wrong_depth", "Not the right depth"], ["not_the_right_time", "Not the right time"], ["other", "Something else"],
+] as const;
+
 export default function GuidedMirrorPanel({ enabled }: { enabled: boolean }) {
   const utils = trpc.useUtils();
   const [situation, setSituation] = useState("");
   const [observedBehaviour, setObservedBehaviour] = useState("");
   const [careerStage, setCareerStage] = useState<"early_career" | "professional" | "manager" | "leader" | "cxo">("leader");
   const [open, setOpen] = useState(true);
+  const [showReasonOptions, setShowReasonOptions] = useState(false);
   const { data, isLoading } = trpc.intelligenceCore.getGuidedMirrors.useQuery(undefined, { enabled });
+  const { data: reminder } = trpc.intelligenceCore.getGuidedMirrorReminder.useQuery(undefined, { enabled });
   const createMirror = trpc.intelligenceCore.createGuidedMirror.useMutation({
     onSuccess: () => {
       utils.intelligenceCore.getGuidedMirrors.invalidate();
@@ -42,6 +48,10 @@ export default function GuidedMirrorPanel({ enabled }: { enabled: boolean }) {
       utils.intelligenceCore.getSelfLeadershipProgress.invalidate();
     },
   });
+  const saveReminder = trpc.intelligenceCore.saveGuidedMirrorReminder.useMutation({
+    onSuccess: () => { utils.intelligenceCore.getGuidedMirrorReminder.invalidate(); toast.success("Weekly Guided Mirror reminder updated."); },
+    onError: () => toast.error("Reminder settings could not be saved. Please try again."),
+  });
 
   const handleCreate = () => {
     if (situation.trim().length < 10 || createMirror.isPending) return;
@@ -59,6 +69,10 @@ export default function GuidedMirrorPanel({ enabled }: { enabled: boolean }) {
       </button>
       {open && <div className="border-t p-5" style={{ borderColor: "var(--color-ln-border)" }}>
         <p className="mb-4 text-xs leading-relaxed" style={{ color: "var(--color-ln-muted)" }}>Private to you. Guide uses observable behaviour and context—not personality labels or assumptions about motives.</p>
+        <div className="mb-4 flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "var(--color-ln-border)", background: "var(--color-ln-ivory)" }}>
+          <div className="flex gap-2"><Bell size={15} style={{ color: "var(--color-ln-navy)" }} /><p className="text-xs" style={{ color: "var(--color-ln-muted)" }}><strong style={{ color: "var(--color-ln-navy)" }}>Weekly reminder</strong><br />A private email prompt on Monday morning UTC.</p></div>
+          <button onClick={() => saveReminder.mutate({ enabled: !reminder?.enabled, dayOfWeek: reminder?.dayOfWeek ?? 1, hourUtc: reminder?.hourUtc ?? 3 })} disabled={saveReminder.isPending} className="rounded-lg border px-3 py-1.5 text-xs font-semibold" style={{ borderColor: "var(--color-ln-border)", background: reminder?.enabled ? "var(--color-ln-navy)" : "white", color: reminder?.enabled ? "white" : "var(--color-ln-navy)" }}>{reminder?.enabled ? "Reminder on" : "Turn on"}</button>
+        </div>
         <div className="space-y-3">
           <Textarea value={situation} onChange={(event) => setSituation(event.target.value)} placeholder="What happened? Describe the workplace moment you want to understand." className="min-h-[92px] text-sm" maxLength={4000} />
           <Textarea value={observedBehaviour} onChange={(event) => setObservedBehaviour(event.target.value)} placeholder="What did you say or do? (Optional, but it sharpens the mirror.)" className="min-h-[70px] text-sm" maxLength={3000} />
@@ -67,6 +81,7 @@ export default function GuidedMirrorPanel({ enabled }: { enabled: boolean }) {
             <button onClick={handleCreate} disabled={situation.trim().length < 10 || createMirror.isPending} className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50" style={{ background: "var(--color-ln-navy)", color: "white" }}>{createMirror.isPending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}{createMirror.isPending ? "Reflecting…" : "Create my Mirror"}</button>
           </div>
         </div>
+        {latestMirror?.relevance === "down" && <div className="mt-4 rounded-xl border p-3" style={{ borderColor: "var(--color-ln-border)", background: "var(--color-ln-ivory)" }}><div className="flex items-center justify-between gap-3"><p className="text-xs" style={{ color: "var(--color-ln-muted)" }}>Optional: what would make this more useful?</p><button onClick={() => setShowReasonOptions((value) => !value)} className="text-xs font-semibold hover:underline" style={{ color: "var(--color-ln-navy)" }}>{showReasonOptions ? "Hide" : "Add reason"}</button></div>{showReasonOptions && <div className="mt-2 flex flex-wrap gap-2">{NOT_YET_REASONS.map(([value, label]) => <button key={value} onClick={() => rateMirror.mutate({ mirrorId: latestMirror.id, relevance: "down", feedbackReason: value })} disabled={rateMirror.isPending} className="rounded-full border bg-white px-2.5 py-1 text-xs" style={{ borderColor: "var(--color-ln-border)" }}>{label}</button>)}</div>}</div>}
         {isLoading ? <div className="mt-5 h-24 animate-pulse rounded-xl" style={{ background: "var(--color-ln-ivory)" }} /> : analysis && latestMirror && <div className="mt-5 rounded-xl p-4" style={{ background: "oklch(98% 0.01 248.6)", border: "1px solid var(--color-ln-border)" }}>
           <div className="flex flex-wrap items-center gap-2"><span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.18)", color: "var(--color-ln-navy)" }}>{DIMENSION_LABELS[analysis.selfLeadershipSignal?.primaryDimension] ?? "Self-leadership"}</span><span className="text-xs" style={{ color: "var(--color-ln-muted)" }}>{analysis.selfLeadershipSignal?.confidence} confidence · evidence, not a label</span></div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2"><div><p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>What we’re noticing</p><p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--color-ln-text)" }}>{analysis.mirror?.whatWeAreNoticing}</p></div><div><p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>Why it may matter</p><p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--color-ln-text)" }}>{analysis.mirror?.whyItMayMatter}</p></div><div><p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>Question to consider</p><p className="mt-1 text-sm leading-relaxed italic" style={{ color: "var(--color-ln-text)" }}>{analysis.mirror?.questionToConsider}</p></div><div><p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-ln-navy)" }}>Experiment</p><p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--color-ln-text)" }}>{analysis.mirror?.experiment}</p></div></div>
