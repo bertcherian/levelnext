@@ -56,6 +56,12 @@ describe("Launch Intelligence B2C acquisition page", () => {
     expect(launchLandingStyles).toContain(".launch-brutal__section--ink .launch-brutal__section-label, .launch-brutal__section--ink .launch-brutal__section-head > p:last-child { color: var(--launch-paper); }");
   });
 
+  it("uses explicit ink text only inside the light and yellow output cards", () => {
+    expect(launchLandingStyles).toContain(".launch-brutal__section--ink .launch-brutal__output,");
+    expect(launchLandingStyles).toContain(".launch-brutal__section--ink .launch-brutal__output h3,");
+    expect(launchLandingStyles).toContain(".launch-brutal__section--ink .launch-brutal__output p { color: var(--launch-ink) !important; }");
+  });
+
   it("maintains contrast-safe dark-surface defaults across the public and Launch landing pages", () => {
     expect(globalStyles).toMatch(/h1, h2, h3, h4, h5, h6\s*\{[\s\S]*?color: inherit;/);
     expect(globalStyles).toMatch(/p\s*\{\s*color: inherit;/);
