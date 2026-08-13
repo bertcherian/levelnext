@@ -6,6 +6,10 @@ const launchLandingSource = readFileSync(
   resolve(process.cwd(), "client/src/pages/launch/LaunchLanding.tsx"),
   "utf8",
 );
+const launchLandingStyles = readFileSync(
+  resolve(process.cwd(), "client/src/pages/launch/launchLanding.css"),
+  "utf8",
+);
 const launchCoachSources = [
   "client/src/pages/launch/LaunchLanding.tsx",
   "client/src/pages/launch/LaunchResumeMakeover.tsx",
@@ -28,5 +32,11 @@ describe("Launch Intelligence B2C acquisition page", () => {
     expect(launchLandingSource).not.toContain("TESTIMONIALS");
     expect(launchLandingSource).not.toContain("Rated by early-career professionals");
     expect(launchLandingSource).not.toContain("5.0");
+  });
+
+  it("uses explicit ivory text for the dark Less Guessing, More Evidence section", () => {
+    expect(launchLandingSource).toContain("Less guessing.<br />More evidence.");
+    expect(launchLandingStyles).toContain(".launch-brutal__section--ink h2 { color: var(--launch-paper); }");
+    expect(launchLandingStyles).toContain(".launch-brutal__section--ink .launch-brutal__section-label, .launch-brutal__section--ink .launch-brutal__section-head > p:last-child { color: var(--launch-paper); }");
   });
 });

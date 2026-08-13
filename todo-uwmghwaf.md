@@ -11,3 +11,6 @@
 - [x] Apply the high-contrast LevelNext logo treatment to the Launch Intelligence landing-page footer.
 - [x] Extend the landing-page logo regression test to cover the footer treatment.
 - [x] Verify the repaired Launch footer logo at desktop and mobile sizes.
+- [x] Fix the unreadable “Less Guessing, More Evidence” heading contrast on the Launch landing page.
+- [x] Add regression coverage for the dark-section heading contrast treatment.
+- [x] Verify the repaired dark-section heading at desktop and mobile sizes.
