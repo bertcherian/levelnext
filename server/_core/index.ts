@@ -13,26 +13,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { weeklySummaryHandler, momentumCheckinHandler, icFollowUpReminderHandler, icOutboxPublisherHandler, earlyCareerNudgeDeliveryHandler } from "../scheduledHandlers";
-
-// ── Allowed origins for CORS ──────────────────────────────────────────────────
-const PRODUCTION_ORIGINS = [
-  "https://levelnext.coach",
-  "https://www.levelnext.coach",
-  "https://levelnextai-m9hb5g5z.manus.space",
-];
-
-const DEV_ORIGINS = [
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-];
-
-// In dev mode, also allow manus.computer preview domains
-const isManusPreview = (origin: string) =>
-  /^https:\/\/[\w-]+\.manus\.(computer|space)$/.test(origin);
-
-const allowedOrigins = process.env.NODE_ENV === "production"
-  ? PRODUCTION_ORIGINS
-  : [...PRODUCTION_ORIGINS, ...DEV_ORIGINS];
+import { isAllowedCorsOrigin } from "./originPolicy";
 
 // ── Rate limiters ─────────────────────────────────────────────────────────────
 // General API rate limiter — applies to all /api/trpc requests
@@ -109,11 +90,11 @@ async function startServer() {
     crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow S3 resources
   }));
 
-  // CORS — restrict to known production domains + localhost in dev
+  // CORS — restrict production to known domains while permitting Manus-managed previews in development.
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (curl, server-to-server, same-origin)
-      if (!origin || allowedOrigins.includes(origin) || (process.env.NODE_ENV !== "production" && isManusPreview(origin))) {
+      if (isAllowedCorsOrigin(origin, process.env.NODE_ENV)) {
         callback(null, true);
       } else {
         callback(new Error(`Origin ${origin} not allowed by CORS`));

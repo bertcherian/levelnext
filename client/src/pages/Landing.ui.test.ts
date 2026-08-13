@@ -16,6 +16,9 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("what success demands.");
     expect(page).toContain("From early career to enterprise leadership, LevelNext builds the intelligence, judgment and everyday capabilities you need for the level you’re stepping into.");
     expect(page).toContain("Professional Intelligence");
+    expect(page).toContain("Four Career Chapters.");
+    expect(page).toContain("Different Capabilities.");
+    expect(page).toContain("LevelNext understands where each person is in their career, then builds the capabilities they need to succeed there — and prepare for what comes next.");
     expect(page).toContain("One platform.");
     expect(page).toContain("Across your talent pipeline.");
     expect(page).toContain("Early Career Intelligence");

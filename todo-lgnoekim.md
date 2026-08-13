@@ -43,3 +43,7 @@
 - [x] Centre eligible organisation CTA compositions while preserving intentional visual-balanced layouts.
 - [x] Add a concise interaction cue above the Intelligence Core capability labels and cover it with regression tests.
 - [x] Save a production checkpoint for the validated CTA composition and Intelligence Core interaction cue update.
+- [x] Inspect the current Journey section markup and regression coverage for the approved messaging replacement.
+- [x] Replace the Journey section headline and supporting copy with the approved career-chapter positioning.
+- [x] Fix the managed-preview CORS origin matcher so regional Manus preview URLs render during validation.
+- [ ] Save a production checkpoint for the validated Journey messaging update and managed-preview CORS repair.

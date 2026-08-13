@@ -150,8 +150,8 @@ export default function Landing() {
         <div className="ln-section-frame">
           <div className="ln-section-heading">
             <p className="ln-eyebrow ln-eyebrow--gold"><span /> The journey</p>
-            <h2 id="journey-title">One workforce.<br /><em>Four moments that matter.</em></h2>
-            <p>LevelNext reads the moment each person is in, then equips your organisation to develop the right capability at the right time.</p>
+            <h2 id="journey-title">Four Career Chapters.<br /><em>Different Capabilities.</em></h2>
+            <p>LevelNext understands where each person is in their career, then builds the capabilities they need to succeed there — and prepare for what comes next.</p>
           </div>
           <div className="ln-stage-quickfilter" aria-label="Quick filter to your career stage">
             <p className="ln-stage-quickfilter__label">Find your stage:</p>
