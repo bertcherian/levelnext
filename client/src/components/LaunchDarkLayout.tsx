@@ -21,15 +21,15 @@ const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_c21f58d5.png";
 
 function LaunchBrandMark() {
   return (
-    <span aria-label="LevelNext Launch Intelligence" style={{ display: "flex", alignItems: "center", gap: 9 }}>
-      <span aria-hidden="true" style={{ width: 38, height: 32, overflow: "hidden", position: "relative", flex: "0 0 auto", borderRadius: 6, border: "1px solid rgba(34,211,238,0.55)", background: "#07111D", boxShadow: "0 0 14px rgba(34,211,238,0.16)" }}>
+    <span aria-label="LevelNext Launch Intelligence" className="launch-app-brand">
+      <span aria-hidden="true" className="launch-app-brand__mark">
         <img src={LOGO_URL} alt="" style={{ position: "absolute", height: 64, width: "auto", maxWidth: "none", top: -14, left: -6 }} />
       </span>
-      <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1 }}>
-        <span style={{ color: "#F8FAFC", fontSize: 16, fontWeight: 800, letterSpacing: "-0.04em", fontFamily: "var(--ld-font-heading)" }}>
-          Level<span style={{ color: "var(--ld-cyan)" }}>Next</span>
+      <span className="launch-app-brand__copy">
+        <span className="launch-app-brand__name">
+          Level<span className="launch-app-brand__accent">Next</span>
         </span>
-        <span style={{ color: "var(--ld-text-dim)", fontSize: 8, fontWeight: 700, letterSpacing: "0.15em", marginTop: 3, fontFamily: "var(--ld-font-heading)" }}>
+        <span className="launch-app-brand__product">
           LAUNCH INTELLIGENCE
         </span>
       </span>
@@ -107,6 +107,7 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
   // Apply accessibility classes to the wrapper
   const wrapperClass = [
     "launch-dark",
+    "launch-brutal-app",
     highContrast ? "ld-high-contrast" : "",
     reducedMotion ? "ld-reduced-motion" : "",
   ].filter(Boolean).join(" ");

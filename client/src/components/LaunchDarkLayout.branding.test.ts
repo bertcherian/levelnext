@@ -8,8 +8,8 @@ describe("Launch platform header branding", () => {
     expect(source).toContain("function LaunchBrandMark()");
     expect(source).toContain('aria-label="LevelNext Launch Intelligence"');
     expect(source).toContain('height: 64');
-    expect(source).toContain('overflow: "hidden"');
-    expect(source).toContain('fontSize: 16');
-    expect(source).toContain('Level<span style={{ color: "var(--ld-cyan)" }}>Next</span>');
+    expect(source).toContain('className="launch-app-brand__mark"');
+    expect(source).toContain('className="launch-app-brand__name"');
+    expect(source).toContain('className="launch-app-brand__accent"');
   });
 });

@@ -61,9 +61,9 @@ const EXPERIENCE_LEVELS = [
 // ─── Animated Background ──────────────────────────────────────────────────────
 function AnimatedBg() {
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="launch-onboarding-bg fixed inset-0 overflow-hidden pointer-events-none">
       {/* Base gradient */}
-      <div className="absolute inset-0" style={{
+      <div className="launch-onboarding-bg__base absolute inset-0" style={{
         background: "linear-gradient(135deg, #0A0F1E 0%, #0D1B2A 40%, #0A1628 70%, #060D1A 100%)"
       }} />
       {/* Glowing orbs */}
@@ -92,31 +92,21 @@ function ProgressBar({ step }: { step: Step }) {
     { n: 4, label: "Experience" },
   ];
   return (
-    <div className="flex items-center gap-0 mb-10">
+    <div className="launch-app-progress flex items-center gap-0 mb-10" aria-label={`Onboarding step ${step} of 4`}>
       {steps.map((s, i) => (
         <React.Fragment key={s.n}>
           <div className="flex flex-col items-center">
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
-              style={{
-                background: step > s.n
-                  ? "linear-gradient(135deg, #10B981, #3B82F6)"
-                  : step === s.n
-                    ? "linear-gradient(135deg, #3B82F6, #8B5CF6)"
-                    : "rgba(255,255,255,0.08)",
-                color: step >= s.n ? "#fff" : "rgba(255,255,255,0.3)",
-                boxShadow: step === s.n ? "0 0 20px rgba(59,130,246,0.5)" : "none",
-              }}>
+              className="launch-app-progress__step w-8 h-8 flex items-center justify-center text-xs font-bold transition-all duration-300"
+              data-state={step > s.n ? "complete" : step === s.n ? "current" : "upcoming"}>
               {step > s.n ? "✓" : s.n}
             </div>
-            <span className="text-[9px] mt-1 font-medium"
-              style={{ color: step >= s.n ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)" }}>
+            <span className="launch-app-progress__label text-[9px] mt-1 font-medium" data-active={step >= s.n}>
               {s.label}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className="flex-1 h-[2px] mx-2 mb-4 rounded-full transition-all duration-500"
-              style={{ background: step > s.n + 0 ? "linear-gradient(90deg, #10B981, #3B82F6)" : "rgba(255,255,255,0.08)" }} />
+            <div className="launch-app-progress__line flex-1 h-[2px] mx-2 mb-4 transition-all duration-500" data-complete={step > s.n} />
           )}
         </React.Fragment>
       ))}
@@ -134,20 +124,14 @@ function SelectCard({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-4 rounded-2xl transition-all duration-200 relative overflow-hidden"
+      className="launch-app-select-card w-full text-left p-4 transition-all duration-200 relative overflow-hidden"
+      data-selected={isSelected}
+      aria-pressed={isSelected}
       style={{
-        background: isSelected
-          ? `linear-gradient(135deg, ${color}22, ${color}11)`
-          : "rgba(255,255,255,0.04)",
-        border: isSelected
-          ? `1.5px solid ${color}`
-          : "1.5px solid rgba(255,255,255,0.08)",
-        boxShadow: isSelected ? `0 0 24px ${color}30, inset 0 0 20px ${color}08` : "none",
-        transform: isSelected ? "scale(1.01)" : "scale(1)",
-      }}>
+        ["--launch-choice" as string]: color,
+      } as React.CSSProperties}>
       {isSelected && (
-        <div className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
-          style={{ background: color }}>
+        <div className="launch-app-select-card__check absolute top-2 right-2 w-5 h-5 flex items-center justify-center">
           <span className="text-[10px] text-white font-bold">✓</span>
         </div>
       )}
@@ -216,32 +200,33 @@ export default function LaunchOnboarding() {
   };
 
   return (
-    <div className="min-h-screen relative" style={{ fontFamily: "Manrope, sans-serif" }}>
+    <div className="launch-dark launch-brutal-app launch-brutal-app--onboarding min-h-screen relative" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
       <AnimatedBg />
 
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="launch-app-onboarding-header text-center mb-8">
           {/* LevelNext Logo */}
           <div className="flex justify-center mb-5">
-            <img
-              src="/manus-storage/LevelNext_logo_transparent_c21f58d5.png"
-              alt="LevelNext"
-              style={{ height: "72px", width: "auto", objectFit: "contain" }}
-            />
+            <span className="launch-app-onboarding-logo">
+              <img
+                src="/manus-storage/LevelNext_logo_transparent_c21f58d5.png"
+                alt="LevelNext"
+                style={{ height: "72px", width: "auto", objectFit: "contain" }}
+              />
+            </span>
           </div>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4"
-            style={{ background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.3)" }}>
-            <Rocket size={14} style={{ color: "#3B82F6" }} />
-            <span className="text-xs font-semibold" style={{ color: "#3B82F6" }}>Launch Intelligence</span>
+          <div className="launch-app-kicker inline-flex items-center gap-2 px-4 py-2 mb-4">
+            <Rocket size={14} />
+            <span className="text-xs font-semibold">Launch Intelligence</span>
           </div>
-          <h1 className="text-3xl font-black text-white mb-2" style={{ fontFamily: "Space Grotesk, sans-serif", letterSpacing: "-0.5px" }}>
+          <h1 className="text-3xl font-black mb-2">
             {step === 1 && "What's your mission?"}
             {step === 2 && "Where are you headed?"}
             {step === 3 && "Pick your arena."}
             {step === 4 && "Where are you right now?"}
           </h1>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <p className="launch-app-onboarding-header__lede text-sm">
             {step === 1 && "This shapes your entire Launch journey."}
             {step === 2 && "We'll tailor your missions to your target role."}
             {step === 3 && "Industry context sharpens your coaching."}
@@ -255,12 +240,7 @@ export default function LaunchOnboarding() {
         </div>
 
         {/* Card */}
-        <div className="w-full max-w-md rounded-3xl p-6"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            backdropFilter: "blur(20px)",
-          }}>
+        <div className="launch-app-onboarding-card w-full max-w-md p-6">
 
           {/* Step 1: Goal */}
           {step === 1 && (
@@ -329,13 +309,11 @@ export default function LaunchOnboarding() {
           )}
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-6 pt-4"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="launch-app-onboarding-actions flex items-center justify-between mt-6 pt-4">
             {step > 1 ? (
               <button
                 onClick={handleBack}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150"
-                style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" }}>
+                className="launch-app-button launch-app-button--secondary flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150">
                 <ArrowLeft size={14} /> Back
               </button>
             ) : (
@@ -346,30 +324,14 @@ export default function LaunchOnboarding() {
               <button
                 onClick={handleNext}
                 disabled={!canNext()}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200"
-                style={{
-                  background: canNext()
-                    ? "linear-gradient(135deg, #3B82F6, #8B5CF6)"
-                    : "rgba(255,255,255,0.06)",
-                  color: canNext() ? "#fff" : "rgba(255,255,255,0.25)",
-                  boxShadow: canNext() ? "0 0 20px rgba(59,130,246,0.4)" : "none",
-                  cursor: canNext() ? "pointer" : "not-allowed",
-                }}>
+                className="launch-app-button flex items-center gap-2 px-6 py-2.5 text-sm font-bold transition-all duration-200">
                 Next <ArrowRight size={14} />
               </button>
             ) : (
               <button
                 onClick={handleFinish}
                 disabled={!canNext() || saving}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200"
-                style={{
-                  background: canNext() && !saving
-                    ? "linear-gradient(135deg, #10B981, #3B82F6)"
-                    : "rgba(255,255,255,0.06)",
-                  color: canNext() && !saving ? "#fff" : "rgba(255,255,255,0.25)",
-                  boxShadow: canNext() && !saving ? "0 0 24px rgba(16,185,129,0.4)" : "none",
-                  cursor: canNext() && !saving ? "pointer" : "not-allowed",
-                }}>
+                className="launch-app-button launch-app-button--finish flex items-center gap-2 px-6 py-2.5 text-sm font-bold transition-all duration-200">
                 {saving ? (
                   <><Sparkles size={14} className="animate-spin" /> Launching…</>
                 ) : (
@@ -381,7 +343,7 @@ export default function LaunchOnboarding() {
         </div>
 
         {/* Footer note */}
-        <p className="text-[11px] mt-6 text-center" style={{ color: "rgba(255,255,255,0.2)" }}>
+        <p className="launch-app-onboarding-footer text-[11px] mt-6 text-center">
           You can update these anytime in your profile settings
         </p>
       </div>
