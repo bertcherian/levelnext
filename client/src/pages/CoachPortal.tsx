@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
@@ -409,6 +409,7 @@ function NotACoachGate() {
 export default function CoachPortal() {
   const { user, loading: authLoading } = useAuth();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [trendPeriodDays, setTrendPeriodDays] = useState<30 | 90>(30);
 
   const { data: profile, isLoading: profileLoading } = trpc.coach.getMyProfile.useQuery(undefined, {
     enabled: !!user,
@@ -417,7 +418,7 @@ export default function CoachPortal() {
   const { data: clients, isLoading: clientsLoading } = trpc.coach.getMyClients.useQuery(undefined, {
     enabled: !!profile,
   });
-  const { data: guidedMirrorThemes, isLoading: themesLoading } = trpc.intelligenceCore.getCoachGuidedMirrorThemes.useQuery(undefined, {
+  const { data: guidedMirrorThemes, isLoading: themesLoading } = trpc.intelligenceCore.getCoachGuidedMirrorThemes.useQuery({ periodDays: trendPeriodDays }, {
     enabled: !!profile,
     retry: false,
   });
@@ -462,8 +463,8 @@ export default function CoachPortal() {
       {/* Client List */}
       <div className="max-w-2xl mx-auto px-6 py-6">
         <Card className="mb-6 border-[#C9A84C]/50 bg-white p-5 rounded-xl shadow-sm">
-          <div className="flex items-start gap-3"><div className="rounded-lg bg-[#0F1F3D] p-2"><Brain className="w-4 h-4 text-[#C9A84C]" /></div><div><h2 className="font-semibold text-[#0F1F3D]">Consented Guided Mirror themes</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Aggregate coaching signals only. No client names, situations, reflection text, feedback notes, or individual experiments are visible.</p></div></div>
-          {themesLoading ? <Skeleton className="mt-4 h-16 w-full" /> : !guidedMirrorThemes?.eligible ? <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{guidedMirrorThemes?.privacyBoundary ?? "Themes are available only to assigned-client cohorts with explicit consent."}<p className="mt-1 text-xs text-slate-400">Minimum consented cohort: {guidedMirrorThemes?.minimumCohortSize ?? 5}. Current cohort: {guidedMirrorThemes?.cohortSize ?? 0}.</p></div> : <div className="mt-4 space-y-2">{guidedMirrorThemes.themes.length ? guidedMirrorThemes.themes.map((theme) => <div key={`${theme.dimension}-${theme.distinctionId}`} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2"><div><p className="text-sm font-medium capitalize text-[#0F1F3D]">{theme.label}</p><p className="text-xs text-slate-400">{theme.experiments} experiments attempted</p></div><Badge variant="outline" className="border-[#C9A84C] text-[#0F1F3D]">{theme.count} signals</Badge></div>) : <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">The consented cohort is large enough, but no theme has reached the additional five-signal publication threshold yet.</p>}</div>}
+          <div className="flex items-start justify-between gap-3"><div className="flex items-start gap-3"><div className="rounded-lg bg-[#0F1F3D] p-2"><Brain className="w-4 h-4 text-[#C9A84C]" /></div><div><h2 className="font-semibold text-[#0F1F3D]">Consented Guided Mirror themes</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Aggregate coaching signals only. No client names, situations, reflection text, feedback notes, or individual experiments are visible.</p></div></div><div className="flex shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-0.5">{([30, 90] as const).map((period) => <button key={period} onClick={() => setTrendPeriodDays(period)} className={`rounded-md px-2 py-1 text-xs font-semibold ${trendPeriodDays === period ? "bg-[#0F1F3D] text-white" : "text-slate-500"}`}>{period}d</button>)}</div></div>
+          {themesLoading ? <Skeleton className="mt-4 h-16 w-full" /> : !guidedMirrorThemes?.eligible ? <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{guidedMirrorThemes?.privacyBoundary ?? "Themes are available only to assigned-client cohorts with explicit consent."}<p className="mt-1 text-xs text-slate-400">Minimum consented cohort: {guidedMirrorThemes?.minimumCohortSize ?? 5}. Current cohort: {guidedMirrorThemes?.cohortSize ?? 0}.</p></div> : <div className="mt-4 space-y-4">{guidedMirrorThemes.themes.length ? <div className="space-y-2">{guidedMirrorThemes.themes.map((theme) => <div key={`${theme.dimension}-${theme.distinctionId}`} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2"><div><p className="text-sm font-medium capitalize text-[#0F1F3D]">{theme.label}</p><p className="text-xs text-slate-400">{theme.experiments} experiments attempted</p></div><Badge variant="outline" className="border-[#C9A84C] text-[#0F1F3D]">{theme.count} signals</Badge></div>)}</div> : <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">The consented cohort is large enough, but no theme has reached the additional five-signal publication threshold yet.</p>}{(guidedMirrorThemes.trends?.length ?? 0) > 0 && <div className="border-t border-slate-100 pt-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{trendPeriodDays}-day comparison</p><p className="mt-1 text-xs text-slate-400">Only themes meeting the five-signal threshold in both periods are shown.</p><div className="mt-2 space-y-2">{guidedMirrorThemes.trends?.map((trend) => <div key={`${trend.dimension}-${trend.distinctionId}`} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"><p className="text-xs capitalize text-[#0F1F3D]">{trend.label}</p><span className={`text-xs font-semibold ${trend.direction === "up" ? "text-emerald-700" : trend.direction === "down" ? "text-amber-700" : "text-slate-500"}`}>{trend.direction === "up" ? "+" : ""}{trend.change} vs prior period</span></div>)}</div></div>}</div>}
         </Card>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-[#0F1F3D]">

@@ -17,6 +17,8 @@ describe("UODL and Guided Mirror enhancements", () => {
     expect(core).toContain("feedbackReason: z.enum");
     expect(guide).toContain("NOT_YET_REASONS");
     expect(guide).toContain("saveGuidedMirrorReminder.useMutation");
+    expect(guide).toContain("Reminder timezone");
+    expect(guide).toContain("localDayOfWeek");
     expect(handler).toContain("guidedMirrorReminderHandler");
     expect(handler).toContain("decideGuidedMirrorReminder");
   });
@@ -25,7 +27,9 @@ describe("UODL and Guided Mirror enhancements", () => {
     expect(core).toContain("getCoachGuidedMirrorThemes: protectedProcedure");
     expect(core).toContain("shareGuidedMirrorAggregateThemes");
     expect(core).toContain("cohortSize < 5");
+    expect(core).toContain("aggregateCoachMirrorTrends");
     expect(coach).toContain("Consented Guided Mirror themes");
+    expect(coach).toContain("day comparison");
     expect(coach).toContain("No client names, situations, reflection text");
   });
 });

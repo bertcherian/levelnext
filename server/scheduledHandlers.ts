@@ -32,7 +32,7 @@ import {
 } from "../drizzle/schema";
 import { eq, gte, and, desc, sql } from "drizzle-orm";
 import { sdk } from "./_core/sdk";
-import { decideGuidedMirrorReminder, resolveRequestOrigin } from "./guidedMirrorReminderHelpers";
+import { decideGuidedMirrorReminder, isLocalReminderTime, resolveRequestOrigin } from "./guidedMirrorReminderHelpers";
 
 // ── Weekly Practice Summary ───────────────────────────────────────────────────
 export async function weeklySummaryHandler(req: Request, res: Response) {
@@ -405,6 +405,7 @@ export async function guidedMirrorReminderHandler(req: Request, res: Response) {
     if (!db) return res.json({ ok: true, skipped: "no-db" });
     const [setting] = await db.select().from(icGuidedMirrorReminderSettings).where(eq(icGuidedMirrorReminderSettings.scheduleCronTaskUid, cronUser.taskUid)).limit(1);
     if (!setting) return res.json({ ok: true, skipped: "orphan" });
+    if (!isLocalReminderTime({ timeZone: setting.timeZone, localDayOfWeek: setting.dayOfWeek, localHour: setting.localHour })) return res.json({ ok: true, skipped: "outside-local-window" });
     const [user] = await db.select().from(users).where(eq(users.id, setting.userId)).limit(1);
     if (!user?.email) return res.json({ ok: true, skipped: "no-email" });
     const [recentMirror] = await db.select({ createdAt: icSelfLeadershipMirrors.createdAt }).from(icSelfLeadershipMirrors).where(eq(icSelfLeadershipMirrors.userId, setting.userId)).orderBy(desc(icSelfLeadershipMirrors.createdAt)).limit(1);

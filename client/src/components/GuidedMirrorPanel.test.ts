@@ -10,6 +10,9 @@ describe("Guided Mirror panel", () => {
     expect(source).toContain("updateGuidedMirrorExperiment.useMutation");
     expect(source).toContain("Private to you");
     expect(source).toContain("Was this useful?");
+    expect(source).toContain("Why Guide chose this lens");
+    expect(source).toContain("getDistinction(analysis?.ontology?.primaryDistinctionId)");
+    expect(source).toContain("Reminder timezone");
   });
 
   it("does not block the Guide home and Guided Mirror behind conversation history loading", () => {

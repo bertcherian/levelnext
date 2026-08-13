@@ -37,3 +37,11 @@
 - [x] Replace the Guided Mirror reminder’s hardcoded link with a deployment-safe runtime origin.
 - [x] Add behavioural reminder-delivery tests for enabled, disabled, recent-reflection, and idempotent resend states.
 - [x] Add procedure-level coach aggregate privacy tests for non-coach denial and below-threshold consent cohorts.
+- [x] Let users select a preferred weekday and local reminder time for Guided Mirror notifications.
+- [x] Add privacy-safe time-period comparisons to consented Coach Portal cohort themes.
+- [x] Explain the selected ontological distinction in Guided Mirror using clear, natural language and its relevant inquiry.
+- [x] Add timezone, privacy, trend, and responsive regression coverage for the enhancements.
+- [x] Add behavioural coach aggregate trend tests for 30-day and 90-day comparisons, including five-signal suppression and direction calculation.
+- [x] Add Coach Portal UI regression coverage for the 30d/90d selector and eligible aggregate trend rows.
+- [x] Add a positive 90-day behavioural cohort comparison test with count and direction assertions.
+- [x] Add a rendered Coach Portal interaction test that toggles 30d/90d and conditionally displays eligible trend rows.

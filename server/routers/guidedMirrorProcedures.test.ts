@@ -140,7 +140,7 @@ describe("Guided Mirror protected procedures", () => {
     const db = makeDb([[]]);
     mockGetDb.mockResolvedValue(db);
     const { intelligenceCoreRouter } = await import("./intelligenceCore");
-    await expect(intelligenceCoreRouter.createCaller(context(1)).getCoachGuidedMirrorThemes()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(intelligenceCoreRouter.createCaller(context(1)).getCoachGuidedMirrorThemes({ periodDays: 30 })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("withholds aggregate themes when fewer than five assigned clients explicitly consent", async () => {
@@ -151,7 +151,7 @@ describe("Guided Mirror protected procedures", () => {
     ]);
     mockGetDb.mockResolvedValue(db);
     const { intelligenceCoreRouter } = await import("./intelligenceCore");
-    const result = await intelligenceCoreRouter.createCaller(context(1)).getCoachGuidedMirrorThemes();
+    const result = await intelligenceCoreRouter.createCaller(context(1)).getCoachGuidedMirrorThemes({ periodDays: 30 });
     expect(result).toMatchObject({ eligible: false, minimumCohortSize: 5, cohortSize: 3, themes: [] });
     expect(result.privacyBoundary).toContain("never shown");
   });

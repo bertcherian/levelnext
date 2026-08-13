@@ -45,7 +45,7 @@ import { analyseSelfLeadership } from "../selfLeadershipIntelligence";
 import { SELF_LEADERSHIP_CAREER_STAGES, SELF_LEADERSHIP_DIMENSIONS, SELF_LEADERSHIP_EXAMPLE_INPUT, createSelfLeadershipFallback, type SelfLeadershipAnalysisInput } from "../../shared/modules/selfLeadershipIntelligence";
 import { analyseOntology } from "../ontologyIntelligence";
 import { createOntologyFallback, type OntologyReasoningInput } from "../../shared/modules/universalOntologicalDistinctions";
-import { aggregateSelfLeadershipProgress, buildGuidedMirrorExperimentUpdate, buildGuidedMirrorFeedbackUpdate, filterGuidedMirrorsForUser } from "./selfLeadershipMirrorHelpers";
+import { aggregateCoachMirrorTrends, aggregateSelfLeadershipProgress, buildGuidedMirrorExperimentUpdate, buildGuidedMirrorFeedbackUpdate, filterGuidedMirrorsForUser } from "./selfLeadershipMirrorHelpers";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -282,8 +282,15 @@ const guidedMirrorExperimentSchema = z.object({
 
 const guidedMirrorReminderSchema = z.object({
   enabled: z.boolean(),
-  dayOfWeek: z.number().int().min(0).max(6).default(1),
-  hourUtc: z.number().int().min(0).max(23).default(3),
+  localDayOfWeek: z.number().int().min(0).max(6).default(1),
+  localHour: z.number().int().min(0).max(23).default(9),
+  timeZone: z.string().trim().min(1).max(80).refine((value) => {
+    try { new Intl.DateTimeFormat("en-US", { timeZone: value }); return true; } catch { return false; }
+  }, "A valid IANA timezone is required."),
+});
+
+const coachGuidedMirrorThemesSchema = z.object({
+  periodDays: z.union([z.literal(30), z.literal(90)]).default(30),
 });
 
 const ontologyAnalysisSchema = z.object({
@@ -319,17 +326,19 @@ export const intelligenceCoreRouter = router({
   getGuidedMirrorReminder: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     const [setting] = await db.select().from(icGuidedMirrorReminderSettings).where(eq(icGuidedMirrorReminderSettings.userId, ctx.user.id)).limit(1);
-    return setting ?? { enabled: false, dayOfWeek: 1, hourUtc: 3, scheduleCronTaskUid: null };
+    return setting ?? { enabled: false, localDayOfWeek: 1, localHour: 9, timeZone: "UTC", scheduleCronTaskUid: null };
   }),
 
   saveGuidedMirrorReminder: protectedProcedure.input(guidedMirrorReminderSchema).mutation(async ({ ctx, input }) => {
     const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     const [existing] = await db.select().from(icGuidedMirrorReminderSettings).where(eq(icGuidedMirrorReminderSettings.userId, ctx.user.id)).limit(1);
     const sessionToken = parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "";
-    const cron = `0 0 ${input.hourUtc} * * ${input.dayOfWeek}`;
+    // Hourly execution lets the handler evaluate local time correctly through DST changes.
+    const cron = "0 0 * * * *";
+    const persistedInput = { ...input, dayOfWeek: input.localDayOfWeek, hourUtc: input.localHour };
     let taskUid = existing?.scheduleCronTaskUid ?? null;
-    if (existing) await db.update(icGuidedMirrorReminderSettings).set(input).where(eq(icGuidedMirrorReminderSettings.id, existing.id));
-    else await db.insert(icGuidedMirrorReminderSettings).values({ userId: ctx.user.id, ...input });
+    if (existing) await db.update(icGuidedMirrorReminderSettings).set(persistedInput).where(eq(icGuidedMirrorReminderSettings.id, existing.id));
+    else await db.insert(icGuidedMirrorReminderSettings).values({ userId: ctx.user.id, ...persistedInput });
     const description = "Private weekly Guided Mirror reminder";
     if (taskUid) await updateHeartbeatJob(taskUid, { cron, path: "/api/scheduled/guidedMirrorReminder", method: "POST", description, enable: input.enabled }, sessionToken);
     else {
@@ -338,7 +347,7 @@ export const intelligenceCoreRouter = router({
       if (!input.enabled) await updateHeartbeatJob(taskUid, { enable: false }, sessionToken);
       await db.update(icGuidedMirrorReminderSettings).set({ scheduleCronTaskUid: taskUid }).where(eq(icGuidedMirrorReminderSettings.userId, ctx.user.id));
     }
-    return { enabled: input.enabled, dayOfWeek: input.dayOfWeek, hourUtc: input.hourUtc, scheduleCronTaskUid: taskUid };
+    return { enabled: input.enabled, localDayOfWeek: input.localDayOfWeek, localHour: input.localHour, timeZone: input.timeZone, scheduleCronTaskUid: taskUid };
   }),
 
   // Private Guided Mirror history. Mirrors remain owned by the individual and
@@ -445,7 +454,7 @@ export const intelligenceCoreRouter = router({
     return { isCoach: Boolean(coach) };
   }),
 
-  getCoachGuidedMirrorThemes: protectedProcedure.query(async ({ ctx }) => {
+  getCoachGuidedMirrorThemes: protectedProcedure.input(coachGuidedMirrorThemesSchema).query(async ({ ctx, input }) => {
     const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     const [coach] = await db.select().from(coaches).where(eq(coaches.userId, ctx.user.id)).limit(1);
     if (!coach) throw new TRPCError({ code: "FORBIDDEN", message: "Coach access is required." });
@@ -456,12 +465,13 @@ export const intelligenceCoreRouter = router({
     const consentedIds = consented.map((item) => item.userId);
     const cohortSize = consentedIds.length;
     if (cohortSize < 5) return { eligible: false, minimumCohortSize: 5, cohortSize, themes: [], privacyBoundary: "Aggregate themes are withheld until at least five assigned clients explicitly consent. Individual reflections, situations, feedback notes, and identities are never shown." };
-    const signals = await db.select({ dimension: icSelfLeadershipMirrors.primaryDimension, distinctionId: icSelfLeadershipMirrors.ontologyPrimaryDistinctionId, experimentStatus: icSelfLeadershipMirrors.experimentStatus }).from(icSelfLeadershipMirrors).where(inArray(icSelfLeadershipMirrors.userId, consentedIds));
+    const signals = await db.select({ dimension: icSelfLeadershipMirrors.primaryDimension, distinctionId: icSelfLeadershipMirrors.ontologyPrimaryDistinctionId, experimentStatus: icSelfLeadershipMirrors.experimentStatus, createdAt: icSelfLeadershipMirrors.createdAt }).from(icSelfLeadershipMirrors).where(inArray(icSelfLeadershipMirrors.userId, consentedIds));
     const grouped = new Map<string, { dimension: string; distinctionId: string | null; count: number; experiments: number }>();
     signals.forEach((signal) => { const key = `${signal.dimension}:${signal.distinctionId ?? "unclassified"}`; const existing = grouped.get(key) ?? { dimension: signal.dimension, distinctionId: signal.distinctionId, count: 0, experiments: 0 }; existing.count += 1; if (signal.experimentStatus === "attempted") existing.experiments += 1; grouped.set(key, existing); });
     const themes = Array.from(grouped.values()).filter((theme) => theme.count >= 5).sort((a, b) => b.count - a.count).map((theme) => ({ ...theme, label: `${theme.dimension.replace(/_/g, " ")} · ${theme.distinctionId ?? "emerging theme"}` }));
+    const trends = aggregateCoachMirrorTrends(signals.map((signal) => ({ ...signal, createdAt: new Date(signal.createdAt) })), input.periodDays);
     await writeAuditEvent({ actorUserId: ctx.user.id, eventType: "coach_guided_mirror_aggregate_viewed", resourceType: "guided_mirror_aggregate", processingPurpose: "consented_aggregate_coaching_themes", authorizationResult: "allowed", metadata: { cohortSize, themeCount: themes.length } });
-    return { eligible: true, minimumCohortSize: 5, cohortSize, themes, privacyBoundary: "Consented aggregate themes only. No individual reflections, situations, feedback notes, experiments, or identities are included." };
+    return { eligible: true, minimumCohortSize: 5, cohortSize, periodDays: input.periodDays, themes, trends, privacyBoundary: "Consented aggregate themes only. No individual reflections, situations, feedback notes, experiments, or identities are included. Trend values are published only when both comparison windows independently meet the five-signal threshold." };
   }),
 
   analyzeSelfLeadership: protectedProcedure
