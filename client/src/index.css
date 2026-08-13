@@ -883,6 +883,58 @@
 .launch-app-button--finish { background: var(--launch-mint) !important; color: var(--launch-ink) !important; }
 .launch-app-onboarding-footer { font-weight: 700; opacity: .72; }
 
+/* Daily missions: purposeful loading and relevance-feedback controls. */
+.launch-brutal-app .mission-refresh-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 2px solid var(--launch-ink) !important;
+  border-radius: 0 !important;
+  background: var(--launch-mint) !important;
+  color: var(--launch-ink) !important;
+  box-shadow: 2px 2px 0 var(--launch-ink);
+  font-size: 11px;
+  font-weight: 900;
+}
+.launch-brutal-app .mission-refresh-control:disabled { opacity: .62; cursor: not-allowed; }
+.launch-brutal-app .mission-feedback__label { color: #71695d !important; font-size: 10px; font-weight: 800; }
+.launch-brutal-app .mission-feedback__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border: 2px solid var(--launch-ink) !important;
+  border-radius: 0 !important;
+  background: #fffdf8 !important;
+  color: var(--launch-ink) !important;
+  box-shadow: 2px 2px 0 var(--launch-ink);
+}
+.launch-brutal-app .mission-feedback__button.is-selected { background: var(--launch-yellow) !important; }
+.launch-brutal-app .mission-feedback__button:disabled { opacity: .6; cursor: wait; }
+.launch-brutal-app .launch-mission-skeleton {
+  display: flex;
+  gap: 12px;
+  min-height: 116px;
+  padding: 16px;
+  border: 2px solid var(--launch-ink);
+  background: #fffdf8;
+  box-shadow: 4px 4px 0 var(--launch-ink);
+}
+.launch-brutal-app .launch-mission-skeleton__icon,
+.launch-brutal-app .launch-mission-skeleton__line { position: relative; overflow: hidden; background: #e4ded0; }
+.launch-brutal-app .launch-mission-skeleton__icon { width: 24px; height: 24px; flex: 0 0 auto; border: 2px solid var(--launch-ink); }
+.launch-brutal-app .launch-mission-skeleton__copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 9px; }
+.launch-brutal-app .launch-mission-skeleton__line { display: block; width: 100%; height: 11px; }
+.launch-brutal-app .launch-mission-skeleton__line--tag { width: 25%; height: 14px; }
+.launch-brutal-app .launch-mission-skeleton__line--title { width: 70%; height: 15px; }
+.launch-brutal-app .launch-mission-skeleton__line--short { width: 58%; }
+@media (prefers-reduced-motion: no-preference) {
+  .launch-brutal-app .launch-mission-skeleton__icon::after,
+  .launch-brutal-app .launch-mission-skeleton__line::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, #fff8e7, transparent); transform: translateX(-100%); animation: launch-mission-shimmer 1.15s ease-in-out infinite; }
+}
+@keyframes launch-mission-shimmer { to { transform: translateX(100%); } }
+
 /* Legacy action buttons share rounded utility classes with cards. Give them a
    deliberate readable surface after the card treatment, while keeping bespoke
    onboarding and bottom-navigation patterns in control of their own styles. */

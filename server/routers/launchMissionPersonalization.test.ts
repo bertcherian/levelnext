@@ -6,6 +6,7 @@ import {
   createPersonalizedDailyMissions,
   shouldRefreshPendingMissions,
 } from "./launchMissionPersonalization";
+import { applyMissionRelevanceRating, refreshPendingMissionSet } from "./launchDailyMissions";
 
 const DATE = "2026-08-13";
 
@@ -43,5 +44,26 @@ describe("Launch daily mission personalisation", () => {
     expect(shouldRefreshPendingMissions([{ status: "pending" }], "finance:media")).toBe(true);
     expect(shouldRefreshPendingMissions([{ status: "pending", contextKey: "finance:media" }], "finance:media")).toBe(false);
     expect(shouldRefreshPendingMissions([{ status: "complete" }], "finance:media")).toBe(false);
+  });
+
+  it("preserves completed work when learners refresh pending missions", () => {
+    const original = [
+      { id: "done", title: "Done", description: "", xp: 20, missionArea: "Skills", status: "complete" as const },
+      { id: "old", title: "Old", description: "", xp: 20, missionArea: "Skills", status: "pending" as const },
+    ];
+    const replacement = [{ id: "new", title: "New", description: "", xp: 30, missionArea: "Research", status: "pending" as const }];
+
+    expect(refreshPendingMissionSet(original, replacement).map((mission) => mission.id)).toEqual(["done", "new"]);
+  });
+
+  it("stores a learner relevance signal on only the selected mission", () => {
+    const missions = [
+      { id: "one", title: "One", description: "", xp: 20, missionArea: "Skills", status: "pending" as const },
+      { id: "two", title: "Two", description: "", xp: 20, missionArea: "Research", status: "pending" as const },
+    ];
+    const rated = applyMissionRelevanceRating(missions, "two", "down");
+
+    expect(rated[0]?.relevanceRating).toBeUndefined();
+    expect(rated[1]?.relevanceRating).toBe("down");
   });
 });

@@ -24,6 +24,8 @@ vi.mock("@/lib/trpc", () => ({
     launchDailyMissions: {
       getToday: { useQuery: () => ({ data: { missions: [{ id: "mission-1", title: "Write an outreach note", description: "Draft a targeted note.", xp: 20, missionArea: "Network", status: "pending" }] } }) },
       completeMission: { useMutation: (options: typeof completionOptions) => { completionOptions = options; return { mutate: completeMutate }; } },
+      refreshToday: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      rateMission: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       saveReflection: { useMutation: () => ({ mutate: vi.fn(), isPending: false, error: null }) },
     },
   },

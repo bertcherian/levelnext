@@ -8,7 +8,7 @@ import LaunchXpBurst from "@/components/LaunchXpBurst";
 import LaunchMissionReflectionPrompt from "@/components/LaunchMissionReflectionPrompt";
 import {
   CheckCircle2, Circle, Zap, Flame, Trophy, ChevronRight,
-  Sparkles, RefreshCw, Map, Rocket, Target, Star
+  Sparkles, RefreshCw, Map, Rocket, Target, Star, ThumbsUp, ThumbsDown
 } from "lucide-react";
 
 // ─── (AnimatedBg removed — provided by LaunchLayout) ─────────────────────────
@@ -43,6 +43,7 @@ interface Mission {
   missionArea: string;
   status: "pending" | "complete";
   completedAt?: string;
+  relevanceRating?: "up" | "down";
 }
 
 const AREA_COLORS: Record<string, string> = {
@@ -56,8 +57,8 @@ const AREA_COLORS: Record<string, string> = {
   Communication: "#EC4899",
 };
 
-function MissionCard({ mission, onComplete, completing }: {
-  mission: Mission; onComplete: (id: string) => void; completing: boolean;
+function MissionCard({ mission, onComplete, onRate, completing, rating }: {
+  mission: Mission; onComplete: (id: string) => void; onRate: (id: string, rating: "up" | "down") => void; completing: boolean; rating: boolean;
 }) {
   const done = mission.status === "complete";
   const color = AREA_COLORS[mission.missionArea] ?? "#3B82F6";
@@ -105,7 +106,42 @@ function MissionCard({ mission, onComplete, completing }: {
           <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
             {mission.description}
           </p>
+          <div className="mission-feedback mt-3 flex items-center gap-1.5" aria-label={`Rate relevance of ${mission.title}`}>
+            <span className="mission-feedback__label">Relevant?</span>
+            <button
+              type="button"
+              aria-label="This mission is relevant"
+              aria-pressed={mission.relevanceRating === "up"}
+              disabled={rating}
+              onClick={() => onRate(mission.id, "up")}
+              className={`mission-feedback__button ${mission.relevanceRating === "up" ? "is-selected" : ""}`}>
+              <ThumbsUp size={13} />
+            </button>
+            <button
+              type="button"
+              aria-label="This mission is not relevant"
+              aria-pressed={mission.relevanceRating === "down"}
+              disabled={rating}
+              onClick={() => onRate(mission.id, "down")}
+              className={`mission-feedback__button ${mission.relevanceRating === "down" ? "is-selected" : ""}`}>
+              <ThumbsDown size={13} />
+            </button>
+          </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function MissionCardSkeleton() {
+  return (
+    <div className="launch-mission-skeleton" aria-hidden="true">
+      <div className="launch-mission-skeleton__icon" />
+      <div className="launch-mission-skeleton__copy">
+        <span className="launch-mission-skeleton__line launch-mission-skeleton__line--tag" />
+        <span className="launch-mission-skeleton__line launch-mission-skeleton__line--title" />
+        <span className="launch-mission-skeleton__line" />
+        <span className="launch-mission-skeleton__line launch-mission-skeleton__line--short" />
       </div>
     </div>
   );
@@ -209,6 +245,14 @@ export default function LaunchHome() {
     },
   });
 
+  const refreshMissions = trpc.launchDailyMissions.refreshToday.useMutation({
+    onSuccess: () => utils.launchDailyMissions.getToday.invalidate(),
+  });
+
+  const rateMission = trpc.launchDailyMissions.rateMission.useMutation({
+    onSuccess: () => utils.launchDailyMissions.getToday.invalidate(),
+  });
+
   const saveReflection = trpc.launchDailyMissions.saveReflection.useMutation({
     onSuccess: () => setReflectionMission(null),
   });
@@ -221,6 +265,14 @@ export default function LaunchHome() {
   const handleComplete = (missionId: string) => {
     setCompleting(missionId);
     completeMission.mutate({ missionId });
+  };
+
+  const handleRefresh = () => {
+    if (!refreshMissions.isPending) refreshMissions.mutate();
+  };
+
+  const handleRate = (missionId: string, rating: "up" | "down") => {
+    if (!rateMission.isPending) rateMission.mutate({ missionId, rating });
   };
 
   const unlockedAchievement = achievementDefsQuery.data?.find((achievement) => achievement.code === unlockedAchievementCode);
@@ -315,20 +367,19 @@ export default function LaunchHome() {
                     style={{ background: "rgba(59,130,246,0.15)", color: "#3B82F6", border: "1px solid rgba(59,130,246,0.3)" }}>
                     {completedCount}/{missions.length}
                   </span>
-                  <button onClick={() => utils.launchDailyMissions.getToday.invalidate()}
-                    className="p-1.5 rounded-xl transition-all duration-150"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)" }}>
-                    <RefreshCw size={12} />
+                  <button onClick={handleRefresh}
+                    disabled={refreshMissions.isPending || allDone}
+                    className="mission-refresh-control px-2.5 py-1.5 transition-all duration-150"
+                    title={allDone ? "All missions are complete" : "Refresh pending missions"}>
+                    <RefreshCw size={12} className={refreshMissions.isPending ? "animate-spin" : ""} />
+                    <span>{refreshMissions.isPending ? "Refreshing" : "Refresh"}</span>
                   </button>
                 </div>
               </div>
 
-              {missionsQuery.isLoading ? (
+              {missionsQuery.isLoading || refreshMissions.isPending ? (
                 <div className="flex flex-col gap-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-20 rounded-2xl animate-pulse"
-                      style={{ background: "rgba(255,255,255,0.04)" }} />
-                  ))}
+                  {[1, 2, 3].map((i) => <MissionCardSkeleton key={i} />)}
                 </div>
               ) : missions.length === 0 ? (
                 <div className="text-center py-8">
@@ -339,7 +390,7 @@ export default function LaunchHome() {
               ) : (
                 <div className="flex flex-col gap-3">
                   {missions.map((m) => (
-                    <MissionCard key={m.id} mission={m} onComplete={handleComplete} completing={completing === m.id} />
+                    <MissionCard key={m.id} mission={m} onComplete={handleComplete} onRate={handleRate} completing={completing === m.id} rating={rateMission.isPending} />
                   ))}
                 </div>
               )}

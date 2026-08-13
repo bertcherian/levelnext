@@ -12,3 +12,7 @@
 - [x] Add a subtle Neo-brutalist hover interaction to Launch output cards and validate the mobile card layout.
 - [x] Review every coloured Launch panel for text contrast and fix only failing combinations.
 - [x] Add automated coverage for personalization combinations, visual contracts, and contrast safeguards.
+- [x] Add an in-app control to refresh today’s pending missions on demand.
+- [x] Add thumbs-up and thumbs-down relevance feedback to each daily mission card.
+- [x] Add a mission-card skeleton state while daily missions are loading or refreshing.
+- [x] Add regression coverage and verify the enhanced mission flow on desktop and mobile.

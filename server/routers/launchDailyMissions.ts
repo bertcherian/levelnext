@@ -7,6 +7,19 @@ import { awardLaunchXp } from "./launchProgress";
 import { advanceWeeklyChallengeProgress } from "./launchWeeklyChallenges";
 import { createLaunchMissionContextKey, createPersonalizedDailyMissions, shouldRefreshPendingMissions } from "./launchMissionPersonalization";
 
+type MissionRelevanceRating = "up" | "down";
+type MissionEntry = {
+  id: string;
+  title: string;
+  description: string;
+  xp: number;
+  missionArea: string;
+  status: "pending" | "complete";
+  completedAt?: string;
+  contextKey?: string;
+  relevanceRating?: MissionRelevanceRating;
+};
+
 // ─── Mission Templates (fallback if LLM fails) ────────────────────────────────
 const MISSION_TEMPLATES = [
   { title: "Update your LinkedIn headline", description: "Write a headline that leads with value, not your job title. Use the format: [What you do] + [Who you help] + [Result you deliver].", xp: 25, missionArea: "Brand" },
@@ -35,6 +48,26 @@ function pickThreeMissions() {
     missionArea: m.missionArea,
     status: "pending" as const,
   }));
+}
+
+export function refreshPendingMissionSet(existing: MissionEntry[], replacements: MissionEntry[]) {
+  let replacementIndex = 0;
+  return existing.map((mission) => {
+    if (mission.status === "complete") return mission;
+    const replacement = replacements[replacementIndex++];
+    return replacement ?? mission;
+  });
+}
+
+export function applyMissionRelevanceRating(missions: MissionEntry[], missionId: string, rating: MissionRelevanceRating) {
+  let found = false;
+  const updatedMissions = missions.map((mission) => {
+    if (mission.id !== missionId) return mission;
+    found = true;
+    return { ...mission, relevanceRating: rating };
+  });
+  if (!found) throw new Error("Mission not found");
+  return updatedMissions;
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
@@ -67,7 +100,7 @@ export const launchDailyMissionsRouter = router({
       )
       .limit(1);
 
-    const existingMissions = existing?.missions as Array<{ contextKey?: string; status?: "pending" | "complete" }> | undefined;
+    const existingMissions = existing?.missions as MissionEntry[] | undefined;
     const shouldRefresh = shouldRefreshPendingMissions(existingMissions, contextKey);
     if (existing && !shouldRefresh) return existing;
 
@@ -113,6 +146,64 @@ export const launchDailyMissionsRouter = router({
     return created ?? null;
   }),
 
+  // Replace only pending missions so a learner can ask for a different angle
+  // without losing credit for work already completed today.
+  refreshToday: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new Error("DB unavailable");
+    const today = getTodayDate();
+    const [record] = await db
+      .select()
+      .from(launchDailyMissions)
+      .where(and(eq(launchDailyMissions.userId, ctx.user.id), eq(launchDailyMissions.date, today)))
+      .limit(1);
+    if (!record) throw new Error("No missions found for today");
+
+    const [progress] = await db
+      .select()
+      .from(launchUserProgress)
+      .where(eq(launchUserProgress.userId, ctx.user.id))
+      .limit(1);
+    const currentMissions = record.missions as MissionEntry[];
+    const pendingCount = currentMissions.filter((mission) => mission.status !== "complete").length;
+    if (pendingCount === 0) return { missions: currentMissions, refreshed: false };
+
+    let replacements: MissionEntry[];
+    if (progress?.targetRole && progress.targetIndustry) {
+      const variationDate = `${today}:${Date.now()}`;
+      replacements = createPersonalizedDailyMissions({
+        targetRole: progress.targetRole,
+        targetIndustry: progress.targetIndustry,
+        date: variationDate,
+      }) as MissionEntry[];
+    } else {
+      replacements = pickThreeMissions() as MissionEntry[];
+    }
+
+    const missions = refreshPendingMissionSet(currentMissions, replacements.slice(0, pendingCount));
+    await db.update(launchDailyMissions).set({ missions }).where(eq(launchDailyMissions.id, record.id));
+    return { missions, refreshed: true };
+  }),
+
+  // A lightweight relevance signal is stored with the learner's private mission
+  // record for use in future personalisation improvements.
+  rateMission: protectedProcedure
+    .input(z.object({ missionId: z.string(), rating: z.enum(["up", "down"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      const today = getTodayDate();
+      const [record] = await db
+        .select()
+        .from(launchDailyMissions)
+        .where(and(eq(launchDailyMissions.userId, ctx.user.id), eq(launchDailyMissions.date, today)))
+        .limit(1);
+      if (!record) throw new Error("No missions found for today");
+      const missions = applyMissionRelevanceRating(record.missions as MissionEntry[], input.missionId, input.rating);
+      await db.update(launchDailyMissions).set({ missions }).where(eq(launchDailyMissions.id, record.id));
+      return { missions, missionId: input.missionId, rating: input.rating };
+    }),
+
   // Complete a specific mission
   completeMission: protectedProcedure
     .input(z.object({ missionId: z.string() }))
@@ -134,29 +225,13 @@ export const launchDailyMissionsRouter = router({
 
       if (!record) throw new Error("No missions found for today");
 
-      const existingMission = (record.missions as Array<{
-        id: string;
-        title: string;
-        description: string;
-        xp: number;
-        missionArea: string;
-        status: "pending" | "complete";
-        completedAt?: string;
-      }>).find((mission) => mission.id === input.missionId);
+      const existingMission = (record.missions as MissionEntry[]).find((mission) => mission.id === input.missionId);
       if (!existingMission) throw new Error("Mission not found");
       if (existingMission.status === "complete") {
         return { xpEarned: 0, allComplete: record.missions.every((mission) => mission.status === "complete"), missions: record.missions, alreadyComplete: true, newAchievements: [] };
       }
 
-      const missions = (record.missions as Array<{
-        id: string;
-        title: string;
-        description: string;
-        xp: number;
-        missionArea: string;
-        status: "pending" | "complete";
-        completedAt?: string;
-      }>).map((m) =>
+      const missions = (record.missions as MissionEntry[]).map((m) =>
         m.id === input.missionId
           ? { ...m, status: "complete" as const, completedAt: new Date().toISOString() }
           : m
