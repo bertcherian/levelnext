@@ -14,3 +14,8 @@
 - [x] Fix the unreadable “Less Guessing, More Evidence” heading contrast on the Launch landing page.
 - [x] Add regression coverage for the dark-section heading contrast treatment.
 - [x] Verify the repaired dark-section heading at desktop and mobile sizes.
+- [x] Correct the landing-page Leader Intelligence link so it opens the Leader Intelligence home page.
+- [x] Add automated route coverage for the Leader Intelligence landing-page destination.
+- [x] Add reusable automated contrast safeguards to the Launch landing-page test suite.
+- [x] Audit dark sections across the site for inherited global text-color conflicts and fix confirmed readability issues.
+- [x] Verify the corrected Leader Intelligence route and affected dark sections at desktop and mobile sizes.

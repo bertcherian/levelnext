@@ -413,7 +413,7 @@ export default function Landing() {
         <div className="ln-section-frame ln-footer__frame">
           <div className="ln-footer__brand"><img src="/logo.png" alt="LevelNext" /><p>Professional Intelligence for what’s next.</p></div>
           <div className="ln-footer__links">
-            <div><p>Platform</p><a href="/early-career">Early Career Intelligence</a><a href="/pe">Professional Intelligence</a><a href="/manager-effectiveness">Manager Effectiveness</a><a href="/signup?experience=leader">Leader Intelligence</a></div>
+            <div><p>Platform</p><a href="/early-career">Early Career Intelligence</a><a href="/pe">Professional Intelligence</a><a href="/manager-effectiveness">Manager Effectiveness</a><a href="/home">Leader Intelligence</a></div>
             <div><p>Organisations</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Enterprise</a><a href={sectionLink("how-it-works")}>Diagnostics</a><a href={sectionLink("how-it-works")}>AI Coaching</a></div>
             <div><p>Company</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">About</a><a href={sectionLink("resources")}>Insights</a><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Contact</a></div>
           </div>

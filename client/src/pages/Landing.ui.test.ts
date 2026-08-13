@@ -1,4 +1,6 @@
 import { createElement } from "react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import Landing from "./Landing";
@@ -9,6 +11,8 @@ import {
 } from "./landingData";
 
 describe("LevelNext public landing page", () => {
+  const appRoutes = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
+
   it("renders the master Professional Intelligence narrative and organisation pathway", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
@@ -61,7 +65,7 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("/signup?platform=leadership");
   });
 
-  it("makes every talent-pipeline stage a contextual link to its tailored diagnostic flow", () => {
+  it("makes every talent-pipeline stage a contextual link to its intended product entry point", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
     expect(page).toContain("Accelerate role readiness with common work standards and clear development signals.");
@@ -70,8 +74,19 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain('href="/early-career"');
     expect(page).toContain('href="/pe/assessment"');
     expect(page).toContain('href="/manager/diagnostics"');
-    expect(page).toContain('href="/diagnostics/lii"');
+    expect(page).toContain('href="/home"');
+    expect(page.match(/href="\/home"/g)).toHaveLength(2);
+    expect(page).not.toContain('href="/diagnostics/lii"');
+    expect(page).not.toContain('href="/signup?experience=leader"');
     expect(page).not.toContain('href="/launch');
     expect(page).not.toContain('href="/career-intelligence"');
+  });
+
+  it("targets the registered Leader Intelligence home route rather than a diagnostic route", () => {
+    const page = renderToStaticMarkup(createElement(Landing));
+
+    expect(appRoutes).toContain('<Route path="/home" component={Home} />');
+    expect(page).toContain('href="/home"');
+    expect(page).not.toContain('href="/diagnostics/lii"');
   });
 });

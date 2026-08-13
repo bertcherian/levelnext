@@ -31,7 +31,7 @@ describe("LevelNext landing page content model", () => {
       "/early-career",
       "/pe/assessment",
       "/manager/diagnostics",
-      "/diagnostics/lii",
+      "/home",
     ]);
     expect(careerStages.map((stage) => stage.pipelineMicrocopy)).toEqual([
       expect.stringMatching(/role readiness/i),

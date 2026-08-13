@@ -76,7 +76,7 @@ export const careerStages: CareerStage[] = [
     buyerOutcome: "Increase your organisation’s capacity to execute the decisions that matter most.",
     pipelineMicrocopy: "Strengthen strategic alignment, enterprise influence and execution across boundaries.",
     ctaLabel: "Start your Leadership diagnostic",
-    href: "/diagnostics/lii",
+    href: "/home",
     focus: ["Strategic alignment", "Decision quality", "Enterprise execution"],
   },
 ];
