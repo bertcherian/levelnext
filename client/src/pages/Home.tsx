@@ -68,8 +68,10 @@ export default function Home() {
     staleTime: 0,
     refetchOnMount: true,
   });
-  const { data: missions, refetch: refetchMissions } = trpc.mission.today.useQuery(undefined, {
+  const { data: actionTimeline, refetch: refetchActionTimeline } = trpc.leadershipCoach.getActionTimeline.useQuery(undefined, {
     enabled: isAuthenticated,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
   const { data: myOrg } = trpc.enterpriseOnboarding.getMyOrganisation.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -77,7 +79,7 @@ export default function Home() {
 
   const updateMissionStatus = trpc.mission.updateStatus.useMutation({
     onSuccess: () => {
-      refetchMissions();
+      refetchActionTimeline();
       toast.success("Mission marked complete. Keep building on the momentum.");
     },
     onError: () => toast.error("Your mission could not be updated. Please try again."),
@@ -107,10 +109,14 @@ export default function Home() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const completedModules = graph?.completedModules ?? [];
-  const nextMove = getNextLeadershipMove(completedModules, missions);
+  const timelineMissions = actionTimeline
+    ?.filter((action) => action.type === "mission")
+    .map((action) => ({ id: action.entityId, title: action.title, description: action.description ?? "", status: action.status }));
+  const nextMove = getNextLeadershipMove(completedModules, timelineMissions);
   const isOrgAdmin = tenant?.role === "owner" || tenant?.role === "admin";
   const showOrgSetup = isOrgAdmin && (!myOrg || myOrg.wizardStatus !== "activated");
   const completionPct = Math.round((completedModules.filter((module) => LEADER_CORE_MODULES.includes(module as typeof LEADER_CORE_MODULES[number])).length / LEADER_CORE_MODULES.length) * 100);
+  const openActions = actionTimeline?.filter((action) => action.status === "pending" || action.status === "in_progress" || action.status === "postponed").slice(0, 2) ?? [];
 
   const handlePrimaryAction = () => {
     if (nextMove.kind === "mission") {
@@ -203,6 +209,29 @@ export default function Home() {
             <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--color-ln-muted)" }}>Understand the pattern, prepare for the real moment, then record what changed. Your profile becomes more useful with every completed action.</p>
             <button onClick={() => navigate("/insights")} className="mt-4 flex items-center gap-1 text-xs font-semibold hover:underline" style={{ color: "var(--color-ln-navy)" }}>Review insights & reports <ArrowRight size={13} /></button>
           </div>
+        </section>
+
+        <section className="rounded-2xl border bg-white p-5 sm:p-6" style={{ borderColor: "var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--color-ln-muted)" }}>Your action timeline</p>
+              <h2 className="mt-1 text-lg font-bold" style={{ color: "var(--color-ln-navy)" }}>One place for missions and commitments</h2>
+            </div>
+            <button onClick={() => navigate("/growth-profile")} className="flex shrink-0 items-center gap-1 text-xs font-semibold hover:underline" style={{ color: "var(--color-ln-navy)" }}>Open timeline <ArrowRight size={13} /></button>
+          </div>
+          {openActions.length > 0 ? (
+            <div className="mt-4 space-y-2">
+              {openActions.map((action) => (
+                <button key={action.id} onClick={() => navigate("/growth-profile")} className="flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors hover:bg-[var(--color-ln-ivory)]" style={{ borderColor: "var(--color-ln-border)" }}>
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full" style={{ background: action.type === "mission" ? "var(--color-ln-navy)" : "oklch(from var(--color-ln-yellow) l c h / 0.3)", color: action.type === "mission" ? "white" : "var(--color-ln-navy)" }}>{action.type === "mission" ? <Zap size={14} /> : <Target size={14} />}</span>
+                  <span className="min-w-0 flex-1"><span className="block text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--color-ln-muted)" }}>{action.type}</span><span className="mt-0.5 block truncate text-sm font-medium" style={{ color: "var(--color-ln-navy)" }}>{action.title}</span></span>
+                  <ArrowRight size={14} className="flex-shrink-0" style={{ color: "var(--color-ln-muted)" }} />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <button onClick={() => navigate("/growth-profile")} className="mt-4 flex w-full items-center gap-2 rounded-xl border border-dashed p-4 text-left text-sm transition-colors hover:bg-[var(--color-ln-ivory)]" style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-muted)" }}><Target size={16} /> Your next diagnostic insight or mission will appear here.</button>
+          )}
         </section>
 
         <section>

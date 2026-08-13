@@ -10,3 +10,18 @@
 - [x] Reduce legacy production build resource pressure by applying route-level lazy loading and focused vendor chunking to the broader eagerly imported route graph.
 - [x] Re-run the isolated production build without development-server memory overhead; it still terminates during Rollup chunk rendering, confirming a broader sandbox/resource constraint rather than a sprint-specific type or test regression.
 - [x] Save publishable checkpoints for the navigation/Home sprint and the route-splitting follow-up.
+- [x] Review the current post-diagnostic completion, mission, commitment, and authentication flows before extending the experience.
+- [x] Add a one-minute post-diagnostic result screen that clearly communicates the score, immediate meaning, and one next action.
+- [x] Consolidate missions and commitments into a single chronological action timeline without losing existing workflow functionality.
+- [x] Add or update Vitest coverage for result-screen decision logic and the unified action timeline.
+- [x] Replace the standalone Home mission treatment with a concise preview and entry point into the unified action timeline.
+- [x] Verify Home and Growth Profile use the same timeline model for mission and commitment interactions.
+- [x] Ensure the Home action-timeline preview refetches after a diagnostic focus or commitment is added.
+- [x] Fix the assessment start-session lifecycle so diagnostic submissions use a valid owned session rather than session ID 0.
+- [x] Prepare an authenticated test leader account through the normal magic-link and workspace onboarding flow without exposing private user data.
+- [x] Capture authenticated desktop and mobile screenshots of the revised Leader Intelligence Home plus a desktop immediate-result screenshot.
+- [x] Capture an authenticated mobile screenshot of the immediate post-diagnostic result screen for complete responsive review.
+- [x] Run type checking and the full 207-test suite for the expanded sprint; the production build was re-attempted but again terminated during Rollup chunk rendering under sandbox memory pressure.
+- [ ] Save a publishable checkpoint for the expanded simplification sprint.
+- [x] Verify current LevelNext availability; the public entry and critical routes returned normally, and no persistent opening failure was reproduced during diagnosis.
+- [x] Verify the restored public entry, authenticated Home, diagnostic, and Growth routes before continuing enhancement work.

@@ -86,7 +86,7 @@ function GrowthProfileMain({
   onPrivacy: () => void;
 }) {
   const { data: profile, isLoading } = trpc.leadershipCoach.getGrowthProfile.useQuery();
-  const { data: commitments, refetch: refetchCommitments } = trpc.leadershipCoach.getCommitments.useQuery();
+  const { data: actionTimeline, refetch: refetchActionTimeline } = trpc.leadershipCoach.getActionTimeline.useQuery();
   const [expandedPlan, setExpandedPlan] = useState(false);
 
   const generatePlan = trpc.leadershipCoach.generateGrowthPlan.useMutation({
@@ -95,7 +95,16 @@ function GrowthProfileMain({
   });
 
   const updateOutcome = trpc.leadershipCoach.updateCommitmentOutcome.useMutation({
-    onSuccess: () => refetchCommitments(),
+    onSuccess: () => refetchActionTimeline(),
+  });
+
+  const updateMission = trpc.mission.updateStatus.useMutation({
+    onSuccess: () => refetchActionTimeline(),
+  });
+
+  const generateMission = trpc.mission.generate.useMutation({
+    onSuccess: () => refetchActionTimeline(),
+    onError: () => toast.error("A mission could not be generated right now. Please try again."),
   });
 
   const OUTCOME_OPTIONS = [
@@ -167,49 +176,57 @@ function GrowthProfileMain({
         ))}
       </div>
 
-      {/* Commitments */}
-      {commitments && commitments.length > 0 && (
-        <div className="my-4">
-          <p className="text-sm font-semibold text-[var(--color-ln-navy)] mb-3 flex items-center gap-1.5">
-            <Target className="w-4 h-4 text-[var(--color-ln-gold)]" />
-            Commitments Tracker
-          </p>
-          <div className="space-y-3">
-            {commitments.slice(0, 8).map((c) => (
-              <div key={c.id} className="rounded-xl border border-gray-200 bg-white p-4">
-                <p className="text-sm text-[var(--color-ln-navy)] mb-2">{c.text}</p>
-                {c.status === "pending" ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {OUTCOME_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() =>
-                          updateOutcome.mutate({
-                            commitmentId: c.id,
-                            status: opt.value as "done_well" | "done_partial" | "done_poorly" | "avoided" | "postponed",
-                          })
-                        }
-                        className={`text-xs px-2.5 py-1 rounded-full border transition-all ${opt.color}`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Badge className="text-xs bg-gray-100 text-gray-600 border-0">
-                      {OUTCOME_OPTIONS.find((o) => o.value === c.status)?.label ?? c.status}
-                    </Badge>
-                    {c.aiRecommendation && (
-                      <p className="text-xs text-[var(--color-ln-navy)]/60 italic">{c.aiRecommendation}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+      {/* Unified action timeline */}
+      <div className="my-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-ln-navy)]"><Target className="w-4 h-4 text-[var(--color-ln-gold)]" />Action Timeline</p>
+            <p className="mt-0.5 text-xs text-gray-400">Missions and commitments, in one focused sequence.</p>
           </div>
+          <Button size="sm" onClick={() => generateMission.mutate()} disabled={generateMission.isPending} className="bg-[var(--color-ln-navy)] text-xs text-white">
+            {generateMission.isPending ? <RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Zap className="mr-1.5 h-3.5 w-3.5" />}New mission
+          </Button>
         </div>
-      )}
+        {actionTimeline && actionTimeline.length > 0 ? (
+          <div className="relative space-y-3 before:absolute before:bottom-5 before:left-[17px] before:top-5 before:w-px before:bg-gray-200">
+            {actionTimeline.slice(0, 12).map((action) => {
+              const isMission = action.type === "mission";
+              const isOpen = action.status === "pending" || action.status === "in_progress" || action.status === "postponed";
+              const statusLabel = isMission && action.status === "complete"
+                ? "Complete"
+                : OUTCOME_OPTIONS.find((option) => option.value === action.status)?.label ?? action.status.replace(/_/g, " ");
+              return (
+                <div key={action.id} className="relative pl-10">
+                  <span className="absolute left-0 top-4 flex h-[35px] w-[35px] items-center justify-center rounded-full border-4 border-[var(--color-ln-ivory)]" style={{ background: isMission ? "var(--color-ln-navy)" : "var(--color-ln-gold)", color: isMission ? "white" : "var(--color-ln-navy)" }}>
+                    {isMission ? <Zap className="h-3.5 w-3.5" /> : <Target className="h-3.5 w-3.5" />}
+                  </span>
+                  <div className="rounded-xl border border-gray-200 bg-white p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2"><span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{isMission ? "Mission" : "Commitment"}</span>{!isOpen && <Badge className="border-0 bg-gray-100 text-xs text-gray-600">{statusLabel}</Badge>}</div>
+                        <p className="mt-1 text-sm font-medium text-[var(--color-ln-navy)]">{action.title}</p>
+                        {action.description && <p className="mt-1 text-xs leading-relaxed text-gray-500">{action.description}</p>}
+                      </div>
+                      <span className="text-[11px] text-gray-400">{new Date(action.dueDate ?? action.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                    </div>
+                    {isOpen && isMission && (
+                      <button onClick={() => updateMission.mutate({ missionId: action.entityId, status: "complete" })} className="mt-3 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100">Mark complete</button>
+                    )}
+                    {isOpen && !isMission && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {OUTCOME_OPTIONS.map((opt) => <button key={opt.value} onClick={() => updateOutcome.mutate({ commitmentId: action.entityId, status: opt.value as "done_well" | "done_partial" | "done_poorly" | "avoided" | "postponed" })} className={`rounded-full border px-2.5 py-1 text-xs transition-all ${opt.color}`}>{opt.label}</button>)}
+                      </div>
+                    )}
+                    {!isOpen && action.aiRecommendation && <p className="mt-3 border-t border-gray-100 pt-3 text-xs italic text-[var(--color-ln-navy)]/60">Next step: {action.aiRecommendation}</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center"><Target className="mx-auto mb-2 h-8 w-8 text-gray-300" /><p className="text-sm text-gray-400">No actions yet. Generate a mission or add a commitment from your next diagnostic.</p></div>
+        )}
+      </div>
 
       {/* 30-Day Growth Plan */}
       <div className="my-4">

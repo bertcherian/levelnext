@@ -3,6 +3,7 @@ import { useLocation, useParams } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { ImmediateDiagnosticResult } from "@/components/ImmediateDiagnosticResult";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, ChevronRight } from "lucide-react";
 
@@ -411,11 +412,13 @@ export default function Assessment() {
   const { isAuthenticated, loading, user } = useAuth();
   const [, navigate] = useLocation();
 
-  const [phase, setPhase] = useState<"intro" | "questions" | "complete">("intro");
+  const [phase, setPhase] = useState<"intro" | "questions" | "complete" | "details">("intro");
   const [currentQ, setCurrentQ] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>({});
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [actionAdded, setActionAdded] = useState(false);
+  const [assessmentSessionId, setAssessmentSessionId] = useState<number | null>(null);
 
   const { data: questionsData, isLoading: questionsLoading, isError: questionsError } = trpc.assessment.getQuestions.useQuery(
     { moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII" },
@@ -428,6 +431,24 @@ export default function Assessment() {
       setPhase("complete");
     },
     onError: () => toast.error("Could not submit your diagnostic. Please try again."),
+  });
+
+  const startAssessment = trpc.assessment.startSession.useMutation({
+    onSuccess: (data) => {
+      setAssessmentSessionId(data.sessionId);
+      setResponses((data.responses as Record<string, number>) ?? {});
+      setCurrentQ(0);
+      setPhase("questions");
+    },
+    onError: () => toast.error("Could not start your diagnostic. Please try again."),
+  });
+
+  const addCommitment = trpc.leadershipCoach.addCommitment.useMutation({
+    onSuccess: () => {
+      setActionAdded(true);
+      toast.success("Your focus has been added to the action timeline.");
+    },
+    onError: () => toast.error("Your focus could not be added right now. Please try again."),
   });
 
   useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [loading, isAuthenticated, navigate]);
@@ -476,8 +497,13 @@ export default function Assessment() {
   };
 
   const handleSubmit = () => {
+    if (!assessmentSessionId) {
+      toast.error("Your diagnostic session has expired. Please restart the diagnostic.");
+      setPhase("intro");
+      return;
+    }
     submitAssessment.mutate({
-      sessionId: 0,
+      sessionId: assessmentSessionId,
       moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII",
       responses,
       participantName: user?.name ?? "Leader",
@@ -606,11 +632,12 @@ export default function Assessment() {
             </div>
 
             <Button
-              onClick={() => setPhase("questions")}
+              onClick={() => startAssessment.mutate({ moduleType: moduleType.toUpperCase() as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI" | "NII" })}
+              disabled={startAssessment.isPending}
               className="w-full h-14 text-base font-bold rounded-full transition-all active:scale-[0.97]"
               style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
             >
-              Begin Diagnostic <ChevronRight size={18} className="ml-2" />
+              {startAssessment.isPending ? <><Loader2 size={18} className="mr-2 animate-spin" />Preparing your diagnostic…</> : <>Begin Diagnostic <ChevronRight size={18} className="ml-2" /></>}
             </Button>
             <p className="text-xs mt-4" style={{ color: "oklch(45% 0.02 248.6)" }}>
               Your responses are private and feed directly into your Leadership Edge profile.
@@ -623,6 +650,26 @@ export default function Assessment() {
 
   // ── Completion Screen ────────────────────────────────────────────────────────
   if (phase === "complete" && result) {
+    return (
+      <ImmediateDiagnosticResult
+        result={result}
+        module={meta}
+        actionAdded={actionAdded}
+        addingAction={addCommitment.isPending}
+        onAddAction={(text) => addCommitment.mutate({
+          text,
+          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          sourceType: "diagnostic",
+        })}
+        onAskGuide={() => navigate(`/guide?module=${moduleType}`)}
+        onOpenTimeline={() => navigate("/growth-profile")}
+        onViewDetail={() => setPhase("details")}
+      />
+    );
+  }
+
+  // ── Detailed Completion Screen ───────────────────────────────────────────────
+  if (phase === "details" && result) {
     const isGcc = moduleType === "gcc";
     const archetypeIcon = isGcc
       ? (GCC_ARCHETYPE_ICONS[result.archetype] ?? "🏢")

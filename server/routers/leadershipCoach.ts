@@ -14,9 +14,11 @@ import {
   privacySettings,
   growthPlans,
   practiceSessions,
+  dailyMissions,
   users,
 } from "../../drizzle/schema";
 import { eq, desc, and, gte } from "drizzle-orm";
+import { sortActionTimeline } from "./actionTimelineHelpers";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 async function getLeaderContext(userId: number) {
@@ -490,6 +492,58 @@ Generate a complete conversation script using the appropriate framework for this
 
       return { success: true, aiRecommendation };
     }),
+
+  // One shared, chronological action view for short-horizon missions and
+  // longer-horizon commitments. It preserves the original entities while
+  // removing the need for leaders to mentally reconcile two trackers.
+  getActionTimeline: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+
+    const [missions, leaderCommitments] = await Promise.all([
+      db.select().from(dailyMissions)
+        .where(eq(dailyMissions.userId, ctx.user.id))
+        .orderBy(desc(dailyMissions.createdAt))
+        .limit(20),
+      db.select().from(commitments)
+        .where(eq(commitments.userId, ctx.user.id))
+        .orderBy(desc(commitments.createdAt))
+        .limit(20),
+    ]);
+
+    const actions = [
+      ...missions.map((mission) => ({
+        id: `mission-${mission.id}`,
+        entityId: mission.id,
+        type: "mission" as const,
+        title: mission.title,
+        description: mission.description,
+        status: mission.status,
+        dueDate: mission.dueDate,
+        completedAt: mission.completedAt,
+        createdAt: mission.createdAt,
+        moduleType: mission.moduleType,
+        sourceType: null,
+        aiRecommendation: null,
+      })),
+      ...leaderCommitments.map((commitment) => ({
+        id: `commitment-${commitment.id}`,
+        entityId: commitment.id,
+        type: "commitment" as const,
+        title: commitment.text,
+        description: commitment.outcome ?? null,
+        status: commitment.status,
+        dueDate: commitment.dueDate,
+        completedAt: null,
+        createdAt: commitment.createdAt,
+        moduleType: null,
+        sourceType: commitment.sourceType,
+        aiRecommendation: commitment.aiRecommendation,
+      })),
+    ];
+
+    return sortActionTimeline(actions);
+  }),
 
   // ── Growth Profile ────────────────────────────────────────────────────────
   getGrowthProfile: protectedProcedure.query(async ({ ctx }) => {
