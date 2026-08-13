@@ -728,6 +728,14 @@
   --launch-pink: #ff7eb6;
   --launch-mint: #8df0b0;
   --launch-shadow: 7px 7px 0 var(--launch-ink);
+  /* Legacy Launch views still reference --ld-* tokens inside spans and divs. */
+  --ld-text: var(--launch-ink);
+  --ld-text-muted: #4f493f;
+  --ld-text-dim: #71695d;
+  --ld-surface: #fffdf8;
+  --ld-surface-solid: #fffdf8;
+  --ld-card-bg: #fffdf8;
+  --ld-card-hover: #fff3bd;
   min-height: 100vh;
   background: var(--launch-paper) !important;
   color: var(--launch-ink) !important;
@@ -754,6 +762,13 @@
 .launch-brutal-app dd {
   color: var(--launch-ink) !important;
   font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* Several legacy Launch pages used dark-shell utility classes. Within the
+   bright app shell, constrain the correction to copy elements—not CTA buttons. */
+.launch-brutal-app :is(p, h1, h2, h3, h4, h5, h6).text-white,
+.launch-brutal-app :is(p, span, label, small)[style*="color: rgba(255"] {
+  color: var(--launch-ink) !important;
 }
 
 .launch-brutal-app nav {
@@ -867,6 +882,18 @@
 .launch-app-button--secondary { background: #fffdf8 !important; color: var(--launch-ink) !important; }
 .launch-app-button--finish { background: var(--launch-mint) !important; color: var(--launch-ink) !important; }
 .launch-app-onboarding-footer { font-weight: 700; opacity: .72; }
+
+/* Legacy action buttons share rounded utility classes with cards. Give them a
+   deliberate readable surface after the card treatment, while keeping bespoke
+   onboarding and bottom-navigation patterns in control of their own styles. */
+.launch-brutal-app button[class*="rounded"]:not(.launch-app-select-card):not(.launch-app-button):not(.ld-bottom-nav-item) {
+  border: 2px solid var(--launch-ink) !important;
+  border-radius: 0 !important;
+  background: var(--launch-mint) !important;
+  color: var(--launch-ink) !important;
+  box-shadow: 3px 3px 0 var(--launch-ink) !important;
+}
+.launch-brutal-app button[style*="#3B82F6"]:not(.launch-app-button) { background: var(--launch-blue) !important; color: #fff !important; }
 
 @media (max-width: 767px) {
   .launch-brutal-app nav > div { height: auto !important; min-height: 66px; }

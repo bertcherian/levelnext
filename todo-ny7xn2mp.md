@@ -7,3 +7,8 @@
 - [x] Add focused styling-contract tests and run the project checks.
 - [x] Verify representative Launch Intelligence routes visually on desktop and mobile.
 - [x] Restore readable dark text within the four Launch landing output cards without changing the white typography in the dark “Less guessing” section.
+- [x] Audit daily mission assignment across every Launch target-role and industry selection for relevance.
+- [x] Correct mission personalization so Finance and Media selections never receive software-engineering-specific tasks unless explicitly appropriate.
+- [x] Add a subtle Neo-brutalist hover interaction to Launch output cards and validate the mobile card layout.
+- [x] Review every coloured Launch panel for text contrast and fix only failing combinations.
+- [x] Add automated coverage for personalization combinations, visual contracts, and contrast safeguards.

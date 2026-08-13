@@ -5,7 +5,7 @@ import { getDb } from "../db";
 import { launchDailyMissions, launchMissionReflections, launchUserProgress } from "../../drizzle/schema";
 import { awardLaunchXp } from "./launchProgress";
 import { advanceWeeklyChallengeProgress } from "./launchWeeklyChallenges";
-import { invokeLLM, safeJsonParse } from "../_core/llm";
+import { createLaunchMissionContextKey, createPersonalizedDailyMissions, shouldRefreshPendingMissions } from "./launchMissionPersonalization";
 
 // ─── Mission Templates (fallback if LLM fails) ────────────────────────────────
 const MISSION_TEMPLATES = [
@@ -25,7 +25,7 @@ function getTodayDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function pickThreeMissions(targetRole?: string | null) {
+function pickThreeMissions() {
   const shuffled = [...MISSION_TEMPLATES].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, 3).map((m, i) => ({
     id: `m${i + 1}_${Date.now()}`,
@@ -37,58 +37,6 @@ function pickThreeMissions(targetRole?: string | null) {
   }));
 }
 
-async function generateMissionsWithLLM(
-  targetRole: string,
-  targetIndustry: string,
-  experienceLevel: string
-) {
-  try {
-    const prompt = `You are a career coach helping a ${experienceLevel} professional who wants to work as a ${targetRole} in the ${targetIndustry} industry.
-
-Generate exactly 3 daily career missions for them. Each mission should be:
-- Specific and actionable (can be done in 15–30 minutes)
-- Directly relevant to their target role and industry
-- Varied across different areas: Resume/LinkedIn, Networking, Interview Prep, Job Applications, or Skill Building
-
-Return ONLY a JSON array with exactly 3 objects, each with these fields:
-- title: string (max 60 chars, action verb first)
-- description: string (2-3 sentences, specific instructions)
-- xp: number (20-50 based on effort)
-- missionArea: string (one of: Resume, Brand, Network, Interview, Applications, Skills, Research)
-
-Example format:
-[{"title":"...","description":"...","xp":25,"missionArea":"Network"}]`;
-
-    const result = await invokeLLM({
-      model: "claude-haiku-4-5",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 800,
-    });
-
-    const rawContent = result?.choices?.[0]?.message?.content;
-    const content = typeof rawContent === "string" ? rawContent : null;
-    if (!content) return null;
-
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return null;
-
-    const missions = safeJsonParse<Array<{ title: string; description: string; xp: number; missionArea: string; }>>(jsonMatch[0], [], "launchDailyMissions.generate");
-
-    if (!Array.isArray(missions) || missions.length !== 3) return null;
-
-    return missions.map((m, i) => ({
-      id: `m${i + 1}_${Date.now()}`,
-      title: m.title,
-      description: m.description,
-      xp: Math.min(Math.max(m.xp, 10), 75),
-      missionArea: m.missionArea,
-      status: "pending" as const,
-    }));
-  } catch {
-    return null;
-  }
-}
-
 // ─── Router ───────────────────────────────────────────────────────────────────
 export const launchDailyMissionsRouter = router({
   // Get today's missions — generate if not yet created
@@ -96,6 +44,17 @@ export const launchDailyMissionsRouter = router({
     const db = await getDb();
     if (!db) return null;
     const today = getTodayDate();
+
+    // Read the learner context first so stale pending missions can be replaced
+    // when an onboarding role or industry changes.
+    const [progress] = await db
+      .select()
+      .from(launchUserProgress)
+      .where(eq(launchUserProgress.userId, ctx.user.id))
+      .limit(1);
+    const contextKey = progress?.targetRole && progress?.targetIndustry
+      ? createLaunchMissionContextKey(progress.targetRole, progress.targetIndustry)
+      : null;
 
     const [existing] = await db
       .select()
@@ -108,25 +67,30 @@ export const launchDailyMissionsRouter = router({
       )
       .limit(1);
 
-    if (existing) return existing;
+    const existingMissions = existing?.missions as Array<{ contextKey?: string; status?: "pending" | "complete" }> | undefined;
+    const shouldRefresh = shouldRefreshPendingMissions(existingMissions, contextKey);
+    if (existing && !shouldRefresh) return existing;
 
-    // Get user's target role for personalisation
-    const [progress] = await db
-      .select()
-      .from(launchUserProgress)
-      .where(eq(launchUserProgress.userId, ctx.user.id))
-      .limit(1);
+    if (existing && contextKey && progress?.targetRole && progress.targetIndustry) {
+      const missions = createPersonalizedDailyMissions({
+        targetRole: progress.targetRole,
+        targetIndustry: progress.targetIndustry,
+        date: today,
+      });
+      await db.update(launchDailyMissions).set({ missions }).where(eq(launchDailyMissions.id, existing.id));
+      return { ...existing, missions };
+    }
 
     let missions;
     if (progress?.targetRole && progress?.targetIndustry) {
-      missions = await generateMissionsWithLLM(
-        progress.targetRole,
-        progress.targetIndustry,
-        progress.experienceLevel ?? "entry-level"
-      );
+      missions = createPersonalizedDailyMissions({
+        targetRole: progress.targetRole,
+        targetIndustry: progress.targetIndustry,
+        date: today,
+      });
     }
     if (!missions) {
-      missions = pickThreeMissions(progress?.targetRole);
+      missions = pickThreeMissions();
     }
 
     await db.insert(launchDailyMissions).values({

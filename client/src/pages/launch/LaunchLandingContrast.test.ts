@@ -62,6 +62,12 @@ describe("Launch Intelligence B2C acquisition page", () => {
     expect(launchLandingStyles).toContain(".launch-brutal__section--ink .launch-brutal__output p { color: var(--launch-ink) !important; }");
   });
 
+  it("adds a restrained Neo-brutalist output-card interaction and compact mobile card spacing", () => {
+    expect(launchLandingStyles).toContain(".launch-brutal__output:hover { transform: translate(-3px, -3px); box-shadow: 7px 7px 0 var(--launch-ink); }");
+    expect(launchLandingStyles).toContain(".launch-brutal__output:active { transform: translate(2px, 2px) scale(.99); box-shadow: 2px 2px 0 var(--launch-ink); }");
+    expect(launchLandingStyles).toContain(".launch-brutal__output { min-height: 0; padding: 18px; }");
+  });
+
   it("maintains contrast-safe dark-surface defaults across the public and Launch landing pages", () => {
     expect(globalStyles).toMatch(/h1, h2, h3, h4, h5, h6\s*\{[\s\S]*?color: inherit;/);
     expect(globalStyles).toMatch(/p\s*\{\s*color: inherit;/);
