@@ -46,4 +46,4 @@
 - [x] Inspect the current Journey section markup and regression coverage for the approved messaging replacement.
 - [x] Replace the Journey section headline and supporting copy with the approved career-chapter positioning.
 - [x] Fix the managed-preview CORS origin matcher so regional Manus preview URLs render during validation.
-- [ ] Save a production checkpoint for the validated Journey messaging update and managed-preview CORS repair.
+- [x] Save a production checkpoint for the validated Journey messaging update and managed-preview CORS repair.
