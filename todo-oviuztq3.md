@@ -29,3 +29,5 @@
 - [ ] Apply and verify a concrete production availability fix across the published LevelNext entry paths.
 - [x] Allow the managed Cloud Run deployment origin through the production CORS policy so published client API calls are not rejected.
 - [x] Remove the production manual-chunk configuration that creates a temporal-dead-zone error in the analytics chunk and leaves the live React root blank.
+- [ ] Force a fresh production client bundle so the published HTML stops serving the stale analytics chunk that still throws during initialization.
+- [x] Clear stale Vite and client output before the production build so the deployment cannot reuse the invalid analytics chunk.
