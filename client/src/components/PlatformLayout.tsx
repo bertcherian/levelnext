@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { Fragment, useState, useRef, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
@@ -44,24 +44,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import ProductSwitcher from "@/components/ProductSwitcher";
-
-// Full sidebar nav items
-const NAV_ITEMS = [
-  { label: "Next Chapter", icon: Sparkles, href: "/next-chapter" },
-  { label: "Home", icon: Home, href: "/home" },
-  { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
-  { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
-  { label: "Practice", icon: Zap, href: "/practice" },
-  { label: "Playbook", icon: BookOpen, href: "/playbook" },
-  { label: "Patterns", icon: BarChart3, href: "/playbook/patterns" },
-  { label: "Growth Profile", icon: Activity, href: "/growth-profile" },
-  { label: "Insights", icon: Lightbulb, href: "/insights" },
-  { label: "Intelligence", icon: Sparkles, href: "/intelligence" },
-  { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
-  { label: "Progress", icon: BarChart3, href: "/progress" },
-  { label: "Organisation", icon: Building2, href: "/organisation" },
-  { label: "Settings", icon: Settings, href: "/settings" },
-];
+import { getLeaderNavigationGroups, LEADER_BOTTOM_TABS } from "@/components/leaderNavigation";
 
 // Searchable index for Career nav — maps nested tool names to their parent route
 const CI_SEARCH_INDEX: { term: string; label: string; href: string }[] = [
@@ -202,15 +185,6 @@ const MEP_NAV_ITEMS: { label: string; icon: React.ElementType; href: string; bad
   { label: "Practice Partner", icon: Zap, href: "/manager/practice" },
   { label: "Commitments", icon: Activity, href: "/manager/commitments" },
   { label: "Settings", icon: Settings, href: "/settings" },
-];
-
-// Bottom tab bar — 5 primary destinations + More
-const BOTTOM_TABS = [
-  { label: "Home", icon: Home, href: "/home" },
-  { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
-  { label: "Growth", icon: Activity, href: "/growth-profile" },
-  { label: "Insights", icon: Lightbulb, href: "/insights" },
-  { label: "More", icon: MoreHorizontal, href: null }, // opens drawer
 ];
 
 interface PlatformLayoutProps {
@@ -369,14 +343,16 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
     );
   };
 
-  // "More" tab is active when current page is not in the bottom tabs
-  const bottomTabPaths = BOTTOM_TABS.filter((t) => t.href).map((t) => t.href as string);
+  // "More" is active when the current page is outside the focused mobile tabs.
+  const bottomTabPaths = LEADER_BOTTOM_TABS.filter((t) => t.href).map((t) => t.href as string);
   const isMoreActive = !bottomTabPaths.some((p) => location === p || location.startsWith(p + "/"));
 
-  // Filter Organisation tab — only visible to tenant owners and admins
-  const filteredNavItems = NAV_ITEMS.filter(
-    (item) => item.href !== "/organisation" || isTenantAdmin
+  const leaderNavGroups = getLeaderNavigationGroups(isTenantAdmin);
+  const leaderNavItems = leaderNavGroups.flatMap((group) => group.items);
+  const leaderGroupByHref = new Map(
+    leaderNavGroups.flatMap((group) => group.items.map((item) => [item.href, group.label] as const)),
   );
+  const currentNavItems = isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : leaderNavItems;
 
   return (
     <div className="min-h-screen flex" style={{ background: "var(--color-ln-ivory)" }}>
@@ -447,36 +423,34 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             </div>
           )}
           <ul className="space-y-0.5">
-            {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : filteredNavItems).map((item) => {
+            {currentNavItems.map((item, index) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
+              const groupLabel = !isMepProduct && !isCareerProduct ? leaderGroupByHref.get(item.href) : undefined;
+              const priorGroupLabel = !isMepProduct && !isCareerProduct && index > 0
+                ? leaderGroupByHref.get(currentNavItems[index - 1]?.href)
+                : undefined;
+              const showGroupLabel = !!groupLabel && groupLabel !== priorGroupLabel;
               if (isCareerProduct) {
                 return (
-                  <li key={item.href}>
-                    <Link href={item.href} onClick={() => setSidebarOpen(false)}>
-                      <CINavItem item={item as typeof CI_NAV_ITEMS[0]} isActive={isActive} badge={badge} journeyPct={item.href === "/career/journey" ? journeyPct : undefined} onClick={() => setSidebarOpen(false)} />
-                    </Link>
-                  </li>
+                  <li key={item.href}><Link href={item.href} onClick={() => setSidebarOpen(false)}><CINavItem item={item as typeof CI_NAV_ITEMS[0]} isActive={isActive} badge={badge} journeyPct={item.href === "/career/journey" ? journeyPct : undefined} onClick={() => setSidebarOpen(false)} /></Link></li>
                 );
               }
               return (
-                <li key={item.href}>
-                  <Link href={item.href} onClick={() => setSidebarOpen(false)}>
-                    <div
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
-                        isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
-                      )}
-                      style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
-                    >
-                      <Icon size={18} className="flex-shrink-0" />
-                      <span>{item.label}</span>
-                      {isActive && !badge && <ChevronRight size={14} className="ml-auto opacity-60" />}
-                      {badge > 0 && <NavBadge count={badge} />}
-                    </div>
-                  </Link>
-                </li>
+                <Fragment key={item.href}>
+                  {showGroupLabel && <li className="mt-4 mb-1 px-3"><p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>{groupLabel}</p></li>}
+                  <li>
+                    <Link href={item.href} onClick={() => setSidebarOpen(false)}>
+                      <div className={cn("flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group", isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8")} style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}>
+                        <Icon size={18} className="flex-shrink-0" />
+                        <span>{item.label}</span>
+                        {isActive && !badge && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                        {badge > 0 && <NavBadge count={badge} />}
+                      </div>
+                    </Link>
+                  </li>
+                </Fragment>
               );
             })}
             {/* Admin-only nav items */}
@@ -787,36 +761,34 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             </div>
           )}
           <ul className="space-y-0.5">
-            {(isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : filteredNavItems).map((item) => {
+            {currentNavItems.map((item, index) => {
               const isActive = isNavActive(item.href);
               const Icon = item.icon;
               const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
+              const groupLabel = !isMepProduct && !isCareerProduct ? leaderGroupByHref.get(item.href) : undefined;
+              const priorGroupLabel = !isMepProduct && !isCareerProduct && index > 0
+                ? leaderGroupByHref.get(currentNavItems[index - 1]?.href)
+                : undefined;
+              const showGroupLabel = !!groupLabel && groupLabel !== priorGroupLabel;
               if (isCareerProduct) {
                 return (
-                  <li key={item.href}>
-                    <Link href={item.href}>
-                      <CINavItem item={item as typeof CI_NAV_ITEMS[0]} isActive={isActive} badge={badge} journeyPct={item.href === "/career/journey" ? journeyPct : undefined} />
-                    </Link>
-                  </li>
+                  <li key={item.href}><Link href={item.href}><CINavItem item={item as typeof CI_NAV_ITEMS[0]} isActive={isActive} badge={badge} journeyPct={item.href === "/career/journey" ? journeyPct : undefined} /></Link></li>
                 );
               }
               return (
-                <li key={item.href}>
-                  <Link href={item.href}>
-                    <div
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
-                        isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
-                      )}
-                      style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
-                    >
-                      <Icon size={18} className={cn("flex-shrink-0", isActive ? "" : "group-hover:scale-105 transition-transform")} />
-                      <span>{item.label}</span>
-                      {isActive && !badge && <ChevronRight size={14} className="ml-auto opacity-60" />}
-                      {badge > 0 && <NavBadge count={badge} />}
-                    </div>
-                  </Link>
-                </li>
+                <Fragment key={item.href}>
+                  {showGroupLabel && <li className="mt-4 mb-1 px-3"><p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>{groupLabel}</p></li>}
+                  <li>
+                    <Link href={item.href}>
+                      <div className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group", isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8")} style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}>
+                        <Icon size={18} className={cn("flex-shrink-0", isActive ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>{item.label}</span>
+                        {isActive && !badge && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                        {badge > 0 && <NavBadge count={badge} />}
+                      </div>
+                    </Link>
+                  </li>
+                </Fragment>
               );
             })}
             {/* Admin-only nav items */}
@@ -1129,7 +1101,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
           boxShadow: "0 -2px 12px rgba(18,52,90,0.08)",
         }}
       >
-        {BOTTOM_TABS.map((tab) => {
+        {LEADER_BOTTOM_TABS.map((tab) => {
           const isActive = tab.href ? isNavActive(tab.href) : isMoreActive;
           const Icon = tab.icon;
 
