@@ -7,9 +7,11 @@ import AchievementUnlockedModal from "@/components/AchievementUnlockedModal";
 import LaunchXpBurst from "@/components/LaunchXpBurst";
 import LaunchMissionReflectionPrompt from "@/components/LaunchMissionReflectionPrompt";
 import {
-  CheckCircle2, Circle, Zap, Flame, Trophy, ChevronRight,
-  Sparkles, RefreshCw, Map, Rocket, Target, Star, ThumbsUp, ThumbsDown
+  Banknote, CheckCircle2, ChevronRight, Circle, ClipboardList, FileText,
+  Flame, Map, Mic2, RefreshCw, Rocket, Sparkles, Star, Target, ThumbsDown,
+  ThumbsUp, Trophy, Zap
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 // ─── (AnimatedBg removed — provided by LaunchLayout) ─────────────────────────
 /*
@@ -190,26 +192,39 @@ function LevelRing({ level, xp }: { level: string; xp: number }) {
 }
 
 // ─── Quick Action Tile ────────────────────────────────────────────────────────
-function ActionTile({ emoji, label, href, color, onClick }: {
-  emoji: string; label: string; href: string; color: string; onClick: () => void;
+function ActionTile({ icon: Icon, label, color, onClick }: {
+  icon: LucideIcon; label: string; color: string; onClick: () => void;
 }) {
   return (
-    <button onClick={onClick}
-      className="rounded-2xl p-3 flex flex-col items-center gap-2 text-center transition-all duration-200"
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      data-testid="quick-launch-tile"
+      className="rounded-xl px-3 py-4 flex flex-col items-center gap-3 text-center font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/40"
       style={{
-        background: `${color}15`,
-        border: `1px solid ${color}30`,
+        background: "#A7F3C1",
+        border: "2px solid #000000",
+        boxShadow: "5px 5px 0 #000000",
+        color: "#000000",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.background = `${color}25`;
-        (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 20px ${color}20`;
+        e.currentTarget.style.background = "#86EFAC";
+        e.currentTarget.style.boxShadow = "7px 7px 0 #000000";
+        e.currentTarget.style.transform = "translate(-2px, -2px)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.background = `${color}15`;
-        (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
+        e.currentTarget.style.background = "#A7F3C1";
+        e.currentTarget.style.boxShadow = "5px 5px 0 #000000";
+        e.currentTarget.style.transform = "translate(0, 0)";
       }}>
-      <span className="text-2xl">{emoji}</span>
-      <span className="text-[11px] font-semibold leading-tight" style={{ color }}>{label}</span>
+      <span
+        className="w-14 h-14 rounded-full flex items-center justify-center"
+        style={{ background: "#F8F5F0", border: "2px solid #000000", boxShadow: `3px 3px 0 ${color}`, color: "#000000" }}
+        aria-hidden="true">
+        <Icon size={31} strokeWidth={2.4} />
+      </span>
+      <span className="text-[13px] leading-tight" style={{ color: "#000000" }}>{label}</span>
     </button>
   );
 }
@@ -287,12 +302,12 @@ export default function LaunchHome() {
   }
 
   const QUICK_ACTIONS = [
-    { emoji: "🗺️", label: "Journey Map", href: "/launch/journey", color: "#3B82F6" },
-    { emoji: "🎤", label: "Mock Interview", href: "/launch/interview", color: "#8B5CF6" },
-    { emoji: "📄", label: "Resume Makeover", href: "/launch/resume", color: "#10B981" },
-    { emoji: "💰", label: "Negotiate Salary", href: "/launch/negotiate", color: "#F59E0B" },
-    { emoji: "📋", label: "Job Tracker", href: "/launch/applications", color: "#EF4444" },
-    { emoji: "⚡", label: "Skill Sprint", href: "/launch/mission/3", color: "#06B6D4" },
+    { icon: Map, label: "Journey Map", href: "/launch/journey", color: "#2563EB" },
+    { icon: Mic2, label: "Mock Interview", href: "/launch/interview", color: "#7C3AED" },
+    { icon: FileText, label: "Resume Makeover", href: "/launch/resume", color: "#059669" },
+    { icon: Banknote, label: "Negotiate Salary", href: "/launch/negotiate", color: "#D97706" },
+    { icon: ClipboardList, label: "Job Tracker", href: "/launch/applications", color: "#DC2626" },
+    { icon: Zap, label: "Skill Sprint", href: "/launch/mission/3", color: "#0891B2" },
   ];
 
   return (
@@ -397,9 +412,9 @@ export default function LaunchHome() {
             </div>
 
             {/* Quick Actions */}
-            <div className="rounded-3xl p-5"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}>
-              <h3 className="font-bold text-sm text-white mb-4" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+            <div className="rounded-2xl p-5"
+              style={{ background: "#F8F5F0", border: "2px solid #000000", boxShadow: "8px 8px 0 #000000" }}>
+              <h3 className="font-black text-sm mb-4" style={{ fontFamily: "Space Grotesk, sans-serif", color: "#000000" }}>
                 Quick Launch
               </h3>
               <div className="grid grid-cols-3 gap-3">
