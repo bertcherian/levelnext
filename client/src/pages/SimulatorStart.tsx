@@ -223,11 +223,12 @@ type VoiceId = typeof VOICES[number]["id"];
 
 type Platform = "leadership" | "manager" | "career" | "young";
 
-const PLATFORM_META: Record<Platform, { label: string; color: string; accent: string; chips: string[] }> = {
+const PLATFORM_META: Record<Platform, { label: string; color: string; accent: string; backTarget: string; chips: string[] }> = {
   leadership: {
     label: "Leadership Intelligence",
     color: "#0A1A2F",
     accent: "#D4AF37",
+    backTarget: "/practice",
     chips: [
       "Influencing a sceptical board member",
       "Delivering difficult feedback to a peer",
@@ -240,6 +241,7 @@ const PLATFORM_META: Record<Platform, { label: string; color: string; accent: st
     label: "Manager Effectiveness",
     color: "#0A1A2F",
     accent: "#D4AF37",
+    backTarget: "/manager/practice",
     chips: [
       "Accountability conversation with an underperformer",
       "Managing up on a priority conflict",
@@ -252,6 +254,7 @@ const PLATFORM_META: Record<Platform, { label: string; color: string; accent: st
     label: "Career Transition Intelligence",
     color: "#0A1A2F",
     accent: "#D4AF37",
+    backTarget: "/career/interview-prep",
     chips: [
       "Salary negotiation with a new employer",
       "Explaining a career gap confidently",
@@ -264,6 +267,7 @@ const PLATFORM_META: Record<Platform, { label: string; color: string; accent: st
     label: "Young Talent Platform",
     color: "#1a1a3a",
     accent: "#818cf8",
+    backTarget: "/early-career/practice",
     chips: [
       "My first performance review conversation",
       "Asking my manager for feedback",
@@ -432,7 +436,7 @@ export default function SimulatorStart() {
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1 as any)} className="text-white/60 hover:text-white text-sm">
+          <button onClick={() => navigate(meta.backTarget)} className="text-white/60 hover:text-white text-sm">
             ← Back
           </button>
           <span className="text-white/30">|</span>

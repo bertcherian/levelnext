@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   inferReset: vi.fn(),
   ttsMutate: vi.fn(),
   startMutate: vi.fn(),
+  navigate: vi.fn(),
   inferOptions: null as {
     onError?: (error: unknown) => void;
     onSuccess?: (scenario: unknown) => void;
@@ -42,7 +43,7 @@ vi.mock("@/_core/hooks/useAuth", () => ({
 }));
 
 vi.mock("wouter", () => ({
-  useLocation: () => ["/manager/simulate", vi.fn()],
+  useLocation: () => ["/manager/simulate", mocks.navigate],
 }));
 
 vi.mock("sonner", () => ({
@@ -57,6 +58,7 @@ beforeEach(() => {
   window.history.pushState({}, "", "/manager/simulate");
   mocks.inferMutate.mockReset();
   mocks.inferReset.mockReset();
+  mocks.navigate.mockReset();
   mocks.inferOptions = null;
 });
 
@@ -98,6 +100,15 @@ describe("SimulatorStart", () => {
       platform: "manager",
       prompt: "Address recurring missed deadlines with a senior project lead.",
     });
+  });
+
+  it("returns Manager Effectiveness users to the valid Practice route instead of browser-history navigation", async () => {
+    const user = userEvent.setup();
+    render(createElement(SimulatorStart));
+
+    await user.click(screen.getByRole("button", { name: /^← Back$/ }));
+
+    expect(mocks.navigate).toHaveBeenCalledWith("/manager/practice");
   });
 
   it("preserves a custom description and offers a retry after a transient generation failure", async () => {
