@@ -22,6 +22,9 @@
 - [x] Capture authenticated desktop and mobile screenshots of the revised Leader Intelligence Home plus a desktop immediate-result screenshot.
 - [x] Capture an authenticated mobile screenshot of the immediate post-diagnostic result screen for complete responsive review.
 - [x] Run type checking and the full 207-test suite for the expanded sprint; the production build was re-attempted but again terminated during Rollup chunk rendering under sandbox memory pressure.
-- [ ] Save a publishable checkpoint for the expanded simplification sprint.
+- [x] Save a publishable checkpoint for the expanded simplification sprint.
 - [x] Verify current LevelNext availability; the public entry and critical routes returned normally, and no persistent opening failure was reproduced during diagnosis.
 - [x] Verify the restored public entry, authenticated Home, diagnostic, and Growth routes before continuing enhancement work.
+- [ ] Diagnose the renewed live LevelNext availability failure against the published domains and production runtime logs.
+- [ ] Apply and verify a concrete production availability fix across the published LevelNext entry paths.
+- [x] Allow the managed Cloud Run deployment origin through the production CORS policy so published client API calls are not rejected.

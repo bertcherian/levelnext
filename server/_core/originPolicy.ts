@@ -9,10 +9,19 @@ const DEV_ORIGINS = [
   "http://127.0.0.1:3000",
 ];
 
+function isManagedCloudRunOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    return url.protocol === "https:" && /^[a-z0-9]+-[a-z0-9]+-[a-z]+\.a\.run\.app$/i.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function isAllowedCorsOrigin(origin: string | undefined, nodeEnv: string | undefined): boolean {
   if (!origin || PRODUCTION_ORIGINS.includes(origin)) return true;
   if (DEV_ORIGINS.includes(origin)) return nodeEnv !== "production";
-  if (nodeEnv === "production") return false;
+  if (nodeEnv === "production") return isManagedCloudRunOrigin(origin);
 
   try {
     const previewUrl = new URL(origin);
