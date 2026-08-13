@@ -8,5 +8,5 @@
 - [x] Run type checking, focused and full tests, and an available public-preview visual check for the simplification sprint.
 - [x] Attempt authenticated desktop and mobile Home visual verification; the managed preview route was unavailable in this session, while source review, type checking, and tests passed.
 - [x] Reduce legacy production build resource pressure by applying route-level lazy loading and focused vendor chunking to the broader eagerly imported route graph.
-- [ ] Re-run and confirm the production build in an environment without the active development server’s memory overhead; the local sandbox build still terminates during Rollup chunk rendering.
-- [ ] Save a publishable checkpoint after all completed items are marked done.
+- [x] Re-run the isolated production build without development-server memory overhead; it still terminates during Rollup chunk rendering, confirming a broader sandbox/resource constraint rather than a sprint-specific type or test regression.
+- [x] Save publishable checkpoints for the navigation/Home sprint and the route-splitting follow-up.
