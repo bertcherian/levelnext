@@ -168,31 +168,6 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     reportCompressedSize: false,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes("node_modules")) return undefined;
-
-          if (/(jspdf|html2canvas|pdf-lib|pdfjs-dist|pdf-parse|mammoth|docx)/.test(id)) {
-            return "document-tools";
-          }
-
-          if (/(recharts|chart\.js|d3-|victory|cytoscape)/.test(id)) {
-            return "analytics-charts";
-          }
-
-          if (/(mermaid|katex|shiki)/.test(id)) {
-            return "visualisation-tools";
-          }
-
-          if (/(react|react-dom|wouter|@tanstack|@trpc)/.test(id)) {
-            return "framework";
-          }
-
-          return "vendor";
-        },
-      },
-    },
   },
   server: {
     host: true,

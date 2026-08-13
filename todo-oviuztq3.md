@@ -28,3 +28,4 @@
 - [ ] Diagnose the renewed live LevelNext availability failure against the published domains and production runtime logs.
 - [ ] Apply and verify a concrete production availability fix across the published LevelNext entry paths.
 - [x] Allow the managed Cloud Run deployment origin through the production CORS policy so published client API calls are not rejected.
+- [x] Remove the production manual-chunk configuration that creates a temporal-dead-zone error in the analytics chunk and leaves the live React root blank.
