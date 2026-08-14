@@ -18,61 +18,13 @@ describe("LevelNext landing page interactions", () => {
 
     expect(leaderTab.getAttribute("aria-selected")).toBe("true");
     expect(screen.getByText("Build the alignment required to execute through complexity.")).toBeTruthy();
-    expect(screen.getByText("Enterprise execution")).toBeTruthy();
   });
 
-  it("changes the intelligence prompt when a visitor chooses a different role context", async () => {
-    const user = userEvent.setup();
+  it("keeps one primary hero action and defers organisational conversion to the final CTA", () => {
     render(createElement(Landing));
-
-    const personalisation = screen.getByRole("tablist", {
-      name: "Professional intelligence by career level",
-    });
-    const managerTab = within(personalisation).getByRole("tab", { name: "Manager" });
-    await user.click(managerTab);
-
-    expect(managerTab.getAttribute("aria-selected")).toBe("true");
-    expect(
-      screen.getByText("How do I diagnose what’s blocking the team, delegate effectively and restore accountability?"),
-    ).toBeTruthy();
-  });
-
-  it("updates the stage showcase when a quick-filter chip is clicked", async () => {
-    const user = userEvent.setup();
-    render(createElement(Landing));
-
-    const quickFilter = screen.getByLabelText("Quick filter to your career stage");
-    const earlyCareerChip = within(quickFilter).getByText("Early Career").closest("button")!;
-    await user.click(earlyCareerChip);
-
-    expect(screen.getByText(/Turn early potential into role-ready capability\./)).toBeTruthy();
-  });
-
-  it("reveals an enterprise outcome and synchronizes the matching Intelligence Core signal", async () => {
-    const user = userEvent.setup();
-    const { container } = render(createElement(Landing));
-
-    const earlyCareerCard = screen.getByRole("button", {
-      name: /Early Career Intelligence: Shorten the path from joining to reliable contribution/i,
-    });
-    await user.hover(earlyCareerCard);
-    expect(earlyCareerCard.className).toContain("is-outcome-open");
-
-    await user.unhover(earlyCareerCard);
-    await user.click(earlyCareerCard);
-
-    expect(earlyCareerCard.className).toContain("is-stage-active");
-    expect(earlyCareerCard.className).toContain("is-outcome-open");
-    const signalLines = container.querySelectorAll(".ln-core__signals i");
-    expect(signalLines[0]?.className).toContain("is-active");
-    expect(signalLines[1]?.className).not.toContain("is-active");
-  });
-
-  it("renders a sign-up CTA at the end of the Professional Intelligence narrative", () => {
-    render(createElement(Landing));
-
-    const cta = screen.getByText("Start your diagnosis");
-    expect(cta).toBeTruthy();
-    expect(cta.closest("a")?.getAttribute("href")).toContain("/signup");
+    expect(screen.getByText("Explore the platform")).toBeTruthy();
+    expect(screen.getByText("Start a conversation")).toBeTruthy();
+    expect(screen.queryByText("Find your stage:")).toBeNull();
+    expect(screen.queryByText("Start your diagnosis")).toBeNull();
   });
 });

@@ -45,3 +45,7 @@
 - [x] Add Coach Portal UI regression coverage for the 30d/90d selector and eligible aggregate trend rows.
 - [x] Add a positive 90-day behavioural cohort comparison test with count and direction assertions.
 - [x] Add a rendered Coach Portal interaction test that toggles 30d/90d and conditionally displays eligible trend rows.
+- [x] Audit the landing-page hero and every below-the-fold section for redundant content, repeated actions, and visual density.
+- [x] Simplify the hero to one promise, one supporting statement, and one primary action.
+- [x] Streamline below-the-fold sections while retaining the strongest product, pathway, and organisation conversion signals.
+- [x] Add landing-page regression coverage and validate the streamlined page on desktop and mobile.

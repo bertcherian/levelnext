@@ -7,31 +7,27 @@ import Landing from "./Landing";
 import {
   defaultStageIndex,
   getCareerStage,
-  personalisationLevels,
 } from "./landingData";
 
 describe("LevelNext public landing page", () => {
   const appRoutes = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 
-  it("renders the master Professional Intelligence narrative and organisation pathway", () => {
+  it("renders the simplified master narrative and organisation pathway", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain("Your Next Level Changes");
-    expect(page).toContain("what success demands.");
-    expect(page).toContain("From early career to enterprise leadership, LevelNext builds the intelligence, judgment and everyday capabilities you need for the level you’re stepping into.");
+    expect(page).toContain("Professional intelligence");
+    expect(page).toContain("for what comes next.");
+    expect(page).toContain("LevelNext helps people build the judgment and everyday capability required for the level they are stepping into.");
     expect(page).toContain("Professional Intelligence");
-    expect(page).toContain("Four Career Chapters.");
-    expect(page).toContain("Different Capabilities.");
-    expect(page).toContain("LevelNext understands where each person is in their career, then builds the capabilities they need to succeed there — and prepare for what comes next.");
-    expect(page).toContain("One platform.");
-    expect(page).toContain("Across your talent pipeline.");
+    expect(page).toContain("A clearer next move.");
+    expect(page).toContain("At every career stage.");
+    expect(page).toContain("Capability development");
+    expect(page).toContain("that fits the work.");
     expect(page).toContain("Early Career Intelligence");
     expect(page).toContain("Manager Effectiveness");
     expect(page).toContain("Leader Intelligence");
-    expect(page).toContain("Enterprise outcome");
-    expect(page).toContain("Select an experience above to reveal its enterprise outcome.");
-    expect(page).toContain("Illustrative organisation scenario");
-    expect(page).toContain("This is an illustrative implementation scenario, not a customer case study or a claim of client results.");
+    expect(page).toContain("One system.");
+    expect(page).toContain("Many next-level moments.");
     expect(page).not.toContain("Career Transition");
     expect(page).not.toContain("LevelNext Launch");
   });
@@ -48,34 +44,23 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("Make execution more reliable across the work that matters.");
   });
 
-  it("renders the three role-specific personalisation controls and the default question", () => {
+  it("removes duplicated stage navigation, scenario, and ecosystem sections", () => {
     const page = renderToStaticMarkup(createElement(Landing));
-
-    expect(personalisationLevels).toEqual(["Professional", "Manager", "Leader"]);
-    expect(page).toContain('aria-label="Professional intelligence by career level"');
-    expect(page).toContain("How do I take ownership, communicate risk and get the work back on track?");
+    expect(page).not.toContain('aria-label="Quick filter to your career stage"');
+    expect(page).not.toContain('aria-label="Professional intelligence by career level"');
+    expect(page).not.toContain("Illustrative organisation scenario");
+    expect(page).not.toContain("One B2B platform.");
   });
 
-  it("renders the quick-filter navigation and the narrative-end sign-up CTA", () => {
+  it("retains direct product pathways without repeating the removed enterprise pipeline narrative", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain('aria-label="Quick filter to your career stage"');
-    expect(page).toContain("Find your stage:");
-    expect(page).toContain("Start your diagnosis");
-    expect(page).toContain("/signup?platform=leadership");
-  });
-
-  it("makes every talent-pipeline stage a contextual link to its intended product entry point", () => {
-    const page = renderToStaticMarkup(createElement(Landing));
-
-    expect(page).toContain("Accelerate role readiness with common work standards and clear development signals.");
-    expect(page).toContain("Build coaching, delegation and accountability into the manager’s operating rhythm.");
-    expect(page).toContain("Strengthen strategic alignment, enterprise influence and execution across boundaries.");
     expect(page).toContain('href="/early-career"');
-    expect(page).toContain('href="/pe/assessment"');
-    expect(page).toContain('href="/manager/diagnostics"');
+    expect(page).toContain('href="/pe"');
+    expect(page).toContain('href="/manager-effectiveness"');
     expect(page).toContain('href="/home"');
-    expect(page.match(/href="\/home"/g)).toHaveLength(2);
+    expect(page).not.toContain("Accelerate role readiness with common work standards and clear development signals.");
+    expect(page).not.toContain("Build coaching, delegation and accountability into the manager’s operating rhythm.");
     expect(page).not.toContain('href="/diagnostics/lii"');
     expect(page).not.toContain('href="/signup?experience=leader"');
     expect(page).not.toContain('href="/launch');
