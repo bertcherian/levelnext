@@ -62,6 +62,16 @@ async function startServer() {
   // causes browsers to silently drop it when SameSite=None is set.
   app.set('trust proxy', 1);
 
+  // Keep public traffic on one hostname. This makes OAuth callbacks and session
+  // cookies deterministic even when a visitor starts from the www alias.
+  app.use((req, res, next) => {
+    if (process.env.NODE_ENV === "production" && req.hostname.toLowerCase() === "www.levelnext.coach") {
+      res.redirect(308, `https://levelnext.coach${req.originalUrl}`);
+      return;
+    }
+    next();
+  });
+
   // ── Security middleware ─────────────────────────────────────────────────────
   // Helmet sets secure HTTP headers: CSP, X-Frame-Options, X-Content-Type-Options,
   // Strict-Transport-Security, etc. In development we relax CSP to allow Vite HMR.
