@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
+import { ArrowRight, Brain, CheckCircle2, ChevronDown, Compass, Menu, MessageSquare, Scale, Search, Sparkles, TrendingUp, X } from "lucide-react";
 import {
   careerStages,
   defaultStageIndex,
   getCareerStage,
-  intelligenceCore,
 } from "./landingData";
 import "./landing.css";
 
@@ -34,6 +33,17 @@ const audienceAliases: Record<string, number> = {
   organization: 5,
   enterprise: 5,
 };
+
+const intelligenceCoreSteps = [
+  { label: "Diagnostics", description: "Reveal the capability signals that matter now.", icon: Search },
+  { label: "Judgement", description: "Interpret evidence in the context of the role and moment.", icon: Scale },
+  { label: "Recommendations", description: "Focus effort on the next move with the greatest value.", icon: Compass },
+  { label: "AI Coaching", description: "Turn insight into perspective, practice, and confidence.", icon: MessageSquare },
+  { label: "Simulations", description: "Rehearse high-stakes moments before they happen.", icon: Sparkles },
+  { label: "Actions", description: "Embed a focused development move in real work.", icon: CheckCircle2 },
+  { label: "Outcomes", description: "Make the change visible in stronger choices and results.", icon: TrendingUp },
+  { label: "Learning", description: "Use what works to guide the next level of growth.", icon: Brain },
+] as const;
 
 export function getAudienceIndexFromSearch(search: string) {
   const params = new URLSearchParams(search);
@@ -125,7 +135,30 @@ export default function Landing() {
       <section className="ln-core ln-core--simple" id="intelligence-core" aria-labelledby="core-title">
         <div className="ln-section-frame">
           <div className="ln-section-heading ln-section-heading--center"><p className="ln-eyebrow">The intelligence core</p><h2 id="core-title">One system.<br /><em>Many next-level moments.</em></h2><p>The same intelligence architecture adapts to a person’s stage, context and challenge.</p></div>
-          <div className="ln-core__simple-list" aria-label="LevelNext Intelligence Core capabilities">{intelligenceCore.map((item, index) => <article key={item}><span>{String(index + 1).padStart(2, "0")}</span><p>{item}</p></article>)}</div>
+          <div className="ln-core__simple-list" aria-label="LevelNext Intelligence Core workflow">
+            <div className="ln-core__simple-primary">
+              {intelligenceCoreSteps.slice(0, 6).map((step, index) => {
+                const Icon = step.icon;
+                return <article className="ln-core__step" key={step.label}>
+                  <span className="ln-core__step-index">{String(index + 1).padStart(2, "0")}</span>
+                  <div className="ln-core__step-icon"><Icon size={22} strokeWidth={1.8} aria-hidden="true" /></div>
+                  <h3>{step.label}</h3>
+                  <p>{step.description}</p>
+                </article>;
+              })}
+            </div>
+            <div className="ln-core__simple-outcomes">
+              {intelligenceCoreSteps.slice(6).map((step, index) => {
+                const Icon = step.icon;
+                return <article className="ln-core__step ln-core__step--outcome" key={step.label}>
+                  <span className="ln-core__step-index">{String(index + 7).padStart(2, "0")}</span>
+                  <div className="ln-core__step-icon"><Icon size={22} strokeWidth={1.8} aria-hidden="true" /></div>
+                  <h3>{step.label}</h3>
+                  <p>{step.description}</p>
+                </article>;
+              })}
+            </div>
+          </div>
         </div>
       </section>
 

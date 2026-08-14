@@ -29,6 +29,10 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("Executive Intelligence");
     expect(page).toContain("One system.");
     expect(page).toContain("Many next-level moments.");
+    expect(page).toContain('aria-label="LevelNext Intelligence Core workflow"');
+    expect(page).toContain("AI Coaching");
+    expect(page).toContain("Outcomes");
+    expect(page).toContain("Learning");
     expect(page).toContain('aria-label="Who LevelNext is for"');
     expect(page).toContain("Who it is for");
     expect(page).not.toContain("Career Transition");
@@ -86,5 +90,13 @@ describe("LevelNext public landing page", () => {
     expect(appRoutes).toContain('<Route path="/executive" component={ExecutiveIntelligence} />');
     expect(page).toContain("Executive Intelligence");
     expect(page).toContain('href="/executive"');
+  });
+
+  it("uses a centred outcome-and-learning pair rather than an unused third-cell placeholder", () => {
+    const page = renderToStaticMarkup(createElement(Landing));
+
+    expect(page).toContain('class="ln-core__simple-outcomes"');
+    expect(page).toContain('class="ln-core__step ln-core__step--outcome"');
+    expect(page).not.toContain('class="ln-core__simple-list"><article');
   });
 });

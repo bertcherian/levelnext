@@ -16,3 +16,8 @@
 - [x] Restore the Executive platform on the landing page with a working discovery or entry path.
 - [x] Add regression coverage for the Executive platform landing entry and validate the live landing page.
 - [x] Save a published checkpoint for the Executive platform landing-page fix.
+- [x] Inspect the intelligence-core diagram markup, styles, and landing-page regression coverage.
+- [x] Replace the flat grid with an icon-led intelligence-core visual and remove the unused grey block.
+- [x] Centre Outcomes and Learning in the final row and verify the responsive layout.
+- [x] Add or update regression coverage, visually validate the landing page, and save a published checkpoint.
+- [ ] Save a published checkpoint for the intelligence-core diagram redesign.
