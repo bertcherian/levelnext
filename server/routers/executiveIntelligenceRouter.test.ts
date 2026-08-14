@@ -9,6 +9,9 @@ describe("Executive Intelligence protected workflow", () => {
     expect(source).toContain("saveContext: protectedProcedure");
     expect(source).toContain("saveMandate: protectedProcedure");
     expect(source).toContain("thinkWithMe: protectedProcedure");
+    expect(source).toContain("exportDecisionJournal: protectedProcedure");
+    expect(source).toContain("getDecisionReviewReminder: protectedProcedure");
+    expect(source).toContain("saveDecisionReviewReminder: protectedProcedure");
     expect(source).toContain("createDecision: protectedProcedure");
     expect(source).toContain("mode: z.enum([\"prepare\", \"think\", \"challenge\", \"debrief\"])");
   });
@@ -17,7 +20,9 @@ describe("Executive Intelligence protected workflow", () => {
     expect(source).toContain("eq(executiveProfiles.userId, ctx.user.id)");
     expect(source).toContain("eq(executiveMandates.userId, ctx.user.id)");
     expect(source).toContain("eq(executiveDecisionJournal.userId, ctx.user.id)");
+    expect(source).toContain("orderBy(desc(executiveDecisionJournal.createdAt))");
     expect(source).toContain("userId: ctx.user.id");
+    expect(source).toContain("eq(executiveDecisionReviewReminderSettings.userId, ctx.user.id)");
     expect(source).toContain("stakeholderSummary");
   });
 });

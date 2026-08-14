@@ -29,8 +29,10 @@ import {
   earlyCareerNudgeConfigs,
   earlyCareerNudgeDeliveries,
   earlyCareerProfiles,
+  executiveDecisionJournal,
+  executiveDecisionReviewReminderSettings,
 } from "../drizzle/schema";
-import { eq, gte, and, desc, sql } from "drizzle-orm";
+import { eq, gte, and, desc, sql, isNotNull, lte } from "drizzle-orm";
 import { sdk } from "./_core/sdk";
 import { decideGuidedMirrorReminder, isLocalReminderTime, resolveRequestOrigin } from "./guidedMirrorReminderHelpers";
 
@@ -417,6 +419,46 @@ export async function guidedMirrorReminderHandler(req: Request, res: Response) {
     return res.json({ ok: true, sent: 1 });
   } catch (error) {
     console.error("[GuidedMirrorReminder] Error:", error);
+    return res.status(500).json({ ok: false, error: String(error), timestamp: new Date().toISOString() });
+  }
+}
+
+function escapeEmailHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character] ?? character);
+}
+
+// ── Executive Intelligence: Decision-review reminder ───────────────────────────
+// The user-owned Heartbeat runs hourly, evaluates local time, and sends one
+// private weekly review prompt only when one or more journal entries are due.
+export async function executiveDecisionReviewReminderHandler(req: Request, res: Response) {
+  try {
+    const cronUser = await sdk.authenticateRequest(req);
+    if (!cronUser.isCron || !cronUser.taskUid) return res.status(403).json({ error: "cron-only" });
+    const db = await getDb();
+    if (!db) return res.json({ ok: true, skipped: "no-db" });
+    const [setting] = await db.select().from(executiveDecisionReviewReminderSettings)
+      .where(eq(executiveDecisionReviewReminderSettings.scheduleCronTaskUid, cronUser.taskUid)).limit(1);
+    if (!setting || !setting.enabled) return res.json({ ok: true, skipped: setting ? "disabled" : "orphan" });
+    if (!isLocalReminderTime({ timeZone: setting.timeZone, localDayOfWeek: setting.localDayOfWeek, localHour: setting.localHour })) return res.json({ ok: true, skipped: "outside-local-window" });
+    const now = new Date();
+    if (setting.lastReminderAt && setting.lastReminderAt.getTime() > now.getTime() - 6 * 24 * 60 * 60 * 1000) return res.json({ ok: true, skipped: "recently-sent" });
+    const [user] = await db.select().from(users).where(eq(users.id, setting.userId)).limit(1);
+    if (!user?.email) return res.json({ ok: true, skipped: "no-email" });
+    const decisions = await db.select().from(executiveDecisionJournal)
+      .where(and(eq(executiveDecisionJournal.userId, setting.userId), isNotNull(executiveDecisionJournal.reviewDate), lte(executiveDecisionJournal.reviewDate, now)))
+      .orderBy(executiveDecisionJournal.reviewDate).limit(5);
+    if (!decisions.length) return res.json({ ok: true, skipped: "no-decisions-due" });
+    const decisionList = decisions.map((entry) => `<li style="margin:0 0 8px"><strong>${escapeEmailHtml(entry.decision)}</strong><br/><span style="color:#667385">Review date: ${entry.reviewDate?.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) ?? "Due"}</span></li>`).join("");
+    const executiveUrl = `${resolveRequestOrigin(req)}/executive`;
+    await sendEmail({
+      to: user.email,
+      subject: `${decisions.length} decision${decisions.length === 1 ? "" : "s"} ready for review`,
+      html: `<div style="font-family:Arial,sans-serif;color:#10243e;max-width:560px"><p style="color:#9a6a24;font-size:11px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase">LevelNext Executive</p><h2 style="margin:0 0 12px">Return to the reasoning behind your decisions.</h2><p>Outcomes are not the only measure of a good decision. Revisit the assumptions, trade-offs, and evidence that informed the choice.</p><ul style="padding-left:20px">${decisionList}</ul><p><a href="${executiveUrl}" style="display:inline-block;background:#10243e;color:#fff;text-decoration:none;padding:12px 18px;font-weight:700">Open decision journal</a></p><p style="color:#667385;font-size:12px">You are receiving this because you enabled private decision-review reminders. You can change these preferences in Executive Intelligence at any time.</p></div>`,
+    });
+    await db.update(executiveDecisionReviewReminderSettings).set({ lastReminderAt: now }).where(eq(executiveDecisionReviewReminderSettings.id, setting.id));
+    return res.json({ ok: true, sent: 1, decisions: decisions.length });
+  } catch (error) {
+    console.error("[ExecutiveDecisionReviewReminder] Error:", error);
     return res.status(500).json({ ok: false, error: String(error), timestamp: new Date().toISOString() });
   }
 }

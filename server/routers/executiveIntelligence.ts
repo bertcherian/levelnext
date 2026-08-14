@@ -1,7 +1,9 @@
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, lte } from "drizzle-orm";
+import { parse as parseCookie } from "cookie";
 import { z } from "zod";
-import { executiveDecisionJournal, executiveMandates, executiveProfiles } from "../../drizzle/schema";
+import { executiveDecisionJournal, executiveDecisionReviewReminderSettings, executiveMandates, executiveProfiles } from "../../drizzle/schema";
+import { COOKIE_NAME } from "../../shared/const";
 import {
   EXECUTIVE_MANDATE_AREAS,
   EXECUTIVE_ROLE_TYPES,
@@ -11,6 +13,7 @@ import {
 } from "../../shared/modules/executiveIntelligence";
 import { analyseExecutiveSituation } from "../executiveIntelligence";
 import { getDb } from "../db";
+import { createHeartbeatJob, updateHeartbeatJob } from "../_core/heartbeat";
 import { protectedProcedure, router } from "../_core/trpc";
 
 const contextSchema = z.object({
@@ -36,16 +39,54 @@ const prioritySchema = z.object({
   progress: z.enum(["not_started", "active", "on_track", "attention"]),
 });
 
+const decisionReviewReminderSchema = z.object({
+  enabled: z.boolean(),
+  localDayOfWeek: z.number().int().min(0).max(6).default(1),
+  localHour: z.number().int().min(0).max(23).default(9),
+  timeZone: z.string().trim().min(1).max(80).refine((value) => {
+    try { new Intl.DateTimeFormat("en-US", { timeZone: value }); return true; } catch { return false; }
+  }, "Choose a valid time zone."),
+});
+
 export const executiveIntelligenceRouter = router({
   getWorkspace: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    const [[profile], [mandate], decisions] = await Promise.all([
+    const reviewCutoff = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const [[profile], [mandate], decisions, reviewableDecisions] = await Promise.all([
       db.select().from(executiveProfiles).where(eq(executiveProfiles.userId, ctx.user.id)).limit(1),
       db.select().from(executiveMandates).where(eq(executiveMandates.userId, ctx.user.id)).limit(1),
       db.select().from(executiveDecisionJournal).where(eq(executiveDecisionJournal.userId, ctx.user.id)).orderBy(desc(executiveDecisionJournal.createdAt)).limit(5),
+      db.select().from(executiveDecisionJournal).where(and(eq(executiveDecisionJournal.userId, ctx.user.id), isNotNull(executiveDecisionJournal.reviewDate), lte(executiveDecisionJournal.reviewDate, reviewCutoff))).orderBy(executiveDecisionJournal.reviewDate).limit(3),
     ]);
-    return { profile: profile ?? null, mandate: mandate ?? null, decisions };
+    return { profile: profile ?? null, mandate: mandate ?? null, decisions, reviewableDecisions };
+  }),
+
+  getDecisionReviewReminder: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [setting] = await db.select().from(executiveDecisionReviewReminderSettings).where(eq(executiveDecisionReviewReminderSettings.userId, ctx.user.id)).limit(1);
+    return setting ?? { enabled: false, localDayOfWeek: 1, localHour: 9, timeZone: "UTC", scheduleCronTaskUid: null };
+  }),
+
+  saveDecisionReviewReminder: protectedProcedure.input(decisionReviewReminderSchema).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [existing] = await db.select().from(executiveDecisionReviewReminderSettings).where(eq(executiveDecisionReviewReminderSettings.userId, ctx.user.id)).limit(1);
+    const sessionToken = parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "";
+    let taskUid = existing?.scheduleCronTaskUid ?? null;
+    if (existing) await db.update(executiveDecisionReviewReminderSettings).set(input).where(eq(executiveDecisionReviewReminderSettings.id, existing.id));
+    else await db.insert(executiveDecisionReviewReminderSettings).values({ userId: ctx.user.id, ...input });
+    const cron = "0 0 * * * *";
+    const description = "Private weekly Executive decision-review reminder";
+    if (taskUid) await updateHeartbeatJob(taskUid, { cron, path: "/api/scheduled/executiveDecisionReviewReminder", method: "POST", description, enable: input.enabled }, sessionToken);
+    else {
+      const job = await createHeartbeatJob({ name: `executive-decision-review-${ctx.user.id}`, cron, path: "/api/scheduled/executiveDecisionReviewReminder", method: "POST", description }, sessionToken);
+      taskUid = job.taskUid;
+      if (!input.enabled) await updateHeartbeatJob(taskUid, { enable: false }, sessionToken);
+      await db.update(executiveDecisionReviewReminderSettings).set({ scheduleCronTaskUid: taskUid }).where(eq(executiveDecisionReviewReminderSettings.userId, ctx.user.id));
+    }
+    return { ...input, scheduleCronTaskUid: taskUid };
   }),
 
   saveContext: protectedProcedure.input(contextSchema).mutation(async ({ ctx, input }) => {
@@ -78,6 +119,14 @@ export const executiveIntelligenceRouter = router({
     } : undefined;
     const analysis = await analyseExecutiveSituation({ situation: input.situation, desiredOutcome: input.desiredOutcome, stakes: input.stakes, mode: input.mode, context: executiveContext, priorities: mandate?.priorities ?? [] });
     return { analysis };
+  }),
+
+  exportDecisionJournal: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    return db.select().from(executiveDecisionJournal)
+      .where(eq(executiveDecisionJournal.userId, ctx.user.id))
+      .orderBy(desc(executiveDecisionJournal.createdAt));
   }),
 
   createDecision: protectedProcedure.input(z.object({

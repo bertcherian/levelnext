@@ -5,3 +5,10 @@
 - [x] Run and pass focused Executive Intelligence backend procedure tests.
 - [x] Verify the Executive Intelligence route in the managed preview and canonical production deployment.
 - [x] Document the module’s main features and architecture in the delivery summary.
+- [x] Add a LevelNext logo treatment to the Executive Intelligence header.
+- [x] Verify the PWA manifest and service worker, and add an install control where supported.
+- [x] Add user-configurable decision-review reminders with scheduled delivery.
+- [x] Deliver decision-review reminders as a configurable weekly email and in-cockpit due/overdue signal.
+- [x] Add a secure decision-journal export in a user-friendly download format.
+- [x] Add Executive Intelligence loading states and actionable error handling.
+- [x] Run focused tests, verify the enhanced cockpit, and publish the update.

@@ -12,7 +12,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { weeklySummaryHandler, momentumCheckinHandler, icFollowUpReminderHandler, icOutboxPublisherHandler, earlyCareerNudgeDeliveryHandler, guidedMirrorReminderHandler } from "../scheduledHandlers";
+import { weeklySummaryHandler, momentumCheckinHandler, icFollowUpReminderHandler, icOutboxPublisherHandler, earlyCareerNudgeDeliveryHandler, guidedMirrorReminderHandler, executiveDecisionReviewReminderHandler } from "../scheduledHandlers";
 import { isAllowedCorsOrigin } from "./originPolicy";
 
 // ── Rate limiters ─────────────────────────────────────────────────────────────
@@ -133,6 +133,7 @@ async function startServer() {
   app.post("/api/scheduled/icOutboxPublisher", icOutboxPublisherHandler);
   app.post("/api/scheduled/earlyCareerNudges", earlyCareerNudgeDeliveryHandler);
   app.post("/api/scheduled/guidedMirrorReminder", guidedMirrorReminderHandler);
+  app.post("/api/scheduled/executiveDecisionReviewReminder", executiveDecisionReviewReminderHandler);
 
   // tRPC API — strict limiter applied before the tRPC handler
   app.use("/api/trpc", llmLimiter);

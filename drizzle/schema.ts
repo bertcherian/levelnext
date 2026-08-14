@@ -2871,6 +2871,20 @@ export const executiveDecisionJournal = mysqlTable("executive_decision_journal",
 }, (table) => [index("executive_decisions_user_created_idx").on(table.userId, table.createdAt)]);
 export type ExecutiveDecisionJournalEntry = typeof executiveDecisionJournal.$inferSelect;
 
+export const executiveDecisionReviewReminderSettings = mysqlTable("executive_decision_review_reminder_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id).unique(),
+  enabled: boolean("enabled").default(false).notNull(),
+  localDayOfWeek: int("localDayOfWeek").default(1).notNull(),
+  localHour: int("localHour").default(9).notNull(),
+  timeZone: varchar("timeZone", { length: 80 }).default("UTC").notNull(),
+  scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+  lastReminderAt: timestamp("lastReminderAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [index("executive_decision_review_task_idx").on(table.scheduleCronTaskUid)]);
+export type ExecutiveDecisionReviewReminderSetting = typeof executiveDecisionReviewReminderSettings.$inferSelect;
+
 // ─── Intelligence Core: User-controlled Guided Mirror reminders ───────────────
 export const icGuidedMirrorReminderSettings = mysqlTable("ic_guided_mirror_reminder_settings", {
   id: int("id").autoincrement().primaryKey(),

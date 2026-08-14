@@ -12,9 +12,12 @@ vi.mock("@/_core/hooks/useAuth", () => ({
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
-    useUtils: () => ({ executiveIntelligence: { getWorkspace: { invalidate: vi.fn() } } }),
+    useUtils: () => ({ executiveIntelligence: { getWorkspace: { invalidate: vi.fn() }, getDecisionReviewReminder: { invalidate: vi.fn() } } }),
     executiveIntelligence: {
-      getWorkspace: { useQuery: () => ({ data: { profile: null, mandate: null, decisions: [] }, isLoading: false }) },
+      getWorkspace: { useQuery: () => ({ data: { profile: null, mandate: null, decisions: [], reviewableDecisions: [{ id: 81, decision: "Approve the supply-chain reset", reviewDate: new Date("2020-01-01") }] }, isLoading: false, isFetching: false, error: null, refetch: vi.fn() }) },
+      exportDecisionJournal: { useQuery: () => ({ refetch: vi.fn(), isFetching: false }) },
+      getDecisionReviewReminder: { useQuery: () => ({ data: { enabled: false, localDayOfWeek: 1, localHour: 9, timeZone: "UTC" } }) },
+      saveDecisionReviewReminder: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       saveContext: { useMutation: () => ({ mutate: contextMutate, isPending: false }) },
       saveMandate: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       thinkWithMe: { useMutation: () => ({ mutate: thinkMutate, isPending: false, data: null }) },
@@ -79,5 +82,16 @@ describe("Executive Intelligence rendered workflows", () => {
     fireEvent.change(screen.getByPlaceholderText("What decision, recommendation, or position do you want to pressure-test?"), { target: { value: "Approve a major discount for a strategic renewal." } });
     fireEvent.click(screen.getByRole("button", { name: /challenge the decision/i }));
     expect(thinkMutate).toHaveBeenLastCalledWith(expect.objectContaining({ mode: "challenge" }));
+  });
+
+  it("renders the authenticated decision-review engagement controls", () => {
+    render(<ExecutiveIntelligence />);
+    expect(screen.getByText(/decision ready for a second look/i)).toBeTruthy();
+    expect(screen.getByText("Approve the supply-chain reset")).toBeTruthy();
+    expect(screen.getByText(/overdue for review/i)).toBeTruthy();
+    expect(screen.getByText(/weekly review email/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /turn on reminder/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /export csv/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /install app/i })).toBeTruthy();
   });
 });
