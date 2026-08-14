@@ -29,7 +29,8 @@ import {
   orgContext as orgContextTable,
 } from "../../drizzle/schema";
 import { invokeLLM, safeJsonParse } from "../_core/llm";
-import { getMepDiagnostic, scoreMepDiagnostic, MEP_DIAGNOSTICS } from "../../shared/modules/mepData";
+import { buildMepFactorReportRows, getMepDiagnostic, scoreMepDiagnostic, MEP_DIAGNOSTICS } from "../../shared/modules/mepData";
+import { getMepPracticeRole } from "../../shared/modules/mepPracticeRoles";
 
 // ─── Helper: extract text from LLM result ────────────────────────────────────
 function extractText(result: Awaited<ReturnType<typeof invokeLLM>>): string {
@@ -298,6 +299,7 @@ export const mepRouter = router({
       }
 
       const { dimensionScores, overallScore, zone } = scoreMepDiagnostic(diag, input.responses);
+      const factorReports = buildMepFactorReportRows(diag, dimensionScores);
 
       const dimSummary = Object.entries(dimensionScores)
         .sort(([, a], [, b]) => b - a)
@@ -340,6 +342,9 @@ Overall score: ${Math.round(overallScore)}/100 (Zone: ${zone})
 Dimension scores:
 ${dimSummary}
 
+Factor context:
+${factorReports.map((factor) => `- ${factor.label}: ${factor.score}/100 (${factor.status}). Development guidance: ${factor.action}`).join("\n")}
+
 Return a JSON object with these exact keys:
 {
   "headline": "string (one powerful sentence summarising their management effectiveness in this area)",
@@ -347,10 +352,12 @@ Return a JSON object with these exact keys:
   "risks": [{ "title": "string", "description": "string" }],
   "blindSpots": [{ "title": "string", "description": "string" }],
   "behaviouralObservations": ["string", "string", "string"],
-  "learningPath": [{ "priority": 1, "focus": "string", "action": "string", "timeframe": "string" }],
-  "coachQuestion": "string (one powerful coaching question to reflect on)"
-}
-`.trim();
+	  "learningPath": [{ "priority": 1, "focus": "string", "action": "string", "timeframe": "string", "successSignal": "string" }],
+	  "coachQuestion": "string (one powerful coaching question to reflect on)"
+	}
+
+	Use the factor data supplied below to make the report concrete. Name the strongest factors, make the development risks candid but constructive, and prescribe three sequenced actions a manager can put into practice over the next 30 days. Do not invent behavioural evidence that is not supported by the scores.
+	`.trim();
 
         const result = await invokeLLM({
           model: "claude-haiku-4-5",
@@ -363,6 +370,11 @@ Return a JSON object with these exact keys:
       } catch (e) {
         console.error("[MEP] LLM analysis failed:", e);
       }
+
+      const reportAnalysis = {
+        ...llmAnalysis,
+        factorReports,
+      };
 
       const db = await getDb();
       if (!db) {
@@ -377,10 +389,10 @@ Return a JSON object with these exact keys:
           dimensionScores,
           overallScore,
           zone,
-          llmAnalysis,
+          llmAnalysis: reportAnalysis,
         }).$returningId();
 
-        return { id: inserted.id, dimensionScores, overallScore, zone, llmAnalysis };
+        return { id: inserted.id, dimensionScores, overallScore, zone, llmAnalysis: reportAnalysis };
       } catch (insertErr) {
         console.error(`[MEP] submitDiagnostic: DB insert failed (user ${ctx.user.id}, code ${input.code}):`, insertErr);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to save diagnostic results" });
@@ -777,7 +789,7 @@ Return a JSON object with these exact keys:
       { id: "career_discussion", label: "Career Development", icon: "🗺️", description: "Have a career development conversation with an ambitious team member" },
       { id: "missed_deadline", label: "Missed Deadline", icon: "⏰", description: "Address a team member who consistently misses deadlines" },
       { id: "difficult_stakeholder", label: "Difficult Stakeholder", icon: "🧩", description: "Manage a demanding or obstructive stakeholder" },
-    ];
+    ].map((scenario) => ({ ...scenario, ...getMepPracticeRole(scenario.id) }));
   }),
 
   startPracticeSession: protectedProcedure
@@ -799,14 +811,7 @@ Return a JSON object with these exact keys:
       }).$returningId();
 
       const context = await buildManagerContext(ctx.user.id);
-      const personalities: Record<string, string> = {
-        realistic: "a realistic, average employee",
-        resistant: "a defensive, resistant employee who pushes back",
-        emotional: "an emotional employee who gets upset easily",
-        passive: "a passive, disengaged employee who gives minimal responses",
-        aggressive: "an assertive, challenging employee who questions everything",
-      };
-      const personalityDesc = personalities[input.counterpartPersonality ?? "realistic"] ?? "a realistic employee";
+      const roleProfile = getMepPracticeRole(input.scenarioId, input.counterpartPersonality ?? "realistic");
 
       let opening = "Hi, you wanted to speak with me?";
       try {
@@ -815,10 +820,11 @@ Return a JSON object with these exact keys:
           messages: [{
             role: "user" as const,
             content: `
-You are playing the role of ${personalityDesc} in a management practice scenario.
+You are playing the role of ${roleProfile.characterDescription} in a management practice scenario.
 Scenario: ${input.scenarioLabel}
 Manager context: ${context}
-Generate a realistic opening line (1-2 sentences) that starts the conversation from the employee's perspective.
+${roleProfile.roleInstruction}
+Generate a realistic opening line (1-2 sentences) that starts the conversation from ${roleProfile.openingPerspective}.
 Return just the dialogue, no labels or quotes.
 `.trim(),
           }],
@@ -859,14 +865,7 @@ Return just the dialogue, no labels or quotes.
       const messages = (session.messages as any[]) ?? [];
       messages.push({ role: "manager", content: input.message, timestamp: new Date().toISOString() });
 
-      const personalities: Record<string, string> = {
-        realistic: "a realistic, average employee",
-        resistant: "a defensive, resistant employee who pushes back",
-        emotional: "an emotional employee who gets upset easily",
-        passive: "a passive, disengaged employee who gives minimal responses",
-        aggressive: "an assertive, challenging employee who questions everything",
-      };
-      const personalityDesc = personalities[session.counterpartPersonality ?? "realistic"] ?? "a realistic employee";
+      const roleProfile = getMepPracticeRole(session.scenarioType ?? "performance_review", session.counterpartPersonality ?? "realistic");
 
       const conversationHistory = messages.slice(-8).map((m: any) => ({
         role: (m.role === "manager" ? "user" : "assistant") as "user" | "assistant",
@@ -875,7 +874,9 @@ Return just the dialogue, no labels or quotes.
 
       const systemMsg = {
         role: "system" as const,
-        content: `You are playing the role of ${personalityDesc} in a management practice scenario: ${session.scenario}. Stay in character. Respond naturally and realistically. Keep responses to 1-3 sentences. Do not break character.`,
+        content: `You are playing the role of ${roleProfile.characterDescription} in a management practice scenario: ${session.scenario}.
+${roleProfile.roleInstruction}
+Stay in character. Respond naturally and realistically. Keep responses to 1-3 sentences. Do not break character.`,
       };
 
       let reply = "I see... let me think about that.";
@@ -915,6 +916,7 @@ Return just the dialogue, no labels or quotes.
 
       const messages = (session.messages as any[]) ?? [];
       const managerMessages = messages.filter((m: any) => m.role === "manager").map((m: any) => m.content).join("\n");
+      const roleProfile = getMepPracticeRole(session.scenarioType ?? "performance_review", session.counterpartPersonality ?? "realistic");
 
       let feedback: Record<string, any> = { overallRating: 3, headline: "Practice session completed.", strengths: [], improvements: [], keyMoment: "", nextPractice: "", coachingInsight: "" };
       try {
@@ -926,7 +928,7 @@ Return just the dialogue, no labels or quotes.
 You are an expert management coach reviewing a practice conversation.
 Scenario: ${session.scenario}
 Manager's messages: ${managerMessages}
-Full conversation: ${messages.map((m: any) => `${m.role === "manager" ? "Manager" : "Employee"}: ${m.content}`).join("\n")}
+Full conversation: ${messages.map((m: any) => `${m.role === "manager" ? "Manager" : roleProfile.counterpartRoleLabel}: ${m.content}`).join("\n")}
 
 Return coaching feedback as JSON:
 {
@@ -954,7 +956,7 @@ Return coaching feedback as JSON:
         .set({ status: "completed", coachingFeedback: feedback })
         .where(eq(mepPracticeSessions.id, input.sessionId));
 
-      return feedback;
+      return { ...feedback, debrief: feedback };
     }),
 
   listPracticeSessions: protectedProcedure.query(async ({ ctx }) => {

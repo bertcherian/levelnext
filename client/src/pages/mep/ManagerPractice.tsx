@@ -69,7 +69,7 @@ export default function ManagerPractice() {
 
   const endSession = trpc.mep.endPracticeSession.useMutation({
     onSuccess: (data) => {
-      setDebrief(data.debrief);
+      setDebrief(data.debrief ?? data);
       setView("debrief");
     },
     onError: () => toast.error("Could not end session."),
@@ -309,6 +309,9 @@ export default function ManagerPractice() {
             <h1 className="text-sm font-bold" style={{ color: "var(--color-ln-navy)" }}>
               {activeScenario?.label}
             </h1>
+            <p className="text-[11px] mt-0.5" style={{ color: "oklch(50% 0.02 248.6)" }}>
+              {activeScenario?.userRoleLabel ?? "You are the manager"} · AI plays: {activeScenario?.rolePlayAs ?? "Team Member"}
+            </p>
           </div>
           <Button
             size="sm"
@@ -417,7 +420,7 @@ export default function ManagerPractice() {
               value={displayValue}
               onChange={(e) => { if (!isListening) setInput(e.target.value); }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder={isListening ? "Listening… speak now" : "Respond as the manager… or click mic to speak"}
+              placeholder={isListening ? "Listening… speak now" : "Respond as yourself, the manager… or click mic to speak"}
               className="flex-1 resize-none text-sm min-h-[44px] max-h-32"
               rows={1}
               disabled={sending}

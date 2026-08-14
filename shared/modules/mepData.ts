@@ -31,6 +31,23 @@ export interface MepDimension {
   description: string;
 }
 
+export interface MepFactorGuidance {
+  definition: string;
+  whyItMatters: string;
+  whatGoodLooksLike: string;
+  nextStep: string;
+}
+
+export interface MepFactorReportRow extends MepFactorGuidance {
+  dimensionId: string;
+  label: string;
+  score: number;
+  status: "Strength" | "Foundation" | "Priority";
+  strength: string;
+  weakness: string;
+  action: string;
+}
+
 export interface MepDiagnostic {
   code: string;
   title: string;
@@ -591,6 +608,246 @@ const TAI_QUESTIONS: MepQuestion[] = [
   { id: "tai_se6", text: "I stay informed about data governance requirements relevant to my team's work.", dimensionId: "tai_security" },
 ];
 
+// ─── Diagnostic depth and factor explanations ─────────────────────────────────
+// Every MEP diagnostic uses the same 24-question depth. Existing diagnostic
+// items remain in place; the expansion items add behavioural evidence, judgement,
+// stakeholder input, and learning-loop nuance to each measured factor.
+const MEP_QUESTION_TARGET = 24;
+
+const CURATED_DEPTH_ITEMS: Record<string, Record<string, [string, string]>> = {
+  DI: {
+    trust: ["I calibrate my level of support to the person's demonstrated capability rather than checking equally on everyone.", "When a team member takes a different but reasonable approach, I stay curious before stepping in."],
+    task_selection: ["I delegate work that exposes people to decisions, stakeholders, or skills they need for their next role.", "I review my own workload regularly to identify responsibilities I am retaining out of habit rather than necessity."],
+    clear_outcomes: ["Before delegation, I agree the decision rights, quality standard, and non-negotiables alongside the desired outcome.", "I ask the person to restate the outcome, risks, and first milestones so misunderstanding is surfaced early."],
+    followup_rhythm: ["I tailor check-in frequency to the work's risk and the person's experience, then honour the agreed rhythm.", "At check-ins, I focus on decisions, learning, and blockers rather than asking people to defend every activity."],
+    empowerment: ["I make it clear to relevant stakeholders what authority the delegated owner has, so they are not bypassed.", "When decisions are escalated back to me, I coach the owner to decide within their agreed boundaries whenever possible."],
+    ownership_transfer: ["I let the delegated owner present their own work and learn from the outcomes rather than speaking for them.", "After completion, I review what the owner learned and increase the scope of future responsibility accordingly."],
+  },
+  FI: {
+    courage: ["I name the conversation I have been avoiding and schedule it before the issue becomes harder to address.", "I separate my discomfort about giving feedback from the other person's need for clarity."],
+    timeliness: ["I agree the right moment for feedback when an immediate conversation would compromise privacy or emotional readiness.", "I close the loop after feedback to check whether the person understood the message and has support to act."],
+    specificity: ["I describe the observable behaviour, the context, and its impact without attributing motives or labels.", "I test whether my feedback is actionable by asking the person what they will do differently next time."],
+    positive_reinforcement: ["I connect recognition to the specific judgement, behaviour, or contribution I want the team to repeat.", "I recognise progress and learning, not only polished outcomes, so improvement is visible and encouraged."],
+    difficult_conversations: ["I prepare a difficult conversation by clarifying the facts, the desired outcome, and the dignity I want to preserve.", "When someone becomes defensive, I slow the conversation down and explore their perspective without diluting the standard."],
+    developmental_feedback: ["I turn feedback into a jointly owned experiment with a clear opportunity to practise and review progress.", "I distinguish between a one-off correction and a capability pattern that needs sustained development support."],
+  },
+  CI_C: {
+    listening: ["I notice when I am interpreting too quickly and return to the person's words before offering a view.", "I summarise what I have heard, including the underlying concern, and ask the person to correct my understanding."],
+    curiosity: ["I explore the assumptions behind a team member's view before deciding whether I agree with it.", "I remain curious when someone brings a perspective that is inconvenient, incomplete, or different from my own."],
+    powerful_questions: ["I use questions that move people from describing a problem to examining choices, consequences, and ownership.", "I vary my questions when the first response is superficial instead of filling the silence with advice."],
+    reflection: ["I leave enough space after a significant question for the person to think rather than rescuing the conversation.", "I invite people to identify the insight they are taking away before we move to action planning."],
+    development_planning: ["I translate development aspirations into a few observable experiences, behaviours, and review points.", "I revisit development plans when the role, business context, or person's aspirations change."],
+    empowerment_coach: ["I end coaching conversations with the person choosing a next step they genuinely own.", "I track whether my coaching is increasing independent judgement rather than creating repeat dependence on me."],
+  },
+  THI: {
+    trust_team: ["I address reliability gaps in ways that restore confidence rather than allowing quiet resentment to grow.", "I create opportunities for team members to understand each other's constraints and follow-through commitments."],
+    psych_safety: ["I respond constructively when someone challenges my view, especially in front of peers or senior leaders.", "I notice whose voice is missing in important discussions and actively create safer routes for input."],
+    collaboration: ["I make interdependencies visible so team members can coordinate before hand-offs become urgent problems.", "I recognise collaboration that improves collective outcomes, not only individual heroics."],
+    accountability_team: ["I help the team agree how it will raise a missed commitment with one another before I need to intervene.", "I distinguish accountability from blame by keeping conversations focused on ownership, learning, and next commitments."],
+    motivation: ["I regularly connect demanding work to the customer, team, or organisational value it creates.", "I adapt stretch, recognition, and support to what different people find genuinely energising."],
+    workload_balance: ["I use evidence about capacity and complexity—not only visible busyness—to rebalance work across the team.", "I make trade-offs explicit when priorities exceed capacity instead of expecting silent overextension."],
+    communication_quality: ["I create clear channels for critical information so people do not have to rely on informal access or guesswork.", "I check that decisions and changes have reached those who need to act on them, not only those in the meeting."],
+  },
+  EXI: {
+    planning_ex: ["I translate plans into clear milestones, dependencies, owners, and decision points that the team can inspect together.", "I test major plans with the people doing the work before treating the timeline as a commitment."],
+    prioritization: ["I make the trade-offs behind a priority decision visible so the team knows what will deliberately not be done.", "I revisit priorities when new requests arrive instead of simply adding work to an already full agenda."],
+    meeting_discipline: ["I choose a meeting only when live discussion creates more value than an asynchronous update or written decision.", "I make unresolved decisions, owners, and due dates visible before a meeting closes."],
+    followthrough: ["I maintain a simple, shared way to track commitments and make slippage visible without creating bureaucracy.", "When commitments slip, I explore the system cause and reset the commitment rather than accepting vague assurances."],
+    risk_management: ["I run pre-mortems on important work to identify the assumptions and weak signals most likely to derail delivery.", "I define trigger points that tell the team when a risk requires a decision, escalation, or contingency plan."],
+    delivery_consistency: ["I set realistic external expectations early and communicate changes before stakeholders have to chase for an update.", "I review delivery patterns over time to distinguish an isolated miss from a process or capacity problem."],
+  },
+  CNFI: {
+    emotional_regulation: ["I recognise the physical and emotional signals that tell me I need to pause before responding in conflict.", "I can acknowledge the intensity of a situation without matching the other person's tone or becoming withdrawn."],
+    assertiveness: ["I state my boundary, rationale, and request clearly without over-explaining or apologising for a legitimate position.", "I remain open to being influenced while still naming the standard or outcome I cannot compromise."],
+    negotiation: ["I prepare by identifying each party's interests, constraints, and acceptable alternatives rather than arguing only over positions.", "I look for creative trades that preserve the relationship and expand options before escalating a disagreement."],
+    resolution: ["I translate verbal agreement into clear owners, commitments, and review points so the issue does not reappear unchanged.", "I check whether both parties experience the resolution as understood and workable, not merely imposed."],
+    fairness: ["I invite each person to describe what a fair process would look like before I decide how to intervene.", "I explain the criteria behind difficult decisions so people can distinguish consistency from personal preference."],
+    recovery: ["After conflict, I make time to repair trust rather than assuming an operational agreement has repaired the relationship.", "I help the team identify how it will work differently next time so the conflict produces a stronger norm."],
+  },
+  O1I: {
+    preparation_1on1: ["I enter each 1:1 with a view of the person's recent commitments, development themes, and likely pressures.", "I invite the team member to shape the agenda so the conversation serves their needs as well as mine."],
+    listening_1on1: ["I notice when a status update is masking a concern and create enough space to explore it respectfully.", "I avoid turning every 1:1 into a problem-solving session when the person primarily needs to be heard."],
+    coaching_1on1: ["I use recurring 1:1 themes to help people spot patterns in their judgement, confidence, or ways of working.", "I ask the person to identify options before I offer experience, resources, or a direct recommendation."],
+    recognition_1on1: ["I recognise effort, growth, and collaborative contribution in ways that feel authentic to the individual.", "I make appreciation specific enough that the person understands the value and behaviour I want to reinforce."],
+    career_discussions: ["I discuss the skills, experiences, and relationships a person needs for their next career step—not only title aspirations.", "I am candid about current readiness while helping the person identify realistic ways to build the missing evidence."],
+    accountability_1on1: ["I end 1:1s by confirming mutual commitments and the support each of us will provide before the next meeting.", "I revisit unresolved commitments with curiosity about barriers, then reset ownership and timing explicitly."],
+  },
+  TCI: {
+    clarity_comm: ["I tailor the level of detail to the decision or action required, rather than assuming one message works for everyone.", "I state the decision, owner, next action, and deadline clearly when a communication requires follow-through."],
+    active_listening_team: ["I use questions and summaries to make sure disagreement is understood before the group moves to a decision.", "I create structured opportunities for quieter or less tenured colleagues to contribute before the loudest voices set the frame."],
+    alignment: ["I surface competing interpretations of a priority early, before people invest effort in different versions of the same outcome.", "I check for alignment through examples of what each person will now do, not only by asking whether everyone agrees."],
+    meeting_effectiveness: ["I design meetings around the decision, discussion, or relationship outcome required—not a default calendar slot.", "I follow up with a concise record of commitments when the consequences of a meeting extend beyond the people present."],
+    written_communication: ["I structure written updates so the audience can quickly distinguish context, decision, risk, and requested action.", "I review important messages for ambiguity, unintended tone, and missing assumptions before sending them."],
+    transparency: ["I explain what I can share, what I cannot yet share, and when the team can expect the next update.", "I communicate difficult changes early enough for people to prepare and ask informed questions rather than relying on rumours."],
+  },
+  OWI: {
+    initiative: ["I create conditions in which people can act on opportunities without waiting for my permission at every step.", "I distinguish useful initiative from unaligned activity by making the team's priorities and decision boundaries clear."],
+    accountability_own: ["I model ownership by naming my contribution to a problem before discussing anyone else's contribution.", "I turn setbacks into clear next commitments rather than allowing explanations to substitute for action."],
+    reliability: ["I make commitments only after checking capacity, dependencies, and the evidence needed to deliver with confidence.", "When a commitment is at risk, I communicate the impact, options, and revised plan before the deadline passes."],
+    problem_ownership: ["I expect problems to be escalated with a diagnosis, options, and a recommended next step whenever possible.", "I help people stay with a problem through resolution while giving them access to the right expertise and authority."],
+    continuous_improvement: ["I create a regular forum for the team to remove friction, simplify work, and test better ways of operating.", "I measure whether an improvement actually changed quality, speed, or experience before treating it as complete."],
+    proactive_behaviour: ["I scan for upcoming decisions, dependencies, and stakeholder expectations so the team can prepare before urgency arrives.", "I reward early signals and thoughtful anticipation even when the expected issue never fully materialises."],
+  },
+  PST: {
+    voice_safety: ["I thank people for raising uncomfortable concerns and show how their input affected the next step or decision.", "I offer private channels for input when hierarchy, culture, or the subject matter makes public challenge difficult."],
+    failure_tolerance: ["I distinguish between thoughtful experimentation and preventable carelessness when discussing a mistake.", "I lead a learning review after setbacks that identifies system improvements without turning the discussion into blame."],
+    inclusion: ["I adapt how decisions are discussed so different communication styles and levels of confidence can genuinely influence the outcome.", "I notice recurring patterns in whose ideas are credited, interrupted, or overlooked and intervene to correct them."],
+    trust_building: ["I make commitments to the team carefully and explain promptly when circumstances mean I cannot meet one.", "I invest in understanding personal working preferences so trust is built through everyday interactions, not only team events."],
+    vulnerability_modelling: ["I ask for help and admit uncertainty in ways that demonstrate responsibility rather than shifting accountability to the team.", "I share what I learned from a mistake and the change I will make, so openness leads to credible action."],
+    challenge_safety: ["I invite people to challenge the strongest argument in the room before a consequential decision is finalised.", "I separate critique of an idea from judgement of the person offering it, especially when disagreement is direct."],
+  },
+  PFM: {
+    goal_setting: ["I agree the evidence that will show progress, quality, and success before performance is evaluated.", "I revisit goals in a two-way conversation when business priorities change so accountability remains fair and relevant."],
+    ongoing_feedback: ["I ask the recipient how the feedback landed and what support or practice would make it useful.", "I notice and reinforce behavioural progress between formal reviews so development does not depend on annual cycles."],
+    underperformance: ["I diagnose whether a gap is caused by clarity, skill, motivation, resources, or fit before choosing an intervention.", "I document expectations, support, and review dates so an improvement conversation is both humane and unambiguous."],
+    recognition: ["I recognise contribution in a way that matches the person's preference while connecting it to shared standards and impact.", "I make sure recognition is distributed fairly and does not repeatedly overlook less visible but valuable work."],
+    development_focus: ["I create assignments that stretch one or two deliberate capabilities rather than assuming more responsibility automatically creates growth.", "I connect development opportunities to the person's aspirations and the team's future needs, then review the learning together."],
+    fairness: ["I test my performance judgements against evidence and comparable standards before communicating them.", "I explain the process, criteria, and available support clearly enough that people understand how decisions were reached."],
+  },
+  CFI: {
+    relationship_building: ["I invest in understanding a peer function's success measures and constraints before I need their support.", "I repair cross-functional trust quickly when my team has created friction, missed a hand-off, or changed a commitment."],
+    stakeholder_alignment: ["I clarify the shared outcome, decision rights, and trade-offs at the start of cross-functional work.", "I create a regular rhythm for surfacing changes in assumptions before stakeholders discover misalignment through delivery problems."],
+    influence_without_authority: ["I build commitment by connecting a request to the other party's goals, incentives, and operational reality.", "I identify the informal influencers who shape a decision and engage them early with a clear, credible case."],
+    conflict_navigation: ["I frame cross-functional disagreement around the shared problem and evidence rather than the intentions of another team.", "I know when to seek a principled escalation and prepare the options, trade-offs, and recommendation before doing so."],
+    communication_upward: ["I give senior leaders concise updates that distinguish facts, risks, decisions needed, and my recommended action.", "I raise concerns early enough for my manager to help shape the outcome rather than merely respond to a crisis."],
+    collaboration: ["I establish joint working norms, shared milestones, and clear hand-offs with partner teams before pressure builds.", "I recognise partner-team contributions publicly so collaboration is experienced as reciprocal rather than transactional."],
+  },
+  MRW: {
+    stress_management: ["I use a reliable reset practice during intense periods instead of allowing stress to determine my tone and priorities.", "I notice which workload patterns repeatedly create stress and address the cause, not only the immediate symptom."],
+    recovery: ["I make time to process a setback, extract the learning, and re-enter the next conversation with composure.", "I seek perspective from a trusted peer or coach when a setback is affecting my judgement or confidence."],
+    boundary_setting: ["I make deliberate decisions about what I will defer, delegate, or decline when demand exceeds sustainable capacity.", "I protect recovery time in visible ways that give my team permission to maintain sustainable boundaries too."],
+    emotional_regulation: ["I prepare for emotionally charged moments by identifying triggers, desired tone, and the response I want to choose.", "I repair quickly when pressure causes me to communicate in a way that undermines trust or clarity."],
+    team_wellbeing: ["I balance care for wellbeing with clear expectations, making it safe for people to discuss capacity before performance suffers.", "I use workload, absence, and engagement signals to spot systemic wellbeing risks rather than relying only on individual disclosure."],
+    sustainable_performance: ["I choose a small number of leadership priorities and protect time for the work that only I can do well.", "I review the cost of my current pace on health, relationships, judgement, and team culture before it becomes normalised."],
+  },
+};
+
+const RICH_FOLLOW_UP_TEMPLATES = [
+  (dimension: MepDimension) =>
+    `I turn ${dimension.description.toLowerCase()} into explicit operating agreements, routines, and observable standards rather than relying on good intentions.`,
+  (dimension: MepDimension) =>
+    `Before consequential work, I surface the trade-offs, constraints, and early warning signals that could undermine ${dimension.label.toLowerCase()}, then agree how the team will respond.`,
+  (dimension: MepDimension) =>
+    `I seek candid evidence from the people closest to the work about how ${dimension.label.toLowerCase()} is experienced, and I adjust my approach when that evidence challenges my assumptions.`,
+  (dimension: MepDimension) =>
+    `After an important outcome, I review what strengthened or weakened ${dimension.label.toLowerCase()} and convert the learning into a specific improvement in how we work.`,
+] as const;
+
+function buildRichFollowUpQuestion(
+  diagnosticCode: string,
+  dimension: MepDimension,
+  sequence: number,
+): MepQuestion {
+  const curatedText = CURATED_DEPTH_ITEMS[diagnosticCode]?.[dimension.id]?.[sequence];
+  const template = RICH_FOLLOW_UP_TEMPLATES[sequence % RICH_FOLLOW_UP_TEMPLATES.length];
+  return {
+    id: `${diagnosticCode.toLowerCase()}_${dimension.id}_depth_${sequence + 1}`,
+    text: curatedText ?? template(dimension),
+    dimensionId: dimension.id,
+  };
+}
+
+/**
+ * Curates all diagnostics to a consistent 24-question experience. When a legacy
+ * bank has fewer questions, factor-specific depth items are added in a balanced
+ * round-robin pattern. When it exceeds 24, each factor keeps at least two items
+ * before the remaining slots are distributed evenly across the factor set.
+ */
+export function toTwentyFourQuestions(
+  diagnosticCode: string,
+  dimensions: MepDimension[],
+  sourceQuestions: MepQuestion[],
+): MepQuestion[] {
+  if (sourceQuestions.length === MEP_QUESTION_TARGET) return [...sourceQuestions];
+
+  const byDimension = new Map(
+    dimensions.map((dimension) => [
+      dimension.id,
+      sourceQuestions.filter((question) => question.dimensionId === dimension.id),
+    ]),
+  );
+
+  if (sourceQuestions.length > MEP_QUESTION_TARGET) {
+    const selected: MepQuestion[] = [];
+    const nextIndex = new Map(dimensions.map((dimension) => [dimension.id, 0]));
+
+    // Preserve a meaningful base from every measured factor first.
+    for (const dimension of dimensions) {
+      const questions = byDimension.get(dimension.id) ?? [];
+      const baseline = questions.slice(0, 2);
+      selected.push(...baseline);
+      nextIndex.set(dimension.id, baseline.length);
+    }
+
+    // Then distribute the remaining slots evenly, preserving the original order.
+    let cursor = 0;
+    while (selected.length < MEP_QUESTION_TARGET && dimensions.length > 0) {
+      const dimension = dimensions[cursor % dimensions.length];
+      const questions = byDimension.get(dimension.id) ?? [];
+      const index = nextIndex.get(dimension.id) ?? 0;
+      if (questions[index]) {
+        selected.push(questions[index]);
+        nextIndex.set(dimension.id, index + 1);
+      }
+      cursor += 1;
+      if (cursor > MEP_QUESTION_TARGET * dimensions.length) break;
+    }
+    return selected.slice(0, MEP_QUESTION_TARGET);
+  }
+
+  const expanded = [...sourceQuestions];
+  const expansionCount = new Map(dimensions.map((dimension) => [dimension.id, 0]));
+  let cursor = 0;
+
+  while (expanded.length < MEP_QUESTION_TARGET && dimensions.length > 0) {
+    const dimension = dimensions[cursor % dimensions.length];
+    const sequence = expansionCount.get(dimension.id) ?? 0;
+    expanded.push(buildRichFollowUpQuestion(diagnosticCode, dimension, sequence));
+    expansionCount.set(dimension.id, sequence + 1);
+    cursor += 1;
+  }
+
+  return expanded;
+}
+
+export function getMepFactorGuidance(dimension: MepDimension): MepFactorGuidance {
+  const factor = dimension.label.toLowerCase();
+  return {
+    definition: dimension.description,
+    whyItMatters: `${dimension.label} shapes the reliability of day-to-day management. When it is deliberate and visible, the team can make better decisions without depending on the manager for every intervention.`,
+    whatGoodLooksLike: `At its best, ${factor} is clear, consistent, and reinforced through observable leadership habits—not left to individual interpretation.`,
+    nextStep: `Choose one recurring management moment this fortnight to strengthen ${factor}; make the expected behaviour explicit, ask for evidence of progress, and review what changed with the people involved.`,
+  };
+}
+
+export function buildMepFactorReportRows(
+  diagnostic: MepDiagnostic,
+  dimensionScores: Record<string, number>,
+): MepFactorReportRow[] {
+  return diagnostic.dimensions.map((dimension) => {
+    const score = Math.round(Number(dimensionScores[dimension.id] ?? 0));
+    const guidance = getMepFactorGuidance(dimension);
+    const status: MepFactorReportRow["status"] = score >= 75 ? "Strength" : score >= 60 ? "Foundation" : "Priority";
+
+    return {
+      dimensionId: dimension.id,
+      label: dimension.label,
+      score,
+      status,
+      ...guidance,
+      strength: score >= 75
+        ? `${dimension.label} is a dependable asset in your management approach. Continue using it intentionally to create confidence and momentum for the team.`
+        : `You have a usable base in ${dimension.label.toLowerCase()}. Naming and repeating the behaviours that already work will make this factor more reliable.`,
+      weakness: score < 60
+        ? `Inconsistent ${dimension.label.toLowerCase()} may be creating avoidable uncertainty, rework, or dependency on you. This is a focused development priority.`
+        : score < 75
+          ? `${dimension.label} is present but may not yet hold under pressure. Strengthen the routine so it survives competing priorities and changing conditions.`
+          : `Protect this strength by checking that it is experienced consistently across the team, not only when you are closely involved.`,
+      action: guidance.nextStep,
+    };
+  });
+}
+
 // ─── Diagnostic registry ──────────────────────────────────────────────────────
 export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
   {
@@ -599,9 +856,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "Your complete management effectiveness profile",
     description: "The flagship diagnostic — measures your effectiveness across 10 core management dimensions to give you a complete picture of your management impact.",
     icon: "🎯",
-    estimatedMinutes: 12,
+    estimatedMinutes: 10,
     dimensions: MEI_DIMENSIONS,
-    questions: MEI_QUESTIONS,
+    questions: toTwentyFourQuestions("MEI", MEI_DIMENSIONS, MEI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -610,9 +867,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How well do you let go and empower others?",
     description: "Measures your ability to delegate effectively — from trust and task selection to empowerment and full ownership transfer.",
     icon: "🤝",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: DI_DIMENSIONS,
-    questions: DI_QUESTIONS,
+    questions: toTwentyFourQuestions("DI", DI_DIMENSIONS, DI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -621,9 +878,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How effectively do you give feedback that changes behaviour?",
     description: "Assesses your feedback quality across courage, timeliness, specificity, and your ability to have difficult developmental conversations.",
     icon: "💬",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: FI_DIMENSIONS,
-    questions: FI_QUESTIONS,
+    questions: toTwentyFourQuestions("FI", FI_DIMENSIONS, FI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -632,9 +889,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How well do you develop people through coaching?",
     description: "Measures your coaching effectiveness — listening depth, curiosity, powerful questions, and your ability to build capability in others.",
     icon: "🧠",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: CI_C_DIMENSIONS,
-    questions: CI_C_QUESTIONS,
+    questions: toTwentyFourQuestions("CI_C", CI_C_DIMENSIONS, CI_C_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -645,7 +902,7 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     icon: "💪",
     estimatedMinutes: 10,
     dimensions: THI_DIMENSIONS,
-    questions: THI_QUESTIONS,
+    questions: toTwentyFourQuestions("THI", THI_DIMENSIONS, THI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -654,9 +911,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How reliably does your team deliver?",
     description: "Measures your execution effectiveness — planning, prioritisation, meeting discipline, follow-through, and delivery consistency.",
     icon: "⚡",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: EXI_DIMENSIONS,
-    questions: EXI_QUESTIONS,
+    questions: toTwentyFourQuestions("EXI", EXI_DIMENSIONS, EXI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -665,9 +922,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How effectively do you navigate conflict?",
     description: "Assesses your ability to manage conflict constructively — emotional regulation, assertiveness, negotiation, and relationship recovery.",
     icon: "🛡️",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: CNFI_DIMENSIONS,
-    questions: CNFI_QUESTIONS,
+    questions: toTwentyFourQuestions("CNFI", CNFI_DIMENSIONS, CNFI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -676,9 +933,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How effective are your 1:1 conversations?",
     description: "Measures the quality of your one-on-one meetings — preparation, listening, coaching, recognition, career development, and accountability.",
     icon: "🗣️",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: O1I_DIMENSIONS,
-    questions: O1I_QUESTIONS,
+    questions: toTwentyFourQuestions("O1I", O1I_DIMENSIONS, O1I_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -687,9 +944,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How clearly and effectively do you communicate?",
     description: "Assesses your team communication across clarity, active listening, alignment, meeting effectiveness, written communication, and transparency.",
     icon: "📡",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: TCI_DIMENSIONS,
-    questions: TCI_QUESTIONS,
+    questions: toTwentyFourQuestions("TCI", TCI_DIMENSIONS, TCI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -698,9 +955,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How strong is your ownership culture?",
     description: "Measures ownership behaviours — initiative, accountability, reliability, problem ownership, continuous improvement, and proactive behaviour.",
     icon: "🏆",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: OWI_DIMENSIONS,
-    questions: OWI_QUESTIONS,
+    questions: toTwentyFourQuestions("OWI", OWI_DIMENSIONS, OWI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -709,9 +966,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "Does your team feel safe to speak up, take risks, and be honest?",
     description: "Measures the psychological safety and trust levels in your team — voice safety, failure tolerance, inclusion, trust building, vulnerability modelling, and challenge safety.",
     icon: "🛡️",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: PST_DIMENSIONS,
-    questions: PST_QUESTIONS,
+    questions: toTwentyFourQuestions("PST", PST_DIMENSIONS, PST_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -720,9 +977,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How effectively do you set goals, give feedback, and manage performance?",
     description: "Assesses your performance management effectiveness — goal setting, ongoing feedback, addressing underperformance, recognition, development focus, and fairness.",
     icon: "📊",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: PFM_DIMENSIONS,
-    questions: PFM_QUESTIONS,
+    questions: toTwentyFourQuestions("PFM", PFM_DIMENSIONS, PFM_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -731,9 +988,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How effectively do you lead and influence beyond your team?",
     description: "Measures your ability to build relationships, align stakeholders, influence without authority, and collaborate effectively across organisational boundaries.",
     icon: "🌐",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: CFI_DIMENSIONS,
-    questions: CFI_QUESTIONS,
+    questions: toTwentyFourQuestions("CFI", CFI_DIMENSIONS, CFI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -742,9 +999,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How sustainably are you performing as a manager?",
     description: "Measures your resilience and wellbeing as a manager — stress management, recovery, boundary setting, emotional regulation, team wellbeing, and sustainable performance.",
     icon: "💚",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: MRW_DIMENSIONS,
-    questions: MRW_QUESTIONS,
+    questions: toTwentyFourQuestions("MRW", MRW_DIMENSIONS, MRW_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -753,9 +1010,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How sound and timely are your decisions as a manager?",
     description: "Assesses the quality and consistency of your decision-making — clarity of criteria, speed, bias awareness, stakeholder inclusion, risk consideration, and learning from outcomes.",
     icon: "🎯",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: DMI_DIMENSIONS,
-    questions: DMI_QUESTIONS,
+    questions: toTwentyFourQuestions("DMI", DMI_DIMENSIONS, DMI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -764,9 +1021,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How proactively do you identify, assess, and manage risk?",
     description: "Measures your risk intelligence as a manager — anticipating risks, building contingency plans, communicating risk to stakeholders, creating a risk-aware team culture, and learning from near-misses.",
     icon: "🛡️",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: RMI_DIMENSIONS,
-    questions: RMI_QUESTIONS,
+    questions: toTwentyFourQuestions("RMI", RMI_DIMENSIONS, RMI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
   {
@@ -775,9 +1032,9 @@ export const MEP_DIAGNOSTICS: MepDiagnostic[] = [
     tagline: "How effectively do you leverage technology to lead your team?",
     description: "Assesses your technology awareness and adoption as a manager — understanding relevant tools, enabling your team with technology, staying current with AI and automation trends, and making data-informed decisions.",
     icon: "💡",
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     dimensions: TAI_DIMENSIONS,
-    questions: TAI_QUESTIONS,
+    questions: toTwentyFourQuestions("TAI", TAI_DIMENSIONS, TAI_QUESTIONS),
     zones: STANDARD_ZONES,
   },
 ];

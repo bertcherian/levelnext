@@ -3,9 +3,11 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, ChevronRight, BarChart3, Clock, Lock, Loader2, History, RotateCw, TrendingUp, Calendar } from "lucide-react";
+import { CheckCircle2, ChevronRight, BarChart3, Clock, Loader2, History, TrendingUp, Calendar, Info } from "lucide-react";
 import { toast } from "sonner";
 import DiagnosticRadarChart from "@/components/DiagnosticRadarChart";
+import { exportMepReportPdf, type MepReportFactor } from "@/lib/mepReportPdf";
+import { MepReportDetails, MepReportDownloadButton } from "@/components/mep/ManagerDiagnosticReportDetails";
 
 const LOGO_URL = "/logo.png";
 
@@ -27,6 +29,7 @@ export default function ManagerDiagnostics() {
   const [latestDiagCode, setLatestDiagCode] = useState<string | null>(null);
   const [showReflection, setShowReflection] = useState(false);
   const [historyResult, setHistoryResult] = useState<any>(null);
+  const [isExporting, setIsExporting] = useState(false);
   // Store the last submission payload so we can retry on failure
   const lastSubmissionRef = useRef<{ code: string; responses: Record<string, number> } | null>(null);
 
@@ -239,6 +242,7 @@ export default function ManagerDiagnostics() {
   if (view === "taking" && diagDetail) {
     const questions = diagDetail.questions;
     const q = questions[currentQ];
+    const activeFactor = diagDetail.dimensions.find((dimension: any) => dimension.id === q.dimensionId);
     const answeredCount = Object.keys(answers).length;
     const progress = (answeredCount / questions.length) * 100;
     const allAnswered = answeredCount === questions.length;
@@ -293,6 +297,19 @@ export default function ManagerDiagnostics() {
               <p className="text-sm font-medium mb-6 leading-relaxed" style={{ color: "var(--color-ln-navy)" }}>
                 {q.text}
               </p>
+              {activeFactor && (
+                <div className="rounded-xl px-4 py-3 mb-5 flex gap-3" style={{ background: "oklch(from #0A1A2F l c h / 0.04)", border: "1px solid oklch(from #0A1A2F l c h / 0.1)" }}>
+                  <Info size={15} className="mt-0.5 flex-shrink-0" style={{ color: "var(--color-ln-navy)" }} />
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--color-ln-navy)" }}>
+                      Measuring: {activeFactor.label}
+                    </p>
+                    <p className="text-xs leading-relaxed" style={{ color: "oklch(42% 0.02 248.6)" }}>
+                      {activeFactor.description}
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-7 gap-1.5">
                 {[1, 2, 3, 4, 5, 6, 7].map((val) => {
                   const isSelected = answers[q.id] === val;
@@ -583,6 +600,60 @@ export default function ManagerDiagnostics() {
           ? displayResult.dimensionScores
           : Object.entries(displayResult.dimensionScores).map(([dim, score]: [string, any]) => ({ dimension: dim, score: typeof score === "number" ? score : Number(score) })))
       : [];
+    const factorReports: MepReportFactor[] = Array.isArray(displayResult.llmAnalysis?.factorReports)
+      ? displayResult.llmAnalysis.factorReports
+      : dimArray.map((dimension: any) => {
+          const score = dimension.score ?? 0;
+          const label = String(dimension.dimension).replace(/_/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
+          const status: MepReportFactor["status"] = score >= 75 ? "Strength" : score >= 60 ? "Foundation" : "Priority";
+          return {
+            label,
+            score,
+            status,
+            definition: `This factor captures the consistency and quality of your management practice in ${label.toLowerCase()}.`,
+            whyItMatters: `${label} enables the team to operate with greater clarity, confidence, and consistency.`,
+            strength: score >= 75 ? `${label} is a reliable asset in your current management approach.` : `You have a workable base in ${label.toLowerCase()} that can become more consistent.`,
+            weakness: score < 60 ? "This factor is a development priority because inconsistency may create avoidable uncertainty for the team." : "Protect this factor by applying it consistently when conditions are demanding.",
+            action: `Choose one upcoming management moment to make ${label.toLowerCase()} more explicit, then ask your team what changed.`,
+          };
+        });
+    const developmentActions = Array.isArray(displayResult.llmAnalysis?.learningPath) && displayResult.llmAnalysis.learningPath.length > 0
+      ? displayResult.llmAnalysis.learningPath.slice(0, 3)
+      : factorReports
+          .slice()
+          .sort((a, b) => a.score - b.score)
+          .slice(0, 3)
+          .map((factor, index) => ({
+            priority: index + 1,
+            focus: factor.label,
+            action: factor.action,
+            timeframe: `${(index + 1) * 10} days`,
+            successSignal: `Ask the team for evidence that ${factor.label.toLowerCase()} is becoming more consistent.`,
+          }));
+
+    const handleDownloadReport = async () => {
+      if (!diag) return;
+      setIsExporting(true);
+      try {
+        await exportMepReportPdf({
+          diagnosticTitle: diag.title,
+          overallScore: displayResult.overallScore,
+          zone: displayResult.zone,
+          headline: displayResult.llmAnalysis?.headline,
+          strengths: displayResult.llmAnalysis?.strengths ?? [],
+          risks: displayResult.llmAnalysis?.risks ?? [],
+          factorReports,
+          learningPath: displayResult.llmAnalysis?.learningPath ?? [],
+          coachQuestion: displayResult.llmAnalysis?.coachQuestion,
+        });
+        toast.success("Your Manager Effectiveness report has been downloaded.");
+      } catch (error) {
+        console.error("[MEP] Report export failed:", error);
+        toast.error("We could not download the report. Please try again.");
+      } finally {
+        setIsExporting(false);
+      }
+    };
 
     return (
       <div className="min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
@@ -604,6 +675,7 @@ export default function ManagerDiagnostics() {
             <p className="text-sm font-semibold" style={{ color: getScoreColor(displayResult.overallScore) }}>
               {getScoreLabel(displayResult.overallScore)}
             </p>
+            <MepReportDownloadButton onClick={handleDownloadReport} isExporting={isExporting} disabled={!diag} />
           </div>
 
           {/* Dimension scores — radar chart + bar breakdown */}
@@ -638,6 +710,8 @@ export default function ManagerDiagnostics() {
               </div>
             </div>
           )}
+
+          <MepReportDetails factorReports={factorReports} developmentActions={developmentActions} />
 
           {/* AI Insights */}
           {displayResult.llmAnalysis?.headline && (
