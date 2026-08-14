@@ -11,4 +11,4 @@
 - [x] Replace generic depth-item templates with curated, diagnostic-specific behavioural questions wherever a diagnostic needs expansion to 24 questions.
 - [x] Add direct Manager Effectiveness results-screen coverage for factor explanations, strengths, development risks, improvement actions, and the report download control.
 - [x] Add rendered component-level coverage for the Manager Effectiveness report details and download control.
-- [ ] Save the validated Manager Effectiveness release checkpoint.
+- [x] Save the validated Manager Effectiveness release checkpoint.
