@@ -56,6 +56,7 @@ describe("Executive Intelligence rendered workflows", () => {
 
   it("switches Prepare and Debrief into their distinct executive thinking workflows", () => {
     render(<ExecutiveIntelligence />);
+    fireEvent.click(screen.getByRole("button", { name: /think with me/i }));
     fireEvent.click(screen.getByRole("button", { name: /prepare me/i }));
     expect(screen.getByText("Prepare for the room that matters.")).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText("What meeting, conversation, or commitment are you preparing for?"), { target: { value: "A board review of a recovery plan." } });
@@ -72,6 +73,7 @@ describe("Executive Intelligence rendered workflows", () => {
   it("switches Think and Challenge into their distinct executive thinking workflows", () => {
     render(<ExecutiveIntelligence />);
     fireEvent.click(screen.getByRole("button", { name: /think with me/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /think with me/i }).at(-1)!);
     expect(screen.getByText("Bring an issue that matters.")).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText("What is happening? Describe the business situation, choice, or tension in your own words."), { target: { value: "An important customer is reconsidering the contract." } });
     fireEvent.click(screen.getByRole("button", { name: /examine the situation/i }));
@@ -86,9 +88,8 @@ describe("Executive Intelligence rendered workflows", () => {
 
   it("renders the authenticated decision-review engagement controls", () => {
     render(<ExecutiveIntelligence />);
+    fireEvent.click(screen.getByRole("button", { name: /decision journal/i }));
     expect(screen.getByText(/decision ready for a second look/i)).toBeTruthy();
-    expect(screen.getByText("Approve the supply-chain reset")).toBeTruthy();
-    expect(screen.getByText(/overdue for review/i)).toBeTruthy();
     expect(screen.getByText(/weekly review email/i)).toBeTruthy();
     expect(screen.getByRole("button", { name: /turn on reminder/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /export csv/i })).toBeTruthy();

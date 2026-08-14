@@ -17,3 +17,8 @@
 - [x] Explicitly verify a safe Landing and stylesheet hot reload after the synchronized restart.
 - [x] Publish the verified HMR recovery state and report the root cause distinction.
 - [x] Keep Landing’s audience helper module-private to prevent Vite Fast Refresh invalidation.
+- [x] Restore clear LevelNext navy-and-gold visual treatment and correct logo rendering in Executive Intelligence.
+- [x] Replace the overloaded Executive Intelligence single page with a focused left-sidebar cockpit.
+- [x] Add manager-entered team-member context beyond name and role in Manager Effectiveness.
+- [x] Feed manager-entered team-member context into the AI insight workflow with suitable uncertainty boundaries.
+- [x] Add regression coverage and visually validate the Executive and Manager Effectiveness improvements.

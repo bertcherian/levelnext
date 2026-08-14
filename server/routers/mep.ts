@@ -1095,6 +1095,7 @@ Provide a 2-3 sentence coaching response that acknowledges their effort, reinfor
     .input(z.object({
       name: z.string().min(1).max(255),
       role: z.string().max(255).optional(),
+      notes: z.string().trim().max(4000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -1103,8 +1104,23 @@ Provide a 2-3 sentence coaching response that acknowledges their effort, reinfor
         userId: String(ctx.user.id),
         name: input.name,
         role: input.role,
+        notes: input.notes || null,
       }).$returningId();
       return { id: result.id };
+    }),
+
+  updateTeamMemberContext: protectedProcedure
+    .input(z.object({ memberId: z.number(), notes: z.string().trim().max(4000) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [member] = await db.select().from(managerTeamMembers).where(and(
+        eq(managerTeamMembers.id, input.memberId),
+        eq(managerTeamMembers.userId, String(ctx.user.id)),
+      ));
+      if (!member) throw new TRPCError({ code: "NOT_FOUND" });
+      await db.update(managerTeamMembers).set({ notes: input.notes || null }).where(eq(managerTeamMembers.id, input.memberId));
+      return { notes: input.notes };
     }),
 
   generateTeamMemberInsight: protectedProcedure
@@ -1127,17 +1143,17 @@ Provide a 2-3 sentence coaching response that acknowledges their effort, reinfor
         model: "claude-haiku-4-5",
         messages: [{
           role: "user" as const,
-          content: `You are an expert management coach. A manager wants coaching insights for one of their team members.\n\nManager context:\n${contextLines}\n\nTeam member: ${member.name}${member.role ? ` (${member.role})` : ""}\n\nGenerate a structured coaching insight. Return ONLY valid JSON:\n{\n  "summary": "2-3 sentence overview of how to manage this person effectively",\n  "strengths": ["strength 1", "strength 2", "strength 3"],\n  "watchOuts": ["risk 1", "risk 2"],\n  "recommendedActions": ["action 1", "action 2", "action 3"]\n}\nBe specific, practical, and grounded in management best practice.`,
+          content: `You are an expert management coach. A manager wants a coaching lens for one of their team members.\n\nManager context:\n${contextLines}\n\nTeam member: ${member.name}${member.role ? ` (${member.role})` : ""}\n\nManager-entered person context (the only person-specific evidence available):\n${member.notes?.trim() || "No person-specific context has been supplied."}\n\nGenerate a structured coaching insight. Return ONLY valid JSON:\n{\n  "summary": "2-3 sentence coaching lens, explicitly framed as provisional when person context is limited",\n  "strengths": ["strength or coaching question grounded in manager context"],\n  "watchOuts": ["watch-out or question to validate, grounded in manager context"],\n  "recommendedActions": ["practical manager action 1", "practical manager action 2", "practical manager action 3"],\n  "evidenceBoundary": "one sentence explaining what this guidance is based on and what the manager should validate"\n}\nRules:\n- Do not infer personality, motivation, performance, capability, wellbeing, or behavioural patterns from a name, role, or the manager's diagnostic alone.\n- Only describe a strength or risk as a fact when the manager-entered person context explicitly supports it.\n- When context is absent or thin, phrase guidance as questions to explore or experiments to try, not conclusions about the person.\n- Treat this as a manager coaching aid, never a people assessment, diagnosis, or performance evaluation.\nBe practical, candid, and grounded in the supplied context.`,
         }],
         maxTokens: 500,
         responseFormat: { type: "json_object" },
       });
 
-      let insight: any = { summary: "", strengths: [], watchOuts: [], recommendedActions: [] };
+      let insight: any = { summary: "", strengths: [], watchOuts: [], recommendedActions: [], evidenceBoundary: "This coaching lens should be validated in conversation with the team member." };
       try {
         const raw = extractText(result);
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) insight = safeJsonParse(jsonMatch[0], { summary: "", strengths: [], watchOuts: [], recommendedActions: [] }, "mep.generateTeamMemberInsight");
+        if (jsonMatch) insight = safeJsonParse(jsonMatch[0], { summary: "", strengths: [], watchOuts: [], recommendedActions: [], evidenceBoundary: "This coaching lens should be validated in conversation with the team member." }, "mep.generateTeamMemberInsight");
       } catch (e) { /* use default */ }
 
       await db
