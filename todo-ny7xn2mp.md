@@ -49,3 +49,5 @@
 - [x] Simplify the hero to one promise, one supporting statement, and one primary action.
 - [x] Streamline below-the-fold sections while retaining the strongest product, pathway, and organisation conversion signals.
 - [x] Add landing-page regression coverage and validate the streamlined page on desktop and mobile.
+- [x] Add a concise “Who it is for” selector that maps visitor audiences to relevant LevelNext destinations.
+- [x] Add selector interaction and responsive regression coverage without reintroducing landing-page density.

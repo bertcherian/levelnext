@@ -27,4 +27,17 @@ describe("LevelNext landing page interactions", () => {
     expect(screen.queryByText("Find your stage:")).toBeNull();
     expect(screen.queryByText("Start your diagnosis")).toBeNull();
   });
+
+  it("routes visitors to a role-specific LevelNext experience through the concise audience selector", async () => {
+    const user = userEvent.setup();
+    render(createElement(Landing));
+
+    const selector = screen.getByRole("tablist", { name: "Who LevelNext is for" });
+    const managerTab = within(selector).getByRole("tab", { name: "Manager" });
+    await user.click(managerTab);
+
+    expect(managerTab.getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByText("Build the operating rhythm to lead people, performance and change.")).toBeTruthy();
+    expect(screen.getByText("Explore Manager Effectiveness").closest("a")?.getAttribute("href")).toBe("/manager-effectiveness");
+  });
 });

@@ -11,6 +11,14 @@ import "./landing.css";
 const organisationConversationUrl =
   "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=organisation";
 
+const audienceOptions = [
+  { label: "Early career", description: "Build a strong foundation for the first critical years of work.", href: "/early-career", cta: "Explore Early Career Intelligence", external: false },
+  { label: "Professional", description: "Strengthen ownership, judgment, execution and influence in your role.", href: "/pe", cta: "Explore Professional Intelligence", external: false },
+  { label: "Manager", description: "Build the operating rhythm to lead people, performance and change.", href: "/manager-effectiveness", cta: "Explore Manager Effectiveness", external: false },
+  { label: "Leader", description: "Lead through complexity with greater alignment, courage and enterprise impact.", href: "/home", cta: "Explore Leader Intelligence", external: false },
+  { label: "Organisation", description: "Create one connected capability path for critical populations and priorities.", href: organisationConversationUrl, cta: "Explore for organisations", external: true },
+] as const;
+
 function sectionLink(id: string) {
   return `#${id}`;
 }
@@ -18,7 +26,9 @@ function sectionLink(id: string) {
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeStage, setActiveStage] = useState(defaultStageIndex);
+  const [activeAudience, setActiveAudience] = useState(0);
   const stage = getCareerStage(activeStage);
+  const audience = audienceOptions[activeAudience];
 
   return (
     <main className="ln-landing" id="top">
@@ -46,6 +56,13 @@ export default function Landing() {
           <h1>Professional intelligence<br /><em>for what comes next.</em></h1>
           <p className="ln-hero__copy">LevelNext helps people build the judgment and everyday capability required for the level they are stepping into.</p>
           <div className="ln-hero__actions"><a className="ln-button" href={sectionLink("platform")}>Explore the platform <ArrowRight size={17} /></a></div>
+          <div className="ln-audience-selector">
+            <p>Who it is for</p>
+            <div className="ln-audience-selector__choices" role="tablist" aria-label="Who LevelNext is for">
+              {audienceOptions.map((option, index) => <button type="button" role="tab" key={option.label} aria-selected={activeAudience === index} className={activeAudience === index ? "is-selected" : ""} onClick={() => setActiveAudience(index)}>{option.label}</button>)}
+            </div>
+            <div className="ln-audience-selector__answer"><span>{audience.description}</span><a href={audience.href} target={audience.external ? "_blank" : undefined} rel={audience.external ? "noreferrer" : undefined}>{audience.cta} <ArrowRight size={14} /></a></div>
+          </div>
         </div>
       </section>
 

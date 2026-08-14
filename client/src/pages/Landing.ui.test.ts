@@ -28,6 +28,8 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("Leader Intelligence");
     expect(page).toContain("One system.");
     expect(page).toContain("Many next-level moments.");
+    expect(page).toContain('aria-label="Who LevelNext is for"');
+    expect(page).toContain("Who it is for");
     expect(page).not.toContain("Career Transition");
     expect(page).not.toContain("LevelNext Launch");
   });
