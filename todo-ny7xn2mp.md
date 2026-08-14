@@ -66,3 +66,4 @@
 - [x] Add behavioural Executive Intelligence tests for full context persistence and each visible action workflow.
 - [x] Add rendered interaction tests for Think and Challenge action modes, including their distinct copy and analysis mode payloads.
 - [x] Add router-level behavioural coverage that all four Executive action modes are accepted and forwarded to executive analysis.
+- [x] Restore clear spacing and chip styling for the landing-page audience selector in the current hero preview.
