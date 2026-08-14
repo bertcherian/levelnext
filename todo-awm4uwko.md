@@ -12,3 +12,8 @@
 - [x] Add a secure decision-journal export in a user-friendly download format.
 - [x] Add Executive Intelligence loading states and actionable error handling.
 - [x] Run focused tests, verify the enhanced cockpit, and publish the update.
+- [x] Diagnose the Vite hot-reload errors reported for Landing.tsx and index.css after the shared-project sync.
+- [x] Fix the landing-page or global stylesheet source issue and validate the route reloads successfully.
+- [x] Explicitly verify a safe Landing and stylesheet hot reload after the synchronized restart.
+- [x] Publish the verified HMR recovery state and report the root cause distinction.
+- [x] Keep Landing’s audience helper module-private to prevent Vite Fast Refresh invalidation.

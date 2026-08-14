@@ -5,6 +5,7 @@ import {
   defaultStageIndex,
   getCareerStage,
 } from "./landingData";
+import { getAudienceIndexFromSearch } from "./landingAudience";
 import "./landing.css";
 
 const organisationConversationUrl =
@@ -19,21 +20,6 @@ const audienceOptions = [
   { label: "Organisation", description: "Create one connected capability path for critical populations and priorities.", href: organisationConversationUrl, cta: "Explore for organisations", external: true },
 ] as const;
 
-const audienceAliases: Record<string, number> = {
-  early: 0,
-  earlycareer: 0,
-  early_career: 0,
-  professional: 1,
-  contributor: 1,
-  manager: 2,
-  leadership: 3,
-  leader: 3,
-  executive: 4,
-  organisation: 5,
-  organization: 5,
-  enterprise: 5,
-};
-
 const intelligenceCoreSteps = [
   { label: "Diagnostics", description: "Reveal the capability signals that matter now.", icon: Search },
   { label: "Judgement", description: "Interpret evidence in the context of the role and moment.", icon: Scale },
@@ -44,13 +30,6 @@ const intelligenceCoreSteps = [
   { label: "Outcomes", description: "Make the change visible in stronger choices and results.", icon: TrendingUp },
   { label: "Learning", description: "Use what works to guide the next level of growth.", icon: Brain },
 ] as const;
-
-export function getAudienceIndexFromSearch(search: string) {
-  const params = new URLSearchParams(search);
-  const rawAudience = params.get("audience") ?? params.get("for") ?? params.get("profile") ?? "";
-  const normalized = rawAudience.trim().toLowerCase().replace(/[\s-]+/g, "_");
-  return audienceAliases[normalized] ?? 0;
-}
 
 function sectionLink(id: string) {
   return `#${id}`;
