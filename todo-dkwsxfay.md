@@ -20,4 +20,4 @@
 - [x] Replace the flat grid with an icon-led intelligence-core visual and remove the unused grey block.
 - [x] Centre Outcomes and Learning in the final row and verify the responsive layout.
 - [x] Add or update regression coverage, visually validate the landing page, and save a published checkpoint.
-- [ ] Save a published checkpoint for the intelligence-core diagram redesign.
+- [x] Save a published checkpoint for the intelligence-core diagram redesign.
