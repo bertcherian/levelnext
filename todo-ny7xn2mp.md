@@ -51,3 +51,6 @@
 - [x] Add landing-page regression coverage and validate the streamlined page on desktop and mobile.
 - [x] Add a concise “Who it is for” selector that maps visitor audiences to relevant LevelNext destinations.
 - [x] Add selector interaction and responsive regression coverage without reintroducing landing-page density.
+- [x] Add smooth, reduced-motion-safe transitions when audience selector profiles change.
+- [x] Support referral URL parameters that preselect a matching audience profile on landing-page arrival.
+- [x] Add URL-normalization, animation, accessibility, and responsive regression coverage for the enhanced selector.

@@ -18,6 +18,11 @@ describe("LevelNext landing simplification", () => {
     expect(landingStyles).toContain(".ln-audience-selector__choices { flex-wrap: wrap;");
   });
 
+  it("animates selector details through transform and opacity only when motion is allowed", () => {
+    expect(landingStyles).toContain("@media (prefers-reduced-motion: no-preference) { .ln-audience-selector__answer");
+    expect(landingStyles).toContain("@keyframes ln-audience-answer-in { from { opacity: 0; transform: translateY(5px);");
+  });
+
   it("uses lighter proof systems for the Intelligence Core and organisation pathway", () => {
     expect(landingStyles).toContain(".ln-core__simple-list { max-width: 900px;");
     expect(landingStyles).toContain(".ln-enterprise__benefits { display: grid; grid-template-columns: repeat(3, 1fr);");

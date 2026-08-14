@@ -245,6 +245,9 @@
 .ln-audience-selector__answer span { color: rgba(255,255,255,.62); font-size: 12px; line-height: 1.45; }
 .ln-audience-selector__answer a { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; color: var(--ln-gold-light); font-size: 12px; font-weight: 800; white-space: nowrap; }
 .ln-audience-selector__answer a:hover { color: white; }
+@media (prefers-reduced-motion: no-preference) { .ln-audience-selector__answer { animation: ln-audience-answer-in 180ms cubic-bezier(.23,1,.32,1) both; }.ln-audience-selector__choices button { transform-origin: 50% 50%; }.ln-audience-selector__choices button.is-selected { animation: ln-audience-choice-in 160ms cubic-bezier(.23,1,.32,1) both; } }
+@keyframes ln-audience-answer-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ln-audience-choice-in { from { transform: scale(.96); } to { transform: scale(1); } }
 .ln-problem--simple { padding-block: clamp(78px, 10vw, 124px); }
 .ln-problem--simple .ln-problem__statements { padding-bottom: 30px; }
 .ln-problem--simple .ln-problem__statements p { color: #42505b !important; }

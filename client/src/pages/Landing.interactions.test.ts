@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import Landing from "./Landing";
+import Landing, { getAudienceIndexFromSearch } from "./Landing";
 
 afterEach(() => cleanup());
 
@@ -39,5 +39,18 @@ describe("LevelNext landing page interactions", () => {
     expect(managerTab.getAttribute("aria-selected")).toBe("true");
     expect(screen.getByText("Build the operating rhythm to lead people, performance and change.")).toBeTruthy();
     expect(screen.getByText("Explore Manager Effectiveness").closest("a")?.getAttribute("href")).toBe("/manager-effectiveness");
+  });
+
+  it("preselects an audience from referral parameters and falls back safely for unknown values", () => {
+    expect(getAudienceIndexFromSearch("?audience=early-career")).toBe(0);
+    expect(getAudienceIndexFromSearch("?for=manager")).toBe(2);
+    expect(getAudienceIndexFromSearch("?profile=enterprise")).toBe(4);
+    expect(getAudienceIndexFromSearch("?audience=unknown")).toBe(0);
+
+    window.history.replaceState({}, "", "/?audience=leader");
+    render(createElement(Landing));
+    expect(screen.getByRole("tab", { name: "Leader" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByText("Explore Leader Intelligence").closest("a")?.getAttribute("href")).toBe("/home");
+    window.history.replaceState({}, "", "/");
   });
 });

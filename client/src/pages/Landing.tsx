@@ -19,6 +19,28 @@ const audienceOptions = [
   { label: "Organisation", description: "Create one connected capability path for critical populations and priorities.", href: organisationConversationUrl, cta: "Explore for organisations", external: true },
 ] as const;
 
+const audienceAliases: Record<string, number> = {
+  early: 0,
+  earlycareer: 0,
+  early_career: 0,
+  professional: 1,
+  contributor: 1,
+  manager: 2,
+  leadership: 3,
+  leader: 3,
+  executive: 3,
+  organisation: 4,
+  organization: 4,
+  enterprise: 4,
+};
+
+export function getAudienceIndexFromSearch(search: string) {
+  const params = new URLSearchParams(search);
+  const rawAudience = params.get("audience") ?? params.get("for") ?? params.get("profile") ?? "";
+  const normalized = rawAudience.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  return audienceAliases[normalized] ?? 0;
+}
+
 function sectionLink(id: string) {
   return `#${id}`;
 }
@@ -26,7 +48,7 @@ function sectionLink(id: string) {
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeStage, setActiveStage] = useState(defaultStageIndex);
-  const [activeAudience, setActiveAudience] = useState(0);
+  const [activeAudience, setActiveAudience] = useState(() => typeof window === "undefined" ? 0 : getAudienceIndexFromSearch(window.location.search));
   const stage = getCareerStage(activeStage);
   const audience = audienceOptions[activeAudience];
 
@@ -61,7 +83,7 @@ export default function Landing() {
             <div className="ln-audience-selector__choices" role="tablist" aria-label="Who LevelNext is for">
               {audienceOptions.map((option, index) => <button type="button" role="tab" key={option.label} aria-selected={activeAudience === index} className={activeAudience === index ? "is-selected" : ""} onClick={() => setActiveAudience(index)}>{option.label}</button>)}
             </div>
-            <div className="ln-audience-selector__answer"><span>{audience.description}</span><a href={audience.href} target={audience.external ? "_blank" : undefined} rel={audience.external ? "noreferrer" : undefined}>{audience.cta} <ArrowRight size={14} /></a></div>
+            <div className="ln-audience-selector__answer" key={audience.label} aria-live="polite"><span>{audience.description}</span><a href={audience.href} target={audience.external ? "_blank" : undefined} rel={audience.external ? "noreferrer" : undefined}>{audience.cta} <ArrowRight size={14} /></a></div>
           </div>
         </div>
       </section>
