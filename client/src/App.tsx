@@ -112,6 +112,7 @@ const EarlyCareerDiagnostic = lazy(() => import("./pages/earlyCareer/EarlyCareer
 const EarlyCareerCoach = lazy(() => import("./pages/earlyCareer/EarlyCareerCoach"));
 const EarlyCareerPractice = lazy(() => import("./pages/earlyCareer/EarlyCareerPractice"));
 const EarlyCareerHR = lazy(() => import("./pages/earlyCareer/EarlyCareerHR"));
+const ExecutiveIntelligence = lazy(() => import("./pages/ExecutiveIntelligence"));
 
 // Launch Intelligence is a self-contained experience. Loading its journeys on
 // demand keeps the platform's initial bundle focused on the page a learner chose.
@@ -297,6 +298,9 @@ function Router() {
       <Route path="/early-career/hr">{() => <EarlyCareerLayout><EarlyCareerHR /></EarlyCareerLayout>}</Route>
       <Route path="/early-career/growth">{() => <EarlyCareerLayout><EarlyCareerGrowth /></EarlyCareerLayout>}</Route>
       <Route path="/early-career/manager">{() => <EarlyCareerLayout><ManagerCompanion /></EarlyCareerLayout>}</Route>
+
+      {/* Executive Intelligence — a private enterprise decision and mandate cockpit */}
+      <Route path="/executive" component={ExecutiveIntelligence} />
 
       <Route path="/manager-effectiveness" component={ManagerEffectivenessLanding} />
       <Route path="/progress" component={Progress} />

@@ -2820,6 +2820,57 @@ export const icSelfLeadershipMirrors = mysqlTable("ic_self_leadership_mirrors", 
 export type IcSelfLeadershipMirror = typeof icSelfLeadershipMirrors.$inferSelect;
 export type InsertIcSelfLeadershipMirror = typeof icSelfLeadershipMirrors.$inferInsert;
 
+// ─── Executive Intelligence: Private Executive Context & Decisions ────────────
+// These records are user-owned. They never become sponsor, HR, or coach content
+// without a separate explicit permission model.
+export const executiveProfiles = mysqlTable("executive_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id).unique(),
+  roleTitle: varchar("roleTitle", { length: 180 }),
+  roleType: varchar("roleType", { length: 80 }),
+  businessName: varchar("businessName", { length: 180 }),
+  businessDescription: text("businessDescription"),
+  geography: varchar("geography", { length: 160 }),
+  scopeDescription: text("scopeDescription"),
+  mandateStatement: text("mandateStatement"),
+  transitionMode: varchar("transitionMode", { length: 40 }).default("executive_performance").notNull(),
+  runAttention: int("runAttention").default(0).notNull(),
+  transformAttention: int("transformAttention").default(0).notNull(),
+  buildAttention: int("buildAttention").default(0).notNull(),
+  stakeholderSummary: text("stakeholderSummary"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ExecutiveProfile = typeof executiveProfiles.$inferSelect;
+
+export const executiveMandates = mysqlTable("executive_mandates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id).unique(),
+  priorities: json("priorities").$type<import("../shared/modules/executiveIntelligence").ExecutivePriority[]>().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ExecutiveMandate = typeof executiveMandates.$inferSelect;
+
+export const executiveDecisionJournal = mysqlTable("executive_decision_journal", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  decision: text("decision").notNull(),
+  context: text("context").notNull(),
+  assumptions: json("assumptions").$type<string[]>(),
+  options: json("options").$type<string[]>(),
+  tradeOffs: text("tradeOffs"),
+  stakeholders: text("stakeholders"),
+  expectedOutcome: text("expectedOutcome"),
+  confidence: int("confidence"),
+  reviewDate: timestamp("reviewDate"),
+  analysis: json("analysis").$type<import("../shared/modules/executiveIntelligence").ExecutiveSituationAnalysis>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [index("executive_decisions_user_created_idx").on(table.userId, table.createdAt)]);
+export type ExecutiveDecisionJournalEntry = typeof executiveDecisionJournal.$inferSelect;
+
 // ─── Intelligence Core: User-controlled Guided Mirror reminders ───────────────
 export const icGuidedMirrorReminderSettings = mysqlTable("ic_guided_mirror_reminder_settings", {
   id: int("id").autoincrement().primaryKey(),

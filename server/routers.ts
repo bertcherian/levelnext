@@ -63,6 +63,7 @@ import { launchWeeklyRecapRouter } from "./routers/launchWeeklyRecap";
 import { peiRouter } from "./routers/pei";
 import { intelligenceCoreRouter } from "./routers/intelligenceCore";
 import { earlyCareerRouter } from "./routers/earlyCareer";
+import { executiveIntelligenceRouter } from "./routers/executiveIntelligence";
 
 export const appRouter = router({
   system: systemRouter,
@@ -135,6 +136,7 @@ export const appRouter = router({
   pei: peiRouter,
   intelligenceCore: intelligenceCoreRouter,
   earlyCareer: earlyCareerRouter,
+  executiveIntelligence: executiveIntelligenceRouter,
 });
 
 export type AppRouter = typeof appRouter;

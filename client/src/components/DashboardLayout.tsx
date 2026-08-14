@@ -20,7 +20,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Star, BookOpen, TrendingUp, BarChart2, Building2, Settings, Zap, MessageSquare, ShieldCheck, Globe, Wand2 } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Star, BookOpen, TrendingUp, BarChart2, Building2, Settings, Zap, MessageSquare, ShieldCheck, Globe, Wand2, Landmark } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -39,6 +39,7 @@ const menuItems = [
   { icon: BookOpen, label: "Diagnostics", path: "/diagnostics" },
   { icon: Zap, label: "AI Practice Coach", path: "/practice" },
   { icon: MessageSquare, label: "Guide", path: "/guide" },
+  { icon: Landmark, label: "Executive Intelligence", path: "/executive" },
   { icon: TrendingUp, label: "Insights", path: "/insights" },
   { icon: BarChart2, label: "Progress", path: "/progress" },
   { icon: Building2, label: "Organisation", path: "/organisation" },

@@ -54,3 +54,15 @@
 - [x] Add smooth, reduced-motion-safe transitions when audience selector profiles change.
 - [x] Support referral URL parameters that preselect a matching audience profile on landing-page arrival.
 - [x] Add URL-normalization, animation, accessibility, and responsive regression coverage for the enhanced selector.
+- [x] Extract the supplied Executive Intelligence framework into a reusable LevelNext product and Intelligence Core specification.
+- [x] Build the Executive Context Map, living Executive Mandate, and Run/Transform/Build attention model.
+- [x] Implement the six executive intelligences, executive-character safeguards, and context-aware executive insight workflow.
+- [x] Add an Executive Intelligence product experience with progressive context gathering, mandate priorities, and decision-support views.
+- [x] Add schema migration, privacy safeguards, regression coverage, and responsive validation for Executive Intelligence.
+- [x] Add a discoverable Executive Intelligence entry to the authenticated LevelNext navigation.
+- [x] Add rendered Executive Intelligence tests for full context persistence and differentiated Prepare and Debrief interactions.
+- [x] Complete UI persistence for all Executive Context Map fields, including stakeholder summary and contextual scope details.
+- [x] Implement differentiated Prepare me and Debrief with me workflows, or remove unsupported visible actions.
+- [x] Add behavioural Executive Intelligence tests for full context persistence and each visible action workflow.
+- [x] Add rendered interaction tests for Think and Challenge action modes, including their distinct copy and analysis mode payloads.
+- [x] Add router-level behavioural coverage that all four Executive action modes are accepted and forwarded to executive analysis.
