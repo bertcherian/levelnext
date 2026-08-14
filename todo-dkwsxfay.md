@@ -15,4 +15,4 @@
 - [x] Inspect the landing-page platform selector, platform data, and Executive routes to identify why the Executive platform is absent.
 - [x] Restore the Executive platform on the landing page with a working discovery or entry path.
 - [x] Add regression coverage for the Executive platform landing entry and validate the live landing page.
-- [ ] Save a published checkpoint for the Executive platform landing-page fix.
+- [x] Save a published checkpoint for the Executive platform landing-page fix.
