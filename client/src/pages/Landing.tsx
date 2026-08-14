@@ -16,6 +16,7 @@ const audienceOptions = [
   { label: "Professional", description: "Strengthen ownership, judgment, execution and influence in your role.", href: "/pe", cta: "Explore Professional Intelligence", external: false },
   { label: "Manager", description: "Build the operating rhythm to lead people, performance and change.", href: "/manager-effectiveness", cta: "Explore Manager Effectiveness", external: false },
   { label: "Leader", description: "Lead through complexity with greater alignment, courage and enterprise impact.", href: "/home", cta: "Explore Leader Intelligence", external: false },
+  { label: "Executive", description: "Lead strategic choices with a private intelligence cockpit for mandate, decisions, and enterprise impact.", href: "/executive", cta: "Explore Executive Intelligence", external: false },
   { label: "Organisation", description: "Create one connected capability path for critical populations and priorities.", href: organisationConversationUrl, cta: "Explore for organisations", external: true },
 ] as const;
 
@@ -28,10 +29,10 @@ const audienceAliases: Record<string, number> = {
   manager: 2,
   leadership: 3,
   leader: 3,
-  executive: 3,
-  organisation: 4,
-  organization: 4,
-  enterprise: 4,
+  executive: 4,
+  organisation: 5,
+  organization: 5,
+  enterprise: 5,
 };
 
 export function getAudienceIndexFromSearch(search: string) {
@@ -141,7 +142,7 @@ export default function Landing() {
         <div className="ln-section-frame ln-final-cta__frame"><p className="ln-eyebrow ln-eyebrow--gold"><span /> Your next level</p><h2>Your people already have a next level.<br /><em>Help them get ready for it.</em></h2><div className="ln-final-cta__actions"><a className="ln-button" href={organisationConversationUrl} target="_blank" rel="noreferrer">Start a conversation <ArrowRight size={17} /></a></div></div>
       </section>
 
-      <footer className="ln-footer"><div className="ln-section-frame ln-footer__frame"><div className="ln-footer__brand"><img src="/logo.png" alt="LevelNext" /><p>Professional Intelligence for what’s next.</p></div><div className="ln-footer__links"><div><p>Platform</p><a href="/early-career">Early Career Intelligence</a><a href="/pe">Professional Intelligence</a><a href="/manager-effectiveness">Manager Effectiveness</a><a href="/home">Leader Intelligence</a></div><div><p>Organisations</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Enterprise</a><a href={sectionLink("how-it-works")}>How it works</a><a href={sectionLink("intelligence-core")}>Intelligence Core</a></div></div><p className="ln-footer__meta">LevelNext — A Meta Results Platform <a href="#top">Back to top <ChevronDown size={13} /></a></p></div></footer>
+      <footer className="ln-footer"><div className="ln-section-frame ln-footer__frame"><div className="ln-footer__brand"><img src="/logo.png" alt="LevelNext" /><p>Professional Intelligence for what’s next.</p></div><div className="ln-footer__links"><div><p>Platform</p><a href="/early-career">Early Career Intelligence</a><a href="/pe">Professional Intelligence</a><a href="/manager-effectiveness">Manager Effectiveness</a><a href="/home">Leader Intelligence</a><a href="/executive">Executive Intelligence</a></div><div><p>Organisations</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Enterprise</a><a href={sectionLink("how-it-works")}>How it works</a><a href={sectionLink("intelligence-core")}>Intelligence Core</a></div></div><p className="ln-footer__meta">LevelNext — A Meta Results Platform <a href="#top">Back to top <ChevronDown size={13} /></a></p></div></footer>
     </main>
   );
 }
@@ -150,5 +151,6 @@ function StageVisual({ stage }: { stage: string }) {
   if (stage === "early-career") return <div className="ln-early-career-visual" aria-label="Preview of LevelNext Early Career Intelligence"><span>Orient</span><span>Deliver</span><span>Connect</span><span>Grow</span><i /><b>First 1,000 Days</b><p>Real-work intelligence for the earliest stage of a career.</p></div>;
   if (stage === "manager") return <div className="ln-manager-visual" aria-label="The management transition from tasks to people and outcomes"><div className="ln-manager-visual__before"><b>Me</b><span>Tasks</span></div><div className="ln-manager-visual__arrow">→</div><div className="ln-manager-visual__after"><b>Manager</b><span>People</span><span>Outcomes</span></div></div>;
   if (stage === "leader") return <div className="ln-leader-visual" aria-label="An expanding organisational network"><span className="ln-leader-visual__centre">Leader</span><i className="ln-leader-visual__node ln-leader-visual__node--1">Team</i><i className="ln-leader-visual__node ln-leader-visual__node--2">Functions</i><i className="ln-leader-visual__node ln-leader-visual__node--3">Stakeholders</i><i className="ln-leader-visual__node ln-leader-visual__node--4">Enterprise</i></div>;
+  if (stage === "executive") return <div className="ln-leader-visual" aria-label="Executive Intelligence decision and mandate cockpit"><span className="ln-leader-visual__centre">Executive</span><i className="ln-leader-visual__node ln-leader-visual__node--1">Mandate</i><i className="ln-leader-visual__node ln-leader-visual__node--2">Decisions</i><i className="ln-leader-visual__node ln-leader-visual__node--3">Stakeholders</i><i className="ln-leader-visual__node ln-leader-visual__node--4">Impact</i></div>;
   return <div className="ln-professional-visual" aria-label="Professional effectiveness focus areas"><span>Communication</span><span>Ownership</span><span>Execution</span><span>Collaboration</span><span>Judgement</span><span>Influence</span><span>Adaptability</span><i /></div>;
 }

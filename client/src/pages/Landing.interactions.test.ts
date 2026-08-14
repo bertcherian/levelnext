@@ -41,10 +41,23 @@ describe("LevelNext landing page interactions", () => {
     expect(screen.getByText("Explore Manager Effectiveness").closest("a")?.getAttribute("href")).toBe("/manager-effectiveness");
   });
 
+  it("shows Executive Intelligence and routes its audience selector CTA to the Executive platform", async () => {
+    const user = userEvent.setup();
+    render(createElement(Landing));
+
+    const selector = screen.getByRole("tablist", { name: "Who LevelNext is for" });
+    const executiveTab = within(selector).getByRole("tab", { name: "Executive" });
+    await user.click(executiveTab);
+
+    expect(executiveTab.getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByText("Explore Executive Intelligence").closest("a")?.getAttribute("href")).toBe("/executive");
+  });
+
   it("preselects an audience from referral parameters and falls back safely for unknown values", () => {
     expect(getAudienceIndexFromSearch("?audience=early-career")).toBe(0);
     expect(getAudienceIndexFromSearch("?for=manager")).toBe(2);
-    expect(getAudienceIndexFromSearch("?profile=enterprise")).toBe(4);
+    expect(getAudienceIndexFromSearch("?profile=enterprise")).toBe(5);
+    expect(getAudienceIndexFromSearch("?audience=executive")).toBe(4);
     expect(getAudienceIndexFromSearch("?audience=unknown")).toBe(0);
 
     window.history.replaceState({}, "", "/?audience=leader");

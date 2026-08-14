@@ -79,6 +79,22 @@ export const careerStages: CareerStage[] = [
     href: "/home",
     focus: ["Strategic alignment", "Decision quality", "Enterprise execution"],
   },
+  {
+    key: "executive",
+    number: "05",
+    name: "Executive Intelligence",
+    shortName: "Executive",
+    journeyLabel: "Lead the mandate with clarity.",
+    tagline: "Turn high-stakes choices into visible enterprise progress.",
+    audience: "Executives & Senior Enterprise Leaders",
+    description:
+      "Give senior leaders a private intelligence cockpit to clarify mandate, review consequential decisions, and mobilise the relationships that move enterprise priorities forward.",
+    buyerOutcome: "Improve the quality, cadence, and visibility of executive decision-making.",
+    pipelineMicrocopy: "Strengthen mandate clarity, decision quality, and enterprise influence.",
+    ctaLabel: "Explore Executive Intelligence",
+    href: "/executive",
+    focus: ["Mandate clarity", "Decision quality", "Enterprise impact"],
+  },
 ];
 
 export const defaultStageIndex = 1;

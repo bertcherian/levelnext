@@ -26,6 +26,7 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain("Early Career Intelligence");
     expect(page).toContain("Manager Effectiveness");
     expect(page).toContain("Leader Intelligence");
+    expect(page).toContain("Executive Intelligence");
     expect(page).toContain("One system.");
     expect(page).toContain("Many next-level moments.");
     expect(page).toContain('aria-label="Who LevelNext is for"');
@@ -41,6 +42,7 @@ describe("LevelNext public landing page", () => {
     expect(getCareerStage(0).name).toBe("Early Career Intelligence");
     expect(getCareerStage(2).name).toBe("Manager Effectiveness");
     expect(getCareerStage(3).name).toBe("Leader Intelligence");
+    expect(getCareerStage(4).name).toBe("Executive Intelligence");
     expect(getCareerStage(99).name).toBe("Professional Intelligence");
     expect(page).toContain('aria-selected="true"');
     expect(page).toContain("Make execution more reliable across the work that matters.");
@@ -61,6 +63,7 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain('href="/pe"');
     expect(page).toContain('href="/manager-effectiveness"');
     expect(page).toContain('href="/home"');
+    expect(page).toContain('href="/executive"');
     expect(page).not.toContain("Accelerate role readiness with common work standards and clear development signals.");
     expect(page).not.toContain("Build coaching, delegation and accountability into the manager’s operating rhythm.");
     expect(page).not.toContain('href="/diagnostics/lii"');
@@ -75,5 +78,13 @@ describe("LevelNext public landing page", () => {
     expect(appRoutes).toContain('<Route path="/home" component={Home} />');
     expect(page).toContain('href="/home"');
     expect(page).not.toContain('href="/diagnostics/lii"');
+  });
+
+  it("shows Executive Intelligence as a direct platform pathway to its registered route", () => {
+    const page = renderToStaticMarkup(createElement(Landing));
+
+    expect(appRoutes).toContain('<Route path="/executive" component={ExecutiveIntelligence} />');
+    expect(page).toContain("Executive Intelligence");
+    expect(page).toContain('href="/executive"');
   });
 });
