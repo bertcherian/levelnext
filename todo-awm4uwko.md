@@ -28,3 +28,13 @@
 - [x] Package the implementation workflow as a validated reusable Manus skill.
 - [x] Test, visually validate, and publish the new Executive and Manager Effectiveness enhancements.
 - [x] Add a visible Team Intelligence loading state while team-member data is resolving.
+- [x] Define the V1 Sales Intelligence entities, evidence categories, confidence rules, and seller privacy boundary.
+- [x] Add owner-scoped commercial situation, claim, commitment, and outcome persistence with secure tRPC procedures.
+- [x] Build the navy-and-gold My Revenue Desk and Help Me Think workflow for a live commercial situation.
+- [x] Generate an evidence-bound truth map, primary constraint, and recommended next move from seller-provided context.
+- [x] Add commitment capture and post-action outcome reflection to form the first closed learning loop.
+- [x] Add focused tests, validate the Sales Intelligence UI, and publish the first vertical slice.
+- [x] Add behavioral tests for Sales Intelligence analysis, commitment creation, and outcome reflection.
+- [ ] Validate the authenticated Sales Intelligence flow end to end in the browser.
+- [ ] Publish the validated Sales Intelligence foundation checkpoint.
+- [x] Complete controlled authenticated-procedure validation because preview-browser sign-in is unavailable.

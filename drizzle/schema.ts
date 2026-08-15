@@ -3107,3 +3107,67 @@ export const earlyCareerNudgeDeliveries = mysqlTable("early_career_nudge_deliver
 });
 export type EarlyCareerNudgeDelivery = typeof earlyCareerNudgeDeliveries.$inferSelect;
 export type InsertEarlyCareerNudgeDelivery = typeof earlyCareerNudgeDeliveries.$inferInsert;
+
+// ─── Sales Intelligence: System of Judgment ───────────────────────────────────
+// Seller-owned commercial context is intentionally separated from the CRM record.
+// It captures the quality of thinking, evidence, commitments, and learning around
+// real commercial work; it does not replace the opportunity system of record.
+export type SalesEvidenceCategory = "fact" | "evidence" | "interpretation" | "assumption" | "hope";
+export type SalesConfidence = "low" | "moderate" | "high";
+export type SalesJudgment = {
+  whatIsHappening: string;
+  whatWeKnow: string[];
+  whatWeAreAssuming: string[];
+  whatMattersMost: string;
+  primaryConstraint: string;
+  constraintEvidence: string[];
+  confidence: SalesConfidence;
+  missingInformation: string[];
+  recommendedNextMove: string;
+  alternativeMove: string;
+  whatWouldChangeJudgment: string;
+  practicePrompt: string;
+};
+
+export const salesSituations = mysqlTable("sales_situations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  accountName: varchar("accountName", { length: 255 }),
+  rawSituation: text("rawSituation").notNull(),
+  desiredOutcome: text("desiredOutcome"),
+  status: mysqlEnum("status", ["active", "committed", "reflected", "archived"]).default("active").notNull(),
+  judgment: json("judgment").$type<SalesJudgment>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [index("sales_situations_user_updated_idx").on(table.userId, table.updatedAt)]);
+export type SalesSituation = typeof salesSituations.$inferSelect;
+export type InsertSalesSituation = typeof salesSituations.$inferInsert;
+
+export const salesClaims = mysqlTable("sales_claims", {
+  id: int("id").autoincrement().primaryKey(),
+  situationId: int("situationId").notNull().references(() => salesSituations.id),
+  userId: int("userId").notNull().references(() => users.id),
+  category: mysqlEnum("category", ["fact", "evidence", "interpretation", "assumption", "hope"]).notNull(),
+  statement: text("statement").notNull(),
+  confidence: mysqlEnum("confidence", ["low", "moderate", "high"]).default("low").notNull(),
+  source: varchar("source", { length: 255 }).default("seller narrative").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [index("sales_claims_situation_idx").on(table.situationId), index("sales_claims_user_idx").on(table.userId)]);
+export type SalesClaim = typeof salesClaims.$inferSelect;
+
+export const salesCommitments = mysqlTable("sales_commitments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  situationId: int("situationId").notNull().references(() => salesSituations.id),
+  action: text("action").notNull(),
+  stakeholder: varchar("stakeholder", { length: 255 }),
+  intendedBehaviour: text("intendedBehaviour"),
+  dueDate: timestamp("dueDate"),
+  status: mysqlEnum("status", ["pending", "completed", "not_done"]).default("pending").notNull(),
+  reflection: text("reflection"),
+  outcome: text("outcome"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [index("sales_commitments_user_status_idx").on(table.userId, table.status), index("sales_commitments_situation_idx").on(table.situationId)]);
+export type SalesCommitment = typeof salesCommitments.$inferSelect;
