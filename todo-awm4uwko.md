@@ -48,3 +48,15 @@
 - [x] Add focused Sales practice service and UI contract tests; TypeScript validation passes, while authenticated preview verification remains unavailable because preview sign-in is disconnected.
 - [x] Add visible retryable error states for Sales practice creation, message send, session load, and debrief completion.
 - [x] Add action-specific retries for failed buyer turns and failed practice debriefs, with regression coverage.
+- [x] Inventory every Career Transition route, page section, backend procedure, and persistence dependency.
+- [x] Audit Career Transition user journeys, access controls, error states, and data ownership section by section.
+- [x] Run targeted Career Transition tests and route-level validation, documenting coverage gaps.
+- [x] Deliver a clear audit report with verified functions, findings, risks, and recommended fixes.
+- [x] Complete a verifiable inventory of all Career Transition routes, child sections, routers, and persistence dependencies.
+- [x] Directly audit remaining Career Transition sections and supporting routers, including Growth Profile and untouched career submodules.
+- [x] Clearly distinguish source-level findings from authenticated mutation flows that could not be exercised in the final audit report.
+- [x] Complete a verifiable inventory of all Career Transition routes, child sections, routers, and persistence dependencies.
+- [x] Directly audit remaining Career Transition sections and supporting routers, including Growth Profile and untouched career submodules.
+- [x] Clearly distinguish source-level findings from authenticated mutation flows that could not be exercised in the final audit report.
+- [x] Directly inspect the remaining Career Landing, Career Investment, Career Simulator, and related supporting submodules and document their audit status.
+- [x] Directly read Career Investment and Career Simulator UI modules and their supporting simulator procedures, then update the audit with concrete findings.
