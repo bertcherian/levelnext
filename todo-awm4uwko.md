@@ -38,3 +38,7 @@
 - [x] Attempt authenticated Sales Intelligence browser validation; preview sign-in was unavailable, so the flow is covered by controlled authenticated procedure tests.
 - [x] Publish the validated Sales Intelligence foundation checkpoint.
 - [x] Complete controlled authenticated-procedure validation because preview-browser sign-in is unavailable.
+- [x] Diagnose the Executive Intelligence sidebar Guide link routing to Manager Effectiveness.
+- [x] Correct the Executive Guide destination and add regression coverage.
+- [x] Validate the Executive Guide navigation fix with focused regression coverage and preview inspection.
+- [ ] Publish the Executive Guide navigation fix.

@@ -100,6 +100,13 @@ describe("Executive Intelligence rendered workflows", () => {
     expect(screen.getByRole("button", { name: /install app/i })).toBeTruthy();
   });
 
+  it("opens Executive-specific guidance from the sidebar instead of routing to the generic Guide", () => {
+    render(<ExecutiveIntelligence />);
+    fireEvent.click(screen.getByRole("button", { name: /executive guide/i }));
+    expect(screen.getByText("Use the cockpit as a disciplined thinking practice.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /open think with me/i })).toBeTruthy();
+  });
+
   it("records a reviewed decision outcome without replacing the original decision", () => {
     render(<ExecutiveIntelligence />);
     fireEvent.click(screen.getByRole("button", { name: /decision journal/i }));
