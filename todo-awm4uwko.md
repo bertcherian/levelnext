@@ -69,3 +69,12 @@
 - [x] Validate, publish, and report the Career integrity repair.
 - [x] Complete controlled owner-scoped Career workflow validation because My Browser access was not approved.
 - [x] Directly inspect Opportunity Radar and Career test fixtures, then verify the applied ownership, scoring, and parsing repairs by readback and focused tests.
+- [x] Trace the first-time organisation setup gate and the Career Skip for now action.
+- [x] Repair the Career onboarding bypass so a first-time individual can reach their personal workspace.
+- [x] Add regression coverage and validate the bypass through focused tests; unauthenticated preview access prevented a signed-in visual click-through.
+- [x] Confirm the onboarding destination helper resolves after the HMR race, run the focused bypass tests, and validate the repaired first-time route.
+- [x] Add an Onboarding interaction test for Skip for now navigation and verify the first-time Career bypass does not return to organisation-gated Home.
+- [x] Read back and run the Onboarding interaction suite to verify default and Career sub-route individual bypass navigation.
+- [x] Confirm the Onboarding DOM-test setup and rerun the interaction suite successfully.
+- [x] Restore the React default import required by the Onboarding component under the project’s JSX test transform.
+- [x] Read back the React import repair and rerun the rendered Onboarding interaction tests successfully.

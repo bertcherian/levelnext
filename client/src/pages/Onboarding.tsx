@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { getIndividualOnboardingDestination } from "./onboardingDestination";
 import {
   Building2, Users, ArrowRight, CheckCircle2, ChevronLeft,
   AlertCircle, Check, Sparkles, Brain, Target, Zap, TrendingUp, BookOpen, X,
@@ -344,6 +345,7 @@ export default function Onboarding() {
 
   // Auto-navigate after success animation — respect returnTo param from magic link flow
   const returnToParam = new URLSearchParams(window.location.search).get("returnTo");
+  const individualDestination = getIndividualOnboardingDestination(returnToParam);
   useEffect(() => {
     if (mode === "success") {
       const destination = returnToParam ?? "/home";
@@ -523,11 +525,11 @@ export default function Onboarding() {
                 {/* Skip org setup — for individual / Career Transition users */}
                 <div className="mt-6 text-center">
                   <button
-                    onClick={() => navigate(returnToParam ?? "/home")}
+                    onClick={() => navigate(individualDestination)}
                     className="text-sm transition-opacity hover:opacity-70"
                     style={{ color: "var(--color-ln-muted)" }}
                   >
-                    I'm using LevelNext individually — skip for now →
+                    I'm using LevelNext individually — go to Career Transition →
                   </button>
                 </div>
 
