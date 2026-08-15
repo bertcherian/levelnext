@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -206,11 +206,16 @@ ${ciContext}`;
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      await db
-        .delete(interviewPrepSessions)
-        .where(
-          eq(interviewPrepSessions.id, input.id)
-        );
+      const [session] = await db.select({ id: interviewPrepSessions.id }).from(interviewPrepSessions).where(and(
+        eq(interviewPrepSessions.id, input.id),
+        eq(interviewPrepSessions.userId, ctx.user.id),
+      )).limit(1);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Interview preparation session not found" });
+
+      await db.delete(interviewPrepSessions).where(and(
+        eq(interviewPrepSessions.id, input.id),
+        eq(interviewPrepSessions.userId, ctx.user.id),
+      ));
 
       return { success: true };
     }),

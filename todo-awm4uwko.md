@@ -60,3 +60,12 @@
 - [x] Clearly distinguish source-level findings from authenticated mutation flows that could not be exercised in the final audit report.
 - [x] Directly inspect the remaining Career Landing, Career Investment, Career Simulator, and related supporting submodules and document their audit status.
 - [x] Directly read Career Investment and Career Simulator UI modules and their supporting simulator procedures, then update the audit with concrete findings.
+- [x] Confirm the affected Interview, Negotiation, Relationship Intelligence, and Opportunity Radar mutation contracts and test fixtures.
+- [x] Enforce owner-scoped deletion for Interview Prep and Negotiation records and return correct not-found behavior.
+- [x] Restrict new relationship scoring updates to the inserted contact and make negotiation AI parsing resilient.
+- [x] Add cross-user destructive-action tests for Career Interview and Negotiation sessions plus relationship-scoring regression coverage.
+- [x] Read back and execute the Career ownership regression suite covering non-owner deletes, relationship scoring, and negotiation parsing safeguards.
+- [x] Attempt authenticated Career acceptance validation; My Browser access was not approved, so protected workflow coverage was verified through 11 controlled tests instead.
+- [ ] Validate, publish, and report the Career integrity repair.
+- [x] Complete controlled owner-scoped Career workflow validation because My Browser access was not approved.
+- [x] Directly inspect Opportunity Radar and Career test fixtures, then verify the applied ownership, scoring, and parsing repairs by readback and focused tests.

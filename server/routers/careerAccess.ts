@@ -486,15 +486,18 @@ Generate 15-20 organisations across all required categories. Be specific and rea
         userId: ctx.user.id,
         ...input,
         linkedOpportunityIds: input.linkedOpportunityIds ?? [],
-      });
+      }).$returningId();
       // Score the relationship with AI
       const scoreResult = await scoreRelationshipWithAI(input);
       if (scoreResult) {
         await db.update(relationshipContacts)
           .set(scoreResult)
-          .where(eq(relationshipContacts.userId, ctx.user.id));
+          .where(and(
+            eq(relationshipContacts.id, inserted.id),
+            eq(relationshipContacts.userId, ctx.user.id),
+          ));
       }
-      return { success: true };
+      return { success: true, id: inserted.id };
     }),
 
   updateRelationship: protectedProcedure

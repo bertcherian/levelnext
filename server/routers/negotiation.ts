@@ -1,9 +1,9 @@
 import { TRPCError } from "@trpc/server";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, safeJsonParse } from "../_core/llm";
 import {
   negotiationSessions,
   careerProfiles,
@@ -186,7 +186,10 @@ ${profileContext}`;
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not parse LLM response" });
       }
 
-      const strategyData = JSON.parse(jsonMatch[0]);
+      const strategyData = safeJsonParse<Record<string, unknown> | null>(jsonMatch[0], null, "negotiation.generateStrategy");
+      if (!strategyData || Object.keys(strategyData).length === 0) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not parse negotiation strategy" });
+      }
 
       const [inserted] = await db
         .insert(negotiationSessions)
@@ -222,9 +225,16 @@ ${profileContext}`;
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      await db
-        .delete(negotiationSessions)
-        .where(eq(negotiationSessions.id, input.id));
+      const [session] = await db.select({ id: negotiationSessions.id }).from(negotiationSessions).where(and(
+        eq(negotiationSessions.id, input.id),
+        eq(negotiationSessions.userId, ctx.user.id),
+      )).limit(1);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Negotiation session not found" });
+
+      await db.delete(negotiationSessions).where(and(
+        eq(negotiationSessions.id, input.id),
+        eq(negotiationSessions.userId, ctx.user.id),
+      ));
 
       return { success: true };
     }),
