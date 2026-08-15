@@ -66,6 +66,6 @@
 - [x] Add cross-user destructive-action tests for Career Interview and Negotiation sessions plus relationship-scoring regression coverage.
 - [x] Read back and execute the Career ownership regression suite covering non-owner deletes, relationship scoring, and negotiation parsing safeguards.
 - [x] Attempt authenticated Career acceptance validation; My Browser access was not approved, so protected workflow coverage was verified through 11 controlled tests instead.
-- [ ] Validate, publish, and report the Career integrity repair.
+- [x] Validate, publish, and report the Career integrity repair.
 - [x] Complete controlled owner-scoped Career workflow validation because My Browser access was not approved.
 - [x] Directly inspect Opportunity Radar and Career test fixtures, then verify the applied ownership, scoring, and parsing repairs by readback and focused tests.
