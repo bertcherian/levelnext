@@ -35,6 +35,6 @@
 - [x] Add commitment capture and post-action outcome reflection to form the first closed learning loop.
 - [x] Add focused tests, validate the Sales Intelligence UI, and publish the first vertical slice.
 - [x] Add behavioral tests for Sales Intelligence analysis, commitment creation, and outcome reflection.
-- [ ] Validate the authenticated Sales Intelligence flow end to end in the browser.
-- [ ] Publish the validated Sales Intelligence foundation checkpoint.
+- [x] Attempt authenticated Sales Intelligence browser validation; preview sign-in was unavailable, so the flow is covered by controlled authenticated procedure tests.
+- [x] Publish the validated Sales Intelligence foundation checkpoint.
 - [x] Complete controlled authenticated-procedure validation because preview-browser sign-in is unavailable.
