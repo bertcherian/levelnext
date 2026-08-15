@@ -17,6 +17,15 @@ describe("Sales Intelligence router", () => {
     expect(router).toContain('status: "reflected"');
   });
 
+  it("keeps every buyer-practice session private to its seller and persists a role-correct learning loop", () => {
+    expect(router).toContain("startPractice: protectedProcedure");
+    expect(router).toContain("sendPracticeMessage: protectedProcedure");
+    expect(router).toContain("finishPractice: protectedProcedure");
+    expect(router).toContain("eq(salesPracticeSessions.userId, ctx.user.id)");
+    expect(router).toContain('role: "buyer"');
+    expect(router).toContain('role: "seller"');
+  });
+
   it("requires evidence-bound analysis and falls back safely when AI analysis is unavailable", () => {
     expect(analysis).toContain("Never invent customer facts");
     expect(analysis).toContain("Separate observation/evidence from interpretation and assumption");

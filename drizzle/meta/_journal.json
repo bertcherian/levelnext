@@ -463,6 +463,13 @@
       "when": 1786761885254,
       "tag": "0065_left_roland_deschain",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "5",
+      "when": 1786775038775,
+      "tag": "0066_black_grey_gargoyle",
+      "breakpoints": true
     }
   ]
 }

@@ -19,6 +19,25 @@ export type CommercialJudgment = {
   practicePrompt: string;
 };
 
+export type SalesPracticeMessage = { role: "seller" | "buyer"; content: string; timestamp: number };
+
+export type SalesPracticeScenario = {
+  buyerRole: string;
+  buyerStance: string;
+  openingLine: string;
+  challenge: string;
+  successSignal: string;
+  evidenceBoundary: string;
+};
+
+export type SalesPracticeDebrief = {
+  strengths: string[];
+  tryNext: string[];
+  evidenceQuestion: string;
+  keyTakeaway: string;
+  evidenceBoundary: string;
+};
+
 export const COMMERCIAL_CONSTRAINTS = [
   "Weak business problem", "Insufficient urgency", "No compelling event", "Poor economic-buyer access",
   "Weak champion", "Single-threaded relationship", "Poor differentiation", "Unquantified value",

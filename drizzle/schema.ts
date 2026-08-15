@@ -3171,3 +3171,23 @@ export const salesCommitments = mysqlTable("sales_commitments", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => [index("sales_commitments_user_status_idx").on(table.userId, table.status), index("sales_commitments_situation_idx").on(table.situationId)]);
 export type SalesCommitment = typeof salesCommitments.$inferSelect;
+
+export type SalesPracticeMessage = { role: "seller" | "buyer"; content: string; timestamp: number };
+export type SalesPracticeScenario = { buyerRole: string; buyerStance: string; openingLine: string; challenge: string; successSignal: string; evidenceBoundary: string };
+export type SalesPracticeDebrief = { strengths: string[]; tryNext: string[]; evidenceQuestion: string; keyTakeaway: string; evidenceBoundary: string };
+
+// A seller-owned rehearsal is a private learning artefact, not a call recording or performance record.
+export const salesPracticeSessions = mysqlTable("sales_practice_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  situationId: int("situationId").notNull().references(() => salesSituations.id),
+  buyerRole: varchar("buyerRole", { length: 255 }).notNull(),
+  objective: text("objective"),
+  scenario: json("scenario").$type<SalesPracticeScenario>(),
+  messages: json("messages").$type<SalesPracticeMessage[]>(),
+  debrief: json("debrief").$type<SalesPracticeDebrief>(),
+  status: mysqlEnum("status", ["active", "completed"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [index("sales_practice_sessions_user_updated_idx").on(table.userId, table.updatedAt), index("sales_practice_sessions_situation_idx").on(table.situationId)]);
+export type SalesPracticeSession = typeof salesPracticeSessions.$inferSelect;

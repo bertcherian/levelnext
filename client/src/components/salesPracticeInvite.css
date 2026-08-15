@@ -1,0 +1,5 @@
+.sales-practice-invite { display:flex; align-items:center; justify-content:space-between; gap:22px; margin-top:18px; padding:22px 24px; border:1px solid var(--si-line); border-left:3px solid var(--si-gold); background:#f2ece0; }
+.sales-practice-invite h2 { margin:0; color:var(--si-navy); font-family:Georgia,serif; font-size:26px; font-weight:500; letter-spacing:-.035em; }
+.sales-practice-invite span { display:block; max-width:620px; margin-top:9px; color:var(--si-muted); font-size:12px; line-height:1.5; }
+.sales-practice-invite button { display:inline-flex; flex:0 0 auto; align-items:center; gap:7px; min-height:39px; padding:0 13px; border:1px solid var(--si-navy); background:var(--si-navy); color:#fff; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+@media (max-width:660px) { .sales-practice-invite { align-items:flex-start; flex-direction:column; }.sales-practice-invite button { width:100%; justify-content:center; } }

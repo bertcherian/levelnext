@@ -1,9 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, lte } from "drizzle-orm";
 import { z } from "zod";
-import { salesClaims, salesCommitments, salesSituations } from "../../drizzle/schema";
+import { salesClaims, salesCommitments, salesPracticeSessions, salesSituations } from "../../drizzle/schema";
 import type { SalesJudgment } from "../../drizzle/schema";
 import { analyzeCommercialSituation } from "../salesIntelligence";
+import { continueSalesPractice, createSalesPracticeScenario, debriefSalesPractice } from "../salesPractice";
+import type { SalesPracticeMessage, SalesPracticeScenario } from "../../shared/modules/salesIntelligence";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -64,5 +66,43 @@ export const salesIntelligenceRouter = router({
     await db.update(salesCommitments).set({ status: input.status, outcome: input.outcome, reflection: input.reflection }).where(and(eq(salesCommitments.id, input.commitmentId), eq(salesCommitments.userId, ctx.user.id)));
     await db.update(salesSituations).set({ status: "reflected" }).where(and(eq(salesSituations.id, commitment.situationId), eq(salesSituations.userId, ctx.user.id)));
     return { success: true };
+  }),
+
+  startPractice: protectedProcedure.input(z.object({ situationId: z.number().int().positive(), buyerRole: z.string().trim().min(3).max(255), objective: z.string().trim().max(1400).optional() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [situation] = await db.select().from(salesSituations).where(and(eq(salesSituations.id, input.situationId), eq(salesSituations.userId, ctx.user.id))).limit(1);
+    if (!situation) throw new TRPCError({ code: "NOT_FOUND" });
+    const scenario = await createSalesPracticeScenario({ buyerRole: input.buyerRole, objective: input.objective, rawSituation: situation.rawSituation, desiredOutcome: situation.desiredOutcome ?? undefined, judgment: situation.judgment as SalesJudgment | null });
+    const messages: SalesPracticeMessage[] = [{ role: "buyer", content: scenario.openingLine, timestamp: Date.now() }];
+    const [saved] = await db.insert(salesPracticeSessions).values({ userId: ctx.user.id, situationId: input.situationId, buyerRole: input.buyerRole, objective: input.objective, scenario, messages, status: "active" }).$returningId();
+    return { id: Number(saved.id), scenario, messages };
+  }),
+
+  getPractice: protectedProcedure.input(z.object({ id: z.number().int().positive() })).query(async ({ ctx, input }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [session] = await db.select().from(salesPracticeSessions).where(and(eq(salesPracticeSessions.id, input.id), eq(salesPracticeSessions.userId, ctx.user.id))).limit(1);
+    if (!session) throw new TRPCError({ code: "NOT_FOUND" });
+    return session;
+  }),
+
+  sendPracticeMessage: protectedProcedure.input(z.object({ practiceId: z.number().int().positive(), message: z.string().trim().min(1).max(2000) })).mutation(async ({ ctx, input }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [session] = await db.select().from(salesPracticeSessions).where(and(eq(salesPracticeSessions.id, input.practiceId), eq(salesPracticeSessions.userId, ctx.user.id))).limit(1);
+    if (!session) throw new TRPCError({ code: "NOT_FOUND" });
+    if (session.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "This rehearsal is already complete." });
+    const existing = (session.messages ?? []) as SalesPracticeMessage[];
+    const reply = await continueSalesPractice({ scenario: session.scenario as SalesPracticeScenario, objective: session.objective, messages: existing, sellerMessage: input.message });
+    const messages: SalesPracticeMessage[] = [...existing, { role: "seller", content: input.message, timestamp: Date.now() }, { role: "buyer", content: reply, timestamp: Date.now() }];
+    await db.update(salesPracticeSessions).set({ messages }).where(and(eq(salesPracticeSessions.id, input.practiceId), eq(salesPracticeSessions.userId, ctx.user.id)));
+    return { reply, messages };
+  }),
+
+  finishPractice: protectedProcedure.input(z.object({ practiceId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [session] = await db.select().from(salesPracticeSessions).where(and(eq(salesPracticeSessions.id, input.practiceId), eq(salesPracticeSessions.userId, ctx.user.id))).limit(1);
+    if (!session) throw new TRPCError({ code: "NOT_FOUND" });
+    const debrief = await debriefSalesPractice({ scenario: session.scenario as SalesPracticeScenario, objective: session.objective, messages: (session.messages ?? []) as SalesPracticeMessage[] });
+    await db.update(salesPracticeSessions).set({ status: "completed", debrief }).where(and(eq(salesPracticeSessions.id, input.practiceId), eq(salesPracticeSessions.userId, ctx.user.id)));
+    return { debrief };
   }),
 });

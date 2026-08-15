@@ -42,3 +42,9 @@
 - [x] Correct the Executive Guide destination and add regression coverage.
 - [x] Validate the Executive Guide navigation fix with focused regression coverage and preview inspection.
 - [x] Publish the Executive Guide navigation fix.
+- [x] Define the Sales Intelligence buyer-conversation rehearsal journey and evidence boundary.
+- [x] Add owner-scoped practice scenario and debrief persistence with role-correct buyer simulation procedures.
+- [x] Build the Sales Intelligence practice and debrief experience from a live commercial situation.
+- [x] Add focused Sales practice service and UI contract tests; TypeScript validation passes, while authenticated preview verification remains unavailable because preview sign-in is disconnected.
+- [x] Add visible retryable error states for Sales practice creation, message send, session load, and debrief completion.
+- [x] Add action-specific retries for failed buyer turns and failed practice debriefs, with regression coverage.
