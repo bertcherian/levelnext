@@ -41,4 +41,4 @@
 - [x] Diagnose the Executive Intelligence sidebar Guide link routing to Manager Effectiveness.
 - [x] Correct the Executive Guide destination and add regression coverage.
 - [x] Validate the Executive Guide navigation fix with focused regression coverage and preview inspection.
-- [ ] Publish the Executive Guide navigation fix.
+- [x] Publish the Executive Guide navigation fix.
