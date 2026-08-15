@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const contextMutate = vi.fn();
 const thinkMutate = vi.fn();
+const reviewOutcomeMutate = vi.fn();
 
 vi.mock("@/_core/hooks/useAuth", () => ({
   useAuth: () => ({ user: { name: "Bert Cherian" }, loading: false, isAuthenticated: true }),
@@ -22,6 +23,7 @@ vi.mock("@/lib/trpc", () => ({
       saveMandate: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       thinkWithMe: { useMutation: () => ({ mutate: thinkMutate, isPending: false, data: null }) },
       createDecision: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      saveDecisionOutcome: { useMutation: () => ({ mutate: reviewOutcomeMutate, isPending: false, error: null }) },
     },
   },
 }));
@@ -33,6 +35,8 @@ describe("Executive Intelligence rendered workflows", () => {
   beforeEach(() => {
     contextMutate.mockReset();
     thinkMutate.mockReset();
+    reviewOutcomeMutate.mockReset();
+    window.localStorage.removeItem("levelnext-executive-sidebar-walkthrough-v1");
     HTMLElement.prototype.scrollIntoView = vi.fn();
   });
 
@@ -94,5 +98,15 @@ describe("Executive Intelligence rendered workflows", () => {
     expect(screen.getByRole("button", { name: /turn on reminder/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /export csv/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /install app/i })).toBeTruthy();
+  });
+
+  it("records a reviewed decision outcome without replacing the original decision", () => {
+    render(<ExecutiveIntelligence />);
+    fireEvent.click(screen.getByRole("button", { name: /decision journal/i }));
+    expect(screen.getByText("What did this decision teach you?")).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText("Describe the observable result, including what differed from your expectation."), { target: { value: "The supply chain reset improved delivery reliability." } });
+    fireEvent.change(screen.getByPlaceholderText("Name the assumption, signal, trade-off, or stakeholder dynamic you would carry forward."), { target: { value: "Escalating supplier signals early prevented a wider disruption." } });
+    fireEvent.click(screen.getByRole("button", { name: /save outcome review/i }));
+    expect(reviewOutcomeMutate).toHaveBeenCalledWith(expect.objectContaining({ decisionId: 81, reviewStatus: "working" }));
   });
 });

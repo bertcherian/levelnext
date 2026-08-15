@@ -7,6 +7,13 @@ import { toast } from "sonner";
 
 type View = "list" | "add" | "member";
 
+const CONTEXT_TEMPLATES = [
+  { label: "Current priorities", text: "Current goals / priorities:\nObserved progress or work pattern:\nSupport or clarity needed from me:" },
+  { label: "Strengths to build", text: "Observed strengths to build on:\nWhere these strengths create value:\nOpportunity to stretch or apply them:" },
+  { label: "Change or concern", text: "Recent change or concern I have observed:\nRelevant facts or examples:\nQuestion I want to explore in a 1:1:" },
+  { label: "1:1 preparation", text: "Topic for our next 1:1:\nWhat I want to understand:\nA useful next step or experiment:" },
+] as const;
+
 export default function TeamIntelligence() {
   const [view, setView] = useState<View>("list");
   const [activeMember, setActiveMember] = useState<any>(null);
@@ -18,7 +25,7 @@ export default function TeamIntelligence() {
   const [generatingInsight, setGeneratingInsight] = useState(false);
   const [insight, setInsight] = useState<any>(null);
 
-  const { data: members, refetch } = trpc.mep.listTeamMembers.useQuery();
+  const { data: members, refetch, isLoading } = trpc.mep.listTeamMembers.useQuery();
 
   const addMember = trpc.mep.addTeamMember.useMutation({
     onSuccess: () => {
@@ -59,6 +66,12 @@ export default function TeamIntelligence() {
     await generateInsight.mutateAsync({ memberId: member.id });
   };
 
+  const insertTemplate = (template: string, target: "new" | "member") => {
+    const update = (current: string) => current.trim() ? `${current.trim()}\n\n${template}` : template;
+    if (target === "new") setNotes(update);
+    else setMemberNotes(update);
+  };
+
   const updateMemberContext = trpc.mep.updateTeamMemberContext.useMutation({
     onSuccess: (data) => {
       setActiveMember((member: any) => ({ ...member, notes: data.notes }));
@@ -67,6 +80,10 @@ export default function TeamIntelligence() {
     },
     onError: () => toast.error("Could not save team-member context."),
   });
+
+  if (isLoading) {
+    return <div className="min-h-screen grid place-items-center" style={{ background: "var(--color-ln-ivory)" }}><div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-ln-navy)" }}><Loader2 size={16} className="animate-spin" /> Loading Team Intelligence…</div></div>;
+  }
 
   // ── List view ─────────────────────────────────────────────────────────────
   if (view === "list") {
@@ -200,6 +217,7 @@ export default function TeamIntelligence() {
             <div>
               <label className="text-xs font-semibold uppercase tracking-widest block mb-1.5" style={{ color: "oklch(45% 0.02 248.6)" }}>Manager context (recommended)</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Relevant facts: current goals, observed work patterns, strengths to build on, recent changes, concerns, or what you want to explore in a 1:1." className="w-full min-h-28 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm" />
+              <div className="flex flex-wrap gap-2 mt-2" aria-label="Manager context templates">{CONTEXT_TEMPLATES.map((template) => <button type="button" key={template.label} onClick={() => insertTemplate(template.text, "new")} className="rounded-full border px-2.5 py-1 text-[10px] font-semibold" style={{ borderColor: "oklch(from var(--color-ln-gold) l c h / 0.45)", color: "var(--color-ln-navy)", background: "oklch(from var(--color-ln-gold) l c h / 0.10)" }}>+ {template.label}</button>)}</div>
               <p className="text-[11px] mt-1.5" style={{ color: "oklch(52% 0.02 248.6)" }}>Use facts you can stand behind. This context gives the AI something concrete to work from; it is not a performance evaluation.</p>
             </div>
             <div className="flex gap-2">
@@ -247,6 +265,7 @@ export default function TeamIntelligence() {
           <section className="rounded-2xl p-5 space-y-3" style={{ background: "white", border: "1px solid oklch(90% 0.01 248.6)" }}>
             <div className="flex items-center gap-2"><NotebookPen size={15} style={{ color: "var(--color-ln-gold)" }} /><div><h2 className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Manager context</h2><p className="text-[11px]" style={{ color: "oklch(52% 0.02 248.6)" }}>Facts and observations to ground the coaching lens.</p></div></div>
             <textarea value={memberNotes} onChange={(event) => setMemberNotes(event.target.value)} placeholder="Add or update observations, current goals, recent changes, strengths to build on, or questions for your next 1:1." className="w-full min-h-28 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm" />
+            <div className="flex flex-wrap gap-2" aria-label="Manager context templates">{CONTEXT_TEMPLATES.map((template) => <button type="button" key={template.label} onClick={() => insertTemplate(template.text, "member")} className="rounded-full border px-2.5 py-1 text-[10px] font-semibold" style={{ borderColor: "oklch(from var(--color-ln-gold) l c h / 0.45)", color: "var(--color-ln-navy)", background: "oklch(from var(--color-ln-gold) l c h / 0.10)" }}>+ {template.label}</button>)}</div>
             <div className="flex items-center justify-between gap-3"><span className="text-[11px]" style={{ color: "oklch(52% 0.02 248.6)" }}>The AI will treat this as context to validate, not proof about the person.</span><Button size="sm" className="text-xs" style={{ background: "var(--color-ln-navy)", color: "white" }} disabled={updateMemberContext.isPending} onClick={() => updateMemberContext.mutate({ memberId: activeMember.id, notes: memberNotes.trim() })}>{updateMemberContext.isPending ? <Loader2 size={12} className="mr-1.5 animate-spin" /> : <Save size={12} className="mr-1.5" />}Save context</Button></div>
           </section>
 

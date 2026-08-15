@@ -48,6 +48,14 @@ const decisionReviewReminderSchema = z.object({
   }, "Choose a valid time zone."),
 });
 
+const decisionOutcomeSchema = z.object({
+  decisionId: z.number().int().positive(),
+  reviewStatus: z.enum(["working", "mixed", "not_working"]),
+  actualOutcome: z.string().trim().min(8).max(4000),
+  learning: z.string().trim().min(8).max(4000),
+  nextTimeChange: z.string().trim().max(4000).optional(),
+});
+
 export const executiveIntelligenceRouter = router({
   getWorkspace: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
@@ -57,7 +65,7 @@ export const executiveIntelligenceRouter = router({
       db.select().from(executiveProfiles).where(eq(executiveProfiles.userId, ctx.user.id)).limit(1),
       db.select().from(executiveMandates).where(eq(executiveMandates.userId, ctx.user.id)).limit(1),
       db.select().from(executiveDecisionJournal).where(eq(executiveDecisionJournal.userId, ctx.user.id)).orderBy(desc(executiveDecisionJournal.createdAt)).limit(5),
-      db.select().from(executiveDecisionJournal).where(and(eq(executiveDecisionJournal.userId, ctx.user.id), isNotNull(executiveDecisionJournal.reviewDate), lte(executiveDecisionJournal.reviewDate, reviewCutoff))).orderBy(executiveDecisionJournal.reviewDate).limit(3),
+      db.select().from(executiveDecisionJournal).where(and(eq(executiveDecisionJournal.userId, ctx.user.id), eq(executiveDecisionJournal.reviewStatus, "pending"), isNotNull(executiveDecisionJournal.reviewDate), lte(executiveDecisionJournal.reviewDate, reviewCutoff))).orderBy(executiveDecisionJournal.reviewDate).limit(3),
     ]);
     return { profile: profile ?? null, mandate: mandate ?? null, decisions, reviewableDecisions };
   }),
@@ -139,5 +147,23 @@ export const executiveIntelligenceRouter = router({
     const analysis = await analyseExecutiveSituation({ situation: input.context, desiredOutcome: input.expectedOutcome, stakes: input.tradeOffs });
     const [saved] = await db.insert(executiveDecisionJournal).values({ ...input, userId: ctx.user.id, analysis });
     return { id: Number(saved.insertId), analysis };
+  }),
+
+  saveDecisionOutcome: protectedProcedure.input(decisionOutcomeSchema).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [decision] = await db.select({ id: executiveDecisionJournal.id }).from(executiveDecisionJournal).where(and(
+      eq(executiveDecisionJournal.id, input.decisionId),
+      eq(executiveDecisionJournal.userId, ctx.user.id),
+    )).limit(1);
+    if (!decision) throw new TRPCError({ code: "NOT_FOUND", message: "Decision record not found." });
+    await db.update(executiveDecisionJournal).set({
+      reviewStatus: input.reviewStatus,
+      actualOutcome: input.actualOutcome,
+      learning: input.learning,
+      nextTimeChange: input.nextTimeChange || null,
+      reviewedAt: new Date(),
+    }).where(and(eq(executiveDecisionJournal.id, input.decisionId), eq(executiveDecisionJournal.userId, ctx.user.id)));
+    return { success: true };
   }),
 });

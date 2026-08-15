@@ -5,6 +5,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { trpc } from "@/lib/trpc";
 import { downloadDecisionJournal } from "@/lib/decisionJournalExport";
+import { ExecutiveDecisionReviewPanel, ExecutiveSidebarWalkthrough } from "@/components/ExecutiveExperienceEnhancements";
 import {
   AlertCircle, ArrowRight, BellRing, BrainCircuit, Check, ChevronRight, Compass,
   Download, LayoutDashboard, Loader2, Menu, NotebookPen, RefreshCw, Scale,
@@ -132,6 +133,8 @@ export default function ExecutiveIntelligence() {
     <section className="exec-main">
       <header className="exec-topbar"><button className="exec-mobile-toggle" aria-label="Open executive navigation" onClick={() => setMobileNavOpen((open) => !open)}>{mobileNavOpen ? <X size={20} /> : <Menu size={20} />}</button><div><p>LevelNext Executive Intelligence</p><span>{transitionMode === "first_180_days" ? "First 180 days" : "Executive performance"}</span></div><button className="exec-topbar-link" type="button" onClick={() => selectSection("context")}>Update context</button></header>
       <div className="exec-content">
+        <ExecutiveSidebarWalkthrough onSelect={(next) => selectSection(next)} />
+        {section === "decisions" && <ExecutiveDecisionReviewPanel decisions={reviewableDecisions} />}
         {workspaceError && <section className="exec-alert exec-alert--error" role="alert"><AlertCircle size={17} /><span><b>We could not load your executive workspace.</b> {workspaceError.message}</span><button onClick={() => refetch()} disabled={isFetching}><RefreshCw size={14} className={isFetching ? "animate-spin" : ""} /> Try again</button></section>}
         {feedback && <section className="exec-alert" role="status"><Check size={17} /><span>{feedback}</span><button onClick={() => setFeedback(null)}>Dismiss</button></section>}
 

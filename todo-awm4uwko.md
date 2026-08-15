@@ -22,3 +22,9 @@
 - [x] Add manager-entered team-member context beyond name and role in Manager Effectiveness.
 - [x] Feed manager-entered team-member context into the AI insight workflow with suitable uncertainty boundaries.
 - [x] Add regression coverage and visually validate the Executive and Manager Effectiveness improvements.
+- [x] Create reusable manager team-member context templates for rapid, evidence-based note entry.
+- [x] Add a decision-review outcome form and private persistence to Executive Intelligence.
+- [x] Add a responsive first-use walkthrough for the Executive Intelligence sidebar cockpit.
+- [x] Package the implementation workflow as a validated reusable Manus skill.
+- [x] Test, visually validate, and publish the new Executive and Manager Effectiveness enhancements.
+- [x] Add a visible Team Intelligence loading state while team-member data is resolving.
