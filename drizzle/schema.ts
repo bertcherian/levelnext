@@ -3061,6 +3061,10 @@ export const earlyCareerPracticeSessions = mysqlTable("early_career_practice_ses
   tenantId: int("tenantId").references(() => tenants.id),
   scenarioId: varchar("scenarioId", { length: 100 }).notNull(),
   scenarioTitle: varchar("scenarioTitle", { length: 255 }).notNull(),
+  // Custom scenario inputs remain part of the employee's private practice record.
+  customContext: text("customContext"),
+  customCounterpartRole: varchar("customCounterpartRole", { length: 120 }),
+  customObjective: text("customObjective"),
   difficulty: mysqlEnum("difficulty", ["guided", "realistic", "stretch"]).notNull().default("realistic"),
   messages: json("messages").$type<Array<{ role: "user" | "counterpart"; content: string; timestamp: string }>>().notNull(),
   status: mysqlEnum("status", ["active", "completed"]).notNull().default("active"),

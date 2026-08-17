@@ -75,6 +75,39 @@ function extractLlmText(result: Awaited<ReturnType<typeof invokeLLM>>): string {
   return typeof content === "string" ? content : "";
 }
 
+const customPracticeDefaults = {
+  id: "custom",
+  title: "Your workplace situation",
+  counterpartRole: "colleague",
+  objective: "Clarify your position and agree a useful next step.",
+};
+
+function resolvePracticeScenario(session: typeof earlyCareerPracticeSessions.$inferSelect) {
+  if (session.scenarioId === customPracticeDefaults.id) {
+    if (!session.customContext) return null;
+    return {
+      ...customPracticeDefaults,
+      title: session.scenarioTitle || customPracticeDefaults.title,
+      situation: session.customContext,
+      counterpartRole: session.customCounterpartRole || customPracticeDefaults.counterpartRole,
+      objective: session.customObjective || customPracticeDefaults.objective,
+    };
+  }
+  return EARLY_CAREER_PRACTICE_SCENARIOS.find((item) => item.id === session.scenarioId) ?? null;
+}
+
+export const earlyCareerPracticeStartInput = z.object({
+  scenarioId: z.string().min(3).max(100).optional(),
+  customContext: z.string().trim().min(20).max(2000).optional(),
+  customCounterpartRole: z.string().trim().min(2).max(120).optional(),
+  customObjective: z.string().trim().min(3).max(600).optional(),
+  difficulty: z.enum(["guided", "realistic", "stretch"]).default("realistic"),
+}).superRefine((input, issue) => {
+  if (Boolean(input.scenarioId) === Boolean(input.customContext)) {
+    issue.addIssue({ code: "custom", message: "Choose a library scenario or describe your own workplace situation." });
+  }
+});
+
 async function buildEarlyCareerPrivateContext(userId: number) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
@@ -254,10 +287,17 @@ export const earlyCareerRouter = router({
 
   getPracticeScenarios: protectedProcedure.query(() => EARLY_CAREER_PRACTICE_SCENARIOS),
 
-  startPracticeSession: protectedProcedure.input(z.object({ scenarioId: z.string().min(3).max(100), difficulty: z.enum(["guided", "realistic", "stretch"]).default("realistic") })).mutation(async ({ ctx, input }) => {
+  startPracticeSession: protectedProcedure.input(earlyCareerPracticeStartInput).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-    const scenario = EARLY_CAREER_PRACTICE_SCENARIOS.find((item) => item.id === input.scenarioId);
+    const scenario = input.customContext
+      ? {
+          ...customPracticeDefaults,
+          situation: input.customContext,
+          counterpartRole: input.customCounterpartRole || customPracticeDefaults.counterpartRole,
+          objective: input.customObjective || customPracticeDefaults.objective,
+        }
+      : EARLY_CAREER_PRACTICE_SCENARIOS.find((item) => item.id === input.scenarioId);
     if (!scenario) throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown practice scenario." });
     const tenantId = await getTenantIdForUser(ctx.user.id);
     let opening = `I’m the ${scenario.counterpartRole}. How would you like to begin?`;
@@ -266,7 +306,17 @@ export const earlyCareerRouter = router({
       opening = extractLlmText(result).trim() || opening;
     } catch { /* practice fallback */ }
     const messages = [{ role: "counterpart" as const, content: opening, timestamp: new Date().toISOString() }];
-    const [created] = await db.insert(earlyCareerPracticeSessions).values({ userId: ctx.user.id, tenantId, scenarioId: scenario.id, scenarioTitle: scenario.title, difficulty: input.difficulty, messages }).$returningId();
+    const [created] = await db.insert(earlyCareerPracticeSessions).values({
+      userId: ctx.user.id,
+      tenantId,
+      scenarioId: scenario.id,
+      scenarioTitle: scenario.title,
+      customContext: input.customContext ?? null,
+      customCounterpartRole: input.customContext ? scenario.counterpartRole : null,
+      customObjective: input.customContext ? scenario.objective : null,
+      difficulty: input.difficulty,
+      messages,
+    }).$returningId();
     return { sessionId: created.id, opening };
   }),
 
@@ -275,7 +325,7 @@ export const earlyCareerRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
     const [session] = await db.select().from(earlyCareerPracticeSessions).where(and(eq(earlyCareerPracticeSessions.id, input.sessionId), eq(earlyCareerPracticeSessions.userId, ctx.user.id))).limit(1);
     if (!session || session.status !== "active") throw new TRPCError({ code: "NOT_FOUND", message: "Active practice session not found." });
-    const scenario = EARLY_CAREER_PRACTICE_SCENARIOS.find((item) => item.id === session.scenarioId);
+    const scenario = resolvePracticeScenario(session);
     if (!scenario) throw new TRPCError({ code: "BAD_REQUEST", message: "Practice scenario unavailable." });
     const messages = [...(session.messages ?? []), { role: "user" as const, content: input.message, timestamp: new Date().toISOString() }];
     let reply = "I understand. What specifically are you proposing as the next step?";

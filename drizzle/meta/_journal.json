@@ -470,6 +470,13 @@
       "when": 1786775038775,
       "tag": "0066_black_grey_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "5",
+      "when": 1786957611448,
+      "tag": "0067_nervous_mandarin",
+      "breakpoints": true
     }
   ]
 }

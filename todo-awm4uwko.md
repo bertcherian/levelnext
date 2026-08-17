@@ -90,3 +90,10 @@
 - [x] Add and validate one combined rendered regression that models authentication becoming transiently unresolved during Growth navigation, then resolving so the Growth Profile proceeds past its navigation-time query guard.
 - [x] Audit the current LevelNext frontend, backend, data, authentication, AI, storage, and platform dependencies without changing product code.
 - [x] Produce a phased Vercel and Render migration assessment with risks, API boundaries, and a recommended low-risk pilot only.
+- [x] Inspect the Early Career Guide and Practice flows and reproduce the currently reported Growth Profile render failure.
+- [x] Add practical example prompts to the Early Career Guide to help users begin a productive coaching conversation.
+- [x] Add a user-led Early Career practice-session input flow with clear context capture and a safe start action.
+- [x] Repair the live Growth Profile rendering path and add regression coverage for the observed failure.
+- [x] Complete focused client and server regression coverage plus TypeScript validation for the Early Career and Growth Profile improvements; publish is user-authorized and live visual acceptance is deferred below.
+- [ ] User to confirm the published authenticated Growth Profile route and Early Career Guide and Practice flows directly on levelnext.coach; browser takeover was unavailable in this session.
+- [ ] Resolve or reconcile the pre-existing Landing architecture and career-stage regression expectations discovered by the full suite; these files were not changed in this task.

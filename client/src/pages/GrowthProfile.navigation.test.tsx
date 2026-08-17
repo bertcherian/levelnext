@@ -59,4 +59,15 @@ describe("Growth Profile client navigation resilience", () => {
     expect(timelineQuery).toHaveBeenLastCalledWith(undefined, expect.objectContaining({ enabled: false, retry: 1 }));
     expect(document.querySelector("svg.animate-spin")).toBeTruthy();
   });
+
+  it("renders a legacy serialized plan and nullable action values without reaching the global error page", () => {
+    authState.isAuthenticated = true;
+    authState.loading = false;
+    profileQuery.mockReturnValue({ data: { memory: null, activePlan: { plan: JSON.stringify({ growthTheme: "Build clarity", whyItMatters: "Make each message easier to act on.", week1: "Practise concise updates.", realWorldActions: ["Ask for a clear decision."] }) }, recentSessions: [], recentBriefs: [], recentDebriefs: [] }, isLoading: false, error: null, refetch: vi.fn() });
+    timelineQuery.mockReturnValue({ data: [{ id: "legacy-1", entityId: 1, type: "commitment", title: null, description: null, status: null, dueDate: null, createdAt: null, aiRecommendation: null }], error: null, refetch: vi.fn() });
+    render(<GrowthProfile />);
+    expect(screen.getByText("Build clarity")).toBeTruthy();
+    expect(screen.getByText("Leadership action")).toBeTruthy();
+    expect(screen.queryByText("Something went wrong")).toBeNull();
+  });
 });
