@@ -105,5 +105,12 @@
 - [x] Complete Early Career cohort management with cohort creation, organisation, and manager reporting assignments for authorised owners and admins.
 - [x] Add explicit loading, error, retry, and empty states for cohort-management, aggregate intelligence, and nudge configuration queries.
 - [x] Add rendered cohort-management failure and empty-state regressions before publication.
-- [ ] Publish the latest Early Career management update after the completed full-suite validation.
-- [ ] Record final acceptance evidence: authenticated owner workflows are covered through rendered and router regressions; only unauthenticated route previews were available in this browser session.
+- [x] Publish the latest Early Career management update after the completed full-suite validation.
+- [x] Record final acceptance evidence: authenticated owner workflows are covered through rendered and router regressions; only unauthenticated route previews were available in this browser session.
+- [x] Audit Early Career practice-session data, cohort manager access, and anonymity thresholds for aggregated scenario insights.
+- [x] Complete manager-visible cohort practice statistics that report only anonymized scenario categories and usage counts.
+- [x] Complete the private personal Practice progress dashboard with fresh metrics after save, delete, and completion actions.
+- [x] Complete topic, status, date, and sort controls by mapping the in-progress UI filter to persisted active sessions.
+- [x] Add regression coverage for progress invalidation and active-session filtering before final practice-intelligence validation.
+- [x] Confirm the actual Manager Companion route and verify the aggregated cohort practice panel entry state on its registered Early Career path before publication.
+- [x] Add privacy, analytics, and discovery regression coverage and validate the Practice intelligence update; publication is authorized through the final checkpoint.

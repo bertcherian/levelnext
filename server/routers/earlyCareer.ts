@@ -117,6 +117,30 @@ export const earlyCareerSavedPracticeScenarioInput = z.object({
   objective: z.string().trim().max(600).optional(),
 });
 
+export const earlyCareerPracticeDiscoveryInput = z.object({
+  topic: z.string().trim().max(160).optional(),
+  status: z.enum(["all", "in_progress", "completed"]).default("all"),
+  dateRange: z.enum(["all", "30d", "90d", "year"]).default("all"),
+  sort: z.enum(["newest", "oldest", "title_az", "title_za"]).default("newest"),
+}).default({ status: "all", dateRange: "all", sort: "newest" });
+
+const PRACTICE_ANALYTICS_ANONYMITY_THRESHOLD = 3;
+
+function practiceScenarioDescriptor(scenarioId: string, scenarioTitle: string | null | undefined) {
+  if (scenarioId === customPracticeDefaults.id) return { key: "self_directed", label: "Self-directed practice", topic: "employee-defined workplace situations" };
+  const scenario = EARLY_CAREER_PRACTICE_SCENARIOS.find((item) => item.id === scenarioId);
+  return scenario
+    ? { key: scenario.id, label: scenario.title, topic: scenario.capabilityId.replaceAll("_", " ") }
+    : { key: "other_structured", label: "Other structured practice", topic: scenarioTitle || "structured rehearsal" };
+}
+
+function practiceDateThreshold(range: "all" | "30d" | "90d" | "year") {
+  if (range === "all") return null;
+  const date = new Date();
+  date.setDate(date.getDate() - (range === "30d" ? 30 : range === "90d" ? 90 : 365));
+  return date;
+}
+
 const earlyCareerCohortInput = z.object({
   tenantId: z.number().int().positive(),
   name: z.string().trim().min(3).max(160),
@@ -311,12 +335,16 @@ export const earlyCareerRouter = router({
 
   getPracticeScenarios: protectedProcedure.query(() => EARLY_CAREER_PRACTICE_SCENARIOS),
 
-  getSavedPracticeScenarios: protectedProcedure.query(async ({ ctx }) => {
+  getSavedPracticeScenarios: protectedProcedure.input(earlyCareerPracticeDiscoveryInput).query(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-    return db.select().from(earlyCareerSavedPracticeScenarios)
+    const items = await db.select().from(earlyCareerSavedPracticeScenarios)
       .where(eq(earlyCareerSavedPracticeScenarios.userId, ctx.user.id))
-      .orderBy(desc(earlyCareerSavedPracticeScenarios.updatedAt)).limit(12);
+      .orderBy(desc(earlyCareerSavedPracticeScenarios.updatedAt)).limit(100);
+    const threshold = practiceDateThreshold(input.dateRange);
+    const topic = input.topic?.toLocaleLowerCase();
+    const filtered = items.filter((item) => (!topic || `${item.title} ${item.context} ${item.counterpartRole}`.toLocaleLowerCase().includes(topic)) && (!threshold || item.updatedAt >= threshold));
+    return filtered.sort((a, b) => input.sort === "oldest" ? a.updatedAt.getTime() - b.updatedAt.getTime() : input.sort === "title_az" ? a.title.localeCompare(b.title) : input.sort === "title_za" ? b.title.localeCompare(a.title) : b.updatedAt.getTime() - a.updatedAt.getTime());
   }),
 
   savePracticeScenario: protectedProcedure.input(earlyCareerSavedPracticeScenarioInput).mutation(async ({ ctx, input }) => {
@@ -336,10 +364,39 @@ export const earlyCareerRouter = router({
     return { success: true };
   }),
 
-  getPracticeHistory: protectedProcedure.query(async ({ ctx }) => {
+  getPracticeHistory: protectedProcedure.input(earlyCareerPracticeDiscoveryInput).query(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-    return db.select().from(earlyCareerPracticeSessions).where(eq(earlyCareerPracticeSessions.userId, ctx.user.id)).orderBy(desc(earlyCareerPracticeSessions.updatedAt)).limit(15);
+    const items = await db.select().from(earlyCareerPracticeSessions).where(eq(earlyCareerPracticeSessions.userId, ctx.user.id)).orderBy(desc(earlyCareerPracticeSessions.updatedAt)).limit(100);
+    const threshold = practiceDateThreshold(input.dateRange);
+    const topic = input.topic?.toLocaleLowerCase();
+    const filtered = items.filter((item) => {
+      const descriptor = practiceScenarioDescriptor(item.scenarioId, item.scenarioTitle);
+      const statusMatches = input.status === "all" || (input.status === "in_progress" ? item.status === "active" : item.status === input.status);
+      return statusMatches && (!threshold || item.updatedAt >= threshold) && (!topic || `${item.scenarioTitle || ""} ${descriptor.label} ${descriptor.topic}`.toLocaleLowerCase().includes(topic));
+    });
+    return filtered.sort((a, b) => input.sort === "oldest" ? a.updatedAt.getTime() - b.updatedAt.getTime() : input.sort === "title_az" ? (a.scenarioTitle || "").localeCompare(b.scenarioTitle || "") : input.sort === "title_za" ? (b.scenarioTitle || "").localeCompare(a.scenarioTitle || "") : b.updatedAt.getTime() - a.updatedAt.getTime());
+  }),
+
+  getPracticeProgress: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [sessions, savedScenarios] = await Promise.all([
+      db.select().from(earlyCareerPracticeSessions).where(eq(earlyCareerPracticeSessions.userId, ctx.user.id)).orderBy(desc(earlyCareerPracticeSessions.updatedAt)).limit(100),
+      db.select({ id: earlyCareerSavedPracticeScenarios.id }).from(earlyCareerSavedPracticeScenarios).where(eq(earlyCareerSavedPracticeScenarios.userId, ctx.user.id)).limit(100),
+    ]);
+    const totalSessions = sessions.length;
+    const completedSessions = sessions.filter((session) => session.status === "completed").length;
+    const inProgressSessions = sessions.filter((session) => session.status === "active").length;
+    const categories = new Map<string, { label: string; topic: string; count: number }>();
+    for (const session of sessions) {
+      const descriptor = practiceScenarioDescriptor(session.scenarioId, session.scenarioTitle);
+      const current = categories.get(descriptor.key) ?? { label: descriptor.label, topic: descriptor.topic, count: 0 };
+      current.count += 1;
+      categories.set(descriptor.key, current);
+    }
+    const topicUsage = Array.from(categories.values()).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+    return { totalSessions, completedSessions, inProgressSessions, savedScenarioCount: savedScenarios.length, completionRate: totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0, topicUsage };
   }),
 
   getCohortManagement: protectedProcedure.query(async ({ ctx }) => {
@@ -715,8 +772,31 @@ export const earlyCareerRouter = router({
       .orderBy(desc(earlyCareerManagerNudges.createdAt))
       .limit(12);
 
+    const practiceSessions = employeeIds.length
+      ? await db.select({ userId: earlyCareerPracticeSessions.userId, scenarioId: earlyCareerPracticeSessions.scenarioId, scenarioTitle: earlyCareerPracticeSessions.scenarioTitle }).from(earlyCareerPracticeSessions).where(inArray(earlyCareerPracticeSessions.userId, employeeIds)).limit(500)
+      : [];
+    const aggregatePracticeCategories = new Map<string, { label: string; topic: string; employeeIds: Set<number>; sessionCount: number }>();
+    for (const session of practiceSessions) {
+      const descriptor = practiceScenarioDescriptor(session.scenarioId, session.scenarioTitle);
+      const current = aggregatePracticeCategories.get(descriptor.key) ?? { label: descriptor.label, topic: descriptor.topic, employeeIds: new Set<number>(), sessionCount: 0 };
+      current.employeeIds.add(session.userId);
+      current.sessionCount += 1;
+      aggregatePracticeCategories.set(descriptor.key, current);
+    }
+    const qualifyingPracticeCategories = Array.from(aggregatePracticeCategories.values())
+      .filter((category) => category.employeeIds.size >= PRACTICE_ANALYTICS_ANONYMITY_THRESHOLD)
+      .map((category) => ({ label: category.label, topic: category.topic, participantCount: category.employeeIds.size, sessionCount: category.sessionCount }))
+      .sort((a, b) => b.participantCount - a.participantCount || b.sessionCount - a.sessionCount || a.label.localeCompare(b.label));
+
     return {
       privacyBoundary: managerPrivacyBoundary,
+      practiceAnalytics: {
+        minimumParticipantCount: PRACTICE_ANALYTICS_ANONYMITY_THRESHOLD,
+        cohortSize: employeeIds.length,
+        categories: qualifyingPracticeCategories,
+        withheldCategoryCount: aggregatePracticeCategories.size - qualifyingPracticeCategories.length,
+        privacyBoundary: "Only scenario categories used by at least three different employees are shown. Individual activity, saved situations, practice transcripts, dates, and completion details are never shown to managers.",
+      },
       employees: employees.map((item, index) => ({
         ...item,
         stage: getEarlyCareerStage(stageIdFrom(item.profile.journeyStage)),
