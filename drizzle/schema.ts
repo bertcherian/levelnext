@@ -3225,3 +3225,55 @@ export const salesPracticeSessions = mysqlTable("sales_practice_sessions", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => [index("sales_practice_sessions_user_updated_idx").on(table.userId, table.updatedAt), index("sales_practice_sessions_situation_idx").on(table.situationId)]);
 export type SalesPracticeSession = typeof salesPracticeSessions.$inferSelect;
+
+// ─── Model Evaluation Workspace ───────────────────────────────────────────────
+// Admin-only evaluation records. Prompts and outputs are stored intentionally for
+// quality review and must not contain personal client or employee data.
+export type ModelEvaluationUsage = {
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+};
+
+export type ModelEvaluationScores = {
+  clarity: number;
+  usefulness: number;
+  leadershipTone: number;
+};
+
+export const modelEvaluations = mysqlTable(
+  "model_evaluations",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    systemPrompt: text("systemPrompt").notNull(),
+    userPrompt: text("userPrompt").notNull(),
+    maxTokens: int("maxTokens").notNull(),
+    temperature: float("temperature").notNull(),
+    status: mysqlEnum("status", ["completed", "partial"]).notNull(),
+    claudeModel: varchar("claudeModel", { length: 100 }).notNull(),
+    claudeResponse: text("claudeResponse"),
+    claudeError: text("claudeError"),
+    claudeLatencyMs: int("claudeLatencyMs"),
+    claudeUsage: json("claudeUsage").$type<ModelEvaluationUsage>(),
+    qwenModel: varchar("qwenModel", { length: 100 }).notNull(),
+    qwenResponse: text("qwenResponse"),
+    qwenError: text("qwenError"),
+    qwenLatencyMs: int("qwenLatencyMs"),
+    qwenUsage: json("qwenUsage").$type<ModelEvaluationUsage>(),
+    preferredModel: mysqlEnum("preferredModel", ["claude", "qwen", "tie", "neither"]),
+    reviewScores: json("reviewScores").$type<ModelEvaluationScores>(),
+    reviewerNote: text("reviewerNote"),
+    reviewedByUserId: int("reviewedByUserId").references(() => users.id),
+    reviewedAt: timestamp("reviewedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("model_evaluations_created_idx").on(table.createdAt),
+    index("model_evaluations_creator_idx").on(table.createdByUserId),
+  ]
+);
+
+export type ModelEvaluation = typeof modelEvaluations.$inferSelect;
+export type InsertModelEvaluation = typeof modelEvaluations.$inferInsert;

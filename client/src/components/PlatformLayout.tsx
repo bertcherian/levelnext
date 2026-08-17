@@ -465,6 +465,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveSPsMobile = isNavActive("/admin/success-partners");
               const isActiveOrgContextMobile = isNavActive("/admin/org-context");
               const isActiveImportMobile = isNavActive("/admin/participants/import");
+              const isActiveModelEvaluatorMobile = isNavActive("/admin/model-evaluator");
               return (
                 <>
                   <li key="/admin-section-mobile">
@@ -484,6 +485,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         <LayoutDashboard size={18} className="flex-shrink-0" />
                         <span>Admin Dashboard</span>
                         {isActiveAdmin && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/model-evaluator-mobile">
+                    <Link href="/admin/model-evaluator" onClick={() => setSidebarOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveModelEvaluatorMobile ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveModelEvaluatorMobile ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Scale size={18} className="flex-shrink-0" />
+                        <span>Model Evaluator</span>
+                        {isActiveModelEvaluatorMobile && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
                   </li>
@@ -803,6 +819,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               const isActiveSPs = isNavActive("/admin/success-partners");
               const isActiveOrgContext = isNavActive("/admin/org-context");
               const isActiveImport = isNavActive("/admin/participants/import");
+              const isActiveModelEvaluator = isNavActive("/admin/model-evaluator");
               return (
                 <>
                   <li key="/admin-section-desktop">
@@ -822,6 +839,21 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                         <LayoutDashboard size={18} className={cn("flex-shrink-0", isActiveAdmin ? "" : "group-hover:scale-105 transition-transform")} />
                         <span>Admin Dashboard</span>
                         {isActiveAdmin && <ChevronRight size={14} className="ml-auto opacity-60" />}
+                      </div>
+                    </Link>
+                  </li>
+                  <li key="/admin/model-evaluator">
+                    <Link href="/admin/model-evaluator">
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                          isActiveModelEvaluator ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
+                        )}
+                        style={isActiveModelEvaluator ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
+                      >
+                        <Scale size={18} className={cn("flex-shrink-0", isActiveModelEvaluator ? "" : "group-hover:scale-105 transition-transform")} />
+                        <span>Model Evaluator</span>
+                        {isActiveModelEvaluator && <ChevronRight size={14} className="ml-auto opacity-60" />}
                       </div>
                     </Link>
                   </li>

@@ -80,6 +80,7 @@ const AdminSuccessPartners = lazy(() => import("@/pages/AdminSuccessPartners"));
 const MEPLeaderDocuments = lazy(() => import("@/pages/mep/MEPLeaderDocuments"));
 const AdminOrgContext = lazy(() => import("@/pages/AdminOrgContext"));
 const AdminParticipantImport = lazy(() => import("@/pages/AdminParticipantImport"));
+const AdminModelEvaluator = lazy(() => import("@/pages/AdminModelEvaluator"));
 const CareerLanding = lazy(() => import("@/pages/CareerLanding"));
 const CareerInvestment = lazy(() => import("@/pages/CareerInvestment"));
 const ResumeMakeover = lazy(() => import("@/pages/ci/ResumeMakeover"));
@@ -251,6 +252,7 @@ function Router() {
       <Route path="/admin/success-partners" component={AdminSuccessPartners} />
       <Route path="/admin/org-context" component={AdminOrgContext} />
       <Route path="/admin/participants/import" component={AdminParticipantImport} />
+      <Route path="/admin/model-evaluator" component={AdminModelEvaluator} />
       <Route path="/next-chapter" component={NextChapter} />
       <Route path="/next-chapter/portfolio" component={NextChapterPortfolio} />
       <Route path="/next-chapter/identity-assessment" component={IdentityClarityAssessment} />

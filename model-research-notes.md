@@ -29,3 +29,15 @@ Source: https://huggingface.co/Qwen/Qwen3.5-27B
 Z.ai's GLM-5.2 release page confirms an MIT licence. The page content accessible in the research browser did not expose sufficient architecture or performance detail, so all other GLM-5.2 specifications remain subject to cross-validation against its repository and benchmark sources.
 
 Source: https://z.ai/blog/glm-5.2
+
+## A/B testing provider validation
+
+The exact Qwen3-30B-A3B Fireworks model path is `accounts/fireworks/models/qwen3-30b-a3b`. Credential validation against Fireworks’ model catalogue passed, but a minimal chat-completions request returned HTTP 404 because the exact model is presented as an on-demand deployment rather than a serverless endpoint. Together AI also presents the exact Qwen3-30B-A3B model as a dedicated-endpoint deployment. Neither route is suitable for immediate request-by-request evaluation without an already-provisioned dedicated inference endpoint.
+
+Sources: https://fireworks.ai/models/fireworks/qwen3-30b-a3b and https://www.together.ai/models/qwen3-30b-a3b
+
+## Deployed A/B route
+
+OpenRouter exposes the exact serverless model identifier `qwen/qwen3-30b-a3b` behind its OpenAI-compatible endpoint. A live credential check and a minimal exact-model completion both succeeded after appending Qwen’s documented `/no_think` instruction, which avoids consuming short fast-path evaluations with reasoning tokens. The LevelNext admin model-evaluator page was also rendered successfully with its side-by-side prompt form, navigation link, privacy notice, reviewer controls, and saved-evaluation section.
+
+Source: https://openrouter.ai/qwen/qwen3-30b-a3b

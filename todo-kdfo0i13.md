@@ -3,3 +3,13 @@
 - [x] Review the platform’s current AI integration and serving constraints.
 - [x] Compare current leading open-source models for latency, token efficiency, and leadership-coaching workloads.
 - [x] Document the LevelNext-specific model recommendation and adoption path.
+- [x] Add and verify a secure server-side OpenRouter/Qwen3-30B-A3B inference route alongside Claude Haiku.
+- [x] Add a minimal exact-model chat-completions integration test for Qwen3-30B-A3B.
+- [x] Add a persisted, admin-only A/B evaluation data model and server-side comparison workflow.
+- [x] Build a side-by-side Claude Haiku versus Qwen3-30B-A3B comparison interface with reviewer feedback controls.
+- [x] Synchronise reviewer controls whenever the selected saved evaluation changes.
+- [x] Add regression coverage that protects existing saved reviews from stale form defaults.
+- [x] Add component-level regression coverage for reviewer hydration and switching between saved evaluations.
+- [x] Add automated tests and verify the A/B comparison feature in the running application.
+- [x] Exercise the real admin comparison procedure through both provider calls, reviewer save, and persisted-record retrieval with cleanup.
+- [x] Add a UI regression case for a saved partial comparison so model-specific errors remain visible beside the successful response.
