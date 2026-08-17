@@ -78,3 +78,8 @@
 - [x] Confirm the Onboarding DOM-test setup and rerun the interaction suite successfully.
 - [x] Restore the React default import required by the Onboarding component under the project’s JSX test transform.
 - [x] Read back the React import repair and rerun the rendered Onboarding interaction tests successfully.
+- [x] Reproduce and trace the Growth Profile error that occurs during client-side Leader Intelligence navigation.
+- [x] Fix the Growth Profile navigation-time render race and provide resilient loading/error handling.
+- [x] Add regression coverage and validate the Leader Intelligence to Growth client-side route through focused rendered tests.
+- [x] Read back the Growth Profile safeguards, run resilience tests, and validate Leader Intelligence to Growth navigation without a reload.
+- [ ] Perform a final signed-in browser click-through from Leader Intelligence to Growth; the available browser session is not authenticated, so this remains a visual acceptance follow-up while focused automated coverage passes.

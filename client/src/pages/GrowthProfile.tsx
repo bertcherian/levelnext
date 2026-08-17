@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
   Play,
   Zap,
   MessageSquare,
+  AlertCircle,
 } from "lucide-react";
 import type { GrowthPlanData } from "../../../drizzle/schema";
 
@@ -85,8 +87,10 @@ function GrowthProfileMain({
   onCoachBrief: () => void;
   onPrivacy: () => void;
 }) {
-  const { data: profile, isLoading } = trpc.leadershipCoach.getGrowthProfile.useQuery();
-  const { data: actionTimeline, refetch: refetchActionTimeline } = trpc.leadershipCoach.getActionTimeline.useQuery();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const queryEnabled = isAuthenticated && !authLoading;
+  const { data: profile, isLoading, error: profileError, refetch: refetchProfile } = trpc.leadershipCoach.getGrowthProfile.useQuery(undefined, { enabled: queryEnabled, retry: 1 });
+  const { data: actionTimeline, error: timelineError, refetch: refetchActionTimeline } = trpc.leadershipCoach.getActionTimeline.useQuery(undefined, { enabled: queryEnabled, retry: 1 });
   const [expandedPlan, setExpandedPlan] = useState(false);
 
   const generatePlan = trpc.leadershipCoach.generateGrowthPlan.useMutation({
@@ -115,7 +119,7 @@ function GrowthProfileMain({
     { value: "postponed", label: "→ Postponed", color: "text-blue-700 bg-blue-50 border-blue-200" },
   ];
 
-  if (isLoading) {
+  if (authLoading || (queryEnabled && isLoading)) {
     return (
       <div className="flex items-center justify-center py-16">
         <RefreshCw className="w-6 h-6 animate-spin text-[var(--color-ln-navy)]/40" />
@@ -123,7 +127,27 @@ function GrowthProfileMain({
     );
   }
 
+  if (profileError) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-center">
+          <AlertCircle className="w-7 h-7 text-red-600 mx-auto mb-2" />
+          <p className="text-sm font-semibold text-red-900">Growth Profile could not load just now.</p>
+          <p className="mt-1 text-xs text-red-700">Your leadership data is safe. Try loading this private workspace again.</p>
+          <Button size="sm" variant="outline" className="mt-4" onClick={() => refetchProfile()}><RefreshCw className="mr-1.5 h-3.5 w-3.5" />Try again</Button>
+        </div>
+      </div>
+    );
+  }
+
   const plan = profile?.activePlan?.plan as GrowthPlanData | undefined;
+  const recentSessions = profile?.recentSessions ?? [];
+  const recentBriefs = profile?.recentBriefs ?? [];
+  const recentDebriefs = profile?.recentDebriefs ?? [];
+  const planList = (key: "realWorldActions" | "recommendedRolePlays" | "recommendedDrills" | "reflectionQuestions" | "successIndicators") => {
+    const value = plan?.[key];
+    return Array.isArray(value) ? value : [];
+  };
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
@@ -164,9 +188,9 @@ function GrowthProfileMain({
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 my-4">
         {[
-          { label: "Practice Sessions", value: profile?.recentSessions.length ?? 0, icon: Play },
-          { label: "Briefs Created", value: profile?.recentBriefs.length ?? 0, icon: Calendar },
-          { label: "Debriefs Done", value: profile?.recentDebriefs.length ?? 0, icon: FileText },
+          { label: "Practice Sessions", value: recentSessions.length, icon: Play },
+          { label: "Briefs Created", value: recentBriefs.length, icon: Calendar },
+          { label: "Debriefs Done", value: recentDebriefs.length, icon: FileText },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl border border-gray-200 bg-white p-3 text-center">
             <stat.icon className="w-4 h-4 text-[var(--color-ln-gold)] mx-auto mb-1" />
@@ -187,7 +211,9 @@ function GrowthProfileMain({
             {generateMission.isPending ? <RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Zap className="mr-1.5 h-3.5 w-3.5" />}New mission
           </Button>
         </div>
-        {actionTimeline && actionTimeline.length > 0 ? (
+        {timelineError ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center"><p className="text-xs text-amber-800">Your action timeline could not load yet.</p><button onClick={() => refetchActionTimeline()} className="mt-2 text-xs font-semibold text-[var(--color-ln-navy)] underline">Try again</button></div>
+        ) : actionTimeline && actionTimeline.length > 0 ? (
           <div className="relative space-y-3 before:absolute before:bottom-5 before:left-[17px] before:top-5 before:w-px before:bg-gray-200">
             {actionTimeline.slice(0, 12).map((action) => {
               const isMission = action.type === "mission";
@@ -287,7 +313,7 @@ function GrowthProfileMain({
                       {section.label}
                     </p>
                     <ul className="space-y-1">
-                      {(plan[section.key as keyof GrowthPlanData] as string[]).map((item, i) => (
+                      {planList(section.key as "realWorldActions" | "recommendedRolePlays" | "recommendedDrills" | "reflectionQuestions" | "successIndicators").map((item, i) => (
                         <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
                           <span className="text-[var(--color-ln-gold)] mt-0.5">•</span>
                           {item}
