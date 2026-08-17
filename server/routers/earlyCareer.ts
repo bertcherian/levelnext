@@ -7,6 +7,7 @@ import {
   earlyCareerCommitments,
   earlyCareerCoachMessages,
   earlyCareerCoachSessions,
+  earlyCareerCohorts,
   earlyCareerDiagnosticResults,
   earlyCareerDiagnosticSessions,
   earlyCareerEvidence,
@@ -15,6 +16,7 @@ import {
   earlyCareerNudgeDeliveries,
   earlyCareerPracticeSessions,
   earlyCareerProfiles,
+  earlyCareerSavedPracticeScenarios,
   tenantUsers,
   users,
 } from "../../drizzle/schema";
@@ -107,6 +109,28 @@ export const earlyCareerPracticeStartInput = z.object({
     issue.addIssue({ code: "custom", message: "Choose a library scenario or describe your own workplace situation." });
   }
 });
+
+export const earlyCareerSavedPracticeScenarioInput = z.object({
+  title: z.string().trim().min(3).max(160),
+  context: z.string().trim().min(20).max(2000),
+  counterpartRole: z.string().trim().min(2).max(120),
+  objective: z.string().trim().max(600).optional(),
+});
+
+const earlyCareerCohortInput = z.object({
+  tenantId: z.number().int().positive(),
+  name: z.string().trim().min(3).max(160),
+  description: z.string().trim().max(1000).optional(),
+  managerUserId: z.number().int().positive(),
+});
+
+async function assertCohortAdministrationAccess(user: { id: number; role: string }, tenantId: number) {
+  if (user.role === "admin") return;
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+  const [membership] = await db.select().from(tenantUsers).where(and(eq(tenantUsers.userId, user.id), eq(tenantUsers.tenantId, tenantId), eq(tenantUsers.role, "owner"))).limit(1);
+  if (!membership) throw new TRPCError({ code: "FORBIDDEN", message: "Organisation owner access is required to manage Early Career cohorts." });
+}
 
 async function buildEarlyCareerPrivateContext(userId: number) {
   const db = await getDb();
@@ -286,6 +310,90 @@ export const earlyCareerRouter = router({
   }),
 
   getPracticeScenarios: protectedProcedure.query(() => EARLY_CAREER_PRACTICE_SCENARIOS),
+
+  getSavedPracticeScenarios: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    return db.select().from(earlyCareerSavedPracticeScenarios)
+      .where(eq(earlyCareerSavedPracticeScenarios.userId, ctx.user.id))
+      .orderBy(desc(earlyCareerSavedPracticeScenarios.updatedAt)).limit(12);
+  }),
+
+  savePracticeScenario: protectedProcedure.input(earlyCareerSavedPracticeScenarioInput).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const tenantId = await getTenantIdForUser(ctx.user.id);
+    const [created] = await db.insert(earlyCareerSavedPracticeScenarios).values({ userId: ctx.user.id, tenantId, title: input.title, context: input.context, counterpartRole: input.counterpartRole, objective: input.objective ?? null }).$returningId();
+    return { id: created.id };
+  }),
+
+  deleteSavedPracticeScenario: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [scenario] = await db.select({ id: earlyCareerSavedPracticeScenarios.id }).from(earlyCareerSavedPracticeScenarios).where(and(eq(earlyCareerSavedPracticeScenarios.id, input.id), eq(earlyCareerSavedPracticeScenarios.userId, ctx.user.id))).limit(1);
+    if (!scenario) throw new TRPCError({ code: "NOT_FOUND", message: "Saved practice scenario not found." });
+    await db.delete(earlyCareerSavedPracticeScenarios).where(eq(earlyCareerSavedPracticeScenarios.id, scenario.id));
+    return { success: true };
+  }),
+
+  getPracticeHistory: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    return db.select().from(earlyCareerPracticeSessions).where(eq(earlyCareerPracticeSessions.userId, ctx.user.id)).orderBy(desc(earlyCareerPracticeSessions.updatedAt)).limit(15);
+  }),
+
+  getCohortManagement: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const ownerMemberships = await db.select({ tenantId: tenantUsers.tenantId }).from(tenantUsers).where(and(eq(tenantUsers.userId, ctx.user.id), eq(tenantUsers.role, "owner")));
+    if (ctx.user.role !== "admin" && ownerMemberships.length === 0) return { canManageCohorts: false, tenantIds: [], cohorts: [], employees: [], managers: [] };
+    const cohorts = ctx.user.role === "admin"
+      ? await db.select().from(earlyCareerCohorts).orderBy(desc(earlyCareerCohorts.updatedAt))
+      : await db.select().from(earlyCareerCohorts).where(inArray(earlyCareerCohorts.tenantId, ownerMemberships.map((membership) => membership.tenantId))).orderBy(desc(earlyCareerCohorts.updatedAt));
+    const tenantIds = ctx.user.role === "admin"
+      ? Array.from(new Set((await db.select({ tenantId: earlyCareerProfiles.tenantId }).from(earlyCareerProfiles)).map((row) => row.tenantId).filter((id): id is number => id !== null)))
+      : ownerMemberships.map((membership) => membership.tenantId);
+    const employees = tenantIds.length ? await db.select({ profile: earlyCareerProfiles, employee: { id: users.id, name: users.name, email: users.email } }).from(earlyCareerProfiles).innerJoin(users, eq(earlyCareerProfiles.userId, users.id)).where(inArray(earlyCareerProfiles.tenantId, tenantIds)).orderBy(desc(earlyCareerProfiles.updatedAt)) : [];
+    const managers = tenantIds.length ? await db.select({ tenantId: tenantUsers.tenantId, user: { id: users.id, name: users.name, email: users.email } }).from(tenantUsers).innerJoin(users, eq(tenantUsers.userId, users.id)).where(inArray(tenantUsers.tenantId, tenantIds)) : [];
+    return { canManageCohorts: true, tenantIds, cohorts, employees, managers };
+  }),
+
+  createCohort: protectedProcedure.input(earlyCareerCohortInput).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    await assertCohortAdministrationAccess(ctx.user, input.tenantId);
+    const [managerMembership] = await db.select().from(tenantUsers).where(and(eq(tenantUsers.userId, input.managerUserId), eq(tenantUsers.tenantId, input.tenantId))).limit(1);
+    if (!managerMembership) throw new TRPCError({ code: "BAD_REQUEST", message: "The selected manager must belong to this organisation." });
+    const [created] = await db.insert(earlyCareerCohorts).values({ tenantId: input.tenantId, name: input.name, description: input.description ?? null, managerUserId: input.managerUserId, createdByUserId: ctx.user.id }).$returningId();
+    return { id: created.id };
+  }),
+
+  assignCohortMember: protectedProcedure.input(z.object({ employeeUserId: z.number().int().positive(), cohortId: z.number().int().positive().nullable() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [employeeProfile] = await db.select().from(earlyCareerProfiles).where(eq(earlyCareerProfiles.userId, input.employeeUserId)).limit(1);
+    if (!employeeProfile?.tenantId) throw new TRPCError({ code: "NOT_FOUND", message: "Early Career employee profile not found." });
+    await assertCohortAdministrationAccess(ctx.user, employeeProfile.tenantId);
+    if (!input.cohortId) {
+      await db.update(earlyCareerProfiles).set({ cohortId: null }).where(eq(earlyCareerProfiles.id, employeeProfile.id));
+      return { success: true };
+    }
+    const [cohort] = await db.select().from(earlyCareerCohorts).where(and(eq(earlyCareerCohorts.id, input.cohortId), eq(earlyCareerCohorts.tenantId, employeeProfile.tenantId))).limit(1);
+    if (!cohort) throw new TRPCError({ code: "BAD_REQUEST", message: "Choose a cohort from the employee's organisation." });
+    await db.update(earlyCareerProfiles).set({ cohortId: cohort.id, managerUserId: cohort.managerUserId }).where(eq(earlyCareerProfiles.id, employeeProfile.id));
+    return { success: true, managerUserId: cohort.managerUserId };
+  }),
+
+  deleteCohort: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const [cohort] = await db.select().from(earlyCareerCohorts).where(eq(earlyCareerCohorts.id, input.id)).limit(1);
+    if (!cohort) throw new TRPCError({ code: "NOT_FOUND", message: "Cohort not found." });
+    await assertCohortAdministrationAccess(ctx.user, cohort.tenantId);
+    await db.update(earlyCareerProfiles).set({ cohortId: null }).where(eq(earlyCareerProfiles.cohortId, cohort.id));
+    await db.delete(earlyCareerCohorts).where(eq(earlyCareerCohorts.id, cohort.id));
+    return { success: true };
+  }),
 
   startPracticeSession: protectedProcedure.input(earlyCareerPracticeStartInput).mutation(async ({ ctx, input }) => {
     const db = await getDb();

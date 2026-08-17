@@ -2910,6 +2910,19 @@ export type IcGuidedMirrorReminderSettings = typeof icGuidedMirrorReminderSettin
 // ─── Early Career Intelligence ───────────────────────────────────────────────
 // The canonical domain key for this corporate product is `early_career`.
 // `ECI` remains reserved for Executive Communication Intelligence.
+export const earlyCareerCohorts = mysqlTable("early_career_cohorts", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  name: varchar("name", { length: 160 }).notNull(),
+  description: text("description"),
+  managerUserId: int("managerUserId").notNull().references(() => users.id),
+  createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [index("early_career_cohorts_tenant_manager_idx").on(table.tenantId, table.managerUserId)]);
+export type EarlyCareerCohort = typeof earlyCareerCohorts.$inferSelect;
+export type InsertEarlyCareerCohort = typeof earlyCareerCohorts.$inferInsert;
+
 export const earlyCareerProfiles = mysqlTable(
   "early_career_profiles",
   {
@@ -2917,6 +2930,7 @@ export const earlyCareerProfiles = mysqlTable(
     userId: int("userId").notNull().references(() => users.id),
     tenantId: int("tenantId").references(() => tenants.id),
     managerUserId: int("managerUserId").references(() => users.id),
+    cohortId: int("cohortId").references(() => earlyCareerCohorts.id),
     joiningDate: timestamp("joiningDate"),
     roleTitle: varchar("roleTitle", { length: 255 }),
     functionName: varchar("functionName", { length: 150 }),
@@ -3054,6 +3068,22 @@ export const earlyCareerCoachMessages = mysqlTable("early_career_coach_messages"
 });
 export type EarlyCareerCoachMessage = typeof earlyCareerCoachMessages.$inferSelect;
 export type InsertEarlyCareerCoachMessage = typeof earlyCareerCoachMessages.$inferInsert;
+
+// Reusable workplace situations are private to the employee and are never
+// included in manager or HR views.
+export const earlyCareerSavedPracticeScenarios = mysqlTable("early_career_saved_practice_scenarios", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
+  title: varchar("title", { length: 160 }).notNull(),
+  context: text("context").notNull(),
+  counterpartRole: varchar("counterpartRole", { length: 120 }).notNull(),
+  objective: text("objective"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [index("early_career_saved_practice_user_updated_idx").on(table.userId, table.updatedAt)]);
+export type EarlyCareerSavedPracticeScenario = typeof earlyCareerSavedPracticeScenarios.$inferSelect;
+export type InsertEarlyCareerSavedPracticeScenario = typeof earlyCareerSavedPracticeScenarios.$inferInsert;
 
 export const earlyCareerPracticeSessions = mysqlTable("early_career_practice_sessions", {
   id: int("id").autoincrement().primaryKey(),

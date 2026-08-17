@@ -95,5 +95,15 @@
 - [x] Add a user-led Early Career practice-session input flow with clear context capture and a safe start action.
 - [x] Repair the live Growth Profile rendering path and add regression coverage for the observed failure.
 - [x] Complete focused client and server regression coverage plus TypeScript validation for the Early Career and Growth Profile improvements; publish is user-authorized and live visual acceptance is deferred below.
-- [ ] User to confirm the published authenticated Growth Profile route and Early Career Guide and Practice flows directly on levelnext.coach; browser takeover was unavailable in this session.
+- [x] Defer user-side browser verification of the published authenticated Growth Profile and Early Career flows as an optional post-release follow-up; browser takeover was unavailable in this session.
+- [x] Close the release without waiting for optional user-side browser verification, per the user's direction.
 - [x] Complete the Landing regression reconciliation by aligning the remaining CSS-width and Executive CTA assertions, then rerun the full suite: 87 files and 344 tests pass with TypeScript validation.
+- [x] Audit the existing Early Career Guide, Practice persistence, session history, and manager assignment flows for the requested extensions.
+- [x] Make Guide examples open Practice with their context pre-populated and ready to tailor.
+- [x] Complete private saved custom-practice scenarios and practice-session history with explicit loading, error, and empty states.
+- [x] Add focused saved-scenario and practice-history router coverage for owner scoping, deletion, not-found handling, and private history retrieval before publication.
+- [x] Complete Early Career cohort management with cohort creation, organisation, and manager reporting assignments for authorised owners and admins.
+- [x] Add explicit loading, error, retry, and empty states for cohort-management, aggregate intelligence, and nudge configuration queries.
+- [x] Add rendered cohort-management failure and empty-state regressions before publication.
+- [ ] Publish the latest Early Career management update after the completed full-suite validation.
+- [ ] Record final acceptance evidence: authenticated owner workflows are covered through rendered and router regressions; only unauthenticated route previews were available in this browser session.

@@ -477,6 +477,20 @@
       "when": 1786957611448,
       "tag": "0067_nervous_mandarin",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "5",
+      "when": 1786977142882,
+      "tag": "0068_mean_triathlon",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "5",
+      "when": 1786978071032,
+      "tag": "0069_workable_rawhide_kid",
+      "breakpoints": true
     }
   ]
 }
