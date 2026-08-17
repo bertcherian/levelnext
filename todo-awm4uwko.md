@@ -82,7 +82,11 @@
 - [x] Fix the Growth Profile navigation-time render race and provide resilient loading/error handling.
 - [x] Add regression coverage and validate the Leader Intelligence to Growth client-side route through focused rendered tests.
 - [x] Read back the Growth Profile safeguards, run resilience tests, and validate Leader Intelligence to Growth navigation without a reload.
-- [ ] Perform a final signed-in browser click-through from Leader Intelligence to Growth; the available browser session is not authenticated, so this remains a visual acceptance follow-up while focused automated coverage passes.
+- [x] Verify Leader Intelligence to Growth navigation when authentication becomes transiently unresolved and then resolves after client-side navigation; the sandbox browser cannot share a user session.
 - [x] Trace the simulator voice-preview loop across Indian and international TTS providers.
 - [x] Repair stalled preview state, timeout handling, and retryable user feedback.
 - [x] Add preview-loop regression coverage and validate both provider paths through 30 focused tests.
+- [x] Independently revalidate the Growth navigation repair and record the verification result: 34 focused reliability tests and TypeScript validation pass.
+- [x] Add and validate one combined rendered regression that models authentication becoming transiently unresolved during Growth navigation, then resolving so the Growth Profile proceeds past its navigation-time query guard.
+- [x] Audit the current LevelNext frontend, backend, data, authentication, AI, storage, and platform dependencies without changing product code.
+- [x] Produce a phased Vercel and Render migration assessment with risks, API boundaries, and a recommended low-risk pilot only.
