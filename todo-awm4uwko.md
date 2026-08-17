@@ -96,4 +96,4 @@
 - [x] Repair the live Growth Profile rendering path and add regression coverage for the observed failure.
 - [x] Complete focused client and server regression coverage plus TypeScript validation for the Early Career and Growth Profile improvements; publish is user-authorized and live visual acceptance is deferred below.
 - [ ] User to confirm the published authenticated Growth Profile route and Early Career Guide and Practice flows directly on levelnext.coach; browser takeover was unavailable in this session.
-- [ ] Resolve or reconcile the pre-existing Landing architecture and career-stage regression expectations discovered by the full suite; these files were not changed in this task.
+- [x] Complete the Landing regression reconciliation by aligning the remaining CSS-width and Executive CTA assertions, then rerun the full suite: 87 files and 344 tests pass with TypeScript validation.

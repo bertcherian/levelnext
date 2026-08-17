@@ -17,6 +17,7 @@ describe("LevelNext landing page content model", () => {
       "Professional Intelligence",
       "Manager Effectiveness",
       "Leader Intelligence",
+      "Executive Intelligence",
     ]);
     expect(careerStages.every((stage) => stage.href.startsWith("/"))).toBe(true);
     expect(getCareerStage(defaultStageIndex).name).toBe("Professional Intelligence");
@@ -26,26 +27,31 @@ describe("LevelNext landing page content model", () => {
       "Individual contributors",
       "Managers & People Leaders",
       "Strategic & Business Leaders",
+      "Executives & Senior Enterprise Leaders",
     ]);
     expect(careerStages.map((stage) => stage.href)).toEqual([
       "/early-career",
       "/pe/assessment",
       "/manager/diagnostics",
       "/home",
+      "/executive",
     ]);
     expect(careerStages.map((stage) => stage.pipelineMicrocopy)).toEqual([
       expect.stringMatching(/role readiness/i),
       expect.stringMatching(/execution/i),
       expect.stringMatching(/accountability/i),
       expect.stringMatching(/strategic alignment/i),
+      expect.stringMatching(/mandate clarity/i),
     ]);
     expect(careerStages.map((stage) => stage.buyerOutcome)).toEqual([
       expect.stringMatching(/reliable contribution/i),
       expect.stringMatching(/delivery friction/i),
       expect.stringMatching(/team accountability/i),
       expect.stringMatching(/capacity to execute/i),
+      expect.stringMatching(/decision-making/i),
     ]);
-    expect(careerStages.every((stage) => stage.ctaLabel.startsWith("Start your"))).toBe(true);
+    expect(careerStages.slice(0, 4).every((stage) => stage.ctaLabel.startsWith("Start your"))).toBe(true);
+    expect(careerStages[4]?.ctaLabel).toBe("Explore Executive Intelligence");
   });
 
   it("uses a closed intelligence loop from diagnosis through adaptation", () => {

@@ -24,12 +24,12 @@ describe("LevelNext landing simplification", () => {
   });
 
   it("uses lighter proof systems for the Intelligence Core and organisation pathway", () => {
-    expect(landingStyles).toContain(".ln-core__simple-list { max-width: 900px;");
+    expect(landingStyles).toContain(".ln-core__simple-list { max-width: 1000px;");
     expect(landingStyles).toContain(".ln-enterprise__benefits { display: grid; grid-template-columns: repeat(3, 1fr);");
     expect(landingStyles).toContain(".ln-loop--simple .ln-loop__capabilities { display: grid; grid-template-columns: repeat(3, 1fr);");
   });
 
   it("stacks the simplified proof sections on mobile", () => {
-    expect(landingStyles).toContain(".ln-loop--simple .ln-loop__capabilities, .ln-core__simple-list, .ln-enterprise__benefits { grid-template-columns: 1fr;");
+    expect(landingStyles).toContain(".ln-loop--simple .ln-loop__capabilities, .ln-core__simple-primary, .ln-core__simple-outcomes, .ln-enterprise__benefits { grid-template-columns: 1fr;");
   });
 });
