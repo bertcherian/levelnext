@@ -59,6 +59,27 @@ function scenarioInteger(value: unknown, fallback: number, min: number, max: num
     : fallback;
 }
 
+const TTS_PROVIDER_TIMEOUT_MS = 12_000;
+
+export async function requestTts(url: string, init: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TTS_PROVIDER_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new TRPCError({
+        code: "TIMEOUT",
+        message: "Voice preview took too long. Please try again.",
+      });
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 /**
  * Normalises an LLM scenario response, including responses that contain a
  * markdown fence or a brief preamble before the requested JSON object.
@@ -465,7 +486,7 @@ Coaching insights:\n${coachingInsights.map(c => `- Said: "${c.moment}" → Try: 
         if (!ENV.sarvamApiKey) {
           throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Sarvam API key not configured" });
         }
-        const response = await fetch("https://api.sarvam.ai/text-to-speech", {
+        const response = await requestTts("https://api.sarvam.ai/text-to-speech", {
           method: "POST",
           headers: {
             "api-subscription-key": ENV.sarvamApiKey,
@@ -482,7 +503,10 @@ Coaching insights:\n${coachingInsights.map(c => `- Said: "${c.moment}" → Try: 
           const err = await response.text();
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Sarvam TTS failed: ${err.substring(0, 100)}` });
         }
-        const data = await response.json() as { audios: string[] };
+        const data = await response.json() as { audios?: string[] };
+        if (typeof data.audios?.[0] !== "string" || data.audios[0].length === 0) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Sarvam TTS returned no playable audio" });
+        }
         // Sarvam returns base64 WAV audio
         return { audioBase64: data.audios[0], mimeType: "audio/wav" };
       } else {
@@ -490,7 +514,7 @@ Coaching insights:\n${coachingInsights.map(c => `- Said: "${c.moment}" → Try: 
         if (!ENV.openAiApiKey) {
           throw new TRPCError({ code: "PRECONDITION_FAILED", message: "OpenAI API key not configured" });
         }
-        const response = await fetch("https://api.openai.com/v1/audio/speech", {
+        const response = await requestTts("https://api.openai.com/v1/audio/speech", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${ENV.openAiApiKey}`,
@@ -508,6 +532,9 @@ Coaching insights:\n${coachingInsights.map(c => `- Said: "${c.moment}" → Try: 
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `OpenAI TTS failed: ${err.substring(0, 100)}` });
         }
         const audioBuffer = await response.arrayBuffer();
+        if (audioBuffer.byteLength === 0) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "OpenAI TTS returned no playable audio" });
+        }
         const base64 = Buffer.from(audioBuffer).toString("base64");
         return { audioBase64: base64, mimeType: "audio/mpeg" };
       }

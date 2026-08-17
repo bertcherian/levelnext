@@ -220,6 +220,7 @@ const VOICES_INTERNATIONAL = [
 ] as const;
 const VOICES = [...VOICES_INDIAN, ...VOICES_INTERNATIONAL] as const;
 type VoiceId = typeof VOICES[number]["id"];
+const PREVIEW_TIMEOUT_MS = 15_000;
 
 type Platform = "leadership" | "manager" | "career" | "young";
 
@@ -320,28 +321,85 @@ export default function SimulatorStart() {
   const [followUpAnswer, setFollowUpAnswer] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<VoiceId>("shubh");
   const [previewingVoice, setPreviewingVoice] = useState<VoiceId | null>(null);
+  const [previewError, setPreviewError] = useState<{ voice: VoiceId; message: string } | null>(null);
   const [lastScenarioPrompt, setLastScenarioPrompt] = useState("");
   const [scenarioError, setScenarioError] = useState<{ message: string; retryable: boolean } | null>(null);
+  const [selectedSpeed, setSelectedSpeed] = useState<number>(1.0);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const previewTimeoutRef = useRef<number | null>(null);
+  const activePreviewVoiceRef = useRef<VoiceId | null>(null);
+
+  const clearPreviewState = (voice?: VoiceId) => {
+    if (voice && activePreviewVoiceRef.current !== voice) return;
+    if (previewTimeoutRef.current !== null) {
+      window.clearTimeout(previewTimeoutRef.current);
+      previewTimeoutRef.current = null;
+    }
+    activePreviewVoiceRef.current = null;
+    setPreviewingVoice(null);
+  };
+
+  const showPreviewError = (voice: VoiceId, message: string) => {
+    clearPreviewState(voice);
+    setPreviewError({ voice, message });
+  };
+
   const ttsMutation = trpc.simulator.tts.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
+      const voice = variables.voice;
+      if (!voice || activePreviewVoiceRef.current !== voice) return;
       if (previewAudioRef.current) { previewAudioRef.current.pause(); }
-      const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
-      audio.playbackRate = selectedSpeed;
-      previewAudioRef.current = audio;
-      audio.play();
-      audio.onended = () => setPreviewingVoice(null);
+      try {
+        const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
+        audio.playbackRate = selectedSpeed;
+        previewAudioRef.current = audio;
+        audio.onended = () => clearPreviewState(voice);
+        audio.onerror = () => showPreviewError(voice, "This preview could not be played. Please try again.");
+        const playPromise = audio.play();
+        if (playPromise) {
+          void playPromise.catch(() => showPreviewError(voice, "Your browser could not start this preview. Please try again."));
+        }
+      } catch {
+        showPreviewError(voice, "This preview could not be prepared. Please try again.");
+      }
     },
-    onError: () => setPreviewingVoice(null),
+    onError: (error, variables) => {
+      const voice = variables.voice;
+      if (!voice || activePreviewVoiceRef.current !== voice) return;
+      const transient = isTransientGenerationError(error);
+      showPreviewError(
+        voice,
+        transient
+          ? "Voice preview is taking longer than usual. Please try again."
+          : "This voice preview is unavailable right now. Please try again.",
+      );
+    },
   });
   const handlePreview = (voice: VoiceId) => {
+    if (activePreviewVoiceRef.current === voice) {
+      previewAudioRef.current?.pause();
+      clearPreviewState(voice);
+      return;
+    }
     if (previewAudioRef.current) { previewAudioRef.current.pause(); }
+    clearPreviewState();
+    setPreviewError(null);
     const v = VOICES.find(x => x.id === voice)!;
+    activePreviewVoiceRef.current = voice;
     setPreviewingVoice(voice);
+    previewTimeoutRef.current = window.setTimeout(() => {
+      if (activePreviewVoiceRef.current === voice) {
+        showPreviewError(voice, "Voice preview is taking too long. Please try again.");
+      }
+    }, PREVIEW_TIMEOUT_MS);
     ttsMutation.mutate({ text: v.sample, voice });
   };
   const [adjustedDifficulty, setAdjustedDifficulty] = useState<number | null>(null);
-  const [selectedSpeed, setSelectedSpeed] = useState<number>(1.0);
+
+  useEffect(() => () => {
+    previewAudioRef.current?.pause();
+    if (previewTimeoutRef.current !== null) window.clearTimeout(previewTimeoutRef.current);
+  }, []);
 
   const inferMutation = trpc.simulator.inferScenario.useMutation({
     onSuccess: (data) => {
@@ -702,6 +760,14 @@ export default function SimulatorStart() {
                   })}
                 </div>
               </div>
+              {previewError && (
+                <div role="alert" aria-live="polite" className="mb-4 flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "rgba(244, 140, 140, 0.46)", background: "rgba(172, 51, 51, 0.16)" }}>
+                  <p className="text-sm text-white/80">{previewError.message}</p>
+                  <Button size="sm" onClick={() => handlePreview(previewError.voice)} style={{ background: meta.accent, color: meta.color }}>
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />Retry preview
+                  </Button>
+                </div>
+              )}
               <div className="rounded-2xl border p-3" style={{ borderColor: "rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.025)" }}>
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3">

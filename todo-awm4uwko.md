@@ -83,3 +83,6 @@
 - [x] Add regression coverage and validate the Leader Intelligence to Growth client-side route through focused rendered tests.
 - [x] Read back the Growth Profile safeguards, run resilience tests, and validate Leader Intelligence to Growth navigation without a reload.
 - [ ] Perform a final signed-in browser click-through from Leader Intelligence to Growth; the available browser session is not authenticated, so this remains a visual acceptance follow-up while focused automated coverage passes.
+- [x] Trace the simulator voice-preview loop across Indian and international TTS providers.
+- [x] Repair stalled preview state, timeout handling, and retryable user feedback.
+- [x] Add preview-loop regression coverage and validate both provider paths through 30 focused tests.

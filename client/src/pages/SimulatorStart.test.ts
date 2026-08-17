@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,6 +13,9 @@ const mocks = vi.hoisted(() => ({
   inferOptions: null as {
     onError?: (error: unknown) => void;
     onSuccess?: (scenario: unknown) => void;
+  } | null,
+  ttsOptions: null as {
+    onError?: (error: unknown, variables: { text: string; voice: string }) => void;
   } | null,
 }));
 
@@ -29,7 +32,10 @@ vi.mock("@/lib/trpc", () => ({
         },
       },
       tts: {
-        useMutation: () => ({ mutate: mocks.ttsMutate, isPending: false }),
+        useMutation: (options: { onError?: (error: unknown, variables: { text: string; voice: string }) => void }) => {
+          mocks.ttsOptions = options;
+          return { mutate: mocks.ttsMutate, isPending: false };
+        },
       },
       startSession: {
         useMutation: () => ({ mutate: mocks.startMutate, isPending: false }),
@@ -58,8 +64,11 @@ beforeEach(() => {
   window.history.pushState({}, "", "/manager/simulate");
   mocks.inferMutate.mockReset();
   mocks.inferReset.mockReset();
+  mocks.ttsMutate.mockReset();
   mocks.navigate.mockReset();
   mocks.inferOptions = null;
+  mocks.ttsOptions = null;
+  vi.useRealTimers();
 });
 
 describe("SimulatorStart", () => {
@@ -131,5 +140,39 @@ describe("SimulatorStart", () => {
 
     expect(mocks.inferMutate).toHaveBeenLastCalledWith({ platform: "manager", prompt });
     expect(mocks.inferMutate).toHaveBeenCalledTimes(2);
+  });
+
+  it("ends a stalled voice preview with an actionable retry state instead of spinning indefinitely", () => {
+    vi.useFakeTimers();
+    render(createElement(SimulatorStart));
+    act(() => {
+      mocks.inferOptions?.onSuccess?.({
+        conversationType: "Accountability conversation", stakeholder: "A direct report", objective: "Agree a recovery plan.", expectedChallenge: "Initial defensiveness.", difficulty: 3, estimatedMinutes: 6, characterName: "Rohan", characterStyle: "Direct and thoughtful.", followUpQuestion: null,
+      });
+    });
+
+    fireEvent.click(screen.getByTitle("Preview Shubh"));
+    expect(mocks.ttsMutate).toHaveBeenCalledWith(expect.objectContaining({ voice: "shubh" }));
+    act(() => { vi.advanceTimersByTime(15_000); });
+
+    expect(screen.getByRole("alert").textContent).toMatch(/taking too long/i);
+    expect(screen.getByRole("button", { name: /retry preview/i })).toBeTruthy();
+  });
+
+  it("turns a provider error into retryable preview feedback", () => {
+    render(createElement(SimulatorStart));
+    act(() => {
+      mocks.inferOptions?.onSuccess?.({
+        conversationType: "Accountability conversation", stakeholder: "A direct report", objective: "Agree a recovery plan.", expectedChallenge: "Initial defensiveness.", difficulty: 3, estimatedMinutes: 6, characterName: "Rohan", characterStyle: "Direct and thoughtful.", followUpQuestion: null,
+      });
+    });
+
+    fireEvent.click(screen.getByTitle("Preview Nova"));
+    act(() => {
+      mocks.ttsOptions?.onError?.({ message: "Voice provider unavailable", data: { httpStatus: 503 } }, { voice: "nova", text: "sample" });
+    });
+
+    expect(screen.getByRole("alert").textContent).toMatch(/taking longer than usual/i);
+    expect(screen.getByRole("button", { name: /retry preview/i })).toBeTruthy();
   });
 });

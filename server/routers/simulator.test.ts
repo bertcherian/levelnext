@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TrpcContext } from "../_core/context";
+import { ENV } from "../_core/env";
 
 const { invokeLLM } = vi.hoisted(() => ({
   invokeLLM: vi.fn(),
@@ -10,7 +11,7 @@ vi.mock("../_core/llm", async (importOriginal) => {
   return { ...actual, invokeLLM };
 });
 
-import { simulatorRouter } from "./simulator";
+import { requestTts, simulatorRouter } from "./simulator";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -143,3 +144,79 @@ describe("simulatorRouter.inferScenario", () => {
     }));
   });
 });
+
+describe("simulator voice-provider boundary", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("aborts a provider request that exceeds the voice-preview timeout", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const requestResult = requestTts("https://voice.example.test", { method: "POST" }).then(
+      () => null,
+      (error) => error,
+    );
+    await actAdvanceTime(12_000);
+
+    await expect(requestResult).resolves.toMatchObject({ code: "TIMEOUT" });
+    expect(fetchMock).toHaveBeenCalledWith("https://voice.example.test", expect.objectContaining({ signal: expect.any(AbortSignal) }));
+  });
+});
+
+describe("simulatorRouter.tts", () => {
+  const originalOpenAiApiKey = ENV.openAiApiKey;
+  const originalSarvamApiKey = ENV.sarvamApiKey;
+
+  beforeEach(() => {
+    ENV.openAiApiKey = "test-openai-key";
+    ENV.sarvamApiKey = "test-sarvam-key";
+  });
+
+  afterEach(() => {
+    ENV.openAiApiKey = originalOpenAiApiKey;
+    ENV.sarvamApiKey = originalSarvamApiKey;
+    vi.unstubAllGlobals();
+  });
+
+  it("returns Sarvam WAV audio for an Indian English voice", async () => {
+    const json = vi.fn().mockResolvedValue({ audios: ["sarvam-base64-audio"] });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const caller = simulatorRouter.createCaller(createAuthContext());
+    await expect(caller.tts({ text: "Hello from LevelNext", voice: "shubh" })).resolves.toEqual({
+      audioBase64: "sarvam-base64-audio",
+      mimeType: "audio/wav",
+    });
+    expect(fetchMock).toHaveBeenCalledWith("https://api.sarvam.ai/text-to-speech", expect.objectContaining({
+      method: "POST",
+      headers: expect.objectContaining({ "api-subscription-key": "test-sarvam-key" }),
+    }));
+  });
+
+  it("returns OpenAI MP3 audio for an international English voice", async () => {
+    const arrayBuffer = vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]).buffer);
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, arrayBuffer });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const caller = simulatorRouter.createCaller(createAuthContext());
+    await expect(caller.tts({ text: "Hello from LevelNext", voice: "nova" })).resolves.toEqual({
+      audioBase64: Buffer.from([1, 2, 3]).toString("base64"),
+      mimeType: "audio/mpeg",
+    });
+    expect(fetchMock).toHaveBeenCalledWith("https://api.openai.com/v1/audio/speech", expect.objectContaining({
+      method: "POST",
+      headers: expect.objectContaining({ Authorization: "Bearer test-openai-key" }),
+    }));
+  });
+});
+
+async function actAdvanceTime(milliseconds: number) {
+  await vi.advanceTimersByTimeAsync(milliseconds);
+}
