@@ -31,6 +31,7 @@ import {
 import { invokeLLM, safeJsonParse } from "../_core/llm";
 import { buildMepFactorReportRows, getMepDiagnostic, scoreMepDiagnostic, MEP_DIAGNOSTICS } from "../../shared/modules/mepData";
 import { getMepPracticeRole } from "../../shared/modules/mepPracticeRoles";
+import { normalizeAiData } from "../../shared/citationSanitization";
 
 // ─── Helper: extract text from LLM result ────────────────────────────────────
 function extractText(result: Awaited<ReturnType<typeof invokeLLM>>): string {
@@ -693,7 +694,7 @@ Return a JSON object with these exact keys:
         eq(mepDailyBriefs.briefDate, today),
       ))
       .limit(1);
-    return (existing?.brief as Record<string, any>) ?? null;
+    return existing?.brief ? normalizeAiData(existing.brief as Record<string, any>) : null;
   }),
 
   getDailyBrief: protectedProcedure.mutation(async ({ ctx }) => {
@@ -709,7 +710,7 @@ Return a JSON object with these exact keys:
         eq(mepDailyBriefs.briefDate, today),
       ));
 
-    if (existing?.brief) return existing.brief;
+    if (existing?.brief) return normalizeAiData(existing.brief as Record<string, any>);
 
     const context = await buildManagerContext(ctx.user.id);
     const userRows = await db.select().from(users).where(eq(users.id, ctx.user.id));
@@ -729,6 +730,8 @@ Generate a Daily Management Brief for ${userName} on ${dayOfWeek}, ${today}.
 
 Manager context:
 ${context}
+
+Return plain reader-facing text only. Do not include citations, footnotes, XML/HTML tags, markdown links, or other markup in any field.
 
 Return a JSON object with these exact keys:
 {
@@ -763,6 +766,8 @@ Return a JSON object with these exact keys:
         commitmentReminder: null,
       };
     }
+
+    brief = normalizeAiData(brief);
 
     await db.insert(mepDailyBriefs).values({
       userId: ctx.user.id,

@@ -31,6 +31,7 @@ vi.mock("@/lib/trpc", () => ({
       getUpcomingEvents: { useQuery: () => ({ data: [] }) },
       generateDailyBrief: { useMutation: () => ({ mutate: vi.fn() }) },
     },
+    aiSuggestionFeedback: { submit: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) } },
   },
 }));
 

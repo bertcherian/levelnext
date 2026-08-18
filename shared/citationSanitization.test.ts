@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeDailyBriefCitations, sanitizeDevelopmentSuggestion, stripCitationMarkup } from "./citationSanitization";
+import { normalizeAiData, normalizeAiText, sanitizeDailyBriefCitations, sanitizeDevelopmentSuggestion, stripCitationMarkup } from "./citationSanitization";
 
 describe("citation sanitisation", () => {
   it("removes literal and HTML-escaped cite wrappers while preserving the recommendation text", () => {
@@ -21,5 +21,10 @@ describe("citation sanitisation", () => {
 
   it("preserves the rest of a daily brief while cleaning its development suggestion", () => {
     expect(sanitizeDailyBriefCitations({ greeting: "Good morning", developmentSuggestion: { topic: "<cite>Focus</cite>", why: "Why", action: "Act" } })).toEqual({ greeting: "Good morning", developmentSuggestion: { topic: "Focus", why: "Why", action: "Act" } });
+  });
+
+  it("normalises markup recursively across all generated-card fields", () => {
+    expect(normalizeAiData({ greeting: "<strong>Good morning</strong>", cards: [{ title: "[source: model] Focus", note: "&lt;cite&gt;Evidence&lt;/cite&gt;" }] })).toEqual({ greeting: "Good morning", cards: [{ title: "Focus", note: "Evidence" }] });
+    expect(normalizeAiText("A\u200B  clear   next step")).toBe("A clear next step");
   });
 });

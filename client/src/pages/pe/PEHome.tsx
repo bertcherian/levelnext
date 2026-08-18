@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Sun, Target, Calendar, Zap, MessageSquare, TrendingUp, CheckCircle2, ArrowRight, Sparkles, Clock, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
-import { sanitizeDevelopmentSuggestion, type DevelopmentSuggestionText } from "@shared/citationSanitization";
+import { normalizeAiData, sanitizeDevelopmentSuggestion, type DevelopmentSuggestionText } from "@shared/citationSanitization";
+import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
 
-export function DevelopmentSuggestionCard({ suggestion }: { suggestion: DevelopmentSuggestionText }) {
+export function DevelopmentSuggestionCard({ suggestion, contentKey }: { suggestion: DevelopmentSuggestionText; contentKey?: string }) {
   const cleanSuggestion = sanitizeDevelopmentSuggestion(suggestion);
   if (!cleanSuggestion) return null;
 
@@ -23,6 +24,12 @@ export function DevelopmentSuggestionCard({ suggestion }: { suggestion: Developm
           <p className="text-sm font-semibold mt-1" style={{ color: "var(--color-ln-navy)" }}>{cleanSuggestion.topic}</p>
           <p className="text-xs mt-1" style={{ color: "oklch(50% 0.02 248.6)" }}>{cleanSuggestion.why}</p>
           <p className="text-sm mt-2" style={{ color: "var(--color-ln-navy)" }}>{cleanSuggestion.action}</p>
+          <AiSuggestionFeedback
+            surface="pe_daily_brief"
+            suggestionKind="development_suggestion"
+            contentKey={contentKey}
+            suggestionText={[cleanSuggestion.topic, cleanSuggestion.why, cleanSuggestion.action].filter(Boolean).join("\n")}
+          />
         </div>
       </div>
     </div>
@@ -65,7 +72,7 @@ export default function PEHome() {
     );
   }
 
-  const brief = briefSnapshot.data;
+  const brief = briefSnapshot.data ? normalizeAiData(briefSnapshot.data) : undefined;
   const hasAssessment = !!summary.data?.latestResult;
   const userName = user?.name?.split(" ")[0] ?? "there";
 
@@ -237,7 +244,7 @@ export default function PEHome() {
 
       {/* Development Suggestion */}
       {brief?.developmentSuggestion && (
-        <DevelopmentSuggestionCard suggestion={brief.developmentSuggestion} />
+        <DevelopmentSuggestionCard suggestion={brief.developmentSuggestion} contentKey={`pe-daily-brief:${new Date().toISOString().slice(0, 10)}`} />
       )}
 
       {/* Reflection Question */}

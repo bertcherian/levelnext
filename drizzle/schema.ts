@@ -30,6 +30,28 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+// ─── AI Suggestion Feedback ───────────────────────────────────────────────────
+// Stores a user-owned snapshot of a flagged AI card so product owners can inspect
+// quality issues without retaining the entire dashboard state.
+export const aiSuggestionFeedback = mysqlTable(
+  "ai_suggestion_feedback",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id),
+    surface: varchar("surface", { length: 100 }).notNull(),
+    contentKey: varchar("contentKey", { length: 160 }),
+    suggestionKind: varchar("suggestionKind", { length: 100 }).notNull(),
+    reason: mysqlEnum("reason", ["malformed", "unhelpful"]).notNull(),
+    contentSnapshot: text("contentSnapshot").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("ai_suggestion_feedback_user_created_idx").on(table.userId, table.createdAt),
+    index("ai_suggestion_feedback_surface_created_idx").on(table.surface, table.createdAt),
+  ],
+);
+export type AiSuggestionFeedback = typeof aiSuggestionFeedback.$inferSelect;
+
 // ─── Tenants (Organisations) ──────────────────────────────────────────────────
 export const tenants = mysqlTable("tenants", {
   id: int("id").autoincrement().primaryKey(),

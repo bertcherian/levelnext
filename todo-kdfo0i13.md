@@ -24,3 +24,13 @@
 - [x] Add regression coverage for citation-markup sanitisation in Professional Effectiveness recommendations.
 - [x] Verify the corrected Professional Effectiveness suggestion UI in the running application.
 - [x] Add a loaded Professional Effectiveness page regression that verifies citation tags never appear in the rendered daily-brief suggestion.
+- [x] Audit all AI-generated dashboard cards and shared response renderers for markup-leak exposure.
+- [x] Apply shared text sanitisation and normalisation to every identified AI-generated dashboard card.
+- [x] Add a lightweight feedback control for malformed or unhelpful AI suggestions with secure persistence.
+- [x] Add regression tests and dashboard verification for sanitisation and suggestion feedback.
+- [x] Add focused Manager and Career dashboard AI-card tests for normalised text and feedback payloads.
+- [x] Visually verify loaded Manager and Career dashboard AI cards with their feedback affordances.
+- [x] Add rendered ManagerHome and CareerAccess tests with populated AI content to verify sanitised text and page-wired feedback payloads.
+- [x] Verify loaded Manager and Career AI cards with visible feedback controls without creating persistent user test data.
+- [x] Capture non-persistent populated-state screenshots of Manager and Career AI cards with visible feedback controls, then remove the verification harness.
+- [x] Verify temporary populated-card overrides are absent from production dashboard code and complete final validation.

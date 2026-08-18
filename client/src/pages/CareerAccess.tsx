@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
@@ -8,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
+import { normalizeAiData, normalizeAiText } from "@shared/citationSanitization";
 import {
   Target, Briefcase, Globe, DollarSign, Heart, Star,
   ChevronRight, ChevronLeft, Sparkles, Building2, TrendingUp,
@@ -174,7 +177,7 @@ type View = "home" | "intake" | "strategy" | "universe" | "pipeline" | "relation
 function WeeklyReportSection() {
   const [report, setReport] = useState<{ narrative: string; generatedAt: string; stats: { totalOpps: number; activeOpps: number; activatedPaths: number; highValueContacts: number; scoreChange: number | null } } | null>(null);
   const generateReport = trpc.careerAccess.generateWeeklyReport.useMutation({
-    onSuccess: (data) => setReport({ ...data, narrative: String(data.narrative ?? "") }),
+    onSuccess: (data) => setReport({ ...data, narrative: normalizeAiText(data.narrative) }),
     onError: (e) => toast.error(e.message),
   });
   return (
@@ -216,6 +219,7 @@ function WeeklyReportSection() {
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-4">
             <p className="text-sm text-gray-700 leading-relaxed">{report.narrative}</p>
+            <AiSuggestionFeedback surface="career_weekly_report" suggestionKind="weekly_report" contentKey={`career-weekly-report:${report.generatedAt}`} suggestionText={report.narrative} />
           </div>
           <p className="text-[10px] text-gray-400 text-right">Generated {new Date(report.generatedAt).toLocaleString()}</p>
         </div>
@@ -456,7 +460,8 @@ export default function CareerAccess() {
 
           {/* Chief of Staff Daily Briefing */}
           {(() => {
-            const brief = briefingData?.brief as Record<string, unknown> | null ?? null;
+            const rawBrief = briefingData?.brief as Record<string, unknown> | null ?? null;
+            const brief = rawBrief ? normalizeAiData(rawBrief) : null;
             const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
             return (
               <div className="mb-6 rounded-2xl overflow-hidden" style={{ background: "var(--color-ln-navy)" }}>
@@ -466,15 +471,18 @@ export default function CareerAccess() {
                     <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--color-ln-gold)" }}>AI Chief of Staff</span>
                     <span className="text-xs" style={{ color: "oklch(60% 0.02 248.6)" }}>· {today}</span>
                   </div>
-                  <button
-                    onClick={() => generateBriefingMutation.mutate()}
-                    disabled={generateBriefingMutation.isPending}
-                    className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-semibold transition-all"
-                    style={{ background: "oklch(from white l c h / 0.1)", color: "white" }}
-                  >
-                    {generateBriefingMutation.isPending ? <RefreshCw className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                    {brief ? "Refresh" : "Generate Briefing"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {brief && <AiSuggestionFeedback surface="career_chief_of_staff" suggestionKind="chief_of_staff_brief" contentKey={`career-chief-of-staff:${today}`} suggestionText={JSON.stringify(brief)} dark />}
+                    <button
+                      onClick={() => generateBriefingMutation.mutate()}
+                      disabled={generateBriefingMutation.isPending}
+                      className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-semibold transition-all"
+                      style={{ background: "oklch(from white l c h / 0.1)", color: "white" }}
+                    >
+                      {generateBriefingMutation.isPending ? <RefreshCw className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                      {brief ? "Refresh" : "Generate Briefing"}
+                    </button>
+                  </div>
                 </div>
                 {!brief ? (
                   <div className="px-5 py-6 text-center">
@@ -2494,4 +2502,3 @@ export default function CareerAccess() {
     </PlatformLayout>
   );
 }
-

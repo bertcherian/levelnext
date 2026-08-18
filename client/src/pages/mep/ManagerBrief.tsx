@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { LLMProcessingSkeleton } from "@/components/SkeletonLoader";
+import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
+import { normalizeAiData } from "@shared/citationSanitization";
 
 // ── Type matching the server response ─────────────────────────────────────────
 interface DailyBrief {
@@ -69,7 +71,8 @@ export default function ManagerBrief() {
   };
 
   // Normalise: support both old and new field names
-  const b: DailyBrief | null = briefData ?? (snapshot as DailyBrief | null) ?? null;
+  const rawBrief: DailyBrief | null = briefData ?? (snapshot as DailyBrief | null) ?? null;
+  const b: DailyBrief | null = rawBrief ? normalizeAiData(rawBrief) : null;
 
   // Derive display values from either schema
   const greeting = b?.greeting ?? b?.openingMessage;
@@ -271,6 +274,7 @@ export default function ManagerBrief() {
                   <CheckCircle2 size={12} className="flex-shrink-0 mt-0.5" style={{ color: "#34d399" }} />
                   <p className="text-xs" style={{ color: "oklch(35% 0.02 248.6)" }}>{learningRec.action}</p>
                 </div>
+                <AiSuggestionFeedback surface="manager_daily_brief" suggestionKind="development_suggestion" contentKey={`manager-daily-brief:${new Date().toISOString().slice(0, 10)}`} suggestionText={[learningRec.topic, learningRec.why, learningRec.action].join("\n")} />
               </BriefSection>
             )}
 

@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
 import * as React from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/trpc", () => ({
+  trpc: { aiSuggestionFeedback: { submit: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) } } },
+}));
+
 import { DevelopmentSuggestionCard } from "./PEHome";
 
 describe("Professional Effectiveness development suggestion", () => {

@@ -1,8 +1,11 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import * as React from "react";
 import { useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
+import { normalizeAiData } from "@shared/citationSanitization";
 import {
   LayoutGrid,
   MessageSquare,
@@ -92,6 +95,7 @@ export default function ManagerHome() {
     onSuccess: () => { refetchBrief(); },
   });
   const briefLoading = generateBriefMutation.isPending;
+  const safeTodayBrief = normalizeAiData(todayBrief ?? undefined);
 
   // Auto-generate the daily brief silently on first visit if not yet generated today
   useEffect(() => {
@@ -229,15 +233,16 @@ export default function ManagerHome() {
             ) : (
               <>
                 <p className="text-sm font-medium leading-relaxed" style={{ color: "#ffffff" }}>
-                  {todayBrief?.priorityFocus
-                    ? String(todayBrief.priorityFocus)
+                  {safeTodayBrief?.priorityFocus
+                    ? String(safeTodayBrief.priorityFocus)
                     : "Have one meaningful coaching conversation with a team member today."}
                 </p>
-                {todayBrief?.managementChallenge && (
+                {safeTodayBrief?.managementChallenge && (
                   <p className="text-xs mt-2 leading-relaxed" style={{ color: "oklch(70% 0.02 248.6)" }}>
-                    Challenge: {String(todayBrief.managementChallenge)}
+                    Challenge: {String(safeTodayBrief.managementChallenge)}
                   </p>
                 )}
+                {safeTodayBrief?.priorityFocus && <AiSuggestionFeedback surface="manager_daily_brief" suggestionKind="daily_focus" contentKey={`manager-daily-brief:${new Date().toISOString().slice(0, 10)}`} suggestionText={[safeTodayBrief.priorityFocus, safeTodayBrief.managementChallenge].filter(Boolean).join("\n")} dark />}
               </>
             )}
           </div>

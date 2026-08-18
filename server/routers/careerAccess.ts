@@ -4,6 +4,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { invokeLLM, safeJsonParse, extractJsonObject, extractJsonArray } from "../_core/llm";
+import { normalizeAiData, normalizeAiText } from "../../shared/citationSanitization";
 import {
   careerProfiles,
   careerStrategyStatements,
@@ -831,7 +832,7 @@ Key achievements: ${profile?.keyAchievements ? "Documented" : "Not documented"}`
         eq(careerAccessBriefings.briefDate, today)
       ))
       .limit(1);
-    return briefing ?? null;
+    return briefing ? { ...briefing, brief: normalizeAiData(briefing.brief) } : null;
   }),
 
   generateChiefOfStaffBriefing: protectedProcedure.mutation(async ({ ctx }) => {
@@ -880,7 +881,7 @@ Key achievements: ${profile?.keyAchievements ? "Documented" : "Not documented"}`
 
     const systemPrompt = `You are the AI Chief of Staff for an executive's career transition. Generate a concise, energising daily briefing.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON with plain reader-facing text. Do not include citations, footnotes, XML/HTML tags, markdown links, or other markup in any field:
 {
   "greeting": "Good morning [name]. One energising sentence about today.",
   "pipelineHealth": "2-sentence assessment of the opportunity pipeline health and momentum.",
@@ -921,7 +922,7 @@ Today's date: ${today}`;
     if (!rawText || typeof rawText !== "string") throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Briefing generation failed." });
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Invalid briefing response." });
-    const briefData = safeJsonParse(jsonMatch[0], null, "careerAccess.generateChiefOfStaffBriefing");
+    const briefData = normalizeAiData(safeJsonParse(jsonMatch[0], null, "careerAccess.generateChiefOfStaffBriefing"));
 
     await db.insert(careerAccessBriefings).values({
       userId: ctx.user.id,
@@ -935,10 +936,11 @@ Today's date: ${today}`;
   getBriefingHistory: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-    return db.select().from(careerAccessBriefings)
+    const rows = await db.select().from(careerAccessBriefings)
       .where(eq(careerAccessBriefings.userId, ctx.user.id))
       .orderBy(desc(careerAccessBriefings.briefDate))
       .limit(30);
+    return rows.map((row) => ({ ...row, brief: normalizeAiData(row.brief) }));
   }),
 
   // ── Access Path Activation Log ───────────────────────────────────────────────
@@ -1035,7 +1037,7 @@ Tone: direct, confident, strategic. Write as if briefing the executive themselve
       model: "claude-haiku-4-5",
       maxTokens: 400,
     });
-    const narrative = response.choices[0]?.message?.content ?? "Unable to generate report.";
+    const narrative = normalizeAiText(response.choices[0]?.message?.content ?? "Unable to generate report.");
     return {
       narrative,
       generatedAt: new Date().toISOString(),
