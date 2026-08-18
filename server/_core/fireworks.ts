@@ -1,21 +1,11 @@
-import { ENV } from "./env";
-
-const FIREWORKS_CHAT_COMPLETIONS_URL =
-  "https://api.fireworks.ai/inference/v1/chat/completions";
-
 export const QWEN_AB_MODEL_ID = "accounts/fireworks/models/qwen3-30b-a3b";
 
-type FireworksChatResponse = {
-  choices?: Array<{
-    message?: { content?: string | null };
-    finish_reason?: string | null;
-  }>;
-  usage?: {
-    prompt_tokens?: number;
-    completion_tokens?: number;
-    total_tokens?: number;
-  };
-};
+/**
+ * This route is deliberately disabled. Unlike the active OpenRouter path, it
+ * does not carry LevelNext's per-request zero-retention/no-collection policy.
+ */
+export const FIREWORKS_QWEN_ROUTE_DISABLED_REASON =
+  "Fireworks Qwen inference is disabled by LevelNext's AI data-use policy. Use the privacy-enforced OpenRouter route instead.";
 
 export type QwenComparisonResponse = {
   model: typeof QWEN_AB_MODEL_ID;
@@ -28,56 +18,16 @@ export type QwenComparisonResponse = {
   };
 };
 
-export async function invokeQwenComparison(input: {
+/**
+ * Kept only for backwards-compatible imports. It fails before making any
+ * network request, preventing accidental transmission of user content.
+ */
+export async function invokeQwenComparison(_input: {
   systemPrompt: string;
   userPrompt: string;
   maxTokens: number;
   temperature: number;
   timeoutMs?: number;
 }): Promise<QwenComparisonResponse> {
-  if (!ENV.fireworksApiKey) {
-    throw new Error("FIREWORKS_API_KEY is not configured");
-  }
-
-  const response = await fetch(FIREWORKS_CHAT_COMPLETIONS_URL, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${ENV.fireworksApiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: QWEN_AB_MODEL_ID,
-      messages: [
-        { role: "system", content: input.systemPrompt },
-        { role: "user", content: input.userPrompt },
-      ],
-      max_tokens: input.maxTokens,
-      temperature: input.temperature,
-    }),
-    signal: AbortSignal.timeout(input.timeoutMs ?? 90_000),
-  });
-
-  const payload = (await response.json().catch(() => null)) as FireworksChatResponse | null;
-  if (!response.ok) {
-    throw new Error(
-      `Qwen inference failed: ${response.status} ${response.statusText}`
-    );
-  }
-
-  const choice = payload?.choices?.[0];
-  const content = choice?.message?.content?.trim();
-  if (!content) {
-    throw new Error("Qwen inference returned no text content");
-  }
-
-  return {
-    model: QWEN_AB_MODEL_ID,
-    content,
-    finishReason: choice?.finish_reason ?? null,
-    usage: {
-      promptTokens: payload?.usage?.prompt_tokens ?? null,
-      completionTokens: payload?.usage?.completion_tokens ?? null,
-      totalTokens: payload?.usage?.total_tokens ?? null,
-    },
-  };
+  throw new Error(FIREWORKS_QWEN_ROUTE_DISABLED_REASON);
 }

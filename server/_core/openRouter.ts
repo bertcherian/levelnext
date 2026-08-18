@@ -5,6 +5,16 @@ const OPENROUTER_CHAT_COMPLETIONS_URL =
 
 export const QWEN_AB_MODEL_ID = "qwen/qwen3-30b-a3b";
 
+/**
+ * Privacy is a hard requirement for LevelNext user-content comparisons.
+ * OpenRouter will reject the request rather than route it to an endpoint that
+ * may collect, retain, or train on submitted prompts and completions.
+ */
+export const OPENROUTER_PRIVACY_PROVIDER_PREFERENCES = {
+  data_collection: "deny" as const,
+  zdr: true,
+};
+
 type OpenRouterChatResponse = {
   choices?: Array<{
     message?: { content?: string | null };
@@ -58,6 +68,7 @@ export async function invokeQwenComparison(input: {
       ],
       max_tokens: input.maxTokens,
       temperature: input.temperature,
+      provider: OPENROUTER_PRIVACY_PROVIDER_PREFERENCES,
     }),
     signal: AbortSignal.timeout(input.timeoutMs ?? 90_000),
   });

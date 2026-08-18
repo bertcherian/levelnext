@@ -34,3 +34,7 @@
 - [x] Verify loaded Manager and Career AI cards with visible feedback controls without creating persistent user test data.
 - [x] Capture non-persistent populated-state screenshots of Manager and Career AI cards with visible feedback controls, then remove the verification harness.
 - [x] Verify temporary populated-card overrides are absent from production dashboard code and complete final validation.
+- [x] Inventory all LevelNext AI providers and user-content request paths.
+- [x] Verify provider training, retention, and no-collection controls from current primary documentation.
+- [x] Enforce no-training/no-collection controls for applicable AI request routes.
+- [x] Add privacy-control regression tests and document the resulting provider boundaries.
