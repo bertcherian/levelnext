@@ -8,7 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import { BarChart3, CheckCircle2, Clock3, Copy, Gauge, Loader2, Scale, ShieldCheck, Sparkles } from "lucide-react";
+import { reviewedEvaluationsToCsv } from "@/lib/modelEvaluationCsv";
+import { MODEL_EVALUATION_TEMPLATES } from "@/lib/modelEvaluationTemplates";
+import { BarChart3, CheckCircle2, Clock3, Copy, Download, FileText, Gauge, Loader2, Scale, ShieldCheck, Sparkles, Timer, TrendingUp, Wallet } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -40,6 +42,14 @@ function formatLatency(latencyMs: number | null) {
 
 function formatTokens(tokens: number | null | undefined) {
   return typeof tokens === "number" ? tokens.toLocaleString() : "—";
+}
+
+function formatUsd(value: number | null | undefined) {
+  return typeof value === "number" ? `$${value.toFixed(value < 0.01 ? 4 : 2)}` : "—";
+}
+
+function formatPercent(value: number | null | undefined) {
+  return typeof value === "number" ? `${Math.round(value * 100)}%` : "—";
 }
 
 function EvaluationResponse({
@@ -104,8 +114,11 @@ export default function AdminModelEvaluator() {
   const [usefulness, setUsefulness] = useState("4");
   const [leadershipTone, setLeadershipTone] = useState("4");
   const [reviewerNote, setReviewerNote] = useState("");
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
 
   const { data: evaluations = [], isLoading: isLoadingHistory } = trpc.modelEvaluation.list.useQuery({ limit: 12 }, { enabled: user?.role === "admin" });
+  const { data: dashboard, isLoading: isLoadingDashboard, isError: isDashboardError, refetch: refetchDashboard } = trpc.modelEvaluation.dashboard.useQuery(undefined, { enabled: user?.role === "admin" });
+  const { data: reviewedExports = [], isLoading: isLoadingExport, isError: isExportError, refetch: refetchReviewedExports } = trpc.modelEvaluation.exportReviewed.useQuery(undefined, { enabled: user?.role === "admin" });
   const selectedEvaluation = useMemo(
     () => evaluations.find((evaluation) => evaluation.id === selectedId) ?? evaluations[0] ?? null,
     [evaluations, selectedId]
@@ -167,6 +180,34 @@ export default function AdminModelEvaluator() {
     });
   };
 
+  const applyTemplate = (templateId: string) => {
+    const template = MODEL_EVALUATION_TEMPLATES.find((candidate) => candidate.id === templateId);
+    if (!template) return;
+    setActiveTemplateId(template.id);
+    setSystemPrompt(template.systemPrompt);
+    setUserPrompt(template.userPrompt);
+    setMaxTokens(String(template.maxTokens));
+    setTemperature(String(template.temperature));
+    toast.success(`${template.title} template applied`);
+  };
+
+  const exportReviewedHistory = () => {
+    if (!reviewedExports.length) {
+      toast.error("There are no reviewed evaluations to export yet.");
+      return;
+    }
+    const blob = new Blob([reviewedEvaluationsToCsv(reviewedExports)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `levelnext-model-evaluations-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`${reviewedExports.length} reviewed evaluation${reviewedExports.length === 1 ? "" : "s"} exported`);
+  };
+
   if (loading) {
     return <PlatformLayout><div className="mx-auto max-w-7xl px-4 py-10"><Skeleton className="h-96 rounded-2xl" /></div></PlatformLayout>;
   }
@@ -200,7 +241,19 @@ export default function AdminModelEvaluator() {
           </div>
         </header>
 
+        <section className="mb-7 rounded-2xl border p-5" style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}>
+          <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--color-ln-navy)" }}><TrendingUp size={14} /> Evidence dashboard</div><h2 className="mt-1 text-lg font-semibold" style={{ color: "var(--color-ln-navy)" }}>Model selection signals</h2><p className="mt-1 text-xs text-muted-foreground">Based on saved comparisons and only reviewer-submitted decisions.</p></div><span className="text-xs text-muted-foreground">{dashboard?.reviewedEvaluations ?? 0} reviewed of {dashboard?.totalEvaluations ?? 0} total</span></div>
+          {isDashboardError ? <div className="flex flex-col items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center"><p className="text-sm text-red-800"><strong>Unable to load evaluation metrics.</strong> Please retry before making a model-routing decision.</p><Button type="button" variant="outline" size="sm" onClick={() => refetchDashboard()} className="border-red-200 bg-white text-red-800 hover:bg-red-100">Retry metrics</Button></div> : isLoadingDashboard ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-40 rounded-xl" />)}</div> : <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-border)" }}><p className="text-xs font-medium text-muted-foreground">Decisive win rate</p><div className="mt-3 flex items-end justify-between"><div><p className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>{formatPercent(dashboard?.preference.claudeWinRate)}</p><p className="text-xs text-muted-foreground">Claude Haiku</p></div><div className="text-right"><p className="text-2xl font-bold" style={{ color: "oklch(0.56 0.15 245)" }}>{formatPercent(dashboard?.preference.qwenWinRate)}</p><p className="text-xs text-muted-foreground">Qwen</p></div></div><div className="mt-3 grid h-2 grid-cols-2 overflow-hidden rounded-full bg-slate-100"><div style={{ width: `${(dashboard?.preference.claudeWinRate ?? 0) * 100}%`, background: "var(--color-ln-yellow)" }} /><div className="ml-auto" style={{ width: `${(dashboard?.preference.qwenWinRate ?? 0) * 100}%`, background: "oklch(0.56 0.15 245)" }} /></div><p className="mt-2 text-xs text-muted-foreground">{dashboard?.preference.ties ?? 0} ties excluded</p></div>
+            <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-border)" }}><p className="text-xs font-medium text-muted-foreground">Reviewer quality score</p><p className="mt-3 text-3xl font-bold" style={{ color: "var(--color-ln-navy)" }}>{dashboard?.quality.averageScore ? `${dashboard.quality.averageScore.toFixed(1)} / 5` : "—"}</p><p className="mt-3 text-xs text-muted-foreground">Average of clarity, usefulness, and leadership tone across {dashboard?.quality.scoredReviews ?? 0} scored reviews.</p></div>
+            <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-border)" }}><div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Timer size={14} /> Average latency</div><div className="mt-3 flex justify-between gap-2"><div><p className="text-xl font-bold" style={{ color: "var(--color-ln-navy)" }}>{formatLatency(dashboard?.latency.claudeAverageMs ?? null)}</p><p className="text-xs text-muted-foreground">Claude</p></div><div><p className="text-xl font-bold" style={{ color: "oklch(0.56 0.15 245)" }}>{formatLatency(dashboard?.latency.qwenAverageMs ?? null)}</p><p className="text-xs text-muted-foreground">Qwen</p></div></div><p className="mt-3 text-xs text-muted-foreground">Measured from completed and partial runs with recorded latency.</p></div>
+            <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-border)" }}><div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Wallet size={14} /> Estimated token cost</div><div className="mt-3 flex justify-between gap-2"><div><p className="text-xl font-bold" style={{ color: "var(--color-ln-navy)" }}>{formatUsd(dashboard?.cost.claudeEstimatedUsd)}</p><p className="text-xs text-muted-foreground">Claude</p></div><div><p className="text-xl font-bold" style={{ color: "oklch(0.56 0.15 245)" }}>{formatUsd(dashboard?.cost.qwenEstimatedUsd)}</p><p className="text-xs text-muted-foreground">Qwen</p></div></div><p className="mt-3 text-xs text-muted-foreground">Qwen estimated savings: <strong>{formatUsd(dashboard?.cost.qwenEstimatedSavingsUsd)}</strong></p></div>
+          </div>}
+          <p className="mt-4 text-[11px] leading-4 text-muted-foreground">Cost estimates apply public list prices to recorded input/output tokens: Claude Haiku 4.5 at $1/$5 and OpenRouter Qwen3-30B-A3B at $0.12/$0.50 per million input/output tokens. Actual provider invoices, discounts, and platform routing may differ.</p>
+        </section>
+
         <section className="rounded-2xl border p-5 shadow-sm" style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}>
+          <div className="mb-5"><div className="mb-2 flex items-center gap-2"><FileText size={15} style={{ color: "var(--color-ln-yellow)" }} /><h2 className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Start with a use-case template</h2></div><div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">{MODEL_EVALUATION_TEMPLATES.map((template) => <button type="button" key={template.id} onClick={() => applyTemplate(template.id)} className={cn("rounded-xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm", activeTemplateId === template.id && "ring-2 ring-offset-1")} style={{ borderColor: activeTemplateId === template.id ? "var(--color-ln-yellow)" : "var(--color-border)", background: activeTemplateId === template.id ? "oklch(from var(--color-ln-yellow) l c h / .10)" : "var(--color-background)", ...(activeTemplateId === template.id ? { "--tw-ring-color": "var(--color-ln-yellow)" } as React.CSSProperties : {}) }}><span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{template.category}</span><span className="mt-1 block text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>{template.title}</span><span className="mt-1 block text-xs leading-4 text-muted-foreground">{template.description}</span></button>)}</div></div>
           <div className="grid gap-5 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
             <div className="space-y-2">
               <Label htmlFor="evaluator-system">System prompt</Label>
@@ -246,7 +299,7 @@ export default function AdminModelEvaluator() {
         )}
 
         <section className="mt-8">
-          <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold" style={{ color: "var(--color-ln-navy)" }}>Recent evaluations</h2><span className="text-xs text-muted-foreground">Last 12 saved comparisons</span></div>
+          <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><h2 className="font-semibold" style={{ color: "var(--color-ln-navy)" }}>Recent evaluations</h2><span className="text-xs text-muted-foreground">Last 12 saved comparisons</span>{isExportError && <span className="mt-1 block text-xs text-red-700">Unable to load reviewed export data. Retry to download ratings.</span>}</div><Button type="button" variant="outline" size="sm" onClick={isExportError ? () => refetchReviewedExports() : exportReviewedHistory} disabled={isLoadingExport || (!isExportError && reviewedExports.length === 0)}><Download className="mr-2 size-4" />{isExportError ? "Retry export data" : isLoadingExport ? "Preparing export…" : "Export reviewed CSV"}</Button></div>
           {isLoadingHistory ? <Skeleton className="h-32 rounded-2xl" /> : evaluations.length === 0 ? <p className="rounded-xl border p-6 text-sm text-muted-foreground" style={{ borderColor: "var(--color-border)" }}>No comparisons saved yet.</p> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{evaluations.map((evaluation) => <button key={evaluation.id} type="button" onClick={() => setSelectedId(evaluation.id)} className={cn("rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md", selectedEvaluation?.id === evaluation.id && "ring-2 ring-offset-2")} style={{ borderColor: "var(--color-border)", background: "var(--color-card)", ...(selectedEvaluation?.id === evaluation.id ? { "--tw-ring-color": "var(--color-ln-yellow)" } as React.CSSProperties : {}) }}><div className="flex items-center justify-between gap-3"><Badge variant="outline" className="capitalize">{evaluation.status}</Badge>{evaluation.preferredModel && <span className="text-xs font-semibold capitalize" style={{ color: "var(--color-ln-navy)" }}>{evaluation.preferredModel} preferred</span>}</div><p className="mt-3 line-clamp-2 text-sm font-medium" style={{ color: "var(--color-ln-charcoal)" }}>{evaluation.userPrompt}</p><p className="mt-2 text-xs text-muted-foreground">{new Date(evaluation.createdAt).toLocaleString()}</p></button>)}</div>}
         </section>
       </main>

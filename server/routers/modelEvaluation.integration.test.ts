@@ -56,6 +56,15 @@ describe("model evaluator end-to-end workflow", () => {
 
       const recent = await caller.list({ limit: 5 });
       expect(recent.some((record) => record.id === evaluation.id)).toBe(true);
+
+      const dashboard = await caller.dashboard();
+      expect(dashboard.reviewedEvaluations).toBeGreaterThan(0);
+      expect(dashboard.preference.ties).toBeGreaterThan(0);
+      expect(dashboard.cost.claudeEstimatedUsd).toBeGreaterThanOrEqual(0);
+      expect(dashboard.cost.qwenEstimatedUsd).toBeGreaterThanOrEqual(0);
+
+      const reviewedHistory = await caller.exportReviewed();
+      expect(reviewedHistory.some((record) => record.id === evaluation.id)).toBe(true);
     },
     120_000
   );

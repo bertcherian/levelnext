@@ -41,3 +41,15 @@ Sources: https://fireworks.ai/models/fireworks/qwen3-30b-a3b and https://www.tog
 OpenRouter exposes the exact serverless model identifier `qwen/qwen3-30b-a3b` behind its OpenAI-compatible endpoint. A live credential check and a minimal exact-model completion both succeeded after appending Qwen’s documented `/no_think` instruction, which avoids consuming short fast-path evaluations with reasoning tokens. The LevelNext admin model-evaluator page was also rendered successfully with its side-by-side prompt form, navigation link, privacy notice, reviewer controls, and saved-evaluation section.
 
 Source: https://openrouter.ai/qwen/qwen3-30b-a3b
+
+## Evaluator cost-comparison assumptions
+
+The Model Evaluator dashboard labels cost figures as estimates rather than billing totals. It applies the public list prices of **$1 input / $5 output per million tokens** for Claude Haiku 4.5 and **$0.12 input / $0.50 output per million tokens** for OpenRouter's Qwen3-30B-A3B to the token usage stored with each evaluation. Discounts, provider routing, currency effects, cached tokens, and Manus platform charges are explicitly excluded from these figures.
+
+The enhanced admin page was rendered after implementation, showing the evidence dashboard, four coaching/report use-case templates, shared prompt controls, and the protected evaluator workflow.
+
+Sources: https://platform.claude.com/docs/en/about-claude/pricing and https://openrouter.ai/qwen/qwen3-30b-a3b
+
+## Responsive evaluator verification
+
+The final evaluator layout was checked in both desktop and narrow mobile viewports. The evidence dashboard retains its metric cards, the four templates stack into readable touch targets, prompt controls remain accessible, and the reviewed-history export control remains visible beneath the evaluation workflow.

@@ -13,3 +13,10 @@
 - [x] Add automated tests and verify the A/B comparison feature in the running application.
 - [x] Exercise the real admin comparison procedure through both provider calls, reviewer save, and persisted-record retrieval with cleanup.
 - [x] Add a UI regression case for a saved partial comparison so model-specific errors remain visible beside the successful response.
+- [x] Add reusable coaching and report prompt templates to the Model Evaluator.
+- [x] Add aggregate win-rate, quality-score, latency, and estimated-cost metrics to the evaluator dashboard.
+- [x] Add an admin-only CSV export of reviewed evaluation history and ratings.
+- [x] Add automated tests and responsive verification for templates, aggregate metrics, and CSV export.
+- [x] Add dashboard query failure messaging with an in-context retry action.
+- [x] Distinguish reviewed-history export failures from an empty reviewed-history state.
+- [x] Add UI regression coverage for dashboard and CSV-export error handling.

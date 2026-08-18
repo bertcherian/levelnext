@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import {
   modelEvaluations,
@@ -10,6 +10,7 @@ import { invokeLLM, type InvokeResult } from "../_core/llm";
 import { invokeQwenComparison, QWEN_AB_MODEL_ID } from "../_core/openRouter";
 import { getDb } from "../db";
 import { adminProcedure, router } from "../_core/trpc";
+import { buildModelEvaluationDashboard } from "../modelEvaluationAnalytics";
 
 const CLAUDE_AB_MODEL_ID = "claude-haiku-4-5";
 
@@ -171,6 +172,22 @@ export const modelEvaluationRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
       return db.select().from(modelEvaluations).orderBy(desc(modelEvaluations.createdAt)).limit(input?.limit ?? 12);
     }),
+
+  dashboard: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const evaluations = await db.select().from(modelEvaluations);
+    return buildModelEvaluationDashboard(evaluations);
+  }),
+
+  exportReviewed: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    return db.select().from(modelEvaluations)
+      .where(isNotNull(modelEvaluations.reviewedAt))
+      .orderBy(desc(modelEvaluations.reviewedAt))
+      .limit(10_000);
+  }),
 
   review: adminProcedure.input(reviewInput).mutation(async ({ ctx, input }) => {
     const db = await getDb();
