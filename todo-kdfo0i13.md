@@ -41,3 +41,6 @@
 - [x] Verify the Professional Effectiveness login/access URL and approved LevelNext logo asset.
 - [x] Create a portrait-A4 Professional Effectiveness new-user login guide with the URL prominently displayed.
 - [x] Compile and visually verify the final A4 guide before delivery.
+- [x] Prevent unauthenticated visitors to Professional Effectiveness from seeing dashboard UI or triggering Daily Brief generation.
+- [x] Redirect unauthenticated Professional Effectiveness visitors directly into the login flow with a safe return destination.
+- [x] Add regression coverage and verify the corrected Professional Effectiveness unauthenticated journey.

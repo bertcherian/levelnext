@@ -19,7 +19,7 @@ const dailyBrief = {
 };
 
 vi.mock("@/_core/hooks/useAuth", () => ({
-  useAuth: () => ({ user: { name: "Bert Cherian" } }),
+  useAuth: () => ({ user: { name: "Bert Cherian" }, loading: false, isAuthenticated: true }),
 }));
 
 vi.mock("@/lib/trpc", () => ({

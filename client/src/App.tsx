@@ -20,6 +20,7 @@ import PWAInstallBanner from "./components/PWAInstallBanner";
 import { lazy, Suspense, useEffect } from "react";
 import { useAuth } from "./_core/hooks/useAuth";
 import { trpc } from "./lib/trpc";
+import PEAccessGate from "./components/PEAccessGate";
 
 const LS_KEY = "levelnext_join_product";
 
@@ -285,13 +286,13 @@ function Router() {
       <Route path="/launch/history" component={LaunchMissionHistory} />
       <Route path="/launch/challenges" component={LaunchWeeklyChallenges} />
       {/* Professional Effectiveness Intelligence */}
-      <Route path="/pe/onboarding" component={PEOnboarding} />
-      <Route path="/pe">{() => <PELayout><PEHome /></PELayout>}</Route>
-      <Route path="/pe/assessment">{() => <PELayout><PEAssessment /></PELayout>}</Route>
-      <Route path="/pe/coach">{() => <PELayout><PECoach /></PELayout>}</Route>
-      <Route path="/pe/practice">{() => <PELayout><PEPractice /></PELayout>}</Route>
-      <Route path="/pe/progress">{() => <PELayout><PEProgress /></PELayout>}</Route>
-      <Route path="/pe/settings">{() => <PELayout><PESettings /></PELayout>}</Route>
+      <Route path="/pe/onboarding">{() => <PEAccessGate><PEOnboarding /></PEAccessGate>}</Route>
+      <Route path="/pe">{() => <PEAccessGate><PELayout><PEHome /></PELayout></PEAccessGate>}</Route>
+      <Route path="/pe/assessment">{() => <PEAccessGate><PELayout><PEAssessment /></PELayout></PEAccessGate>}</Route>
+      <Route path="/pe/coach">{() => <PEAccessGate><PELayout><PECoach /></PELayout></PEAccessGate>}</Route>
+      <Route path="/pe/practice">{() => <PEAccessGate><PELayout><PEPractice /></PELayout></PEAccessGate>}</Route>
+      <Route path="/pe/progress">{() => <PEAccessGate><PELayout><PEProgress /></PELayout></PEAccessGate>}</Route>
+      <Route path="/pe/settings">{() => <PEAccessGate><PELayout><PESettings /></PELayout></PEAccessGate>}</Route>
 
       {/* Early Career Intelligence — distinct from Launch and Executive Communication Intelligence */}
       <Route path="/early-career">{() => <EarlyCareerLayout><EarlyCareerHome /></EarlyCareerLayout>}</Route>

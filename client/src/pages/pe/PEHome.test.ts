@@ -24,3 +24,12 @@ describe("Professional Effectiveness brief refresh", () => {
     expect(peHomeSource).toContain('toast.error("Could not refresh your daily brief. Please try again.");');
   });
 });
+
+describe("Professional Effectiveness protected dashboard requests", () => {
+  it("gates private dashboard queries and Daily Brief generation behind authentication", () => {
+    expect(peHomeSource).toContain('useQuery(undefined, { enabled: isAuthenticated })');
+    expect(peHomeSource).toContain('useQuery({ days: 7 }, { enabled: isAuthenticated })');
+    expect(peHomeSource).toContain('if (isAuthenticated && !briefSnapshot.data');
+    expect(peHomeSource).toContain('if (authLoading || !isAuthenticated)');
+  });
+});

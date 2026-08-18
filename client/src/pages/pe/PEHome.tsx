@@ -37,13 +37,13 @@ export function DevelopmentSuggestionCard({ suggestion, contentKey }: { suggesti
 }
 
 export default function PEHome() {
-  const { user } = useAuth();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [briefGenerating, setBriefGenerating] = useState(false);
   const utils = trpc.useUtils();
 
-  const summary = trpc.pei.getDashboardSummary.useQuery();
-  const briefSnapshot = trpc.pei.getTodayBriefSnapshot.useQuery();
-  const upcomingEvents = trpc.pei.getUpcomingEvents.useQuery({ days: 7 });
+  const summary = trpc.pei.getDashboardSummary.useQuery(undefined, { enabled: isAuthenticated });
+  const briefSnapshot = trpc.pei.getTodayBriefSnapshot.useQuery(undefined, { enabled: isAuthenticated });
+  const upcomingEvents = trpc.pei.getUpcomingEvents.useQuery({ days: 7 }, { enabled: isAuthenticated });
   const generateBrief = trpc.pei.generateDailyBrief.useMutation({
     onSuccess: (data, variables) => {
       utils.pei.getTodayBriefSnapshot.setData(undefined, data);
@@ -58,11 +58,15 @@ export default function PEHome() {
   });
 
   useEffect(() => {
-    if (!briefSnapshot.data && !briefSnapshot.isLoading && !briefGenerating) {
+    if (isAuthenticated && !briefSnapshot.data && !briefSnapshot.isLoading && !briefSnapshot.isError && !briefGenerating) {
       setBriefGenerating(true);
       generateBrief.mutate({ refresh: false });
     }
-  }, [briefSnapshot.data, briefSnapshot.isLoading]);
+  }, [briefSnapshot.data, briefSnapshot.isError, briefSnapshot.isLoading, briefGenerating, generateBrief, isAuthenticated]);
+
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
 
   if (summary.isLoading) {
     return (
