@@ -38,3 +38,6 @@
 - [x] Verify provider training, retention, and no-collection controls from current primary documentation.
 - [x] Enforce no-training/no-collection controls for applicable AI request routes.
 - [x] Add privacy-control regression tests and document the resulting provider boundaries.
+- [x] Verify the Professional Effectiveness login/access URL and approved LevelNext logo asset.
+- [x] Create a portrait-A4 Professional Effectiveness new-user login guide with the URL prominently displayed.
+- [x] Compile and visually verify the final A4 guide before delivery.
