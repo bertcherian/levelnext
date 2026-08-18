@@ -20,3 +20,7 @@
 - [x] Add dashboard query failure messaging with an in-context retry action.
 - [x] Distinguish reviewed-history export failures from an empty reviewed-history state.
 - [x] Add UI regression coverage for dashboard and CSV-export error handling.
+- [x] Remove leaked citation markup from the Professional Effectiveness Today’s Development Suggestion display.
+- [x] Add regression coverage for citation-markup sanitisation in Professional Effectiveness recommendations.
+- [x] Verify the corrected Professional Effectiveness suggestion UI in the running application.
+- [x] Add a loaded Professional Effectiveness page regression that verifies citation tags never appear in the rendered daily-brief suggestion.

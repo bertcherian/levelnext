@@ -63,7 +63,7 @@ describe("PEI daily brief refresh", () => {
       dayTheme: "Focused execution",
       priorityFocus: "Complete the highest-impact task.",
       calendarItems: [],
-      developmentSuggestion: { topic: "Focus", why: "It matters", action: "Block time" },
+      developmentSuggestion: { topic: '<cite index="10-1">Focus</cite>', why: '<cite index="1-24">It matters</cite>', action: "Block time" },
       reflectionQuestion: "What can wait?",
       commitmentReminder: null,
       coachingNudge: "Start now.",
@@ -102,10 +102,14 @@ describe("PEI daily brief refresh", () => {
 
     const result = await peiRouter.createCaller(createAuthContext()).generateDailyBrief({ refresh: true });
 
-    expect(result).toEqual(refreshedBrief);
+    const expectedBrief = {
+      ...refreshedBrief,
+      developmentSuggestion: { topic: "Focus", why: "It matters", action: "Block time" },
+    };
+    expect(result).toEqual(expectedBrief);
     expect(invokeLLM).toHaveBeenCalledOnce();
     expect(update).toHaveBeenCalledWith(peDailyBriefs);
-    expect(updateSet).toHaveBeenCalledWith(expect.objectContaining({ brief: refreshedBrief }));
+    expect(updateSet).toHaveBeenCalledWith(expect.objectContaining({ brief: expectedBrief }));
     expect(updateWhere).toHaveBeenCalledOnce();
     expect(mockDb.insert).not.toHaveBeenCalled();
   });

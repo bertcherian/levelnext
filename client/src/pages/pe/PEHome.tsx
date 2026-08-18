@@ -1,10 +1,33 @@
 import { useEffect, useState } from "react";
+import * as React from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Sun, Target, Calendar, Zap, MessageSquare, TrendingUp, CheckCircle2, ArrowRight, Sparkles, Clock, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
+import { sanitizeDevelopmentSuggestion, type DevelopmentSuggestionText } from "@shared/citationSanitization";
+
+export function DevelopmentSuggestionCard({ suggestion }: { suggestion: DevelopmentSuggestionText }) {
+  const cleanSuggestion = sanitizeDevelopmentSuggestion(suggestion);
+  if (!cleanSuggestion) return null;
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
+      <div className="flex items-start gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0" style={{ background: "oklch(from #6366f1 l c h / 0.12)" }}>
+          <Sun size={18} style={{ color: "#6366f1" }} />
+        </div>
+        <div className="flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(55% 0.02 248.6)" }}>Today's Development Suggestion</p>
+          <p className="text-sm font-semibold mt-1" style={{ color: "var(--color-ln-navy)" }}>{cleanSuggestion.topic}</p>
+          <p className="text-xs mt-1" style={{ color: "oklch(50% 0.02 248.6)" }}>{cleanSuggestion.why}</p>
+          <p className="text-sm mt-2" style={{ color: "var(--color-ln-navy)" }}>{cleanSuggestion.action}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function PEHome() {
   const { user } = useAuth();
@@ -214,19 +237,7 @@ export default function PEHome() {
 
       {/* Development Suggestion */}
       {brief?.developmentSuggestion && (
-        <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: "oklch(90% 0.02 248.6)" }}>
-          <div className="flex items-start gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0" style={{ background: "oklch(from #6366f1 l c h / 0.12)" }}>
-              <Sun size={18} style={{ color: "#6366f1" }} />
-            </div>
-            <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "oklch(55% 0.02 248.6)" }}>Today's Development Suggestion</p>
-              <p className="text-sm font-semibold mt-1" style={{ color: "var(--color-ln-navy)" }}>{brief.developmentSuggestion.topic}</p>
-              <p className="text-xs mt-1" style={{ color: "oklch(50% 0.02 248.6)" }}>{brief.developmentSuggestion.why}</p>
-              <p className="text-sm mt-2" style={{ color: "var(--color-ln-navy)" }}>{brief.developmentSuggestion.action}</p>
-            </div>
-          </div>
-        </div>
+        <DevelopmentSuggestionCard suggestion={brief.developmentSuggestion} />
       )}
 
       {/* Reflection Question */}

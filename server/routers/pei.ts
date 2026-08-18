@@ -41,6 +41,7 @@ import {
   scoreOverall,
   getZone,
 } from "../../shared/modules/peiData";
+import { sanitizeDailyBriefCitations } from "../../shared/citationSanitization";
 
 // ─── Helper: extract text from LLM result ────────────────────────────────────
 function extractText(result: Awaited<ReturnType<typeof invokeLLM>>): string {
@@ -553,7 +554,7 @@ Return just the response text, no labels or quotes.
         eq(peDailyBriefs.briefDate, today),
       ))
       .limit(1);
-    return (existing?.brief as Record<string, any>) ?? null;
+    return existing?.brief ? sanitizeDailyBriefCitations(existing.brief as Record<string, any>) : null;
   }),
 
   generateDailyBrief: protectedProcedure
@@ -657,6 +658,8 @@ ${calendarItemsText}
 Active Commitments:
 ${commitmentReminderText}
 
+Never include citations, footnote references, XML/HTML tags, or markup in any returned text field. Return plain reader-facing language only.
+
 Return a JSON object with these exact keys:
 {
   "greeting": "string (warm, personalised greeting for the day)",
@@ -688,6 +691,8 @@ Return a JSON object with these exact keys:
         coachingNudge: "Pick one thing that matters and do it exceptionally well today.",
       };
     }
+
+    brief = sanitizeDailyBriefCitations(brief);
 
     if (existing) {
       await db
