@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { LLMProcessingSkeleton } from "@/components/SkeletonLoader";
 import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
 import { normalizeAiData } from "@shared/citationSanitization";
+import { getBrowserTimeZone, getMepDailyBriefDateKey } from "@shared/modules/mepDailyBriefDate";
 
 // ── Type matching the server response ─────────────────────────────────────────
 interface DailyBrief {
@@ -45,9 +46,31 @@ const PULSE_LABELS: Record<string, string> = {
 export default function ManagerBrief() {
   const [generating, setGenerating] = useState(false);
   const [briefData, setBriefData] = useState<DailyBrief | null>(null);
+  const [timeZone] = useState(getBrowserTimeZone);
+  const [briefDateKey, setBriefDateKey] = useState(() => getMepDailyBriefDateKey(new Date(), timeZone));
 
   // Also try to load today's snapshot on mount
-  const { data: snapshot } = trpc.mep.getTodayBriefSnapshot.useQuery();
+  const { data: snapshot, refetch: refetchSnapshot } = trpc.mep.getTodayBriefSnapshot.useQuery({ timeZone });
+
+  useEffect(() => {
+    const checkForNewDay = () => {
+      const nextDateKey = getMepDailyBriefDateKey(new Date(), timeZone);
+      setBriefDateKey((currentDateKey) => currentDateKey === nextDateKey ? currentDateKey : nextDateKey);
+    };
+    const interval = window.setInterval(checkForNewDay, 30_000);
+    window.addEventListener("focus", checkForNewDay);
+    document.addEventListener("visibilitychange", checkForNewDay);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", checkForNewDay);
+      document.removeEventListener("visibilitychange", checkForNewDay);
+    };
+  }, [timeZone]);
+
+  useEffect(() => {
+    setBriefData(null);
+    void refetchSnapshot();
+  }, [briefDateKey, refetchSnapshot]);
 
   useEffect(() => {
     if (snapshot && !briefData) setBriefData(snapshot as DailyBrief);
@@ -67,7 +90,7 @@ export default function ManagerBrief() {
 
   const handleGenerate = () => {
     setGenerating(true);
-    generateMutation.mutate();
+    generateMutation.mutate({ timeZone });
   };
 
   // Normalise: support both old and new field names
@@ -274,7 +297,7 @@ export default function ManagerBrief() {
                   <CheckCircle2 size={12} className="flex-shrink-0 mt-0.5" style={{ color: "#34d399" }} />
                   <p className="text-xs" style={{ color: "oklch(35% 0.02 248.6)" }}>{learningRec.action}</p>
                 </div>
-                <AiSuggestionFeedback surface="manager_daily_brief" suggestionKind="development_suggestion" contentKey={`manager-daily-brief:${new Date().toISOString().slice(0, 10)}`} suggestionText={[learningRec.topic, learningRec.why, learningRec.action].join("\n")} />
+                <AiSuggestionFeedback surface="manager_daily_brief" suggestionKind="development_suggestion" contentKey={`manager-daily-brief:${briefDateKey}`} suggestionText={[learningRec.topic, learningRec.why, learningRec.action].join("\n")} />
               </BriefSection>
             )}
 

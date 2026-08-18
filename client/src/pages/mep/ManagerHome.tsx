@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
 import { normalizeAiData } from "@shared/citationSanitization";
+import { getBrowserTimeZone, getMepDailyBriefDateKey } from "@shared/modules/mepDailyBriefDate";
 import {
   LayoutGrid,
   MessageSquare,
@@ -85,25 +86,47 @@ const QUICK_STATS = [
 export default function ManagerHome() {
   const { user } = useAuth();
   const firstName = user?.name?.split(" ")[0] ?? "Manager";
+  const [timeZone] = React.useState(getBrowserTimeZone);
+  const [briefDateKey, setBriefDateKey] = React.useState(() => getMepDailyBriefDateKey(new Date(), timeZone));
 
   const { data: myResults } = trpc.mep.getMyResults.useQuery();
   const { data: playbookSessions } = trpc.mep.listPlaybookSessions.useQuery();
   const { data: commitments } = trpc.mep.listCommitments.useQuery();
   const { data: practiceSessions } = trpc.mep.listPracticeSessions.useQuery();
-  const { data: todayBrief, refetch: refetchBrief } = trpc.mep.getTodayBriefSnapshot.useQuery();
+  const { data: todayBrief, refetch: refetchBrief } = trpc.mep.getTodayBriefSnapshot.useQuery({ timeZone });
   const generateBriefMutation = trpc.mep.getDailyBrief.useMutation({
     onSuccess: () => { refetchBrief(); },
   });
   const briefLoading = generateBriefMutation.isPending;
   const safeTodayBrief = normalizeAiData(todayBrief ?? undefined);
 
-  // Auto-generate the daily brief silently on first visit if not yet generated today
+  // Keep an already-open dashboard aligned to the manager's local calendar day.
   useEffect(() => {
-    if (todayBrief === null) {
-      generateBriefMutation.mutate();
+    const checkForNewDay = () => {
+      const nextDateKey = getMepDailyBriefDateKey(new Date(), timeZone);
+      setBriefDateKey((currentDateKey) => currentDateKey === nextDateKey ? currentDateKey : nextDateKey);
+    };
+    const interval = window.setInterval(checkForNewDay, 30_000);
+    window.addEventListener("focus", checkForNewDay);
+    document.addEventListener("visibilitychange", checkForNewDay);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", checkForNewDay);
+      document.removeEventListener("visibilitychange", checkForNewDay);
+    };
+  }, [timeZone]);
+
+  useEffect(() => {
+    void refetchBrief();
+  }, [briefDateKey, refetchBrief]);
+
+  // Auto-generate the daily brief silently on first visit if not yet generated for this local day.
+  useEffect(() => {
+    if (todayBrief === null && !generateBriefMutation.isPending) {
+      generateBriefMutation.mutate({ timeZone });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayBrief]);
+  }, [todayBrief, briefDateKey, timeZone]);
 
   const stats = {
     diagnosticsCompleted: myResults?.length ?? 0,
@@ -242,7 +265,7 @@ export default function ManagerHome() {
                     Challenge: {String(safeTodayBrief.managementChallenge)}
                   </p>
                 )}
-                {safeTodayBrief?.priorityFocus && <AiSuggestionFeedback surface="manager_daily_brief" suggestionKind="daily_focus" contentKey={`manager-daily-brief:${new Date().toISOString().slice(0, 10)}`} suggestionText={[safeTodayBrief.priorityFocus, safeTodayBrief.managementChallenge].filter(Boolean).join("\n")} dark />}
+                {safeTodayBrief?.priorityFocus && <AiSuggestionFeedback surface="manager_daily_brief" suggestionKind="daily_focus" contentKey={`manager-daily-brief:${briefDateKey}`} suggestionText={[safeTodayBrief.priorityFocus, safeTodayBrief.managementChallenge].filter(Boolean).join("\n")} dark />}
               </>
             )}
           </div>

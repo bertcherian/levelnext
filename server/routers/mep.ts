@@ -32,6 +32,11 @@ import { invokeLLM, safeJsonParse } from "../_core/llm";
 import { buildMepFactorReportRows, getMepDiagnostic, scoreMepDiagnostic, MEP_DIAGNOSTICS } from "../../shared/modules/mepData";
 import { getMepPracticeRole } from "../../shared/modules/mepPracticeRoles";
 import { normalizeAiData } from "../../shared/citationSanitization";
+import { getMepDailyBriefDateKey } from "../../shared/modules/mepDailyBriefDate";
+
+const dailyBriefTimeZoneInput = z.object({
+  timeZone: z.string().trim().min(1).max(100).optional(),
+}).optional();
 
 // ─── Helper: extract text from LLM result ────────────────────────────────────
 function extractText(result: Awaited<ReturnType<typeof invokeLLM>>): string {
@@ -682,10 +687,10 @@ Return a JSON object with these exact keys:
   // ── LAYER 4: Daily Management Brief ──────────────────────────────────────
 
   // Returns today's brief if already generated, null otherwise (no LLM call)
-  getTodayBriefSnapshot: protectedProcedure.query(async ({ ctx }) => {
+  getTodayBriefSnapshot: protectedProcedure.input(dailyBriefTimeZoneInput).query(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) return null;
-    const today = new Date().toISOString().split("T")[0];
+    const today = getMepDailyBriefDateKey(new Date(), input?.timeZone);
     const [existing] = await db
       .select()
       .from(mepDailyBriefs)
@@ -697,10 +702,10 @@ Return a JSON object with these exact keys:
     return existing?.brief ? normalizeAiData(existing.brief as Record<string, any>) : null;
   }),
 
-  getDailyBrief: protectedProcedure.mutation(async ({ ctx }) => {
+  getDailyBrief: protectedProcedure.input(dailyBriefTimeZoneInput).mutation(async ({ ctx, input }) => {
     const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    const today = new Date().toISOString().split("T")[0];
+    const today = getMepDailyBriefDateKey(new Date(), input?.timeZone);
 
     const [existing] = await db
       .select()
@@ -726,7 +731,7 @@ Return a JSON object with these exact keys:
         messages: [{
           role: "user" as const,
           content: `
-Generate a Daily Management Brief for ${userName} on ${dayOfWeek}, ${today}.
+Generate a Daily Management Brief for ${userName} on ${dayOfWeek}, ${today}${input?.timeZone ? ` in the ${input.timeZone} timezone` : ""}.
 
 Manager context:
 ${context}
