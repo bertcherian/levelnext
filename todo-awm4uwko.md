@@ -114,3 +114,9 @@
 - [x] Add regression coverage for progress invalidation and active-session filtering before final practice-intelligence validation.
 - [x] Confirm the actual Manager Companion route and verify the aggregated cohort practice panel entry state on its registered Early Career path before publication.
 - [x] Add privacy, analytics, and discovery regression coverage and validate the Practice intelligence update; publication is authorized through the final checkpoint.
+- [x] Audit the existing AI suggestion feedback schema, quick-feedback control, dashboard insertion points, and manager feedback view.
+- [x] Complete persistent thumbs-up and thumbs-down ratings with consistent pending indicators and explicit retryable failure states.
+- [x] Add explicit rendered coverage for helpful and unhelpful pending states plus separate failure, rollback, and retry paths.
+- [x] Add manager feedback filters for date and reliability status plus date/reliability sorting.
+- [x] Add behavioural and rendered regression coverage and validate the feedback workflows; publication is authorized through the final checkpoint.
+- [x] Update remaining dashboard AI-card regression expectations from the retired flag-only action to the quick rating interaction, then rerun the full suite.

@@ -44,8 +44,7 @@ describe("Career Access AI Chief-of-Staff card", () => {
     expect(screen.getByText("Schedule one strategic conversation.")).toBeTruthy();
     expect(container.textContent).not.toContain("<cite");
 
-    fireEvent.click(screen.getByRole("button", { name: "Flag this AI suggestion" }));
-    fireEvent.click(screen.getByRole("button", { name: "Not helpful" }));
-    expect(mocks.feedbackMutate).toHaveBeenCalledWith(expect.objectContaining({ surface: "career_chief_of_staff", suggestionKind: "chief_of_staff_brief", reason: "unhelpful" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rate this AI suggestion not helpful" }));
+    expect(mocks.feedbackMutate).toHaveBeenCalledWith(expect.objectContaining({ surface: "career_chief_of_staff", suggestionKind: "chief_of_staff_brief", reason: "unhelpful" }), expect.any(Object));
   });
 });

@@ -41,7 +41,7 @@ export const aiSuggestionFeedback = mysqlTable(
     surface: varchar("surface", { length: 100 }).notNull(),
     contentKey: varchar("contentKey", { length: 160 }),
     suggestionKind: varchar("suggestionKind", { length: 100 }).notNull(),
-    reason: mysqlEnum("reason", ["malformed", "unhelpful"]).notNull(),
+    reason: mysqlEnum("reason", ["helpful", "malformed", "unhelpful"]).notNull(),
     contentSnapshot: text("contentSnapshot").notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },

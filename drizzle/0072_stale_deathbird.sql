@@ -1,0 +1,1 @@
+ALTER TABLE `ai_suggestion_feedback` MODIFY COLUMN `reason` enum('helpful','malformed','unhelpful') NOT NULL;

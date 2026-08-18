@@ -505,6 +505,13 @@
       "when": 1787049338308,
       "tag": "0071_known_swarm",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "5",
+      "when": 1787051376423,
+      "tag": "0072_stale_deathbird",
+      "breakpoints": true
     }
   ]
 }
