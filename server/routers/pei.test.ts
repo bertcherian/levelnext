@@ -94,7 +94,7 @@ describe("peiRouter", () => {
 
       // Will be null if db not available in test env, or an object if it is
       expect(result === null || typeof result === "object").toBe(true);
-    });
+    }, 15_000);
   });
 
   describe("getProfile", () => {

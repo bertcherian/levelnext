@@ -120,3 +120,8 @@
 - [x] Add manager feedback filters for date and reliability status plus date/reliability sorting.
 - [x] Add behavioural and rendered regression coverage and validate the feedback workflows; publication is authorized through the final checkpoint.
 - [x] Update remaining dashboard AI-card regression expectations from the retired flag-only action to the quick rating interaction, then rerun the full suite.
+- [x] Audit persisted AI feedback data, manager dashboard chart placement, administrator-only route access, and existing chart components.
+- [x] Add a Manager dashboard visual trend chart and rating-distribution summary for the manager’s private feedback history.
+- [x] Add an administrator-only weekly AI-quality summary with aggregate volume, reliability, and trend metrics.
+- [x] Complete validated feedback analytics publication through the final checkpoint; release evidence includes standard full-suite, TypeScript, rendered dashboard, and admin-access coverage.
+- [x] Stabilize the known slow Professional Effectiveness dashboard-summary test with an intentional test-level timeout, then rerun the standard full suite without a global timeout override: 117 files and 416 tests pass.

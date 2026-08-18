@@ -7,8 +7,10 @@ const mocks = vi.hoisted(() => ({
   listUseQuery: vi.fn(),
   dashboardUseQuery: vi.fn(),
   exportReviewedUseQuery: vi.fn(),
+  weeklyFeedbackUseQuery: vi.fn(),
   dashboardRefetch: vi.fn(),
   exportRefetch: vi.fn(),
+  weeklyFeedbackRefetch: vi.fn(),
   runMutation: { mutate: vi.fn(), isPending: false },
   reviewMutation: { mutate: vi.fn(), isPending: false },
   invalidate: vi.fn(),
@@ -32,6 +34,7 @@ vi.mock("@/lib/trpc", () => ({
       run: { useMutation: () => mocks.runMutation },
       review: { useMutation: () => mocks.reviewMutation },
     },
+    aiSuggestionFeedback: { getWeeklyQualitySummary: { useQuery: mocks.weeklyFeedbackUseQuery } },
   },
 }));
 
@@ -68,6 +71,8 @@ describe("model evaluator reviewer controls", () => {
     mocks.dashboardUseQuery.mockReturnValue({ data: { totalEvaluations: 1, reviewedEvaluations: 1, preference: { claudeWinRate: 0, qwenWinRate: 1, ties: 0 }, quality: { averageScore: 4, scoredReviews: 1 }, latency: { claudeAverageMs: 500, qwenAverageMs: 700 }, cost: { claudeEstimatedUsd: 0.0001, qwenEstimatedUsd: 0.00001, qwenEstimatedSavingsUsd: 0.00009 } }, isLoading: false, isError: false, refetch: mocks.dashboardRefetch });
     mocks.exportReviewedUseQuery.mockReset();
     mocks.exportReviewedUseQuery.mockReturnValue({ data: [savedEvaluation()], isLoading: false, isError: false, refetch: mocks.exportRefetch });
+    mocks.weeklyFeedbackUseQuery.mockReset();
+    mocks.weeklyFeedbackUseQuery.mockReturnValue({ data: { feedback: { total: 6, helpful: 4, unhelpful: 1, malformed: 1, helpfulRate: 67, concernRate: 33 }, priorWeekVolume: 4, volumeChange: 2, dailyTrend: [{ date: "2026-08-18", total: 2, helpful: 1, unhelpful: 1, malformed: 0 }], surfaces: [{ surface: "manager_daily_brief", count: 4 }] }, isLoading: false, isError: false, refetch: mocks.weeklyFeedbackRefetch });
     Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn(() => "blob:levelnext-evaluations") });
     Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
     mocks.runMutation.mutate.mockReset();
@@ -75,6 +80,7 @@ describe("model evaluator reviewer controls", () => {
     mocks.invalidate.mockReset();
     mocks.dashboardRefetch.mockReset();
     mocks.exportRefetch.mockReset();
+    mocks.weeklyFeedbackRefetch.mockReset();
   });
 
   it("hydrates a saved evaluation review instead of retaining default form values", () => {
@@ -168,6 +174,8 @@ describe("model evaluator reviewer controls", () => {
 
     expect(screen.getByText("Model selection signals")).toBeTruthy();
     expect(screen.getByText("Reviewer quality score")).toBeTruthy();
+    expect(screen.getByText("Platform feedback signals")).toBeTruthy();
+    expect(screen.getByText("Helpful rating")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Export reviewed CSV/i }));
 
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
@@ -182,6 +190,14 @@ describe("model evaluator reviewer controls", () => {
     expect(screen.getByText("Unable to load evaluation metrics.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Retry metrics" }));
     expect(mocks.dashboardRefetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a retryable failure when the weekly AI-quality summary cannot load", () => {
+    mocks.weeklyFeedbackUseQuery.mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch: mocks.weeklyFeedbackRefetch });
+    render(<AdminModelEvaluator />);
+    expect(screen.getByText("Unable to load weekly feedback signals.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Retry summary" }));
+    expect(mocks.weeklyFeedbackRefetch).toHaveBeenCalledTimes(1);
   });
 
   it("distinguishes an export-data failure from an empty reviewed history and retries it", () => {

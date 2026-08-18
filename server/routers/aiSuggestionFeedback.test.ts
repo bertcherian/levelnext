@@ -6,9 +6,9 @@ vi.mock("../db", () => ({ getDb: vi.fn() }));
 import { getDb } from "../db";
 import { aiSuggestionFeedbackRouter } from "./aiSuggestionFeedback";
 
-function context(): TrpcContext {
+function context(role: "user" | "admin" = "user"): TrpcContext {
   return {
-    user: { id: 7, openId: "feedback-user", name: "Feedback User", email: null, loginMethod: "manus", role: "user", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() },
+    user: { id: 7, openId: "feedback-user", name: "Feedback User", email: null, loginMethod: "manus", role, createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() },
     req: {} as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };
@@ -50,5 +50,28 @@ describe("AI suggestion feedback", () => {
     const result = await aiSuggestionFeedbackRouter.createCaller(context()).listMine({ reliability: "all", dateRange: "30d", sort: "reliability" });
     expect(result.map((entry) => entry.reason)).toEqual(["unhelpful", "helpful"]);
     expect(select).toHaveBeenCalledTimes(1);
+  });
+
+  it("builds a private manager trend and rating distribution from the current user’s feedback", async () => {
+    const now = new Date();
+    const entries = [
+      { createdAt: now, reason: "helpful" },
+      { createdAt: now, reason: "helpful" },
+      { createdAt: now, reason: "unhelpful" },
+    ];
+    (getDb as ReturnType<typeof vi.fn>).mockResolvedValue({ select: vi.fn(() => feedbackQuery(entries)) });
+    const result = await aiSuggestionFeedbackRouter.createCaller(context()).getMyFeedbackAnalytics({ days: 7 });
+    expect(result.distribution).toMatchObject({ total: 3, helpful: 2, unhelpful: 1, malformed: 0, helpfulRate: 67 });
+    expect(result.trend.reduce((total, day) => total + day.total, 0)).toBe(3);
+  });
+
+  it("restricts weekly platform AI-quality aggregation to administrators", async () => {
+    await expect(aiSuggestionFeedbackRouter.createCaller(context()).getWeeklyQualitySummary()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const now = new Date();
+    const entries = [{ createdAt: now, reason: "helpful", surface: "manager_daily_brief" }, { createdAt: now, reason: "malformed", surface: "manager_daily_brief" }];
+    (getDb as ReturnType<typeof vi.fn>).mockResolvedValue({ select: vi.fn(() => feedbackQuery(entries)) });
+    const result = await aiSuggestionFeedbackRouter.createCaller(context("admin")).getWeeklyQualitySummary();
+    expect(result.feedback).toMatchObject({ total: 2, helpful: 1, malformed: 1, helpfulRate: 50 });
+    expect(result.surfaces).toEqual([{ surface: "manager_daily_brief", count: 2 }]);
   });
 });
