@@ -84,15 +84,18 @@ The current database does not show duplicate `(tenantId, userId)` membership rec
 
 **Refactor gate:** No schema migration or field deletion is permitted until a lifecycle decision record maps all reads and writes, including imported reports, report regeneration, user summary refresh, and Intelligence Core rule execution. The likely direction is to make `reports` canonical only if its current invariants meet those lifecycle needs.
 
+## Outbox deprecation status
+
+The dormant outbox publisher has now been retired. Its source endpoint, handler, and no-consumer producer writes were removed; the project-owned Heartbeat job was paused after deployment; the history table remains explicitly marked as history-only. The detailed decision record is in [`dormant-services-deprecation-audit.md`](./dormant-services-deprecation-audit.md).
+
 ## Approved next implementation order
 
 | Order | Work item | Why it is next | Prerequisite |
 |---:|---|---|---|
-| 1 | Resolve outbox semantics | It is the only identified issue whose current status can misrepresent a completed external action. | Product decision: dormant now or real consumer now. |
-| 2 | Add structured LLM helper and MEP schemas | High value, bounded scope, no schema migration, and clear repeated call pattern. | Schema/fallback/redaction contracts approved. |
-| 3 | Replace route-wrapper duplication and normalize navigation data | Low data risk and preserves URLs. | Visual capture and legacy-route test plan. |
-| 4 | Split scheduled domains and make Early Career delivery idempotent | Reduces operational work after selector and cadence decisions are made. | Scheduler ownership and cadence-window key. |
-| 5 | Decide and stage canonical diagnostic result | Highest value but requires historical-data governance. | Complete lifecycle decision record and migration design. |
+| 1 | Add structured LLM helper and MEP schemas | High value, bounded scope, no schema migration, and clear repeated call pattern. | Schema/fallback/redaction contracts approved. |
+| 2 | Replace route-wrapper duplication and normalize navigation data | Low data risk and preserves URLs. | Visual capture and legacy-route test plan. |
+| 3 | Split scheduled domains and make Early Career delivery idempotent | Reduces operational work after selector and cadence decisions are made. | Scheduler ownership and cadence-window key. |
+| 4 | Decide and stage canonical diagnostic result | Highest value but requires historical-data governance. | Complete lifecycle decision record and migration design. |
 
 ## References
 
