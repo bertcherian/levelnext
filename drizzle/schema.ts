@@ -2780,8 +2780,9 @@ export const icAuditEvents = mysqlTable("ic_audit_events", {
 });
 export type IcAuditEvent = typeof icAuditEvents.$inferSelect;
 
-// ─── IC: Outbox Events ───────────────────────────────────────────────────────────
-// Reliable event publication via transactional outbox pattern
+// ─── IC: Outbox Events (history-only; publisher deprecated) ─────────────────────
+// Retained for historical observability. Do not create new rows or infer delivery
+// from existing status values unless a verified downstream consumer is introduced.
 export const icOutboxEvents = mysqlTable("ic_outbox_events", {
   id: int("id").autoincrement().primaryKey(),
   tenantId: int("tenantId").references(() => tenants.id),

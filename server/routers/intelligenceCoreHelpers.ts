@@ -14,7 +14,6 @@ import {
   icJudgmentExecutions,
   icRecommendations,
   icAuditEvents,
-  icOutboxEvents,
   reports,
 } from "../../drizzle/schema";
 
@@ -117,16 +116,6 @@ export async function autoRegisterAndExecuteRules(
     resourceId: diagnosticInstanceId,
     authorizationResult: "allowed",
     metadata: { autoRegistered: true, moduleType: report.moduleType },
-  });
-
-  // Write outbox event
-  await db.insert(icOutboxEvents).values({
-    tenantId: report.tenantId ?? null,
-    eventType: "diagnostic.registered",
-    aggregateType: "diagnostic_instance",
-    aggregateId: diagnosticInstanceId,
-    payload: { reportId: report.id, moduleType: report.moduleType, edgeScore: report.edgeScore },
-    status: "pending",
   });
 
   // Execute all active rules for this module type

@@ -32,7 +32,6 @@ import {
   icPracticeProgress,
   icSelfLeadershipMirrors,
   icGuidedMirrorReminderSettings,
-  icOutboxEvents,
   reports,
   tenantUsers,
   privacySettings,
@@ -103,25 +102,6 @@ async function writeAuditEvent(event: {
     processingPurpose: event.processingPurpose ?? null,
     authorizationResult: event.authorizationResult ?? "not_applicable",
     metadata: event.metadata ?? null,
-  });
-}
-
-/** Write an outbox event for downstream processing. */
-async function writeOutboxEvent(event: {
-  tenantId?: number | null;
-  eventType: string;
-  aggregateType?: string;
-  aggregateId?: number;
-  payload?: Record<string, unknown>;
-}) {
-  const db = await getDb();
-  if (!db) return;
-  await db.insert(icOutboxEvents).values({
-    tenantId: event.tenantId ?? null,
-    eventType: event.eventType,
-    aggregateType: event.aggregateType ?? null,
-    aggregateId: event.aggregateId ?? null,
-    payload: event.payload ?? null,
   });
 }
 
@@ -553,14 +533,6 @@ export const intelligenceCoreRouter = router({
         resourceType: "ic_diagnostic_instance",
         resourceId: instance.insertId,
         authorizationResult: "allowed",
-      });
-
-      await writeOutboxEvent({
-        tenantId: report.tenantId,
-        eventType: "diagnostic.registered",
-        aggregateType: "diagnostic_instance",
-        aggregateId: Number(instance.insertId),
-        payload: { reportId: report.id, moduleType: report.moduleType, edgeScore: report.edgeScore },
       });
 
       return { diagnosticInstanceId: Number(instance.insertId), alreadyRegistered: false };
@@ -1045,14 +1017,6 @@ export const intelligenceCoreRouter = router({
         })
         .where(eq(icRecommendations.id, input.recommendationId));
 
-      await writeOutboxEvent({
-        tenantId: rec.tenantId,
-        eventType: "recommendation.decided",
-        aggregateType: "recommendation",
-        aggregateId: rec.id,
-        payload: { decision: input.decision, reasonCode: input.reasonCode },
-      });
-
       return { success: true };
     }),
 
@@ -1090,14 +1054,6 @@ export const intelligenceCoreRouter = router({
         status: "planned",
         plannedStartAt: input.plannedStartAt ?? null,
         plannedCompleteAt: input.plannedCompleteAt ?? null,
-      });
-
-      await writeOutboxEvent({
-        tenantId: rec.tenantId,
-        eventType: "action.created",
-        aggregateType: "recommendation_action",
-        aggregateId: Number(action.insertId),
-        payload: { recommendationId: input.recommendationId, actionTypeCode: input.actionTypeCode },
       });
 
       return { actionId: Number(action.insertId) };
@@ -1138,14 +1094,6 @@ export const intelligenceCoreRouter = router({
         .update(icRecommendationActions)
         .set(updateData)
         .where(eq(icRecommendationActions.id, input.actionId));
-
-      await writeOutboxEvent({
-        tenantId: action.tenantId,
-        eventType: "action.status_changed",
-        aggregateType: "recommendation_action",
-        aggregateId: action.id,
-        payload: { status: input.status },
-      });
 
       return { success: true };
     }),
@@ -1229,18 +1177,6 @@ export const intelligenceCoreRouter = router({
           evidenceReference: input.evidence.evidenceReference ?? null,
         });
       }
-
-      await writeOutboxEvent({
-        tenantId: action.tenantId,
-        eventType: "outcome.recorded",
-        aggregateType: "outcome_observation",
-        aggregateId: observationId,
-        payload: {
-          actionId: input.actionId,
-          impactLevel: input.impactLevel,
-          recommendationValue: input.recommendationValue,
-        },
-      });
 
       await writeAuditEvent({
         tenantId: action.tenantId,

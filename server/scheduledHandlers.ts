@@ -23,7 +23,6 @@ import {
   icRecommendationActions,
   icRecommendations,
   icOutcomeObservations,
-  icOutboxEvents,
   icGuidedMirrorReminderSettings,
   icSelfLeadershipMirrors,
   earlyCareerNudgeConfigs,
@@ -460,38 +459,6 @@ export async function executiveDecisionReviewReminderHandler(req: Request, res: 
   } catch (error) {
     console.error("[ExecutiveDecisionReviewReminder] Error:", error);
     return res.status(500).json({ ok: false, error: String(error), timestamp: new Date().toISOString() });
-  }
-}
-
-// ── Intelligence Core: Outbox Publisher ─────────────────────────────────────────
-// Every 15 minutes — processes pending outbox events and marks them as published.
-export async function icOutboxPublisherHandler(req: Request, res: Response) {
-  try {
-    const db = await getDb();
-    if (!db) return res.json({ ok: true, skipped: "no-db" });
-
-    // Get pending events
-    const pendingEvents = await db
-      .select()
-      .from(icOutboxEvents)
-      .where(eq(icOutboxEvents.status, "pending"))
-      .orderBy(icOutboxEvents.createdAt)
-      .limit(100);
-
-    let published = 0;
-    for (const event of pendingEvents) {
-      // Mark as published (in production, this would publish to event bus / webhook)
-      await db
-        .update(icOutboxEvents)
-        .set({ status: "published", publishedAt: new Date() })
-        .where(eq(icOutboxEvents.id, event.id));
-      published++;
-    }
-
-    return res.json({ ok: true, published });
-  } catch (error) {
-    console.error("[IC Outbox Publisher] Error:", error);
-    return res.status(500).json({ ok: false, error: String(error) });
   }
 }
 
