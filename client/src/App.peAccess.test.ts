@@ -5,12 +5,18 @@ import { describe, expect, it } from "vitest";
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 
 describe("Professional Effectiveness route protection", () => {
-  it("wraps every Professional Effectiveness route in the authentication-first access gate", () => {
-    for (const route of ["/pe/onboarding", "/pe", "/pe/assessment", "/pe/coach", "/pe/practice", "/pe/progress", "/pe/settings"]) {
+  it("keeps every Professional Effectiveness route behind the authentication-first shared access wrapper", () => {
+    expect(appSource).toContain("const withPeAccess");
+    expect(appSource).toContain("const withPeLayout");
+
+    for (const route of ["/pe", "/pe/assessment", "/pe/coach", "/pe/practice", "/pe/progress", "/pe/settings"]) {
       const routePosition = appSource.indexOf(`<Route path="${route}"`);
       expect(routePosition).toBeGreaterThan(-1);
-      expect(appSource.slice(routePosition, routePosition + 180)).toContain("<PEAccessGate>");
+      expect(appSource.slice(routePosition, routePosition + 150)).toContain("component={withPeLayout(");
     }
+
+    const onboardingPosition = appSource.indexOf('<Route path="/pe/onboarding"');
+    expect(onboardingPosition).toBeGreaterThan(-1);
+    expect(appSource.slice(onboardingPosition, onboardingPosition + 150)).toContain("component={withPeAccess(");
   });
 });
-

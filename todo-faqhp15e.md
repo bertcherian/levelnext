@@ -13,3 +13,12 @@
 - [x] Audit other scheduled endpoints, services, database tables, and client/server routes for verified dormancy without removing active behaviour.
 - [x] Remove the verified unused empty Drizzle relations module without altering database schema or relational query behaviour.
 - [x] Document deprecation decisions, retained dormant artifacts, and evidence-based follow-up recommendations.
+- [x] Read the built-in LLM integration guidance and inventory the six MEP structured-output response contracts before implementing the shared helper.
+- [x] Implement a Zod-validated structured LLM helper with typed success and fallback outcomes, preserving privacy-safe observability.
+- [x] Migrate the six MEP JSON-producing flows to the shared helper without changing prompts, deterministic scores, or user-facing fallback behaviour.
+- [x] Add focused tests for valid, malformed, and schema-invalid structured LLM outcomes plus each MEP fallback policy.
+- [x] Consolidate repeated MEP, Professional Effectiveness, and Early Career layout/access composition through typed route wrapper helpers while preserving every existing path.
+- [x] Normalize the shared primary PlatformLayout mobile and desktop navigation rendering around typed navigation data while retaining intentional Career, role-specific, and bottom-tab projections.
+- [x] Add route and navigation regression tests covering legacy Manager paths, retained admin visibility, shared primary active state, and responsive projections.
+- [x] Design the Early Career set-based, task-UID-owned delivery flow, cadence-window idempotency key, migration sequence, and failure/retry tests without altering delivery behaviour yet.
+- [x] Document the completed simplification tranche and its Early Career implementation-ready design.

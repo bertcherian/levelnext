@@ -17,7 +17,7 @@ import Assessment from "./pages/Assessment";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PWAInstallBanner from "./components/PWAInstallBanner";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { useAuth } from "./_core/hooks/useAuth";
 import { trpc } from "./lib/trpc";
 import PEAccessGate from "./components/PEAccessGate";
@@ -147,6 +147,18 @@ function LaunchRouteFallback() {
   );
 }
 
+const withMepLayout = (page: ReactNode) => () => <MEPLayout>{page}</MEPLayout>;
+
+const withPeAccess = (page: ReactNode) => () => <PEAccessGate>{page}</PEAccessGate>;
+
+const withPeLayout = (page: ReactNode) => () => (
+  <PEAccessGate><PELayout>{page}</PELayout></PEAccessGate>
+);
+
+const withEarlyCareerLayout = (page: ReactNode) => () => (
+  <EarlyCareerLayout>{page}</EarlyCareerLayout>
+);
+
 // Handles the case where user was redirected to OAuth from /join-product
 // and lands back at "/" after login — we pick up the pending product from localStorage.
 function PostLoginProductActivator() {
@@ -236,18 +248,18 @@ function Router() {
       <Route path="/career/resume/rewrite/:id" component={ResumeRewrite} />
       <Route path="/org-intelligence" component={OrgIntelligence} />
       {/* Manager Effectiveness Platform — 6-item nav */}
-      <Route path="/manager">{() => <MEPLayout><ManagerHome /></MEPLayout>}</Route>
-      <Route path="/manager/diagnostics">{() => <MEPLayout><ManagerDiagnostics /></MEPLayout>}</Route>
-      <Route path="/manager/coach">{() => <MEPLayout><ManagerCoach /></MEPLayout>}</Route>
-      <Route path="/manager/practice">{() => <MEPLayout><ManagerPractice /></MEPLayout>}</Route>
-      <Route path="/manager/team">{() => <MEPLayout><TeamIntelligence /></MEPLayout>}</Route>
-      <Route path="/manager/progress">{() => <MEPLayout><ManagerProgress /></MEPLayout>}</Route>
+      <Route path="/manager" component={withMepLayout(<ManagerHome />)} />
+      <Route path="/manager/diagnostics" component={withMepLayout(<ManagerDiagnostics />)} />
+      <Route path="/manager/coach" component={withMepLayout(<ManagerCoach />)} />
+      <Route path="/manager/practice" component={withMepLayout(<ManagerPractice />)} />
+      <Route path="/manager/team" component={withMepLayout(<TeamIntelligence />)} />
+      <Route path="/manager/progress" component={withMepLayout(<ManagerProgress />)} />
       {/* Legacy redirects — old routes still work */}
-      <Route path="/manager/guide">{() => <MEPLayout><ManagerCoach /></MEPLayout>}</Route>
-      <Route path="/manager/playbook">{() => <MEPLayout><ManagerCoach /></MEPLayout>}</Route>
-      <Route path="/manager/brief">{() => <MEPLayout><ManagerBrief /></MEPLayout>}</Route>
-      <Route path="/manager/commitments">{() => <MEPLayout><ManagerProgress /></MEPLayout>}</Route>
-      <Route path="/manager/documents">{() => <MEPLayout><ManagerProgress /></MEPLayout>}</Route>
+      <Route path="/manager/guide" component={withMepLayout(<ManagerCoach />)} />
+      <Route path="/manager/playbook" component={withMepLayout(<ManagerCoach />)} />
+      <Route path="/manager/brief" component={withMepLayout(<ManagerBrief />)} />
+      <Route path="/manager/commitments" component={withMepLayout(<ManagerProgress />)} />
+      <Route path="/manager/documents" component={withMepLayout(<ManagerProgress />)} />
       <Route path="/admin/enrollments" component={AdminProductEnrollments} />
       <Route path="/admin/coaches" component={AdminCoachManagement} />
       <Route path="/admin/success-partners" component={AdminSuccessPartners} />
@@ -286,22 +298,22 @@ function Router() {
       <Route path="/launch/history" component={LaunchMissionHistory} />
       <Route path="/launch/challenges" component={LaunchWeeklyChallenges} />
       {/* Professional Effectiveness Intelligence */}
-      <Route path="/pe/onboarding">{() => <PEAccessGate><PEOnboarding /></PEAccessGate>}</Route>
-      <Route path="/pe">{() => <PEAccessGate><PELayout><PEHome /></PELayout></PEAccessGate>}</Route>
-      <Route path="/pe/assessment">{() => <PEAccessGate><PELayout><PEAssessment /></PELayout></PEAccessGate>}</Route>
-      <Route path="/pe/coach">{() => <PEAccessGate><PELayout><PECoach /></PELayout></PEAccessGate>}</Route>
-      <Route path="/pe/practice">{() => <PEAccessGate><PELayout><PEPractice /></PELayout></PEAccessGate>}</Route>
-      <Route path="/pe/progress">{() => <PEAccessGate><PELayout><PEProgress /></PELayout></PEAccessGate>}</Route>
-      <Route path="/pe/settings">{() => <PEAccessGate><PELayout><PESettings /></PELayout></PEAccessGate>}</Route>
+      <Route path="/pe/onboarding" component={withPeAccess(<PEOnboarding />)} />
+      <Route path="/pe" component={withPeLayout(<PEHome />)} />
+      <Route path="/pe/assessment" component={withPeLayout(<PEAssessment />)} />
+      <Route path="/pe/coach" component={withPeLayout(<PECoach />)} />
+      <Route path="/pe/practice" component={withPeLayout(<PEPractice />)} />
+      <Route path="/pe/progress" component={withPeLayout(<PEProgress />)} />
+      <Route path="/pe/settings" component={withPeLayout(<PESettings />)} />
 
       {/* Early Career Intelligence — distinct from Launch and Executive Communication Intelligence */}
-      <Route path="/early-career">{() => <EarlyCareerLayout><EarlyCareerHome /></EarlyCareerLayout>}</Route>
-      <Route path="/early-career/diagnostic">{() => <EarlyCareerLayout><EarlyCareerDiagnostic /></EarlyCareerLayout>}</Route>
-      <Route path="/early-career/guide">{() => <EarlyCareerLayout><EarlyCareerCoach /></EarlyCareerLayout>}</Route>
-      <Route path="/early-career/practice">{() => <EarlyCareerLayout><EarlyCareerPractice /></EarlyCareerLayout>}</Route>
-      <Route path="/early-career/hr">{() => <EarlyCareerLayout><EarlyCareerHR /></EarlyCareerLayout>}</Route>
-      <Route path="/early-career/growth">{() => <EarlyCareerLayout><EarlyCareerGrowth /></EarlyCareerLayout>}</Route>
-      <Route path="/early-career/manager">{() => <EarlyCareerLayout><ManagerCompanion /></EarlyCareerLayout>}</Route>
+      <Route path="/early-career" component={withEarlyCareerLayout(<EarlyCareerHome />)} />
+      <Route path="/early-career/diagnostic" component={withEarlyCareerLayout(<EarlyCareerDiagnostic />)} />
+      <Route path="/early-career/guide" component={withEarlyCareerLayout(<EarlyCareerCoach />)} />
+      <Route path="/early-career/practice" component={withEarlyCareerLayout(<EarlyCareerPractice />)} />
+      <Route path="/early-career/hr" component={withEarlyCareerLayout(<EarlyCareerHR />)} />
+      <Route path="/early-career/growth" component={withEarlyCareerLayout(<EarlyCareerGrowth />)} />
+      <Route path="/early-career/manager" component={withEarlyCareerLayout(<ManagerCompanion />)} />
 
       {/* Executive Intelligence — a private enterprise decision and mandate cockpit */}
       <Route path="/executive" component={ExecutiveIntelligence} />

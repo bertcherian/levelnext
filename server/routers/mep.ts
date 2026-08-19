@@ -28,11 +28,26 @@ import {
   tenantUsers,
   orgContext as orgContextTable,
 } from "../../drizzle/schema";
-import { invokeLLM, safeJsonParse } from "../_core/llm";
+import { invokeLLM } from "../_core/llm";
+import { invokeStructured } from "../structuredLlm";
 import { buildMepFactorReportRows, getMepDiagnostic, scoreMepDiagnostic, MEP_DIAGNOSTICS } from "../../shared/modules/mepData";
 import { getMepPracticeRole } from "../../shared/modules/mepPracticeRoles";
 import { normalizeAiData } from "../../shared/citationSanitization";
 import { getMepDailyBriefDateKey } from "../../shared/modules/mepDailyBriefDate";
+import {
+  COMMITMENT_SUGGESTIONS_FALLBACK,
+  commitmentSuggestionsSchema,
+  DAILY_BRIEF_FALLBACK,
+  dailyBriefSchema,
+  DIAGNOSTIC_ANALYSIS_FALLBACK,
+  diagnosticAnalysisSchema,
+  PLAYBOOK_FALLBACK,
+  playbookSchema,
+  PRACTICE_FEEDBACK_FALLBACK,
+  practiceFeedbackSchema,
+  TEAM_MEMBER_INSIGHT_FALLBACK,
+  teamMemberInsightSchema,
+} from "./mepStructuredContracts";
 
 const dailyBriefTimeZoneInput = z.object({
   timeZone: z.string().trim().min(1).max(100).optional(),
@@ -336,9 +351,7 @@ export const mepRouter = router({
         TAI: "You are a technology leadership coach who helps managers navigate the digital and AI era with confidence. You specialise in helping non-technical managers build tech literacy, enable their teams with the right tools, and lead through AI-driven change without fear or hype.",
       };
       const persona = DIAGNOSTIC_PERSONAS[input.code] ?? "You are an expert management coach with deep expertise in leadership development and team performance.";
-      let llmAnalysis: Record<string, any> = {};
-      try {
-        const analysisPrompt = `
+      const analysisPrompt = `
 ${persona}
 
 You are analysing a manager's ${diag.title} diagnostic results.
@@ -363,19 +376,20 @@ Return a JSON object with these exact keys:
 	}
 
 	Use the factor data supplied below to make the report concrete. Name the strongest factors, make the development risks candid but constructive, and prescribe three sequenced actions a manager can put into practice over the next 30 days. Do not invent behavioural evidence that is not supported by the scores.
-	`.trim();
+		`.trim();
 
-        const result = await invokeLLM({
+      const analysisResult = await invokeStructured({
+        context: "mep.submitDiagnostic",
+        schemaName: "mep_diagnostic_analysis",
+        schema: diagnosticAnalysisSchema,
+        fallback: {},
+        request: {
           model: "claude-haiku-4-5",
           messages: [{ role: "user" as const, content: analysisPrompt }],
           maxTokens: 1200,
-        });
-        const raw = extractText(result);
-        const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) llmAnalysis = safeJsonParse(jsonMatch[0], {}, "mep.submitDiagnostic");
-      } catch (e) {
-        console.error("[MEP] LLM analysis failed:", e);
-      }
+        },
+      });
+      const llmAnalysis = analysisResult.value;
 
       const reportAnalysis = {
         ...llmAnalysis,
@@ -572,22 +586,24 @@ Return a JSON object with these exact keys:
     .mutation(async ({ ctx, input }) => {
       const context = await buildManagerContext(ctx.user.id);
 
-      let playbook: Record<string, any> = {};
-      try {
-        const promptFn = PLAYBOOK_PROMPTS[input.playbookType];
-        const systemMsg = { role: "system" as const, content: promptFn(context) };
-        const result = await invokeLLM({
+      const promptFn = PLAYBOOK_PROMPTS[input.playbookType];
+      const systemMsg = { role: "system" as const, content: promptFn(context) };
+      const playbookResult = await invokeStructured({
+        context: "mep.generatePlaybook",
+        schemaName: "mep_playbook",
+        schema: playbookSchema,
+        fallback: {},
+        mode: "json_object",
+        request: {
           model: "claude-haiku-4-5",
           messages: [systemMsg, { role: "user" as const, content: `My situation: ${input.situation}` }],
           maxTokens: 1500,
-        });
-        const raw = extractText(result);
-        const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) playbook = safeJsonParse(jsonMatch[0], {}, "mep.generatePlaybook");
-      } catch (e) {
-        console.error("[MEP Playbook] LLM failed:", e);
+        },
+      });
+      if (playbookResult.status === "fallback" && playbookResult.failure === "invoke_failed") {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not generate playbook" });
       }
+      const playbook = playbookResult.value;
 
       const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -724,9 +740,13 @@ Return a JSON object with these exact keys:
     const now = new Date();
     const dayOfWeek = now.toLocaleDateString("en-US", { weekday: "long" });
 
-    let brief: Record<string, any> = {};
-    try {
-      const result = await invokeLLM({
+    const dailyBriefFallback = { ...DAILY_BRIEF_FALLBACK, greeting: `Good morning, ${userName}. Ready to lead well today?` };
+    const briefResult = await invokeStructured({
+      context: "mep.getDailyBrief",
+      schemaName: "mep_daily_brief",
+      schema: dailyBriefSchema,
+      fallback: dailyBriefFallback,
+      request: {
         model: "claude-haiku-4-5",
         messages: [{
           role: "user" as const,
@@ -754,23 +774,9 @@ Return a JSON object with these exact keys:
 `.trim(),
         }],
         maxTokens: 800,
-      });
-      const raw = extractText(result);
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (jsonMatch) brief = safeJsonParse(jsonMatch[0], {}, "mep.getDailyBrief");
-    } catch (e) {
-      console.error("[MEP Brief] LLM failed:", e);
-      brief = {
-        greeting: `Good morning, ${userName}. Ready to lead well today?`,
-        dayTheme: "Intentional Leadership",
-        priorityFocus: "Have one meaningful coaching conversation with a team member today.",
-        teamPulseItems: [],
-        managementChallenge: "Before your first meeting, write down the one thing your team needs most from you today.",
-        reflectionQuestion: "What would make today a great day of management for you?",
-        learningRecommendation: { topic: "Delegation", why: "A key growth area", action: "Identify one task to delegate today" },
-        commitmentReminder: null,
-      };
-    }
+      },
+    });
+    let brief = briefResult.value;
 
     brief = normalizeAiData(brief);
 
@@ -928,9 +934,12 @@ Stay in character. Respond naturally and realistically. Keep responses to 1-3 se
       const managerMessages = messages.filter((m: any) => m.role === "manager").map((m: any) => m.content).join("\n");
       const roleProfile = getMepPracticeRole(session.scenarioType ?? "performance_review", session.counterpartPersonality ?? "realistic");
 
-      let feedback: Record<string, any> = { overallRating: 3, headline: "Practice session completed.", strengths: [], improvements: [], keyMoment: "", nextPractice: "", coachingInsight: "" };
-      try {
-        const result = await invokeLLM({
+      const feedbackResult = await invokeStructured({
+        context: "mep.endPracticeSession",
+        schemaName: "mep_practice_feedback",
+        schema: practiceFeedbackSchema,
+        fallback: PRACTICE_FEEDBACK_FALLBACK,
+        request: {
           model: "claude-haiku-4-5",
           messages: [{
             role: "user" as const,
@@ -953,13 +962,9 @@ Return coaching feedback as JSON:
 `.trim(),
           }],
           maxTokens: 600,
-        });
-        const raw = extractText(result);
-        const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) feedback = safeJsonParse(jsonMatch[0], { overallRating: 3, headline: "Practice session completed.", strengths: [], improvements: [], keyMoment: "", nextPractice: "", coachingInsight: "" }, "mep.submitCommitmentFeedback");
-      } catch (e) {
-        // use default
-      }
+        },
+      });
+      const feedback = feedbackResult.value;
 
       await db
         .update(mepPracticeSessions)
@@ -1149,22 +1154,22 @@ Provide a 2-3 sentence coaching response that acknowledges their effort, reinfor
 
       const contextLines = await buildManagerContext(ctx.user.id, db);
 
-      const result = await invokeLLM({
+      const insightResult = await invokeStructured({
+        context: "mep.generateTeamMemberInsight",
+        schemaName: "mep_team_member_insight",
+        schema: teamMemberInsightSchema,
+        fallback: TEAM_MEMBER_INSIGHT_FALLBACK,
+        mode: "json_object",
+        request: {
         model: "claude-haiku-4-5",
         messages: [{
           role: "user" as const,
           content: `You are an expert management coach. A manager wants a coaching lens for one of their team members.\n\nManager context:\n${contextLines}\n\nTeam member: ${member.name}${member.role ? ` (${member.role})` : ""}\n\nManager-entered person context (the only person-specific evidence available):\n${member.notes?.trim() || "No person-specific context has been supplied."}\n\nGenerate a structured coaching insight. Return ONLY valid JSON:\n{\n  "summary": "2-3 sentence coaching lens, explicitly framed as provisional when person context is limited",\n  "strengths": ["strength or coaching question grounded in manager context"],\n  "watchOuts": ["watch-out or question to validate, grounded in manager context"],\n  "recommendedActions": ["practical manager action 1", "practical manager action 2", "practical manager action 3"],\n  "evidenceBoundary": "one sentence explaining what this guidance is based on and what the manager should validate"\n}\nRules:\n- Do not infer personality, motivation, performance, capability, wellbeing, or behavioural patterns from a name, role, or the manager's diagnostic alone.\n- Only describe a strength or risk as a fact when the manager-entered person context explicitly supports it.\n- When context is absent or thin, phrase guidance as questions to explore or experiments to try, not conclusions about the person.\n- Treat this as a manager coaching aid, never a people assessment, diagnosis, or performance evaluation.\nBe practical, candid, and grounded in the supplied context.`,
         }],
         maxTokens: 500,
-        responseFormat: { type: "json_object" },
+        },
       });
-
-      let insight: any = { summary: "", strengths: [], watchOuts: [], recommendedActions: [], evidenceBoundary: "This coaching lens should be validated in conversation with the team member." };
-      try {
-        const raw = extractText(result);
-        const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (jsonMatch) insight = safeJsonParse(jsonMatch[0], { summary: "", strengths: [], watchOuts: [], recommendedActions: [], evidenceBoundary: "This coaching lens should be validated in conversation with the team member." }, "mep.generateTeamMemberInsight");
-      } catch (e) { /* use default */ }
+      const insight = insightResult.value;
 
       await db
         .update(managerTeamMembers)
@@ -1197,7 +1202,13 @@ Provide a 2-3 sentence coaching response that acknowledges their effort, reinfor
       ? `The manager's MEP diagnostic scores: ${JSON.stringify(latestResult.dimensionScores ?? {})}.`
       : "No diagnostic data available yet.";
 
-    const result = await invokeLLM({
+    const commitmentResult = await invokeStructured({
+      context: "mep.suggestCommitments",
+      schemaName: "mep_commitment_suggestions",
+      schema: commitmentSuggestionsSchema,
+      fallback: { suggestions: [] },
+      mode: "json_object",
+      request: {
       model: "claude-haiku-4-5",
       messages: [{
         role: "user" as const,
@@ -1227,18 +1238,10 @@ Rules:
 - Return exactly 3 suggestions`,
       }],
       maxTokens: 600,
-      responseFormat: { type: "json_object" },
+      },
     });
 
-    let suggestions: Array<{ category: string; title: string; why: string }> = [];
-    try {
-      const raw = extractText(result);
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = safeJsonParse<{ suggestions?: any[] }>(jsonMatch[0], { suggestions: [] }, "mep.suggestCommitments");
-        suggestions = parsed.suggestions ?? [];
-      }
-    } catch (e) { /* use defaults */ }
+    let suggestions = commitmentResult.value.suggestions;
 
     if (suggestions.length === 0) {
       suggestions = [

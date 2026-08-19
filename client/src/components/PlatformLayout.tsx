@@ -45,47 +45,7 @@ import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import ProductSwitcher from "@/components/ProductSwitcher";
 import { getLeaderNavigationGroups, LEADER_BOTTOM_TABS } from "@/components/leaderNavigation";
-
-// Searchable index for Career nav — maps nested tool names to their parent route
-const CI_SEARCH_INDEX: { term: string; label: string; href: string }[] = [
-  // Market Intel sub-tools
-  { term: "opportunities executive opportunity", label: "Opportunities", href: "/career/market-intel" },
-  { term: "signals radar hiring expansion", label: "Radar Signals", href: "/career/market-intel" },
-  { term: "relationships relationship graph contacts network", label: "Relationship Graph", href: "/career/market-intel" },
-  { term: "access paths target organisations company", label: "Access Paths", href: "/career/market-intel" },
-  { term: "outreach engine linkedin brand content", label: "Outreach Engine", href: "/career/market-intel" },
-  // Prepare sub-tools
-  { term: "resume makeover cv rewrite", label: "Resume Makeover", href: "/career/prepare" },
-  { term: "interview prep mock questions", label: "Interview Prep", href: "/career/prepare" },
-  { term: "negotiation salary offer compensation", label: "Negotiation Intelligence", href: "/career/prepare" },
-  // My Journey sub-tools
-  { term: "progress journey tracker completion", label: "Journey Progress", href: "/career/journey" },
-  { term: "growth profile leadership scores", label: "Growth Profile", href: "/career/journey" },
-];
-
-// Tooltip descriptions for each CI nav item
-const CI_NAV_TOOLTIPS: Record<string, { description: string; subItems: string[] }> = {
-  "/career": { description: "Your career transition dashboard", subItems: ["Edge Score", "Daily coach prompt", "Quick diagnostics"] },
-  "/diagnostics": { description: "Run career intelligence assessments", subItems: ["Career Positioning", "Resilience", "Marketability", "+ 4 more"] },
-  "/guide": { description: "AI coaching chat for career questions", subItems: ["Ask anything", "Personalised advice", "Unlock insights"] },
-  "/practice": { description: "Role-play practice with AI feedback", subItems: ["Difficult conversations", "Executive presence", "Debrief & score"] },
-  "/career/market-intel": { description: "Find and access your next opportunity", subItems: ["Opportunities", "Radar Signals", "Relationships", "Access Paths", "Outreach"] },
-  "/career/prepare": { description: "Get ready to win the role", subItems: ["Resume Makeover", "Interview Prep", "Negotiation"] },
-  "/career/journey": { description: "Track your progress and growth", subItems: ["Journey Progress", "Growth Profile"] },
-  "/settings": { description: "Account and platform settings", subItems: [] },
-};
-
-// Career Transition Intelligence nav items — simplified 7-item structure
-const CI_NAV_ITEMS = [
-  { label: "Career Home", icon: Briefcase, href: "/career" },
-  { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
-  { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" as const },
-  { label: "Practice", icon: Zap, href: "/practice" },
-  { label: "Market Intel", icon: Globe, href: "/career/market-intel" },
-  { label: "Prepare", icon: ClipboardList, href: "/career/prepare" },
-  { label: "My Journey", icon: BarChart3, href: "/career/journey" },
-  { label: "Settings", icon: Settings, href: "/settings" },
-];
+import { CI_NAV_ITEMS, CI_NAV_TOOLTIPS, CI_SEARCH_INDEX, MEP_NAV_ITEMS, type PlatformNavItem } from "@/components/platformNavigation";
 
 // ── CI-specific nav item with tooltip ────────────────────────────────────────
 function CINavItem({
@@ -95,7 +55,7 @@ function CINavItem({
   journeyPct,
   onClick,
 }: {
-  item: typeof CI_NAV_ITEMS[0];
+  item: PlatformNavItem;
   isActive: boolean;
   badge: number;
   journeyPct?: number; // 0-100, only for My Journey item
@@ -175,18 +135,6 @@ function CINavItem({
   );
 }
 
-// Manager Effectiveness Platform nav items
-const MEP_NAV_ITEMS: { label: string; icon: React.ElementType; href: string; badgeKey?: string }[] = [
-  { label: "Manager Home", icon: Home, href: "/manager" },
-  { label: "Diagnostics", icon: LayoutGrid, href: "/manager/diagnostics" },
-  { label: "Manager Guide", icon: MessageSquare, href: "/manager/guide" },
-  { label: "Playbook", icon: BookOpen, href: "/manager/playbook" },
-  { label: "Daily Brief", icon: Lightbulb, href: "/manager/brief" },
-  { label: "Practice Partner", icon: Zap, href: "/manager/practice" },
-  { label: "Commitments", icon: Activity, href: "/manager/commitments" },
-  { label: "Settings", icon: Settings, href: "/settings" },
-];
-
 interface PlatformLayoutProps {
   children: React.ReactNode;
   title?: string;
@@ -208,6 +156,106 @@ function NavBadge({ count }: { count: number }) {
     >
       {count > 9 ? "9+" : count}
     </span>
+  );
+}
+
+function StandardNavItem({
+  item,
+  isActive,
+  badge,
+  compact,
+  onNavigate,
+}: {
+  item: PlatformNavItem;
+  isActive: boolean;
+  badge: number;
+  compact: boolean;
+  onNavigate?: () => void;
+}) {
+  const Icon = item.icon;
+  return (
+    <Link href={item.href} onClick={onNavigate}>
+      <div
+        className={cn(
+          "flex items-center gap-3 px-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+          compact ? "py-2.5" : "py-3",
+          isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8",
+        )}
+        style={isActive ? {
+          background: "oklch(from var(--color-ln-yellow) l c h / 0.12)",
+          borderLeftColor: "var(--color-ln-yellow)",
+          color: "var(--color-ln-yellow)",
+        } : {}}
+      >
+        <Icon size={18} className={cn("flex-shrink-0", compact && !isActive ? "group-hover:scale-105 transition-transform" : "")} />
+        <span>{item.label}</span>
+        {isActive && !badge && <ChevronRight size={14} className="ml-auto opacity-60" />}
+        {badge > 0 && <NavBadge count={badge} />}
+      </div>
+    </Link>
+  );
+}
+
+function ProductNavigationItems({
+  items,
+  isCareerProduct,
+  isMepProduct,
+  leaderGroupByHref,
+  isNavActive,
+  badgeCounts,
+  journeyPct,
+  compact,
+  onNavigate,
+}: {
+  items: PlatformNavItem[];
+  isCareerProduct: boolean;
+  isMepProduct: boolean;
+  leaderGroupByHref: Map<string, string>;
+  isNavActive: (href: string) => boolean;
+  badgeCounts: Record<string, number>;
+  journeyPct: number;
+  compact: boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <>
+      {items.map((item, index) => {
+        const isActive = isNavActive(item.href);
+        const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
+        const groupLabel = !isMepProduct && !isCareerProduct ? leaderGroupByHref.get(item.href) : undefined;
+        const priorGroupLabel = !isMepProduct && !isCareerProduct && index > 0
+          ? leaderGroupByHref.get(items[index - 1]?.href)
+          : undefined;
+        const showGroupLabel = !!groupLabel && groupLabel !== priorGroupLabel;
+
+        if (isCareerProduct) {
+          return (
+            <li key={item.href}>
+              <Link href={item.href} onClick={onNavigate}>
+                <CINavItem
+                  item={item}
+                  isActive={isActive}
+                  badge={badge}
+                  journeyPct={item.href === "/career/journey" ? journeyPct : undefined}
+                  onClick={onNavigate}
+                />
+              </Link>
+            </li>
+          );
+        }
+
+        return (
+          <Fragment key={item.href}>
+            {showGroupLabel && (
+              <li className="mt-4 mb-1 px-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>{groupLabel}</p>
+              </li>
+            )}
+            <li><StandardNavItem item={item} isActive={isActive} badge={badge} compact={compact} onNavigate={onNavigate} /></li>
+          </Fragment>
+        );
+      })}
+    </>
   );
 }
 
@@ -352,7 +400,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
   const leaderGroupByHref = new Map(
     leaderNavGroups.flatMap((group) => group.items.map((item) => [item.href, group.label] as const)),
   );
-  const currentNavItems = isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : leaderNavItems;
+  const currentNavItems: PlatformNavItem[] = isMepProduct ? MEP_NAV_ITEMS : isCareerProduct ? CI_NAV_ITEMS : leaderNavItems;
 
   return (
     <div className="min-h-screen flex" style={{ background: "var(--color-ln-ivory)" }}>
@@ -423,36 +471,17 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             </div>
           )}
           <ul className="space-y-0.5">
-            {currentNavItems.map((item, index) => {
-              const isActive = isNavActive(item.href);
-              const Icon = item.icon;
-              const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
-              const groupLabel = !isMepProduct && !isCareerProduct ? leaderGroupByHref.get(item.href) : undefined;
-              const priorGroupLabel = !isMepProduct && !isCareerProduct && index > 0
-                ? leaderGroupByHref.get(currentNavItems[index - 1]?.href)
-                : undefined;
-              const showGroupLabel = !!groupLabel && groupLabel !== priorGroupLabel;
-              if (isCareerProduct) {
-                return (
-                  <li key={item.href}><Link href={item.href} onClick={() => setSidebarOpen(false)}><CINavItem item={item as typeof CI_NAV_ITEMS[0]} isActive={isActive} badge={badge} journeyPct={item.href === "/career/journey" ? journeyPct : undefined} onClick={() => setSidebarOpen(false)} /></Link></li>
-                );
-              }
-              return (
-                <Fragment key={item.href}>
-                  {showGroupLabel && <li className="mt-4 mb-1 px-3"><p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>{groupLabel}</p></li>}
-                  <li>
-                    <Link href={item.href} onClick={() => setSidebarOpen(false)}>
-                      <div className={cn("flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group", isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8")} style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}>
-                        <Icon size={18} className="flex-shrink-0" />
-                        <span>{item.label}</span>
-                        {isActive && !badge && <ChevronRight size={14} className="ml-auto opacity-60" />}
-                        {badge > 0 && <NavBadge count={badge} />}
-                      </div>
-                    </Link>
-                  </li>
-                </Fragment>
-              );
-            })}
+            <ProductNavigationItems
+              items={currentNavItems}
+              isCareerProduct={isCareerProduct}
+              isMepProduct={isMepProduct}
+              leaderGroupByHref={leaderGroupByHref}
+              isNavActive={isNavActive}
+              badgeCounts={badgeCounts}
+              journeyPct={journeyPct}
+              compact={false}
+              onNavigate={() => setSidebarOpen(false)}
+            />
             {/* Admin-only nav items */}
             {user?.role === "admin" && (() => {
               const isActiveAdmin = location === "/admin";
@@ -777,36 +806,16 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             </div>
           )}
           <ul className="space-y-0.5">
-            {currentNavItems.map((item, index) => {
-              const isActive = isNavActive(item.href);
-              const Icon = item.icon;
-              const badge = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
-              const groupLabel = !isMepProduct && !isCareerProduct ? leaderGroupByHref.get(item.href) : undefined;
-              const priorGroupLabel = !isMepProduct && !isCareerProduct && index > 0
-                ? leaderGroupByHref.get(currentNavItems[index - 1]?.href)
-                : undefined;
-              const showGroupLabel = !!groupLabel && groupLabel !== priorGroupLabel;
-              if (isCareerProduct) {
-                return (
-                  <li key={item.href}><Link href={item.href}><CINavItem item={item as typeof CI_NAV_ITEMS[0]} isActive={isActive} badge={badge} journeyPct={item.href === "/career/journey" ? journeyPct : undefined} /></Link></li>
-                );
-              }
-              return (
-                <Fragment key={item.href}>
-                  {showGroupLabel && <li className="mt-4 mb-1 px-3"><p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>{groupLabel}</p></li>}
-                  <li>
-                    <Link href={item.href}>
-                      <div className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group", isActive ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8")} style={isActive ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}>
-                        <Icon size={18} className={cn("flex-shrink-0", isActive ? "" : "group-hover:scale-105 transition-transform")} />
-                        <span>{item.label}</span>
-                        {isActive && !badge && <ChevronRight size={14} className="ml-auto opacity-60" />}
-                        {badge > 0 && <NavBadge count={badge} />}
-                      </div>
-                    </Link>
-                  </li>
-                </Fragment>
-              );
-            })}
+            <ProductNavigationItems
+              items={currentNavItems}
+              isCareerProduct={isCareerProduct}
+              isMepProduct={isMepProduct}
+              leaderGroupByHref={leaderGroupByHref}
+              isNavActive={isNavActive}
+              badgeCounts={badgeCounts}
+              journeyPct={journeyPct}
+              compact
+            />
             {/* Admin-only nav items */}
             {user?.role === "admin" && (() => {
               const isActiveAdmin = location === "/admin";
