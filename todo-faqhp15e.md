@@ -22,3 +22,16 @@
 - [x] Add route and navigation regression tests covering legacy Manager paths, retained admin visibility, shared primary active state, and responsive projections.
 - [x] Design the Early Career set-based, task-UID-owned delivery flow, cadence-window idempotency key, migration sequence, and failure/retry tests without altering delivery behaviour yet.
 - [x] Document the completed simplification tranche and its Early Career implementation-ready design.
+- [x] Re-read periodic-work guidance and confirm current Early Career schedule ownership before changing the schema or callback path.
+- [x] Add and apply the reviewed Early Career cadence anchor, cadence window key, supporting index, and unique delivery constraint through a schema-first migration.
+- [x] Backfill safely for existing configurations and delivery history without exposing participant or coaching data; both affected tables had zero rows.
+- [x] Replace the Early Career delivery loop with a cron-authenticated, task-UID-owned, set-based idempotent insert while preserving eligibility and message policy.
+- [x] Update the owner configuration mutation so schedule payloads are no longer trusted for configuration selection and cadence changes reset only the intended delivery anchor.
+- [x] Add runtime coverage for authentication, task ownership, cadence windows, retries, eligibility, and duplicate suppression.
+- [x] Consolidate admin and Success Partner sidebar definitions and renderers across mobile and desktop without changing role visibility or route targets.
+- [x] Add role-navigation regression coverage for admin and Success Partner projections, active state, and mobile drawer close behaviour.
+- [ ] Verify the live Early Career schedules after deployment and document the migration outcome.
+- [x] Complete handler-level coverage by inspecting eligibility SQL and duplicate-key retry semantics in addition to cron rejection and task-UID selection.
+- [ ] Remove the dead duplicated admin and Success Partner sidebar JSX so only the shared role renderer remains.
+- [x] Add rendered PlatformLayout coverage for admin and Success Partner role visibility, active styling, and the mobile drawer close callback.
+- [x] Add rendered PlatformLayout tests with mocked authentication and location state to verify real admin and Success Partner branch wiring, active styling, and mobile drawer closure.

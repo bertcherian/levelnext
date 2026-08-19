@@ -3142,11 +3142,15 @@ export const earlyCareerNudgeConfigs = mysqlTable(
     dayOfWeek: int("dayOfWeek").notNull().default(1),
     hourUtc: int("hourUtc").notNull().default(8),
     scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+    cadenceAnchorAt: timestamp("cadenceAnchorAt"),
     createdByUserId: int("createdByUserId").notNull().references(() => users.id),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  (table) => [uniqueIndex("early_career_nudge_tenant_audience_unique").on(table.tenantId, table.audience)]
+  (table) => [
+    uniqueIndex("early_career_nudge_tenant_audience_unique").on(table.tenantId, table.audience),
+    index("early_career_nudge_schedule_task_uid_idx").on(table.scheduleCronTaskUid),
+  ]
 );
 export type EarlyCareerNudgeConfig = typeof earlyCareerNudgeConfigs.$inferSelect;
 export type InsertEarlyCareerNudgeConfig = typeof earlyCareerNudgeConfigs.$inferInsert;
@@ -3159,9 +3163,13 @@ export const earlyCareerNudgeDeliveries = mysqlTable("early_career_nudge_deliver
   tenantId: int("tenantId").notNull().references(() => tenants.id),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body").notNull(),
+  cadenceWindowKey: varchar("cadenceWindowKey", { length: 64 }).notNull(),
   status: mysqlEnum("status", ["created", "read", "dismissed"]).notNull().default("created"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => [
+  uniqueIndex("early_career_nudge_delivery_window_unique").on(table.configId, table.recipientUserId, table.cadenceWindowKey),
+  index("early_career_nudge_delivery_config_window_idx").on(table.configId, table.cadenceWindowKey),
+]);
 export type EarlyCareerNudgeDelivery = typeof earlyCareerNudgeDeliveries.$inferSelect;
 export type InsertEarlyCareerNudgeDelivery = typeof earlyCareerNudgeDeliveries.$inferInsert;
 

@@ -20,9 +20,13 @@ describe("PlatformLayout navigation composition", () => {
     expect(layoutSource).toContain("compact");
   });
 
-  it("retains role-gated admin visibility and computes active state through the shared primary item path", () => {
-    expect((layoutSource.match(/user\?\.role === "admin"/g) ?? []).length).toBe(2);
-    expect((layoutSource.match(/user\?\.role === "success_partner"/g) ?? []).length).toBe(2);
+  it("retains role-gated visibility and routes admin and Success Partner projections through the shared renderer", () => {
+    expect((layoutSource.match(/user\?\.role === "admin"/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect((layoutSource.match(/user\?\.role === "success_partner"/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect(layoutSource).toContain("const ADMIN_NAV_ITEMS");
+    expect(layoutSource).toContain("const SUCCESS_PARTNER_NAV_ITEMS");
+    expect((layoutSource.match(/<RoleNavigationSection/g) ?? []).length).toBe(2);
+    expect(layoutSource).toContain('onNavigate={() => setSidebarOpen(false)}');
     expect(layoutSource).toContain("const isActive = isNavActive(item.href);");
     expect(layoutSource).toContain("<StandardNavItem item={item} isActive={isActive}");
   });

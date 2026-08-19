@@ -1,4 +1,5 @@
 import { Fragment, useState, useRef, useMemo } from "react";
+import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
@@ -46,6 +47,26 @@ import { cn } from "@/lib/utils";
 import ProductSwitcher from "@/components/ProductSwitcher";
 import { getLeaderNavigationGroups, LEADER_BOTTOM_TABS } from "@/components/leaderNavigation";
 import { CI_NAV_ITEMS, CI_NAV_TOOLTIPS, CI_SEARCH_INDEX, MEP_NAV_ITEMS, type PlatformNavItem } from "@/components/platformNavigation";
+
+const ADMIN_NAV_ITEMS: PlatformNavItem[] = [
+  { label: "Admin Dashboard", icon: LayoutDashboard, href: "/admin" },
+  { label: "Model Evaluator", icon: Scale, href: "/admin/model-evaluator" },
+  { label: "Pilot Applications", icon: Briefcase, href: "/admin/pilot-applications" },
+  { label: "Manage Invites", icon: Link2, href: "/admin/invites" },
+  { label: "SP Workspace", icon: Zap, href: "/admin/lsos" },
+  { label: "Success Partner", icon: Phone, href: "/admin/momentum" },
+  { label: "Escalation Inbox", icon: AlertCircle, href: "/admin/escalations" },
+  { label: "Product Enrollments", icon: UserCog, href: "/admin/enrollments" },
+  { label: "Manage SPs", icon: UserCheck, href: "/admin/success-partners" },
+  { label: "Org Context", icon: Building2, href: "/admin/org-context" },
+  { label: "Import Participants", icon: Upload, href: "/admin/participants/import" },
+];
+
+const SUCCESS_PARTNER_NAV_ITEMS: PlatformNavItem[] = [
+  { label: "SP Workspace", icon: Zap, href: "/admin/lsos" },
+  { label: "Call Queue", icon: Phone, href: "/admin/momentum" },
+  { label: "Escalation Inbox", icon: AlertCircle, href: "/admin/escalations" },
+];
 
 // ── CI-specific nav item with tooltip ────────────────────────────────────────
 function CINavItem({
@@ -257,6 +278,32 @@ function ProductNavigationItems({
       })}
     </>
   );
+}
+
+export function RoleNavigationSection({ label, items, isNavActive, compact, onNavigate }: {
+  label: string;
+  items: PlatformNavItem[];
+  isNavActive: (href: string) => boolean;
+  compact: boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <>
+      <li><div className="mt-3 mb-1 px-3"><p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>{label}</p></div></li>
+      {items.map((item) => <li key={item.href}><StandardNavItem item={item} isActive={isNavActive(item.href)} badge={0} compact={compact} onNavigate={onNavigate} /></li>)}
+    </>
+  );
+}
+
+export function RoleNavigationByRole({ role, isNavActive, compact, onNavigate }: {
+  role: "admin" | "success_partner" | string | null | undefined;
+  isNavActive: (href: string) => boolean;
+  compact: boolean;
+  onNavigate?: () => void;
+}) {
+  if (role === "admin") return <RoleNavigationSection label="Admin" items={ADMIN_NAV_ITEMS} isNavActive={isNavActive} compact={compact} onNavigate={onNavigate} />;
+  if (role === "success_partner") return <RoleNavigationSection label="Success Partner" items={SUCCESS_PARTNER_NAV_ITEMS} isNavActive={isNavActive} compact={compact} onNavigate={onNavigate} />;
+  return null;
 }
 
 export default function PlatformLayout({ children }: PlatformLayoutProps) {
@@ -483,7 +530,8 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               onNavigate={() => setSidebarOpen(false)}
             />
             {/* Admin-only nav items */}
-            {user?.role === "admin" && (() => {
+            {false && user?.role === "admin" && (() => {
+              return <RoleNavigationByRole role="admin" isNavActive={isNavActive} compact={false} onNavigate={() => setSidebarOpen(false)} />;
               const isActiveAdmin = location === "/admin";
               const isActivePilot = isNavActive("/admin/pilot-applications");
               const isActiveInvites = isNavActive("/admin/invites");
@@ -670,66 +718,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
                 </>
               );
             })()}
-            {/* SP-only nav items (success_partner role) */}
-            {user?.role === "success_partner" && (() => {
-              const isActiveSPLSOS = isNavActive("/admin/lsos");
-              const isActiveSPQueue = isNavActive("/admin/momentum");
-              const isActiveSPEscalations = isNavActive("/admin/escalations");
-              return (
-                <>
-                  <li key="/sp-section-mobile">
-                    <div className="mt-3 mb-1 px-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(45% 0.02 248.6)" }}>Success Partner</p>
-                    </div>
-                  </li>
-                  <li key="/sp-lsos-mobile">
-                    <Link href="/admin/lsos" onClick={() => setSidebarOpen(false)}>
-                      <div
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
-                          isActiveSPLSOS ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
-                        )}
-                        style={isActiveSPLSOS ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
-                      >
-                        <Zap size={18} className="flex-shrink-0" />
-                        <span>SP Workspace</span>
-                        {isActiveSPLSOS && <ChevronRight size={14} className="ml-auto opacity-60" />}
-                      </div>
-                    </Link>
-                  </li>
-                  <li key="/sp-queue-mobile">
-                    <Link href="/admin/momentum" onClick={() => setSidebarOpen(false)}>
-                      <div
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
-                          isActiveSPQueue ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
-                        )}
-                        style={isActiveSPQueue ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
-                      >
-                        <Phone size={18} className="flex-shrink-0" />
-                        <span>Call Queue</span>
-                        {isActiveSPQueue && <ChevronRight size={14} className="ml-auto opacity-60" />}
-                      </div>
-                    </Link>
-                  </li>
-                  <li key="/sp-escalations-mobile">
-                    <Link href="/admin/escalations" onClick={() => setSidebarOpen(false)}>
-                      <div
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
-                          isActiveSPEscalations ? "text-ln-yellow border-l-2 pl-2.5" : "text-white/70 hover:text-white hover:bg-white/8"
-                        )}
-                        style={isActiveSPEscalations ? { background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", borderLeftColor: "var(--color-ln-yellow)", color: "var(--color-ln-yellow)" } : {}}
-                      >
-                        <AlertCircle size={18} className="flex-shrink-0" />
-                        <span>Escalation Inbox</span>
-                        {isActiveSPEscalations && <ChevronRight size={14} className="ml-auto opacity-60" />}
-                      </div>
-                    </Link>
-                  </li>
-                </>
-              );
-            })()}
+            {(user?.role === "admin" || user?.role === "success_partner") && <RoleNavigationByRole role={user.role} isNavActive={isNavActive} compact={false} onNavigate={() => setSidebarOpen(false)} />}
           </ul>
         </nav>
 
@@ -818,6 +807,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             />
             {/* Admin-only nav items */}
             {user?.role === "admin" && (() => {
+              return <RoleNavigationByRole role="admin" isNavActive={isNavActive} compact />;
               const isActiveAdmin = location === "/admin";
               const isActivePilot = isNavActive("/admin/pilot-applications");
               const isActiveInvites = isNavActive("/admin/invites");
@@ -1006,6 +996,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             })()}
             {/* SP-only nav items (success_partner role) */}
             {user?.role === "success_partner" && (() => {
+              return <RoleNavigationByRole role="success_partner" isNavActive={isNavActive} compact />;
               const isActiveSPLSOS = isNavActive("/admin/lsos");
               const isActiveSPQueue = isNavActive("/admin/momentum");
               const isActiveSPEscalations = isNavActive("/admin/escalations");

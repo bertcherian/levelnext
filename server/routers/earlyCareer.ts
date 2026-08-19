@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { parse as parseCookie } from "cookie";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -41,6 +42,8 @@ import {
 import { invokeLLM } from "../_core/llm";
 import { buildSelfLeadershipGuideDirective } from "../../shared/modules/selfLeadershipIntelligence";
 import { createHeartbeatJob, updateHeartbeatJob } from "../_core/heartbeat";
+import { COOKIE_NAME } from "../../shared/const";
+import { nextScheduledAnchor } from "../earlyCareerNudgeDelivery";
 
 const stages = ["orient", "deliver", "connect", "navigate", "grow", "contribute", "accelerate"] as const;
 const capabilities = [
@@ -547,18 +550,26 @@ export const earlyCareerRouter = router({
     if (!membership && ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Organisation owner access is required." });
     if (!membership) throw new TRPCError({ code: "BAD_REQUEST", message: "A tenant owner membership is required." });
     const [existing] = await db.select().from(earlyCareerNudgeConfigs).where(and(eq(earlyCareerNudgeConfigs.tenantId, membership.tenantId), eq(earlyCareerNudgeConfigs.audience, input.audience))).limit(1);
+    const sessionToken = parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "";
+    const scheduleChanged = !existing
+      || existing.cadence !== input.cadence
+      || existing.dayOfWeek !== input.dayOfWeek
+      || existing.hourUtc !== input.hourUtc;
+    const cadenceAnchorAt = scheduleChanged
+      ? nextScheduledAnchor({ now: new Date(), dayOfWeek: input.dayOfWeek, hourUtc: input.hourUtc })
+      : existing.cadenceAnchorAt ?? nextScheduledAnchor({ now: new Date(), dayOfWeek: input.dayOfWeek, hourUtc: input.hourUtc });
     let configId: number;
     let taskUid = existing?.scheduleCronTaskUid ?? null;
-    if (existing) { await db.update(earlyCareerNudgeConfigs).set(input).where(eq(earlyCareerNudgeConfigs.id, existing.id)); configId = existing.id; }
-    else { const [created] = await db.insert(earlyCareerNudgeConfigs).values({ ...input, tenantId: membership.tenantId, createdByUserId: ctx.user.id }).$returningId(); configId = created.id; }
+    if (existing) { await db.update(earlyCareerNudgeConfigs).set({ ...input, cadenceAnchorAt }).where(eq(earlyCareerNudgeConfigs.id, existing.id)); configId = existing.id; }
+    else { const [created] = await db.insert(earlyCareerNudgeConfigs).values({ ...input, cadenceAnchorAt, tenantId: membership.tenantId, createdByUserId: ctx.user.id }).$returningId(); configId = created.id; }
 
     const cron = `0 0 ${input.hourUtc} * * ${input.dayOfWeek}`;
-    const schedulePatch = { cron, path: "/api/scheduled/earlyCareerNudges", method: "POST" as const, payload: { configId }, description: `Early Career ${input.audience} nudges for tenant ${membership.tenantId}`, enable: input.enabled };
-    if (taskUid) await updateHeartbeatJob(taskUid, schedulePatch, "");
+    const schedulePatch = { cron, path: "/api/scheduled/earlyCareerNudges", method: "POST" as const, payload: {}, description: `Early Career ${input.audience} nudges for tenant ${membership.tenantId}`, enable: input.enabled };
+    if (taskUid) await updateHeartbeatJob(taskUid, schedulePatch, sessionToken);
     else {
-      const createdJob = await createHeartbeatJob({ name: `early-career-${membership.tenantId}-${input.audience}`, cron, path: "/api/scheduled/earlyCareerNudges", method: "POST", payload: { configId }, description: `Early Career ${input.audience} nudges for tenant ${membership.tenantId}` }, "");
+      const createdJob = await createHeartbeatJob({ name: `early-career-${membership.tenantId}-${input.audience}`, cron, path: "/api/scheduled/earlyCareerNudges", method: "POST", payload: {}, description: `Early Career ${input.audience} nudges for tenant ${membership.tenantId}` }, sessionToken);
       taskUid = createdJob.taskUid;
-      if (!input.enabled) await updateHeartbeatJob(taskUid, { enable: false }, "");
+      if (!input.enabled) await updateHeartbeatJob(taskUid, { enable: false }, sessionToken);
       await db.update(earlyCareerNudgeConfigs).set({ scheduleCronTaskUid: taskUid }).where(eq(earlyCareerNudgeConfigs.id, configId));
     }
     return { id: configId, scheduleCronTaskUid: taskUid };
