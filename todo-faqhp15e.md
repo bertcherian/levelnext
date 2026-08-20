@@ -30,8 +30,14 @@
 - [x] Add runtime coverage for authentication, task ownership, cadence windows, retries, eligibility, and duplicate suppression.
 - [x] Consolidate admin and Success Partner sidebar definitions and renderers across mobile and desktop without changing role visibility or route targets.
 - [x] Add role-navigation regression coverage for admin and Success Partner projections, active state, and mobile drawer close behaviour.
-- [ ] Verify the live Early Career schedules after deployment and document the migration outcome.
+- [x] Verify the live Early Career schedules after deployment and document the migration outcome; no tenant-owned Early Career schedule exists yet.
 - [x] Complete handler-level coverage by inspecting eligibility SQL and duplicate-key retry semantics in addition to cron rejection and task-UID selection.
-- [ ] Remove the dead duplicated admin and Success Partner sidebar JSX so only the shared role renderer remains.
+- [x] Remove the dead duplicated admin and Success Partner sidebar JSX so only the shared role renderer remains.
 - [x] Add rendered PlatformLayout coverage for admin and Success Partner role visibility, active styling, and the mobile drawer close callback.
 - [x] Add rendered PlatformLayout tests with mocked authentication and location state to verify real admin and Success Partner branch wiring, active styling, and mobile drawer closure.
+- [x] Verify the live Early Career schedules after deployment and document the migration outcome; no tenant-owned Early Career schedule exists yet.
+- [x] Delete the three confirmed inactive sidebar legacy blocks after the shared role-navigation renderer is verified as the only active path.
+- [x] Run the complete LevelNext test suite after sidebar source cleanup and record the exact result; 128 files and 447 tests passed, with one file and two tests skipped.
+- [x] Create a consolidated over-engineering implementation status covering completed work, retained safeguards, and remaining audit-plan phases.
+- [x] Update the navigation composition assertion to validate the consolidated shared role renderer rather than the deleted legacy branches.
+- [x] Re-run the full suite and distinguish cleanup-related regressions from external model-evaluation availability failures; the rerun passed cleanly.

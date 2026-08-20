@@ -21,8 +21,8 @@ describe("PlatformLayout navigation composition", () => {
   });
 
   it("retains role-gated visibility and routes admin and Success Partner projections through the shared renderer", () => {
-    expect((layoutSource.match(/user\?\.role === "admin"/g) ?? []).length).toBeGreaterThanOrEqual(2);
-    expect((layoutSource.match(/user\?\.role === "success_partner"/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect((layoutSource.match(/user\?\.role === "admin"/g) ?? []).length).toBeGreaterThanOrEqual(1);
+    expect((layoutSource.match(/user\?\.role === "success_partner"/g) ?? []).length).toBeGreaterThanOrEqual(1);
     expect(layoutSource).toContain("const ADMIN_NAV_ITEMS");
     expect(layoutSource).toContain("const SUCCESS_PARTNER_NAV_ITEMS");
     expect((layoutSource.match(/<RoleNavigationSection/g) ?? []).length).toBe(2);
