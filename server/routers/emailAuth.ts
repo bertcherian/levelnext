@@ -18,6 +18,7 @@ import { magicLinkTokens, platformInvites, users } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
+import { getMagicLinkRedirectLocation } from "./magicLinkDestination";
 
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
 
@@ -367,23 +368,16 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Redirect to app — SP invites → SP workspace; new users → onboarding (or platform-specific); returning users → returnTo or /home
-      let postLoginPath: string;
-      if (isSPInvite) {
-        postLoginPath = "/admin/lsos";
-      } else if (isNewUser) {
-        // New users go to onboarding, but preserve returnTo so onboarding can redirect them afterward
-        const returnParam = magicLink.returnTo ? `?returnTo=${encodeURIComponent(magicLink.returnTo)}` : "";
-        postLoginPath = `/onboard${returnParam}`;
-      } else {
-        // Returning users go directly to their platform destination (or /home)
-        postLoginPath = magicLink.returnTo ?? "/home";
-      }
       // Pass the session token as _st URL param so the client can store it in
       // sessionStorage as a Bearer token fallback when SameSite cookies are
       // blocked (Cloud Run cross-origin, Safari ITP, WebView, etc.).
-      const sep = postLoginPath.includes("?") ? "&" : "?";
-      res.redirect(302, `${origin}${postLoginPath}${sep}_st=${encodeURIComponent(sessionToken)}`);
+      res.redirect(302, getMagicLinkRedirectLocation({
+        origin,
+        sessionToken,
+        isNewUser,
+        isSPInvite,
+        returnTo: magicLink.returnTo,
+      }));
     } catch (error) {
       console.error("[MagicLink] Verify failed:", error);
       res.redirect(`${origin}/login?error=server_error`);

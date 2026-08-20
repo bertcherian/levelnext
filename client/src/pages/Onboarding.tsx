@@ -346,6 +346,9 @@ export default function Onboarding() {
   // Auto-navigate after success animation — respect returnTo param from magic link flow
   const returnToParam = new URLSearchParams(window.location.search).get("returnTo");
   const individualDestination = getIndividualOnboardingDestination(returnToParam);
+  const individualProductName = individualDestination.startsWith("/manager")
+    ? "Manager Effectiveness"
+    : "Career Transition";
   useEffect(() => {
     if (mode === "success") {
       const destination = returnToParam ?? "/home";
@@ -522,16 +525,19 @@ export default function Onboarding() {
                   </button>
                 </div>
 
-                {/* Skip org setup — for individual / Career Transition users */}
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={() => navigate(individualDestination)}
-                    className="text-sm transition-opacity hover:opacity-70"
-                    style={{ color: "var(--color-ln-muted)" }}
-                  >
-                    I'm using LevelNext individually — go to Career Transition →
-                  </button>
-                </div>
+                {/* Testers and individual users can defer organisation setup. */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(individualDestination)}
+                  className="mt-5 h-auto w-full flex-col items-center gap-1.5 rounded-2xl border-2 px-5 py-4 text-center transition-all hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.99]"
+                  style={{ borderColor: "var(--color-ln-navy)", color: "var(--color-ln-navy)", background: "white" }}
+                >
+                  <span className="text-base font-bold">Skip for now</span>
+                  <span className="text-xs font-normal" style={{ color: "var(--color-ln-muted)" }}>
+                    Explore {individualProductName}. You can set up an organisation later.
+                  </span>
+                </Button>
 
                 <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--color-ln-border)" }}>
                   <p className="text-xs text-center" style={{ color: "var(--color-ln-muted)" }}>

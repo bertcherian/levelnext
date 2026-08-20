@@ -3,10 +3,11 @@
  *
  * Anyone can sign up without an invite.
  * Collects name + email, sends a magic link via the existing requestMagicLink flow.
- * No password needed. On click, user is signed in and lands on /onboard (new users)
- * or /home (returning users).
+ * No password needed. Product sign-ups preserve their requested product destination;
+ * generic users can continue through onboarding.
  */
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";

@@ -18,13 +18,13 @@ vi.mock("@/lib/trpc", () => ({
 
 import Onboarding from "./Onboarding";
 
-describe("Onboarding individual Career bypass", () => {
+describe("Onboarding tester bypass", () => {
   beforeEach(() => { navigate.mockReset(); });
   afterEach(() => { cleanup(); window.history.replaceState({}, "", "/onboard"); });
 
   it("moves an individual first-time user to Career Transition rather than organisation-gated Home", () => {
     render(<Onboarding />);
-    fireEvent.click(screen.getByRole("button", { name: /go to career transition/i }));
+    fireEvent.click(screen.getByRole("button", { name: /skip for now/i }));
     expect(navigate).toHaveBeenCalledWith("/career");
     expect(navigate).not.toHaveBeenCalledWith("/home");
   });
@@ -32,7 +32,14 @@ describe("Onboarding individual Career bypass", () => {
   it("preserves a safe Career sub-route after individual onboarding", () => {
     window.history.replaceState({}, "", "/onboard?returnTo=/career/market-intel");
     render(<Onboarding />);
-    fireEvent.click(screen.getByRole("button", { name: /go to career transition/i }));
+    fireEvent.click(screen.getByRole("button", { name: /skip for now/i }));
     expect(navigate).toHaveBeenCalledWith("/career/market-intel");
+  });
+
+  it("keeps a manager-effectiveness tester in Manager Effectiveness", () => {
+    window.history.replaceState({}, "", "/onboard?returnTo=/manager");
+    render(<Onboarding />);
+    fireEvent.click(screen.getByRole("button", { name: /skip for now/i }));
+    expect(navigate).toHaveBeenCalledWith("/manager");
   });
 });

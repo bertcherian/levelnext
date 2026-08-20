@@ -1,10 +1,14 @@
 /**
- * Individual onboarding is entered from personal Career Transition journeys.
- * Keep users in that personal flow and never send an unprovisioned user back
- * to Home, which requires an organisation and would re-open onboarding.
+ * Preserve the product an individual selected while keeping redirect targets
+ * inside the application. Home is organisation-gated and would re-open setup.
  */
 export function getIndividualOnboardingDestination(returnTo: string | null) {
-  if (returnTo && returnTo.startsWith("/career") && !returnTo.startsWith("//")) {
+  if (
+    returnTo
+    && !returnTo.startsWith("//")
+    && !returnTo.includes("\\")
+    && (returnTo.startsWith("/career") || returnTo.startsWith("/manager"))
+  ) {
     return returnTo;
   }
 
