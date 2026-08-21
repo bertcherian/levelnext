@@ -2,6 +2,7 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MEP_DEFERRED_ORG_SETUP_KEY, MEP_POST_SKIP_WELCOME_KEY } from "@/lib/mepPostSkip";
 
 const navigate = vi.hoisted(() => vi.fn());
 
@@ -19,7 +20,11 @@ vi.mock("@/lib/trpc", () => ({
 import Onboarding from "./Onboarding";
 
 describe("Onboarding tester bypass", () => {
-  beforeEach(() => { navigate.mockReset(); });
+  beforeEach(() => {
+    navigate.mockReset();
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
   afterEach(() => { cleanup(); window.history.replaceState({}, "", "/onboard"); });
 
   it("moves an individual first-time user to Career Transition rather than organisation-gated Home", () => {
@@ -40,6 +45,8 @@ describe("Onboarding tester bypass", () => {
     window.history.replaceState({}, "", "/onboard?returnTo=/manager");
     render(<Onboarding />);
     fireEvent.click(screen.getByRole("button", { name: /skip for now/i }));
-    expect(navigate).toHaveBeenCalledWith("/manager");
+    expect(navigate).toHaveBeenCalledWith("/manager?onboarding=skipped");
+    expect(window.sessionStorage.getItem(MEP_POST_SKIP_WELCOME_KEY)).toBe("true");
+    expect(window.localStorage.getItem(MEP_DEFERRED_ORG_SETUP_KEY)).toBe("true");
   });
 });

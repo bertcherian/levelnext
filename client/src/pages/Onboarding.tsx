@@ -8,6 +8,11 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getIndividualOnboardingDestination } from "./onboardingDestination";
 import {
+  isManagerEffectivenessDestination,
+  MEP_DEFERRED_ORG_SETUP_KEY,
+  MEP_POST_SKIP_WELCOME_KEY,
+} from "@/lib/mepPostSkip";
+import {
   Building2, Users, ArrowRight, CheckCircle2, ChevronLeft,
   AlertCircle, Check, Sparkles, Brain, Target, Zap, TrendingUp, BookOpen, X,
 } from "lucide-react";
@@ -349,6 +354,17 @@ export default function Onboarding() {
   const individualProductName = individualDestination.startsWith("/manager")
     ? "Manager Effectiveness"
     : "Career Transition";
+  const handleIndividualSkip = () => {
+    const isManagerDestination = isManagerEffectivenessDestination(individualDestination);
+    if (isManagerDestination) {
+      window.sessionStorage.setItem(MEP_POST_SKIP_WELCOME_KEY, "true");
+      window.localStorage.setItem(MEP_DEFERRED_ORG_SETUP_KEY, "true");
+    }
+    const postSkipDestination = isManagerDestination && individualDestination === "/manager"
+      ? "/manager?onboarding=skipped"
+      : individualDestination;
+    navigate(postSkipDestination);
+  };
   useEffect(() => {
     if (mode === "success") {
       const destination = returnToParam ?? "/home";
@@ -528,14 +544,14 @@ export default function Onboarding() {
                 {/* Testers and individual users can defer organisation setup. */}
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => navigate(individualDestination)}
-                  className="mt-5 h-auto w-full flex-col items-center gap-1.5 rounded-2xl border-2 px-5 py-4 text-center transition-all hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.99]"
-                  style={{ borderColor: "var(--color-ln-navy)", color: "var(--color-ln-navy)", background: "white" }}
+                  variant="ghost"
+                  onClick={handleIndividualSkip}
+                  className="mt-5 h-auto w-full flex-col items-center gap-1 rounded-xl border border-dashed px-4 py-3 text-center transition-colors hover:bg-slate-50 active:scale-[0.99]"
+                  style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-muted)", background: "transparent" }}
                 >
-                  <span className="text-base font-bold">Skip for now</span>
-                  <span className="text-xs font-normal" style={{ color: "var(--color-ln-muted)" }}>
-                    Explore {individualProductName}. You can set up an organisation later.
+                  <span className="text-sm font-medium">Skip for now</span>
+                  <span className="text-[11px] font-normal" style={{ color: "var(--color-ln-muted)" }}>
+                    Explore {individualProductName} first. You can set up an organisation later.
                   </span>
                 </Button>
 

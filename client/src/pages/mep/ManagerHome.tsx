@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { MEP_DEFERRED_ORG_SETUP_KEY, MEP_POST_SKIP_WELCOME_KEY } from "@/lib/mepPostSkip";
 import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
 import { normalizeAiData } from "@shared/citationSanitization";
 import { getBrowserTimeZone, getMepDailyBriefDateKey } from "@shared/modules/mepDailyBriefDate";
@@ -30,6 +32,8 @@ import {
   ThumbsDown,
   ThumbsUp,
   BarChart3,
+  Building2,
+  X,
 } from "lucide-react";
 
 const MEP_MODULES = [
@@ -90,6 +94,10 @@ const QUICK_STATS = [
 export default function ManagerHome() {
   const { user } = useAuth();
   const firstName = user?.name?.split(" ")[0] ?? "Manager";
+  const [showDeferredOrgSetup, setShowDeferredOrgSetup] = React.useState(() => {
+    const arrivedAfterSkip = new URLSearchParams(window.location.search).get("onboarding") === "skipped";
+    return arrivedAfterSkip || window.localStorage.getItem(MEP_DEFERRED_ORG_SETUP_KEY) === "true";
+  });
   const [timeZone] = React.useState(getBrowserTimeZone);
   const [briefDateKey, setBriefDateKey] = React.useState(() => getMepDailyBriefDateKey(new Date(), timeZone));
 
@@ -129,6 +137,24 @@ export default function ManagerHome() {
   useEffect(() => {
     void refetchBrief();
   }, [briefDateKey, refetchBrief]);
+
+  useEffect(() => {
+    const arrivedAfterSkip = new URLSearchParams(window.location.search).get("onboarding") === "skipped";
+    const shouldWelcome = arrivedAfterSkip || window.sessionStorage.getItem(MEP_POST_SKIP_WELCOME_KEY) === "true";
+    if (!shouldWelcome) return;
+    window.sessionStorage.removeItem(MEP_POST_SKIP_WELCOME_KEY);
+    toast.success("Welcome to Manager Effectiveness", {
+      description: "You can explore the platform now and complete organisation setup whenever you are ready.",
+    });
+    if (arrivedAfterSkip) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  const dismissDeferredOrgSetup = () => {
+    window.localStorage.removeItem(MEP_DEFERRED_ORG_SETUP_KEY);
+    setShowDeferredOrgSetup(false);
+  };
 
   // Auto-generate the daily brief silently on first visit if not yet generated for this local day.
   useEffect(() => {
@@ -230,6 +256,43 @@ export default function ManagerHome() {
             ))}
           </div>
         </div>
+
+        {showDeferredOrgSetup && (
+          <section
+            className="rounded-2xl border px-5 py-4"
+            style={{ background: "white", borderColor: "oklch(from #34d399 l c h / 0.32)" }}
+            aria-label="Organisation setup reminder"
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                style={{ background: "oklch(from #34d399 l c h / 0.12)", color: "#047857" }}
+              >
+                <Building2 size={17} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+                  Organisation setup can wait
+                </p>
+                <p className="mt-1 text-xs leading-relaxed" style={{ color: "oklch(45% 0.02 248.6)" }}>
+                  You are free to explore Manager Effectiveness while you test the platform. Return here whenever you are ready to create or join an organisation.
+                </p>
+                <Link href="/onboard?returnTo=/manager" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#047857" }}>
+                  Complete organisation setup <ArrowRight size={13} />
+                </Link>
+              </div>
+              <button
+                type="button"
+                onClick={dismissDeferredOrgSetup}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-slate-100"
+                style={{ color: "oklch(55% 0.02 248.6)" }}
+                aria-label="Dismiss organisation setup reminder"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Today's Focus / Mission */}
         <div
