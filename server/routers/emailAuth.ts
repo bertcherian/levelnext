@@ -392,6 +392,7 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       // remains unambiguous even when a browser retains an older standard
       // session cookie for a different account.
       console.info(`[MagicLink] Issuing dedicated session cookie: ${MAGIC_LINK_SESSION_COOKIE_NAME}`);
+      res.setHeader("X-LevelNext-Magic-Session", MAGIC_LINK_SESSION_COOKIE_NAME);
       res.cookie(MAGIC_LINK_SESSION_COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       // Pass the session token as _st URL param so the client can store it in
