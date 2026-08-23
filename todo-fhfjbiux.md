@@ -12,5 +12,5 @@
 - [x] Inspect the live magic-link request and redemption records for care@metaresults.com and reconcile them with the account shown after login.
 - [x] Eliminate any remaining credential precedence or cookie-domain path that can resolve a newly redeemed email link as Bert.
 - [x] Locate and guard the exact remaining `Cannot read properties of undefined (reading '0')` path observed immediately after Manager Effectiveness login.
-- [ ] Add regression coverage for the care-account redemption path, run validation, and publish the corrective checkpoint.
+- [x] Add regression coverage for the care-account redemption path, run validation, and publish the corrective checkpoint.
 - [x] Use a dedicated magic-link session cookie and explicit precedence so a fresh care redemption cannot collide with any stale Bert standard-session cookie.
