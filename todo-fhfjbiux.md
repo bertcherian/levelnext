@@ -16,5 +16,5 @@
 - [x] Use a dedicated magic-link session cookie and explicit precedence so a fresh care redemption cannot collide with any stale Bert standard-session cookie.
 - [x] Inspect the current Broadridge onboarding and organisation-management routes after Manager Effectiveness sign-in.
 - [x] Add a clear, reachable organisation setup or organisation settings entry point for Broadridge administrators.
-- [ ] Validate the organisation-information path and publish the clarified experience.
+- [x] Validate the organisation-information path and publish the clarified experience.
 - [x] Browser-verify the Organisation Setup destinations from the Manager Effectiveness sidebar and dashboard card.
