@@ -108,6 +108,9 @@ export default function ManagerHome() {
   const { data: todayBrief, refetch: refetchBrief } = trpc.mep.getTodayBriefSnapshot.useQuery({ timeZone });
   const generateBriefMutation = trpc.mep.getDailyBrief.useMutation({
     onSuccess: () => { refetchBrief(); },
+    onError: () => {
+      toast.error("Your Daily Management Brief could not be generated right now. Please try again.");
+    },
   });
   const briefLoading = generateBriefMutation.isPending;
   const safeTodayBrief = normalizeAiData(todayBrief ?? undefined);

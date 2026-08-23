@@ -260,12 +260,11 @@ class SDKServer {
     // A fresh magic-link redirect stores its explicit session in the Authorization
     // header. Prefer it over potentially duplicated legacy host-only cookies, then
     // fall back to the regular cookie session for all other requests.
-    const cookies = this.parseCookies(req.headers.cookie);
     const authHeader = req.headers.authorization;
-    const bearerToken = typeof authHeader === "string" && authHeader.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : undefined;
-    const sessionToken = bearerToken || cookies.get(COOKIE_NAME);
+    const sessionToken = selectSessionToken({
+      cookieHeader: req.headers.cookie,
+      authorization: typeof authHeader === "string" ? authHeader : undefined,
+    });
 
     const session = await this.verifySession(sessionToken);
 
@@ -345,3 +344,14 @@ function buildCronUser(
 }
 
 export const sdk = new SDKServer();
+export function selectSessionToken({
+  cookieHeader,
+  authorization,
+}: {
+  cookieHeader?: string;
+  authorization?: string;
+}) {
+  const bearerToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : undefined;
+  if (bearerToken) return bearerToken;
+  return parseCookieHeader(cookieHeader ?? "")[COOKIE_NAME];
+}

@@ -1,6 +1,6 @@
 import type { Request } from "express";
 import { describe, expect, it } from "vitest";
-import { getSessionCookieDomain, getSessionCookieOptions } from "./cookies";
+import { getSessionCookieClearOptions, getSessionCookieDomain, getSessionCookieOptions } from "./cookies";
 
 function requestFor(hostname: string, protocol = "https") {
   return {
@@ -29,5 +29,12 @@ describe("LevelNext session cookie domain", () => {
       sameSite: "none",
       secure: true,
     });
+  });
+
+  it("clears both legacy host-only and current shared-domain session cookies on a public host", () => {
+    expect(getSessionCookieClearOptions(requestFor("levelnext.coach"))).toEqual([
+      { httpOnly: true, path: "/", sameSite: "none", secure: true },
+      { domain: ".levelnext.coach", httpOnly: true, path: "/", sameSite: "none", secure: true },
+    ]);
   });
 });

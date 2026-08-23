@@ -239,7 +239,7 @@ export const emailAuthRouter = router({
  */
 export async function registerMagicLinkVerifyRoute(app: import("express").Express) {
   const { sdk } = await import("../_core/sdk");
-  const { getSessionCookieOptions } = await import("../_core/cookies");
+  const { getSessionCookieClearOptions, getSessionCookieOptions } = await import("../_core/cookies");
   const { COOKIE_NAME, ONE_YEAR_MS } = await import("../../shared/const");
 
   app.get("/api/auth/magic-link/verify", async (req, res) => {
@@ -384,6 +384,9 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       });
 
       const cookieOptions = getSessionCookieOptions(req);
+      for (const clearOptions of getSessionCookieClearOptions(req)) {
+        res.clearCookie(COOKIE_NAME, { ...clearOptions, maxAge: 0 });
+      }
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       // Pass the session token as _st URL param so the client can store it in

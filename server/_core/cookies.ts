@@ -47,3 +47,15 @@ export function getSessionCookieOptions(
     ...(domain ? { domain } : {}),
   };
 }
+
+/**
+ * Clear both the current shared-domain session and a legacy host-only session.
+ * Browsers may retain both cookies after a domain strategy change and send the
+ * older identity first, which can make a fresh magic-link sign-in look like a
+ * different user.
+ */
+export function getSessionCookieClearOptions(req: Request): Array<Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure">> {
+  const shared = getSessionCookieOptions(req);
+  const { domain: _domain, ...hostOnly } = shared;
+  return shared.domain ? [hostOnly, shared] : [hostOnly];
+}

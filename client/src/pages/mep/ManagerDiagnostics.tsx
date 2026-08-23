@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import DiagnosticRadarChart from "@/components/DiagnosticRadarChart";
 import { exportMepReportPdf, type MepReportFactor } from "@/lib/mepReportPdf";
 import { MepReportDetails, MepReportDownloadButton } from "@/components/mep/ManagerDiagnosticReportDetails";
+import { getMostRecentMepDiagnostic } from "@/lib/mepDiagnosticHistory";
 
 const LOGO_URL = "/logo.png";
 
@@ -413,6 +414,7 @@ export default function ManagerDiagnostics() {
     const sortedResults = [...(myResults ?? [])].sort(
       (a: any, b: any) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
     );
+    const mostRecentResult = getMostRecentMepDiagnostic(sortedResults);
 
     return (
       <div className="min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
@@ -437,7 +439,7 @@ export default function ManagerDiagnostics() {
           </div>
 
           {/* Summary stats */}
-          {sortedResults.length > 0 && (
+          {sortedResults.length > 0 && mostRecentResult && (
             <div className="grid grid-cols-3 gap-3">
               <div
                 className="rounded-2xl p-4 text-center"
@@ -469,7 +471,7 @@ export default function ManagerDiagnostics() {
               >
                 <Calendar size={18} className="mx-auto mb-1" style={{ color: "#f59e0b" }} />
                 <p className="text-sm font-bold mt-2" style={{ color: "var(--color-ln-navy)" }}>
-                  {formatDate(sortedResults[0].completedAt)}
+                  {formatDate(mostRecentResult.completedAt)}
                 </p>
                 <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "oklch(55% 0.02 248.6)" }}>
                   Most Recent

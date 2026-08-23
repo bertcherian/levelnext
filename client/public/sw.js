@@ -1,5 +1,7 @@
-// LevelNext Service Worker — v1
-const CACHE_NAME = 'levelnext-v1';
+// LevelNext Service Worker — v2
+// Bumping the cache releases the magic-link session correction to installed and
+// mobile clients that previously cached the application shell.
+const CACHE_NAME = 'levelnext-v2';
 
 // Shell assets to cache on install
 const PRECACHE_URLS = [
@@ -51,19 +53,36 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For static assets: cache-first
+  // Application code must be network-first so an authentication repair cannot
+  // be masked by an older JavaScript bundle. Cached code remains an offline
+  // fallback only.
   if (
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|woff2?|ttf)$/)
+    url.pathname.match(/\.(js|css)$/)
   ) {
     event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ||
-          fetch(request).then((response) => {
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-            return response;
-          })
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Images and fonts can remain cache-first because they do not control
+  // identity, session, or runtime behavior.
+  if (url.pathname.match(/\.(png|jpg|jpeg|svg|ico|woff2?|ttf)$/)) {
+    event.respondWith(
+      caches.match(request).then(
+        (cached) => cached || fetch(request).then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        })
       )
     );
   }
