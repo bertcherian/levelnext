@@ -1027,6 +1027,8 @@ export const magicLinkTokens = mysqlTable("magic_link_tokens", {
   id: int("id").autoincrement().primaryKey(),
   token: varchar("token", { length: 128 }).notNull().unique(),
   email: varchar("email", { length: 320 }).notNull(),
+  requestedName: varchar("requestedName", { length: 255 }), // name verified when the recipient redeems the link
+  requestedOrganisation: varchar("requestedOrganisation", { length: 120 }), // prefill for first-time enterprise setup
   userId: int("userId").references(() => users.id), // set after first use (user created)
   inviteToken: varchar("inviteToken", { length: 64 }), // platform invite token to auto-accept
   returnTo: varchar("returnTo", { length: 255 }), // post-login redirect path (e.g. /career, /manager)

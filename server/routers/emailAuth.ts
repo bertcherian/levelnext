@@ -19,6 +19,9 @@ import { sendEmail } from "../_core/email";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { getMagicLinkRedirectLocation } from "./magicLinkDestination";
+import { getMagicLinkUserName } from "./magicLinkIdentity";
+import { getMagicLinkRequestedProfile } from "./magicLinkProfile";
+import { getMagicLinkRedemptionRedirect } from "./magicLinkRedemption";
 
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
 
@@ -35,7 +38,8 @@ export const emailAuthRouter = router({
         email: z.string().email(),
         origin: z.string().url(),
         inviteToken: z.string().optional(),
-        name: z.string().optional(),
+        name: z.string().trim().min(1).max(255).optional(),
+        organisation: z.string().trim().min(2).max(120).optional(),
         returnTo: z.string().optional(), // post-login redirect path e.g. /career, /manager
       })
     )
@@ -44,7 +48,8 @@ export const emailAuthRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
       const email = input.email.toLowerCase().trim();
-      const firstName = input.name?.trim().split(" ")[0] ?? null;
+      const { requestedName, requestedOrganisation } = getMagicLinkRequestedProfile(input.name, input.organisation);
+      const firstName = requestedName?.split(" ")[0] ?? null;
       const token = crypto.randomBytes(48).toString("hex");
       const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MINUTES * 60 * 1000);
 
@@ -52,6 +57,8 @@ export const emailAuthRouter = router({
       await db.insert(magicLinkTokens).values({
         token,
         email,
+        requestedName,
+        requestedOrganisation,
         inviteToken: input.inviteToken ?? null,
         returnTo: input.returnTo ?? null,
         expiresAt,
@@ -275,6 +282,7 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       }
 
       const email = magicLink.email;
+      const requestedName = magicLink.requestedName?.trim() || null;
 
       // Find or create the user
       // For magic link users, openId is derived from their email (email-based identity)
@@ -307,7 +315,7 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
           await db.insert(users).values({
             openId,
             email,
-            name: email.split("@")[0], // default name from email prefix
+            name: getMagicLinkUserName(email, requestedName),
             loginMethod: "magic_link",
             lastSignedIn: new Date(),
           });
@@ -323,6 +331,16 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       if (!existingUser) {
         res.redirect(`${origin}/login?error=user_creation_failed`);
         return;
+      }
+
+      // The email recipient has verified this submitted sign-up name by
+      // redeeming the link, so retain it for both new and email-only accounts.
+      if (requestedName && existingUser.name !== requestedName) {
+        await db
+          .update(users)
+          .set({ name: requestedName })
+          .where(eq(users.id, existingUser.id));
+        existingUser = { ...existingUser, name: requestedName };
       }
 
       // Mark token as used
@@ -361,7 +379,7 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
 
       // Create session token
       const sessionToken = await sdk.createSessionToken(existingUser.openId, {
-        name: existingUser.name ?? email,
+        name: getMagicLinkUserName(email, existingUser.name),
         expiresInMs: ONE_YEAR_MS,
       });
 
@@ -371,12 +389,12 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       // Pass the session token as _st URL param so the client can store it in
       // sessionStorage as a Bearer token fallback when SameSite cookies are
       // blocked (Cloud Run cross-origin, Safari ITP, WebView, etc.).
-      res.redirect(302, getMagicLinkRedirectLocation({
+      res.redirect(302, getMagicLinkRedemptionRedirect({
         origin,
         sessionToken,
         isNewUser,
         isSPInvite,
-        returnTo: magicLink.returnTo,
+        magicLink,
       }));
     } catch (error) {
       console.error("[MagicLink] Verify failed:", error);

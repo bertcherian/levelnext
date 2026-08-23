@@ -66,6 +66,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [organisation, setOrganisation] = useState("");
   const [state, setState] = useState<"form" | "check_inbox" | "link_error">("form");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [devToken, setDevToken] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export default function Signup() {
     (platformParam === "mep" ? "/manager" :
      platformParam === "career" ? "/career" :
      platformParam === "leadership" ? "/home" : undefined);
+  const isManagerEffectivenessSignup = platformParam === "mep";
 
   useEffect(() => {
     if (errorParam === "invalid_or_expired" || errorParam === "missing_token") {
@@ -108,6 +110,7 @@ export default function Signup() {
       email: email.trim().toLowerCase(),
       origin: window.location.origin,
       name: name.trim() || undefined,
+      organisation: isManagerEffectivenessSignup ? organisation.trim() || undefined : undefined,
       returnTo: resolvedReturnTo,
     });
   };
@@ -209,7 +212,7 @@ export default function Signup() {
                     e.preventDefault();
                     if (!email.trim()) return;
                     setErrorMsg(null);
-                    requestMagicLink.mutate({ email: email.trim().toLowerCase(), origin: window.location.origin, name: name || undefined, returnTo: resolvedReturnTo });
+                    requestMagicLink.mutate({ email: email.trim().toLowerCase(), origin: window.location.origin, name: name || undefined, organisation: isManagerEffectivenessSignup ? organisation.trim() || undefined : undefined, returnTo: resolvedReturnTo });
                   }}
                   className="space-y-3 mb-4"
                 >
@@ -285,6 +288,25 @@ export default function Signup() {
                       style={{ borderColor: "#d1cfc9" }}
                     />
                   </div>
+
+                  {isManagerEffectivenessSignup && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5" style={{ color: "#12345A" }}>
+                        Organisation <span className="text-xs font-normal" style={{ color: "#666" }}>(optional)</span>
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Broadridge"
+                        value={organisation}
+                        onChange={(e) => setOrganisation(e.target.value)}
+                        className="h-12 text-base"
+                        style={{ borderColor: "#d1cfc9" }}
+                      />
+                      <p className="mt-1.5 text-xs" style={{ color: "#666" }}>
+                        We will carry this into your organisation setup after you verify your email.
+                      </p>
+                    </div>
+                  )}
 
                   <Button
                     type="submit"

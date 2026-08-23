@@ -49,4 +49,11 @@ describe("Onboarding tester bypass", () => {
     expect(window.sessionStorage.getItem(MEP_POST_SKIP_WELCOME_KEY)).toBe("true");
     expect(window.localStorage.getItem(MEP_DEFERRED_ORG_SETUP_KEY)).toBe("true");
   });
+
+  it("prefills an organisation selected before email verification", () => {
+    window.history.replaceState({}, "", "/onboard?returnTo=%2Fmanager&org=Broadridge");
+    render(<Onboarding />);
+    expect(screen.getByDisplayValue("Broadridge")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /create your organisation/i })).toBeTruthy();
+  });
 });

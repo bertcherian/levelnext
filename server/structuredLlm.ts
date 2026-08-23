@@ -29,8 +29,9 @@ export type InvokeStructuredOptions<T> = {
 };
 
 function extractText(result: InvokeResult): string {
-  const content = result.choices[0]?.message.content ?? "";
+  const content = result.choices?.[0]?.message?.content ?? "";
   if (typeof content === "string") return content.trim();
+  if (!Array.isArray(content)) return "";
   return content
     .filter((part): part is Extract<typeof part, { type: "text" }> => part.type === "text")
     .map(part => part.text)

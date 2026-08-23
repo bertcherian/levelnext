@@ -312,11 +312,12 @@ function SuccessScreen({ orgName }: { orgName: string }) {
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const [mode, setMode] = useState<Mode>("choose");
+  const requestedOrganisation = new URLSearchParams(window.location.search).get("org")?.trim() ?? "";
+  const [mode, setMode] = useState<Mode>(() => requestedOrganisation ? "create" : "choose");
   const [successOrgName, setSuccessOrgName] = useState("");
 
   // Create form state
-  const [orgName, setOrgName]       = useState("");
+  const [orgName, setOrgName]       = useState(() => requestedOrganisation);
   const [orgNameTouched, setOrgNameTouched] = useState(false);
   const [industry, setIndustry]     = useState("");
   const [size, setSize]             = useState("");

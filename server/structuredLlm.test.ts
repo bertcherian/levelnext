@@ -53,6 +53,19 @@ describe("invokeStructured", () => {
     expect(result).toEqual({ status: "fallback", value: fallback, failure: "invalid_json" });
   });
 
+  it("uses the declared fallback when an AI provider returns no choices", async () => {
+    const result = await invokeStructured({
+      context: "test.empty-choices",
+      schemaName: "test_response",
+      schema,
+      fallback,
+      request,
+      invoke: async () => ({ id: "empty", created: 0, model: "test-model", choices: [] }),
+    });
+
+    expect(result).toEqual({ status: "fallback", value: fallback, failure: "empty_response" });
+  });
+
   it("uses the declared fallback for schema-invalid JSON", async () => {
     const result = await invokeStructured({
       context: "test.invalid-schema",
@@ -85,4 +98,3 @@ describe("invokeStructured", () => {
     expect(captured?.responseFormat).toEqual({ type: "json_object" });
   });
 });
-

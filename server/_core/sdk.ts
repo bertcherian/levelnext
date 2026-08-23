@@ -257,19 +257,15 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<AuthenticatedUser> {
-    // 1. Prefer the session cookie (regular OAuth login).
+    // A fresh magic-link redirect stores its explicit session in the Authorization
+    // header. Prefer it over potentially duplicated legacy host-only cookies, then
+    // fall back to the regular cookie session for all other requests.
     const cookies = this.parseCookies(req.headers.cookie);
-    let sessionToken = cookies.get(COOKIE_NAME);
-
-    // 2. Fallback to the Authorization header (Preview auto-login via
-    //    sessionStorage), used when the browser blocks iframe cookies such as
-    //    Safari ITP, private browsing, or iOS/Android WebView.
-    if (!sessionToken) {
-      const authHeader = req.headers.authorization;
-      if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
-        sessionToken = authHeader.slice(7);
-      }
-    }
+    const authHeader = req.headers.authorization;
+    const bearerToken = typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : undefined;
+    const sessionToken = bearerToken || cookies.get(COOKIE_NAME);
 
     const session = await this.verifySession(sessionToken);
 

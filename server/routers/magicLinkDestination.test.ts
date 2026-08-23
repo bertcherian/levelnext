@@ -2,22 +2,24 @@ import { describe, expect, it } from "vitest";
 import { getMagicLinkPostLoginPath, getMagicLinkRedirectLocation } from "./magicLinkDestination";
 
 describe("getMagicLinkPostLoginPath", () => {
-  it("takes a first-time manager-effectiveness user directly to Manager Effectiveness", () => {
+  it("takes a first-time manager-effectiveness user through onboarding while preserving the requested workspace", () => {
     expect(getMagicLinkPostLoginPath({
       isNewUser: true,
       isSPInvite: false,
       returnTo: "/manager",
-    })).toBe("/manager");
+      requestedOrganisation: "Broadridge",
+    })).toBe("/onboard?returnTo=%2Fmanager&org=Broadridge");
   });
 
-  it("builds the magic-link verify redirect directly to Manager Effectiveness for a new user", () => {
+  it("builds a magic-link redirect that carries the new manager through organisation setup", () => {
     expect(getMagicLinkRedirectLocation({
       origin: "https://www.levelnext.coach",
       sessionToken: "session-token",
       isNewUser: true,
       isSPInvite: false,
       returnTo: "/manager",
-    })).toBe("https://www.levelnext.coach/manager?_st=session-token");
+      requestedOrganisation: "Broadridge",
+    })).toBe("https://www.levelnext.coach/onboard?returnTo=%2Fmanager&org=Broadridge&_st=session-token");
   });
 
   it("keeps generic first-time sign-ins on onboarding when no product was requested", () => {

@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { COOKIE_NAME, UNAUTHED_ERR_MSG } from '@shared/const';
+import { bootstrapSessionFromUrl, MAGIC_LINK_SESSION_STORAGE_KEY } from "@/lib/sessionAuth";
 
 // ─── Magic-link Bearer-token bootstrap ───────────────────────────────────────
 // After a magic link click the server appends ?_st=<token> to the redirect URL
@@ -7,20 +8,9 @@ import { COOKIE_NAME, UNAUTHED_ERR_MSG } from '@shared/const';
 // tRPC httpBatchLink (below) forward it as "Authorization: Bearer <token>" on
 // every request, which is the fallback when the SameSite=None cookie is blocked
 // (Cloud Run cross-origin, Safari ITP, private browsing, WebView, etc.).
-(function bootstrapSessionFromUrl() {
+(function initialiseSessionFromUrl() {
   try {
-    const params = new URLSearchParams(window.location.search);
-    const st = params.get("_st");
-    if (st) {
-      // Store in the same format the tRPC headers() function expects below.
-      sessionStorage.setItem("manus-cookie", `${COOKIE_NAME}=${st}`);
-      // Remove the token from the URL so it is never visible in the address bar
-      // after the initial load and is not accidentally shared.
-      params.delete("_st");
-      const newSearch = params.toString();
-      const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "") + window.location.hash;
-      window.history.replaceState(null, "", newUrl);
-    }
+    bootstrapSessionFromUrl({ location: window.location, history: window.history, storage: sessionStorage });
   } catch {
     // sessionStorage unavailable (e.g. private-browsing with strict settings)
   }
@@ -94,7 +84,7 @@ const trpcClient = trpc.createClient({
         // session into sessionStorage so we can forward it as a Bearer token.
         // The regular OAuth cookie flow keeps working and takes priority server-side.
         try {
-          const raw = sessionStorage.getItem("manus-cookie");
+          const raw = sessionStorage.getItem(MAGIC_LINK_SESSION_STORAGE_KEY);
           if (raw) {
             const prefix = `${COOKIE_NAME}=`;
             const pair = raw.split(";").find(s => s.trim().startsWith(prefix));

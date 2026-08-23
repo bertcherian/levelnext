@@ -1,0 +1,1 @@
+ALTER TABLE `magic_link_tokens` ADD `requestedName` varchar(255);

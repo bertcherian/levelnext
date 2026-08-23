@@ -519,6 +519,20 @@
       "when": 1787146614151,
       "tag": "0073_adorable_leper_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "5",
+      "when": 1787490512251,
+      "tag": "0074_organic_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "5",
+      "when": 1787490756035,
+      "tag": "0075_blue_gamora",
+      "breakpoints": true
     }
   ]
 }
