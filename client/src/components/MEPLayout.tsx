@@ -11,6 +11,7 @@ import {
   Activity,
   Home,
   Users,
+  Building2,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -20,13 +21,14 @@ import { useState, useEffect } from "react";
 
 const LOGO_URL = "/logo.png";
 
-const NAV_ITEMS = [
+export const MEP_NAV_ITEMS = [
   { href: "/manager", label: "Home", icon: Home, exact: true },
   { href: "/manager/diagnostics", label: "Diagnostics", icon: LayoutGrid },
   { href: "/manager/coach", label: "Coach", icon: MessageSquare },
   { href: "/manager/practice", label: "Practice", icon: Zap },
   { href: "/manager/team", label: "Team", icon: Users },
   { href: "/manager/progress", label: "My Progress", icon: Activity },
+  { href: "/onboard?returnTo=/manager", label: "Organisation Setup", icon: Building2 },
 ];
 
 interface MEPLayoutProps {
@@ -53,7 +55,7 @@ export default function MEPLayout({ children }: MEPLayoutProps) {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
-  const isActive = (item: typeof NAV_ITEMS[0]) => {
+  const isActive = (item: typeof MEP_NAV_ITEMS[0]) => {
     if (item.exact) return location === item.href;
     return location.startsWith(item.href);
   };
@@ -81,7 +83,7 @@ export default function MEPLayout({ children }: MEPLayoutProps) {
 
       {/* Nav items */}
       <nav className="flex-1 px-2 py-2 space-y-0.5">
-        {NAV_ITEMS.map((item) => {
+        {MEP_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = isActive(item);
           return (
@@ -155,7 +157,7 @@ export default function MEPLayout({ children }: MEPLayoutProps) {
 
         {/* Nav items */}
         <nav className="flex-1 px-2 py-2 space-y-0.5">
-          {NAV_ITEMS.map((item) => {
+          {MEP_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
             return (

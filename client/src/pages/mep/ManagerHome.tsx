@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { MEP_DEFERRED_ORG_SETUP_KEY, MEP_POST_SKIP_WELCOME_KEY } from "@/lib/mepPostSkip";
+import { getMepOrganisationSetupHref } from "@/lib/mepOrganisationSetup";
 import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
 import { normalizeAiData } from "@shared/citationSanitization";
 import { getBrowserTimeZone, getMepDailyBriefDateKey } from "@shared/modules/mepDailyBriefDate";
@@ -102,6 +103,7 @@ export default function ManagerHome() {
   const [briefDateKey, setBriefDateKey] = React.useState(() => getMepDailyBriefDateKey(new Date(), timeZone));
 
   const { data: myResults } = trpc.mep.getMyResults.useQuery();
+  const { data: myTenant } = trpc.tenant.myTenant.useQuery();
   const { data: playbookSessions } = trpc.mep.listPlaybookSessions.useQuery();
   const { data: commitments } = trpc.mep.listCommitments.useQuery();
   const { data: practiceSessions } = trpc.mep.listPracticeSessions.useQuery();
@@ -188,6 +190,7 @@ export default function ManagerHome() {
     commitments: stats.activeCommitments,
     practice: stats.practiceSessions,
   };
+  const organisationSetupHref = getMepOrganisationSetupHref(Boolean(myTenant));
 
   return (
     <div className="min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
@@ -259,6 +262,34 @@ export default function ManagerHome() {
             ))}
           </div>
         </div>
+
+        <section
+          className="rounded-2xl border px-5 py-4"
+          style={{ background: "white", borderColor: "oklch(from var(--color-ln-yellow) l c h / 0.55)" }}
+          aria-label="Organisation information"
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.22)", color: "var(--color-ln-navy)" }}
+            >
+              <Building2 size={17} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+                {myTenant ? `${myTenant.tenant.name} organisation` : "Set up your organisation"}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed" style={{ color: "oklch(45% 0.02 248.6)" }}>
+                {myTenant
+                  ? "Review your company profile, branding, leadership context, team invitations, and organisation settings."
+                  : "Create Broadridge as your workspace, then add its company profile, mission and values, branding, documents, and team invitations."}
+              </p>
+              <Link href={organisationSetupHref} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--color-ln-navy)" }}>
+                {myTenant ? "Manage organisation information" : "Add organisation information"} <ArrowRight size={13} />
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {showDeferredOrgSetup && (
           <section
