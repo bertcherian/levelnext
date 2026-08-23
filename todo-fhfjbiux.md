@@ -13,3 +13,4 @@
 - [x] Eliminate any remaining credential precedence or cookie-domain path that can resolve a newly redeemed email link as Bert.
 - [x] Locate and guard the exact remaining `Cannot read properties of undefined (reading '0')` path observed immediately after Manager Effectiveness login.
 - [ ] Add regression coverage for the care-account redemption path, run validation, and publish the corrective checkpoint.
+- [x] Use a dedicated magic-link session cookie and explicit precedence so a fresh care redemption cannot collide with any stale Bert standard-session cookie.

@@ -1,4 +1,4 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, MAGIC_LINK_SESSION_COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieClearOptions, getSessionCookieOptions } from "./cookies";
@@ -44,6 +44,7 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       for (const clearOptions of getSessionCookieClearOptions(req)) {
         res.clearCookie(COOKIE_NAME, { ...clearOptions, maxAge: 0 });
+        res.clearCookie(MAGIC_LINK_SESSION_COOKIE_NAME, { ...clearOptions, maxAge: 0 });
       }
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 

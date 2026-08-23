@@ -1,4 +1,4 @@
-import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { AXIOS_TIMEOUT_MS, COOKIE_NAME, MAGIC_LINK_SESSION_COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
@@ -353,5 +353,6 @@ export function selectSessionToken({
 }) {
   const bearerToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : undefined;
   if (bearerToken) return bearerToken;
-  return parseCookieHeader(cookieHeader ?? "")[COOKIE_NAME];
+  const cookies = parseCookieHeader(cookieHeader ?? "");
+  return cookies[MAGIC_LINK_SESSION_COOKIE_NAME] || cookies[COOKIE_NAME];
 }

@@ -240,7 +240,7 @@ export const emailAuthRouter = router({
 export async function registerMagicLinkVerifyRoute(app: import("express").Express) {
   const { sdk } = await import("../_core/sdk");
   const { getSessionCookieClearOptions, getSessionCookieOptions } = await import("../_core/cookies");
-  const { COOKIE_NAME, ONE_YEAR_MS } = await import("../../shared/const");
+  const { COOKIE_NAME, MAGIC_LINK_SESSION_COOKIE_NAME, ONE_YEAR_MS } = await import("../../shared/const");
 
   app.get("/api/auth/magic-link/verify", async (req, res) => {
     const token = typeof req.query.token === "string" ? req.query.token : null;
@@ -386,8 +386,12 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
       const cookieOptions = getSessionCookieOptions(req);
       for (const clearOptions of getSessionCookieClearOptions(req)) {
         res.clearCookie(COOKIE_NAME, { ...clearOptions, maxAge: 0 });
+        res.clearCookie(MAGIC_LINK_SESSION_COOKIE_NAME, { ...clearOptions, maxAge: 0 });
       }
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      // Use a distinct name for the freshly redeemed email session. This
+      // remains unambiguous even when a browser retains an older standard
+      // session cookie for a different account.
+      res.cookie(MAGIC_LINK_SESSION_COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       // Pass the session token as _st URL param so the client can store it in
       // sessionStorage as a Bearer token fallback when SameSite cookies are
