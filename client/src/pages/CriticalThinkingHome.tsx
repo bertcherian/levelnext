@@ -43,7 +43,7 @@ export default function CriticalThinkingHome() {
               <Button className="bg-[#F2B705] text-[#0A1A2F] hover:bg-[#ffd44b]" size="lg" onClick={() => document.getElementById("your-campaigns")?.scrollIntoView({ behavior: "smooth" })}>
                 View my diagnostic <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              {canAdminister && <Button variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white" size="lg" onClick={() => setLocation("/critical-thinking/admin")}>Set up a campaign</Button>}
+              {canAdminister && <Button variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white" size="lg" onClick={() => setLocation("/critical-thinking/pilot")}>Launch a pilot</Button>}
             </div>
           </div>
           <div className="relative">
@@ -66,7 +66,7 @@ export default function CriticalThinkingHome() {
         <div className="mb-7 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm font-semibold uppercase tracking-widest text-[#12345A]">Your access</p><h2 className="mt-1 text-3xl font-bold">Your diagnostic campaigns</h2></div><p className="max-w-lg text-sm text-slate-600">Typical completion time is 20–25 minutes. You can save and return to an in-progress diagnostic.</p></div>
         {!user && <Card className="border-[#12345A]/10"><CardContent className="flex flex-col items-start gap-4 p-7 sm:flex-row sm:items-center"><LockKeyhole className="h-8 w-8 text-[#12345A]" /><div className="flex-1"><h3 className="font-semibold">Sign in to see your invited campaigns</h3><p className="mt-1 text-sm text-slate-600">Your organisation must enrol you in a tenant-specific campaign before you can begin.</p></div><Button onClick={() => setLocation("/login?returnTo=" + encodeURIComponent("/critical-thinking"))}>Sign in</Button></CardContent></Card>}
         {user && isLoading && <Card><CardContent className="p-8 text-sm text-slate-600">Loading your campaign access…</CardContent></Card>}
-        {user && !isLoading && !campaigns?.length && <Card className="border-dashed"><CardContent className="flex flex-col items-start gap-4 p-8 sm:flex-row sm:items-center"><Building2 className="h-8 w-8 text-[#12345A]" /><div className="flex-1"><h3 className="font-semibold">No active diagnostic invitation yet</h3><p className="mt-1 text-sm text-slate-600">Ask your LevelNext tenant administrator to add your email address to a Critical Thinking campaign.</p></div>{canAdminister && <Button variant="outline" onClick={() => setLocation("/critical-thinking/admin")}>Open admin panel</Button>}</CardContent></Card>}
+        {user && !isLoading && !campaigns?.length && <Card className="border-dashed"><CardContent className="flex flex-col items-start gap-4 p-8 sm:flex-row sm:items-center"><Building2 className="h-8 w-8 text-[#12345A]" /><div className="flex-1"><h3 className="font-semibold">No active diagnostic invitation yet</h3><p className="mt-1 text-sm text-slate-600">Ask your LevelNext tenant administrator to add your email address to a Critical Thinking campaign.</p></div>{canAdminister && <Button variant="outline" onClick={() => setLocation("/critical-thinking/pilot")}>Launch pilot cohort</Button>}</CardContent></Card>}
         <div className="grid gap-5 lg:grid-cols-2">
           {campaigns?.map(({ campaign, participant, assessment, report }) => {
             const completed = participant.status === "completed" || assessment?.status === "completed";

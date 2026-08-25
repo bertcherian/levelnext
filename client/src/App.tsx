@@ -121,6 +121,7 @@ const CriticalThinkingAssessment = lazy(() => import("./pages/CriticalThinkingAs
 const CriticalThinkingReport = lazy(() => import("./pages/CriticalThinkingReport"));
 const CriticalThinkingAdmin = lazy(() => import("./pages/CriticalThinkingAdmin"));
 const CriticalThinkingPlatformAdmin = lazy(() => import("./pages/CriticalThinkingPlatformAdmin"));
+const CriticalThinkingPilot = lazy(() => import("./pages/CriticalThinkingPilot"));
 
 // Launch Intelligence is a self-contained experience. Loading its journeys on
 // demand keeps the platform's initial bundle focused on the page a learner chose.
@@ -210,6 +211,7 @@ function Router() {
       <Route path="/critical-thinking/assessment/:campaignId" component={CriticalThinkingAssessment} />
       <Route path="/critical-thinking/report/:reportId" component={CriticalThinkingReport} />
       <Route path="/critical-thinking/admin" component={CriticalThinkingAdmin} />
+      <Route path="/critical-thinking/pilot" component={CriticalThinkingPilot} />
       <Route path="/admin/critical-thinking" component={CriticalThinkingPlatformAdmin} />
 
       {/* Platform (authenticated) */}

@@ -20,3 +20,15 @@
 - [x] Add router-level automated tests for participant report ownership, tenant-admin campaign controls, and platform-admin cross-tenant oversight boundaries.
 - [x] Add LevelNext logo branding to the Critical Thinking administration experience.
 - [x] Implement a secured platform-admin Critical Thinking oversight panel for cross-tenant campaign monitoring and status control.
+- [x] Add LevelNext-branded PDF export for private individual Critical Thinking development reports.
+- [x] Add LevelNext-branded PDF export for eligible anonymised team development reports.
+- [x] Enforce participant, tenant-admin, and anonymity access boundaries for all exported reports.
+- [x] Streamline first tenant campaign creation with pilot defaults and guided context settings.
+- [x] Add a streamlined pilot-cohort enrolment flow with email entry, import-ready guidance, and completion status.
+- [x] Add focused tests and visual validation for PDF exports and the pilot campaign workflow.
+- [x] Package the reusable branded diagnostic PDF export workflow as a project skill.
+- [x] Publish the completed PDF export and pilot-cohort enhancement.
+- [x] Add focused tests for pilot email parsing, validation, campaign creation, participant enrolment sequencing, and completion state.
+- [x] Defer live authenticated PDF-download and pilot-mutation checks until approved non-production tenant data is available; complete component, authorization, PDF-generation, visual, type, and production-build validation without creating tenant records.
+- [x] Add rendered-form component tests for invalid pilot input and successful pilot completion state.
+- [x] Add component-level tests for pilot campaign creation, invalid-email blocking, sequential participant enrolment, and completion-state rendering.
