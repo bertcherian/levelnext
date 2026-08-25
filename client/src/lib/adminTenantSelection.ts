@@ -3,6 +3,12 @@ import { useCallback, useEffect, useState } from "react";
 const STORAGE_KEY = "levelnext-admin-active-tenant";
 const CHANGE_EVENT = "levelnext-admin-tenant-change";
 
+function getTenantIdFromLocation() {
+  if (typeof window === "undefined") return null;
+  const fromUrl = Number(new URLSearchParams(window.location.search).get("tenant"));
+  return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : null;
+}
+
 export function getTenantScopedAdminHref(path: string, tenantId: number | null) {
   if (!tenantId) return path;
   const separator = path.includes("?") ? "&" : "?";
@@ -12,8 +18,8 @@ export function getTenantScopedAdminHref(path: string, tenantId: number | null) 
 export function useAdminTenantSelection() {
   const [tenantId, setTenantIdState] = useState<number | null>(() => {
     if (typeof window === "undefined") return null;
-    const fromUrl = Number(new URLSearchParams(window.location.search).get("tenant"));
-    if (Number.isInteger(fromUrl) && fromUrl > 0) return fromUrl;
+    const fromUrl = getTenantIdFromLocation();
+    if (fromUrl) return fromUrl;
     const raw = window.localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? Number(raw) : NaN;
     return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
@@ -21,12 +27,22 @@ export function useAdminTenantSelection() {
 
   useEffect(() => {
     const onChange = () => {
+      const fromUrl = getTenantIdFromLocation();
+      if (fromUrl) {
+        setTenantIdState(fromUrl);
+        return;
+      }
       const raw = window.localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? Number(raw) : NaN;
       setTenantIdState(Number.isInteger(parsed) && parsed > 0 ? parsed : null);
     };
     window.addEventListener(CHANGE_EVENT, onChange);
-    return () => window.removeEventListener(CHANGE_EVENT, onChange);
+    window.addEventListener("popstate", onChange);
+    onChange();
+    return () => {
+      window.removeEventListener(CHANGE_EVENT, onChange);
+      window.removeEventListener("popstate", onChange);
+    };
   }, []);
 
   const setTenantId = useCallback((next: number | null) => {
