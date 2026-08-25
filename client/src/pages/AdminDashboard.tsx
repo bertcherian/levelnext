@@ -325,8 +325,8 @@ export default function AdminDashboard() {
         {/* ── Playbook Usage ── */}
         <PlaybookStatsSection tenantId={tenantId} />
 
-        {/* ── Recent Pilot Applications ── */}
-        <div
+        {/* Pilot applications are global lead data and are intentionally hidden in a client workspace. */}
+        {!tenantId && <div
           className="rounded-xl border p-6"
           style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}
         >
@@ -379,7 +379,7 @@ export default function AdminDashboard() {
           ) : (
             <p className="text-sm text-muted-foreground text-center py-8">No pilot applications yet.</p>
           )}
-        </div>
+        </div>}
 
         {/* ── Quick Links ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -408,7 +408,7 @@ export default function AdminDashboard() {
               label: "Your Dashboard",
               desc: "Switch to your leader view",
             },
-          ].map((item) => (
+          ].filter((link) => !tenantId || link.href !== "/admin/pilot-applications").map((item) => (
             <Link key={item.href} href={item.href}>
               <div
                 className="rounded-xl border p-5 flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
