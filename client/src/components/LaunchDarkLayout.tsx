@@ -16,7 +16,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { ADMINISTRATOR_CONTROLS, isPlatformAdministrator } from "@/lib/adminControls";
 import { Map, LayoutDashboard, Briefcase, LogOut, Menu, X, Rocket, Settings, Trophy, History, Swords } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const LOGO_URL = "/manus-storage/LevelNext_logo_transparent_c21f58d5.png";
 

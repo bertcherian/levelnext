@@ -19,7 +19,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 const LOGO_URL = "/logo.png";
 

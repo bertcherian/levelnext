@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import React from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ADMINISTRATOR_CONTROLS, isPlatformAdministrator } from "@/lib/adminControls";
 import { BarChart3, BriefcaseBusiness, ClipboardCheck, Compass, Home, MessageCircle, ShieldCheck, Sparkles, Theater, UsersRound } from "lucide-react";

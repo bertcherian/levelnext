@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ADMINISTRATOR_CONTROLS, isPlatformAdministrator } from "@/lib/adminControls";
@@ -110,7 +110,7 @@ export function CareerAccessLayout({ children }: CareerAccessLayoutProps) {
           const active = isActive(item.href);
           return (
             <Link key={item.href} href={item.href}>
-              <a
+              <div
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group ${
                   active
@@ -125,7 +125,7 @@ export function CareerAccessLayout({ children }: CareerAccessLayoutProps) {
                     <div className="text-[10px] text-white/40 truncate">{item.description}</div>
                   </div>
                 )}
-              </a>
+              </div>
             </Link>
           );
         })}
