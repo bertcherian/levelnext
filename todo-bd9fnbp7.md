@@ -10,9 +10,11 @@
 - [x] Add focused automated tests for assessment scoring and tenant/admin access boundaries.
 - [x] Validate core user journeys, responsive LevelNext UI, and production readiness; create a published checkpoint.
 - [x] Package the reusable implementation workflow as a project skill after the platform work is complete.
-- [ ] Run end-to-end validation of assessment start/save/submit/report access and tenant/platform administration flows.
-- [ ] Run a production build validation and resolve any resulting errors.
-- [ ] Create a published checkpoint after final validation.
+- [x] Run end-to-end validation of assessment start/save/submit/report access and tenant/platform administration flows.
+- [x] Run a production build validation and resolve any resulting errors.
+- [x] Create a published checkpoint after final validation.
+- [x] Run runtime tenant and platform administration validation for campaign creation, enrolment, dashboard access, and status control.
+- [x] Complete a full client production build or implement a concrete low-memory build workaround for this environment.
 - [x] Add positive router-level tests for tenant-admin campaign update, participant enrolment, and campaign-dashboard procedures.
 - [x] Add positive router-level authorization tests for tenant-admin campaign control procedures and platform-admin oversight procedures.
 - [x] Add router-level automated tests for participant report ownership, tenant-admin campaign controls, and platform-admin cross-tenant oversight boundaries.
