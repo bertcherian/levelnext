@@ -617,8 +617,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
               journeyPct={journeyPct}
               compact
             />
-            {/* Admin-only nav items */}
-            {/* SP-only nav items (success_partner role) */}
+            {(user?.role === "admin" || user?.role === "success_partner") && <RoleNavigationByRole role={user.role} isNavActive={isNavActive} compact />}
           </ul>
         </nav>
 

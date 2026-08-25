@@ -1,4 +1,6 @@
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { ADMINISTRATOR_CONTROLS, isPlatformAdministrator } from "@/lib/adminControls";
 import { BarChart3, BriefcaseBusiness, ClipboardCheck, Compass, Home, MessageCircle, ShieldCheck, Sparkles, Theater, UsersRound } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -13,6 +15,8 @@ const NAV_ITEMS = [
 
 export default function EarlyCareerLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { user } = useAuth();
+  const isAdministrator = isPlatformAdministrator(user?.role);
 
   return (
     <div className="min-h-screen" style={{ background: "#F8F5F0", color: "#0A1A2F" }}>
@@ -49,6 +53,16 @@ export default function EarlyCareerLayout({ children }: { children: React.ReactN
                   color: active ? "#F8F5F0" : "#56616D",
                 }}
               >
+                <Icon size={16} aria-hidden="true" style={{ color: active ? "#D4AF37" : "currentColor" }} />
+                {item.label}
+              </Link>
+            );
+          })}
+          {isAdministrator && ADMINISTRATOR_CONTROLS.map((item) => {
+            const Icon = item.icon;
+            const active = location === item.href || location.startsWith(item.href + "/");
+            return (
+              <Link key={item.href} href={item.href} className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors" style={{ background: active ? "#0A1A2F" : "#EFE9DE", color: active ? "#F8F5F0" : "#0A1A2F" }}>
                 <Icon size={16} aria-hidden="true" style={{ color: active ? "#D4AF37" : "currentColor" }} />
                 {item.label}
               </Link>

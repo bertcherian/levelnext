@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { ADMINISTRATOR_CONTROLS, isPlatformAdministrator } from "@/lib/adminControls";
 import {
   Target,
   Users,
@@ -73,6 +74,7 @@ interface CareerAccessLayoutProps {
 export function CareerAccessLayout({ children }: CareerAccessLayoutProps) {
   const [location] = useLocation();
   const { user } = useAuth();
+  const isAdministrator = isPlatformAdministrator(user?.role);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -127,6 +129,26 @@ export function CareerAccessLayout({ children }: CareerAccessLayoutProps) {
             </Link>
           );
         })}
+        {isAdministrator && (
+          <>
+            {!collapsed && <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-[#D4AF37]">Administrator</p>}
+            {ADMINISTRATOR_CONTROLS.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link key={item.href} href={item.href}>
+                  <div
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group ${active ? "bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
+                  >
+                    <Icon size={18} className="flex-shrink-0" />
+                    {!collapsed && <div className="min-w-0"><div className="text-sm font-medium truncate">{item.label}</div><div className="text-[10px] text-white/40 truncate">Platform administration</div></div>}
+                  </div>
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
 
       {/* Platform switcher */}

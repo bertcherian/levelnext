@@ -18,3 +18,8 @@
 - [x] Add a clear, reachable organisation setup or organisation settings entry point for Broadridge administrators.
 - [x] Validate the organisation-information path and publish the clarified experience.
 - [x] Browser-verify the Organisation Setup destinations from the Manager Effectiveness sidebar and dashboard card.
+- [x] Inventory all platform layouts and existing administrator-only controls, using Leader Intelligence as the reference pattern.
+- [x] Define a shared role-gated administrator navigation model that hides controls from non-admin participants.
+- [x] Add the required administrator controls to Manager Effectiveness and each other applicable platform shell.
+- [ ] Add automated tests for administrator visibility and participant non-visibility, validate in the browser, and publish the standardised controls.
+- [x] Add the shared administrator control section to Career Access and replace Launch’s single shortcut with the full standard administrator control catalogue.

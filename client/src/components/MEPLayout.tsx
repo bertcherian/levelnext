@@ -4,6 +4,8 @@
  * Mobile: hamburger button in top bar → slide-in drawer overlay
  */
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { ADMINISTRATOR_CONTROLS, isPlatformAdministrator } from "@/lib/adminControls";
 import {
   LayoutGrid,
   MessageSquare,
@@ -37,8 +39,10 @@ interface MEPLayoutProps {
 
 export default function MEPLayout({ children }: MEPLayoutProps) {
   const [location] = useLocation();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isAdministrator = isPlatformAdministrator(user?.role);
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -111,6 +115,27 @@ export default function MEPLayout({ children }: MEPLayoutProps) {
             </Link>
           );
         })}
+        {isAdministrator && (
+          <>
+            {!collapsed && <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#34d399" }}>Administrator</p>}
+            {ADMINISTRATOR_CONTROLS.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item);
+              return (
+                <Link key={item.href} href={item.href}>
+                  <div
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-150"
+                    style={{ background: active ? "oklch(from #34d399 l c h / 0.15)" : "transparent", border: active ? "1px solid oklch(from #34d399 l c h / 0.3)" : "1px solid transparent" }}
+                    onClick={onItemClick}
+                  >
+                    <Icon size={16} className="flex-shrink-0" style={{ color: active ? "#34d399" : "oklch(65% 0.02 248.6)" }} />
+                    {!collapsed && <span className="text-sm font-medium truncate" style={{ color: active ? "#ffffff" : "oklch(65% 0.02 248.6)" }}>{item.label}</span>}
+                  </div>
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
     </>
   );
@@ -180,6 +205,27 @@ export default function MEPLayout({ children }: MEPLayoutProps) {
               </Link>
             );
           })}
+          {isAdministrator && (
+            <>
+              {!collapsed && <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#34d399" }}>Administrator</p>}
+              {ADMINISTRATOR_CONTROLS.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item);
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <div
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-150"
+                      style={{ background: active ? "oklch(from #34d399 l c h / 0.15)" : "transparent", border: active ? "1px solid oklch(from #34d399 l c h / 0.3)" : "1px solid transparent" }}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      <Icon size={16} className="flex-shrink-0" style={{ color: active ? "#34d399" : "oklch(65% 0.02 248.6)" }} />
+                      {!collapsed && <span className="text-sm font-medium truncate" style={{ color: active ? "#ffffff" : "oklch(65% 0.02 248.6)" }}>{item.label}</span>}
+                    </div>
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </nav>
 
         {/* Collapse toggle */}

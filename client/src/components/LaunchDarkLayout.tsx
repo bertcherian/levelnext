@@ -14,6 +14,7 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { ADMINISTRATOR_CONTROLS, isPlatformAdministrator } from "@/lib/adminControls";
 import { Map, LayoutDashboard, Briefcase, LogOut, Menu, X, Rocket, Settings, Trophy, History, Swords } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
@@ -58,6 +59,7 @@ const MOBILE_NAV_ITEMS = NAV_ITEMS.filter(({ href }) => [
 export default function LaunchDarkLayout({ children, showBottomNav = true }: { children: React.ReactNode; showBottomNav?: boolean }) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
+  const isAdministrator = isPlatformAdministrator(user?.role);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [xpPulse, setXpPulse] = useState(false);
   const previousXp = useRef<number | null>(null);
@@ -183,6 +185,18 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
                 </button>
               );
             })}
+            {isAdministrator && (
+              <details style={{ position: "relative" }}>
+                <summary style={{ listStyle: "none", display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 8, border: "1px solid var(--ld-cyan)", cursor: "pointer", fontSize: 13, fontWeight: 700, background: "var(--ld-cyan-soft)", color: "var(--ld-cyan)" }}>Admin</summary>
+                <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 220, padding: 8, borderRadius: 10, border: "1px solid var(--ld-border)", background: "rgba(10,15,30,.98)", boxShadow: "var(--ld-shadow-cyan)" }}>
+                  {ADMINISTRATOR_CONTROLS.map(({ href, label, icon: Icon }) => (
+                    <button key={href} onClick={() => navigate(href)} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 10px", border: "none", borderRadius: 7, cursor: "pointer", background: "transparent", color: "var(--ld-text-muted)", fontSize: 12, fontWeight: 600, textAlign: "left" }}>
+                      <Icon size={14} /> {label}
+                    </button>
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
 
           {/* Right: XP + Streak + Settings + Logout */}
@@ -265,6 +279,16 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
                 </button>
               );
             })}
+            {isAdministrator && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--ld-border)" }}>
+                <p style={{ margin: "0 0 6px 12px", color: "var(--ld-cyan)", fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>Administrator</p>
+                {ADMINISTRATOR_CONTROLS.map(({ href, label, icon: Icon }) => (
+                  <button key={href} onClick={() => { navigate(href); setMobileOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, marginBottom: 4, background: "transparent", color: "var(--ld-text-muted)", textAlign: "left" }}>
+                    <Icon size={16} /> {label}
+                  </button>
+                ))}
+              </div>
+            )}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--ld-border)" }}>
               <span className="ld-badge ld-badge-cyan">⚡ {xp} XP</span>
               {streak > 0 && <span className="ld-badge ld-badge-orange">🔥 {streak}d</span>}
