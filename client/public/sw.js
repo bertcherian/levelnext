@@ -1,7 +1,7 @@
-// LevelNext Service Worker — v2
+// LevelNext Service Worker — v3
 // Bumping the cache releases the magic-link session correction to installed and
 // mobile clients that previously cached the application shell.
-const CACHE_NAME = 'levelnext-v2';
+const CACHE_NAME = 'levelnext-v3';
 
 // Shell assets to cache on install
 const PRECACHE_URLS = [

@@ -5,7 +5,7 @@ const serviceWorker = readFileSync(new URL("../../public/sw.js", import.meta.url
 
 describe("service worker authentication release safety", () => {
   it("uses a new cache version and refreshes JavaScript and CSS from the network", () => {
-    expect(serviceWorker).toContain("const CACHE_NAME = 'levelnext-v2'");
+    expect(serviceWorker).toContain("const CACHE_NAME = 'levelnext-v3'");
     expect(serviceWorker).toContain("fetch(request)");
     expect(serviceWorker).toContain("Cached code remains an offline");
   });

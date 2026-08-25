@@ -37,3 +37,4 @@
 - [ ] Add tenant-scoped metric tests and complete an authenticated published-browser verification of the sidebar switcher and quick metrics.
 - [x] Add tenant identity to platform invites and scope invitation list, create, resend, revoke, and bulk flows to the active organisation.
 - [ ] Add tenant filtering to the existing admin dashboard procedures and each organisation-specific dashboard section, then verify it in the published administrator workspace.
+- [ ] Refresh the client asset cache version and verify the final tenant-scoped dashboard presentation on the published domain.
