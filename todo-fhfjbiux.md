@@ -27,14 +27,15 @@
 - [x] Verify the published controls in an authenticated administrator browser session for one dedicated shell and one shared-shell product.
 - [x] Add a behavioral shared-shell test proving normal participants cannot see the administrator section.
 - [x] Audit tenant context, participant records, enrolments, and existing admin procedures for multi-client operations.
-- [ ] Add a role-gated organisation switcher that changes the active administrator workspace without exposing cross-tenant data to participants.
+- [x] Add a role-gated organisation switcher that changes the active administrator workspace without exposing cross-tenant data to participants.
 - [x] Add accurate administrator quick metrics to the shared sidebar using live tenant and participant data.
 - [x] Build a consolidated cross-platform participant search with secure results, platform enrolment visibility, and administrator controls.
-- [ ] Add regression coverage, verify the administrator workflow in the browser, and publish the operations upgrade.
-- [ ] Propagate the selected organisation context through relevant administrator routes and tools, not only the new dashboard widgets.
+- [x] Add regression coverage, verify the administrator workflow in the browser, and publish the operations upgrade.
+- [x] Propagate the selected organisation context through relevant administrator routes and tools, not only the new dashboard widgets.
 - [x] Add explicit participant-level administrator actions from consolidated search and cover their access boundaries.
-- [ ] Make selected tenant context scope the underlying data in existing admin dashboard, invite, enrolment, and organisation-context tools.
-- [ ] Add tenant-scoped metric tests and complete an authenticated published-browser verification of the sidebar switcher and quick metrics.
+- [x] Make selected tenant context scope the underlying data in existing admin dashboard, invite, enrolment, and organisation-context tools.
+- [x] Add tenant-scoped metric tests and complete an authenticated published-browser verification of the sidebar switcher and quick metrics.
 - [x] Add tenant identity to platform invites and scope invitation list, create, resend, revoke, and bulk flows to the active organisation.
-- [ ] Add tenant filtering to the existing admin dashboard procedures and each organisation-specific dashboard section, then verify it in the published administrator workspace.
-- [ ] Refresh the client asset cache version and verify the final tenant-scoped dashboard presentation on the published domain.
+- [x] Add tenant filtering to the existing admin dashboard procedures and each organisation-specific dashboard section, then verify it in the published administrator workspace.
+- [x] Refresh the client asset cache version and verify the final tenant-scoped dashboard presentation on the published domain.
+- [x] Add tenant-mode dashboard visibility tests that assert global pilot panels and pilot shortcuts are absent, then verify this on the published domain.
