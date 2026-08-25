@@ -1,0 +1,2 @@
+ALTER TABLE `platform_invites` ADD `tenantId` int;--> statement-breakpoint
+ALTER TABLE `platform_invites` ADD CONSTRAINT `platform_invites_tenantId_tenants_id_fk` FOREIGN KEY (`tenantId`) REFERENCES `tenants`(`id`) ON DELETE no action ON UPDATE no action;

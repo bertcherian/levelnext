@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAdminTenantSelection } from "@/lib/adminTenantSelection";
 import PlatformLayout from "@/components/PlatformLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,7 +68,8 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
 }
 
 export default function AdminManageInvites() {
-  const { data, isLoading, refetch } = trpc.platformInvites.listInvites.useQuery();
+  const { tenantId } = useAdminTenantSelection();
+  const { data, isLoading, refetch } = trpc.platformInvites.listInvites.useQuery({ tenantId });
 
   const createInvite = trpc.platformInvites.generateInvite.useMutation({
     onSuccess: () => {
@@ -142,6 +144,7 @@ export default function AdminManageInvites() {
     if (!valid.length) return;
     bulkInvite.mutate({
       invitees: valid.map((r) => ({ email: r.email, name: r.name || undefined })),
+      tenantId: tenantId ?? undefined,
       origin: window.location.origin,
     });
   }
@@ -175,7 +178,7 @@ export default function AdminManageInvites() {
 
   function handleRevoke(id: number) {
     if (!confirm("Revoke this invite? The link will stop working immediately.")) return;
-    revokeInvite.mutate({ id });
+    revokeInvite.mutate({ id, tenantId: tenantId ?? undefined });
   }
 
   function handleCopyLink(token: string) {
@@ -192,6 +195,7 @@ export default function AdminManageInvites() {
       email: inviteEmail.trim(),
       name: inviteName.trim() || undefined,
       productId: inviteProduct || undefined,
+      tenantId: tenantId ?? undefined,
       origin: window.location.origin,
     });
   }
@@ -573,7 +577,7 @@ export default function AdminManageInvites() {
                                   className="h-8 px-2 text-xs gap-1 text-muted-foreground hover:text-ln-navy"
                                   title="Resend invite with fresh 7-day link"
                                   disabled={resendInvite.isPending}
-                                  onClick={() => resendInvite.mutate({ id: inv.id, origin: window.location.origin })}
+                                  onClick={() => resendInvite.mutate({ id: inv.id, origin: window.location.origin, tenantId: tenantId ?? undefined })}
                                 >
                                   <RefreshCw size={13} />
                                   Resend

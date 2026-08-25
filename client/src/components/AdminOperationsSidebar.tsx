@@ -1,6 +1,7 @@
 import { Building2, Layers3, UsersRound } from "lucide-react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { useAdminTenantSelection } from "@/lib/adminTenantSelection";
+import { getTenantScopedAdminHref, useAdminTenantSelection } from "@/lib/adminTenantSelection";
 
 export default function AdminOperationsSidebar({ compact = false }: { compact?: boolean }) {
   const { tenantId, setTenantId } = useAdminTenantSelection();
@@ -19,6 +20,12 @@ export default function AdminOperationsSidebar({ compact = false }: { compact?: 
         <Metric icon={<Building2 size={12} />} value={metrics?.organisationCount ?? "—"} label="Orgs" />
         <Metric icon={<UsersRound size={12} />} value={metrics?.participantCount ?? "—"} label="People" />
         <Metric icon={<Layers3 size={12} />} value={metrics?.activeEnrollmentCount ?? "—"} label="Active" />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-1 text-[10px] font-semibold">
+        <Link href={getTenantScopedAdminHref("/admin", tenantId)} className="rounded px-1.5 py-1 text-center text-white/70 hover:bg-white/10">Dashboard</Link>
+        <Link href={getTenantScopedAdminHref("/admin/org-context", tenantId)} className="rounded px-1.5 py-1 text-center text-white/70 hover:bg-white/10">Org context</Link>
+        <Link href={getTenantScopedAdminHref("/admin/invites", tenantId)} className="rounded px-1.5 py-1 text-center text-white/70 hover:bg-white/10">Invites</Link>
+        <Link href={getTenantScopedAdminHref("/admin/enrollments", tenantId)} className="rounded px-1.5 py-1 text-center text-white/70 hover:bg-white/10">Enrolments</Link>
       </div>
     </section>
   );

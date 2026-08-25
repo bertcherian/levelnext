@@ -3,10 +3,18 @@ import { eq, desc, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { platformInvites, users } from "../../drizzle/schema";
+import { platformInvites, tenants, users } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
 import { notifyOwner } from "../_core/notification";
 import crypto from "crypto";
+
+async function assertTenantScope(tenantId?: number) {
+  if (!tenantId) return;
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+  const [tenant] = await db.select({ id: tenants.id }).from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+  if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "Organisation not found" });
+}
 
 export const platformInvitesRouter = router({
   // Admin: generate a magic link invite for a user
@@ -17,6 +25,7 @@ export const platformInvitesRouter = router({
         name: z.string().optional(),
         pilotApplicationId: z.number().optional(),
         productId: z.string().optional(), // e.g. "career_intelligence" — routes invite to /join-product
+        tenantId: z.number().int().positive().optional(),
         origin: z.string().url(),
       })
     )
@@ -24,6 +33,7 @@ export const platformInvitesRouter = router({
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
       }
+      await assertTenantScope(input.tenantId);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
@@ -37,7 +47,8 @@ export const platformInvitesRouter = router({
         .where(
           and(
             eq(platformInvites.email, input.email),
-            eq(platformInvites.status, "pending")
+            eq(platformInvites.status, "pending"),
+            ...(input.tenantId ? [eq(platformInvites.tenantId, input.tenantId)] : [])
           )
         );
 
@@ -46,6 +57,7 @@ export const platformInvitesRouter = router({
         email: input.email,
         name: input.name,
         invitedBy: ctx.user.id,
+        tenantId: input.tenantId,
         pilotApplicationId: input.pilotApplicationId,
         expiresAt,
         status: "pending",
@@ -112,7 +124,7 @@ export const platformInvitesRouter = router({
     }),
 
   // Admin: list all invites
-  listInvites: protectedProcedure.query(async ({ ctx }) => {
+  listInvites: protectedProcedure.input(z.object({ tenantId: z.number().int().positive().nullable().optional() }).optional()).query(async ({ ctx, input }) => {
     if (ctx.user.role !== "admin") {
       throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
     }
@@ -121,23 +133,25 @@ export const platformInvitesRouter = router({
       const invites = await db
       .select()
       .from(platformInvites)
+      .where(input?.tenantId ? eq(platformInvites.tenantId, input.tenantId) : undefined)
       .orderBy(desc(platformInvites.createdAt));
     return invites;
   }),
 
   // Admin: revoke an invite
   revokeInvite: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.number(), tenantId: z.number().int().positive().optional() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
       }
+      await assertTenantScope(input.tenantId);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
       await db
         .update(platformInvites)
         .set({ status: "expired" })
-        .where(eq(platformInvites.id, input.id));
+        .where(and(eq(platformInvites.id, input.id), ...(input.tenantId ? [eq(platformInvites.tenantId, input.tenantId)] : [])));
       return { success: true };
     }),
 
@@ -180,6 +194,7 @@ export const platformInvitesRouter = router({
             name: z.string().optional(),
           })
         ).min(1).max(200),
+        tenantId: z.number().int().positive().optional(),
         origin: z.string().url(),
       })
     )
@@ -191,6 +206,7 @@ export const platformInvitesRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
       const results: { email: string; success: boolean; error?: string }[] = [];
+      await assertTenantScope(input.tenantId);
 
       for (const invitee of input.invitees) {
         try {
@@ -205,7 +221,8 @@ export const platformInvitesRouter = router({
             .where(
               and(
                 eq(platformInvites.email, email),
-                eq(platformInvites.status, "pending")
+                eq(platformInvites.status, "pending"),
+                ...(input.tenantId ? [eq(platformInvites.tenantId, input.tenantId)] : [])
               )
             );
 
@@ -214,6 +231,7 @@ export const platformInvitesRouter = router({
             email,
             name: invitee.name,
             invitedBy: ctx.user.id,
+            tenantId: input.tenantId,
             expiresAt,
             status: "pending",
           });
@@ -266,7 +284,7 @@ export const platformInvitesRouter = router({
 
   // Admin: resend an expired or pending invite — generates a fresh 7-day token and re-sends the email
   resendInvite: protectedProcedure
-    .input(z.object({ id: z.number(), origin: z.string().url() }))
+    .input(z.object({ id: z.number(), origin: z.string().url(), tenantId: z.number().int().positive().optional() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
@@ -275,10 +293,11 @@ export const platformInvitesRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
       // Find the invite
+      await assertTenantScope(input.tenantId);
       const [invite] = await db
         .select()
         .from(platformInvites)
-        .where(eq(platformInvites.id, input.id))
+        .where(and(eq(platformInvites.id, input.id), ...(input.tenantId ? [eq(platformInvites.tenantId, input.tenantId)] : [])))
         .limit(1);
 
       if (!invite) throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found" });
@@ -291,7 +310,7 @@ export const platformInvitesRouter = router({
       await db
         .update(platformInvites)
         .set({ token, expiresAt, status: "pending" })
-        .where(eq(platformInvites.id, input.id));
+        .where(and(eq(platformInvites.id, input.id), ...(input.tenantId ? [eq(platformInvites.tenantId, input.tenantId)] : [])));
 
       const inviteUrl = `${input.origin}/login?invite=${token}`;
       const firstName = invite.name?.split(" ")[0] || "there";

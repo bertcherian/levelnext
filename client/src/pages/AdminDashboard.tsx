@@ -70,8 +70,8 @@ function StatCard({
   return href ? <Link href={href}>{inner}</Link> : inner;
 }
 
-function PlaybookStatsSection() {
-  const { data, isLoading } = trpc.adminStats.getPlaybookStats.useQuery();
+function PlaybookStatsSection({ tenantId }: { tenantId: number | null }) {
+  const { data, isLoading } = trpc.adminStats.getPlaybookStats.useQuery({ tenantId });
 
   return (
     <div
@@ -151,8 +151,8 @@ function PlaybookStatsSection() {
 }
 
 export default function AdminDashboard() {
-  const { data, isLoading } = trpc.adminStats.getDashboardStats.useQuery();
   const { tenantId } = useAdminTenantSelection();
+  const { data, isLoading } = trpc.adminStats.getDashboardStats.useQuery({ tenantId });
   const { data: scopedMetrics } = trpc.adminOperations.getQuickMetrics.useQuery({ tenantId });
 
   return (
@@ -183,14 +183,14 @@ export default function AdminDashboard() {
               icon={<Users size={18} className="text-blue-600" />}
               iconBg="bg-blue-500/12"
             />
-            <StatCard
+            {!tenantId && <StatCard
               label="Pilot Applications"
               value={data.pilotApplications.total}
               sub={`+${data.pilotApplications.newLast7Days} this week`}
               icon={<Briefcase size={18} className="text-amber-600" />}
               iconBg="bg-amber-500/12"
               href="/admin/pilot-applications"
-            />
+            />}
             <StatCard
               label="Invites Accepted"
               value={data.invites.accepted}
@@ -323,7 +323,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* ── Playbook Usage ── */}
-        <PlaybookStatsSection />
+        <PlaybookStatsSection tenantId={tenantId} />
 
         {/* ── Recent Pilot Applications ── */}
         <div

@@ -1,12 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { users, pilotApplications, platformInvites, assessmentSessions, reports, practiceSessions, playbookSessions } from "../../drizzle/schema";
-import { desc, eq, gte, count, sql } from "drizzle-orm";
+import { users, tenantUsers, pilotApplications, platformInvites, assessmentSessions, reports, practiceSessions, playbookSessions } from "../../drizzle/schema";
+import { and, desc, eq, gte, count, sql } from "drizzle-orm";
+import { z } from "zod";
 
 export const adminStatsRouter = router({
   // Returns all key platform metrics for the admin dashboard
-  getDashboardStats: protectedProcedure.query(async ({ ctx }) => {
+  getDashboardStats: protectedProcedure.input(z.object({ tenantId: z.number().int().positive().nullable().optional() }).optional()).query(async ({ ctx, input }) => {
     if (ctx.user.role !== "admin") {
       throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
     }
@@ -15,30 +16,39 @@ export const adminStatsRouter = router({
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const tenantId = input?.tenantId ?? null;
 
     // Users
-    const [totalUsersRow] = await db.select({ count: count() }).from(users);
-    const [newUsersRow] = await db.select({ count: count() }).from(users).where(gte(users.createdAt, thirtyDaysAgo));
+    const [totalUsersRow] = tenantId
+      ? await db.select({ count: count() }).from(tenantUsers).where(eq(tenantUsers.tenantId, tenantId))
+      : await db.select({ count: count() }).from(users);
+    const [newUsersRow] = tenantId
+      ? await db.select({ count: count() }).from(users).innerJoin(tenantUsers, eq(users.id, tenantUsers.userId)).where(and(eq(tenantUsers.tenantId, tenantId), gte(users.createdAt, thirtyDaysAgo)))
+      : await db.select({ count: count() }).from(users).where(gte(users.createdAt, thirtyDaysAgo));
 
     // Pilot applications
-    const [totalAppsRow] = await db.select({ count: count() }).from(pilotApplications);
-    const [newAppsRow] = await db.select({ count: count() }).from(pilotApplications).where(gte(pilotApplications.createdAt, sevenDaysAgo));
+    const [totalAppsRow] = tenantId ? [{ count: 0 }] : await db.select({ count: count() }).from(pilotApplications);
+    const [newAppsRow] = tenantId ? [{ count: 0 }] : await db.select({ count: count() }).from(pilotApplications).where(gte(pilotApplications.createdAt, sevenDaysAgo));
 
     // Invites
-    const [pendingInvitesRow] = await db.select({ count: count() }).from(platformInvites).where(eq(platformInvites.status, "pending"));
-    const [acceptedInvitesRow] = await db.select({ count: count() }).from(platformInvites).where(eq(platformInvites.status, "accepted"));
+    const [pendingInvitesRow] = await db.select({ count: count() }).from(platformInvites).where(and(eq(platformInvites.status, "pending"), ...(tenantId ? [eq(platformInvites.tenantId, tenantId)] : [])));
+    const [acceptedInvitesRow] = await db.select({ count: count() }).from(platformInvites).where(and(eq(platformInvites.status, "accepted"), ...(tenantId ? [eq(platformInvites.tenantId, tenantId)] : [])));
 
     // Assessments completed
-    const [completedAssessmentsRow] = await db.select({ count: count() }).from(assessmentSessions).where(eq(assessmentSessions.status, "completed"));
+    const [completedAssessmentsRow] = await db.select({ count: count() }).from(assessmentSessions).where(and(eq(assessmentSessions.status, "completed"), ...(tenantId ? [eq(assessmentSessions.tenantId, tenantId)] : [])));
     const [recentAssessmentsRow] = await db.select({ count: count() }).from(assessmentSessions)
-      .where(sql`${assessmentSessions.status} = 'completed' AND ${assessmentSessions.completedAt} >= ${thirtyDaysAgo}`);
+      .where(and(sql`${assessmentSessions.status} = 'completed' AND ${assessmentSessions.completedAt} >= ${thirtyDaysAgo}`, ...(tenantId ? [eq(assessmentSessions.tenantId, tenantId)] : [])));
 
     // Reports generated
-    const [totalReportsRow] = await db.select({ count: count() }).from(reports);
+    const [totalReportsRow] = await db.select({ count: count() }).from(reports).where(tenantId ? eq(reports.tenantId, tenantId) : undefined);
 
     // Practice sessions
-    const [totalPracticeRow] = await db.select({ count: count() }).from(practiceSessions);
-    const [recentPracticeRow] = await db.select({ count: count() }).from(practiceSessions).where(gte(practiceSessions.createdAt, thirtyDaysAgo));
+    const [totalPracticeRow] = tenantId
+      ? await db.select({ count: count() }).from(practiceSessions).innerJoin(tenantUsers, eq(practiceSessions.userId, tenantUsers.userId)).where(eq(tenantUsers.tenantId, tenantId))
+      : await db.select({ count: count() }).from(practiceSessions);
+    const [recentPracticeRow] = tenantId
+      ? await db.select({ count: count() }).from(practiceSessions).innerJoin(tenantUsers, eq(practiceSessions.userId, tenantUsers.userId)).where(and(eq(tenantUsers.tenantId, tenantId), gte(practiceSessions.createdAt, thirtyDaysAgo)))
+      : await db.select({ count: count() }).from(practiceSessions).where(gte(practiceSessions.createdAt, thirtyDaysAgo));
 
     // Assessments by module type
     const moduleBreakdown = await db
@@ -47,11 +57,24 @@ export const adminStatsRouter = router({
         total: count(),
       })
       .from(assessmentSessions)
-      .where(eq(assessmentSessions.status, "completed"))
+      .where(and(eq(assessmentSessions.status, "completed"), ...(tenantId ? [eq(assessmentSessions.tenantId, tenantId)] : [])))
       .groupBy(assessmentSessions.moduleType);
 
     // Recent users (last 10 sign-ups)
-    const recentUsers = await db
+    const recentUsers = (tenantId ? await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        createdAt: users.createdAt,
+        lastSignedIn: users.lastSignedIn,
+      })
+      .from(users)
+      .innerJoin(tenantUsers, eq(users.id, tenantUsers.userId))
+      .where(eq(tenantUsers.tenantId, tenantId))
+      .orderBy(desc(users.createdAt))
+      .limit(10) : await db
       .select({
         id: users.id,
         name: users.name,
@@ -62,18 +85,22 @@ export const adminStatsRouter = router({
       })
       .from(users)
       .orderBy(desc(users.createdAt))
-      .limit(10);
+      .limit(10));
 
     // Recent pilot applications (last 5)
-    const recentApplications = await db
+    const recentApplications = tenantId ? [] : await db
       .select()
       .from(pilotApplications)
       .orderBy(desc(pilotApplications.createdAt))
       .limit(5);
 
     // Playbook sessions
-    const [totalPlaybookRow] = await db.select({ count: count() }).from(playbookSessions);
-    const [recentPlaybookRow] = await db.select({ count: count() }).from(playbookSessions).where(gte(playbookSessions.createdAt, thirtyDaysAgo));
+    const [totalPlaybookRow] = tenantId
+      ? await db.select({ count: count() }).from(playbookSessions).innerJoin(tenantUsers, eq(playbookSessions.userId, tenantUsers.userId)).where(eq(tenantUsers.tenantId, tenantId))
+      : await db.select({ count: count() }).from(playbookSessions);
+    const [recentPlaybookRow] = tenantId
+      ? await db.select({ count: count() }).from(playbookSessions).innerJoin(tenantUsers, eq(playbookSessions.userId, tenantUsers.userId)).where(and(eq(tenantUsers.tenantId, tenantId), gte(playbookSessions.createdAt, thirtyDaysAgo)))
+      : await db.select({ count: count() }).from(playbookSessions).where(gte(playbookSessions.createdAt, thirtyDaysAgo));
 
     return {
       users: {
@@ -110,15 +137,29 @@ export const adminStatsRouter = router({
   }),
 
   // Returns per-user playbook usage for admin view
-  getPlaybookStats: protectedProcedure.query(async ({ ctx }) => {
+  getPlaybookStats: protectedProcedure.input(z.object({ tenantId: z.number().int().positive().nullable().optional() }).optional()).query(async ({ ctx, input }) => {
     if (ctx.user.role !== "admin") {
       throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const tenantId = input?.tenantId ?? null;
 
     // Per-user session counts
-    const perUser = await db
+    const perUser = (tenantId ? await db
+      .select({
+        userId: playbookSessions.userId,
+        userName: users.name,
+        userEmail: users.email,
+        sessionCount: count(),
+      })
+      .from(playbookSessions)
+      .leftJoin(users, eq(playbookSessions.userId, users.id))
+      .innerJoin(tenantUsers, eq(playbookSessions.userId, tenantUsers.userId))
+      .where(eq(tenantUsers.tenantId, tenantId))
+      .groupBy(playbookSessions.userId, users.name, users.email)
+      .orderBy(desc(count()))
+      .limit(20) : await db
       .select({
         userId: playbookSessions.userId,
         userName: users.name,
@@ -129,10 +170,20 @@ export const adminStatsRouter = router({
       .leftJoin(users, eq(playbookSessions.userId, users.id))
       .groupBy(playbookSessions.userId, users.name, users.email)
       .orderBy(desc(count()))
-      .limit(20);
+      .limit(20));
 
     // Top situation types
-    const topSituations = await db
+    const topSituations = (tenantId ? await db
+      .select({
+        playbookType: playbookSessions.playbookType,
+        total: count(),
+      })
+      .from(playbookSessions)
+      .innerJoin(tenantUsers, eq(playbookSessions.userId, tenantUsers.userId))
+      .where(eq(tenantUsers.tenantId, tenantId))
+      .groupBy(playbookSessions.playbookType)
+      .orderBy(desc(count()))
+      .limit(10) : await db
       .select({
         playbookType: playbookSessions.playbookType,
         total: count(),
@@ -140,7 +191,7 @@ export const adminStatsRouter = router({
       .from(playbookSessions)
       .groupBy(playbookSessions.playbookType)
       .orderBy(desc(count()))
-      .limit(10);
+      .limit(10));
 
     return { perUser, topSituations };
   }),

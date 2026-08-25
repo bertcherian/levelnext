@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import PlatformLayout from "@/components/PlatformLayout";
 import { trpc } from "@/lib/trpc";
+import { useAdminTenantSelection } from "@/lib/adminTenantSelection";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,13 +31,14 @@ const PRODUCT_META: Record<string, { label: string; shortLabel: string; icon: Re
 type SortKey = "name" | "email" | "createdAt" | "enrollments";
 
 export default function AdminProductEnrollments() {
+  const { tenantId } = useAdminTenantSelection();
   const [search, setSearch] = useState("");
   const [filterProduct, setFilterProduct] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortAsc, setSortAsc] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null); // "userId-productId"
 
-  const { data, isLoading, refetch } = trpc.products.adminGetUsersWithEnrollments.useQuery();
+  const { data, isLoading, refetch } = trpc.products.adminGetUsersWithEnrollments.useQuery({ tenantId });
   const enrollUser = trpc.products.adminEnrollUser.useMutation({
     onSuccess: (result, vars) => {
       refetch();
@@ -133,7 +135,7 @@ export default function AdminProductEnrollments() {
           <div>
             <h1 className="text-2xl font-bold" style={{ color: "var(--color-ln-navy)" }}>Product Enrollments</h1>
             <p className="text-sm mt-1" style={{ color: "oklch(50% 0.02 248.6)" }}>
-              Manage which users have access to Leadership Intelligence and Career Transition Intelligence.
+              {tenantId ? "Manage product access for participants in the selected organisation." : "Manage which users have access to Leadership Intelligence and Career Transition Intelligence."}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={exportCsv} className="flex items-center gap-2">

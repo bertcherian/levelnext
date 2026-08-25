@@ -8,6 +8,7 @@ import {
   productModules,
   userProductEnrollments,
   users,
+  tenantUsers,
 } from "../../drizzle/schema";
 
 // ─── Admin procedure helper ────────────────────────────────────────────────────
@@ -302,9 +303,10 @@ export const productsRouter = router({
     }),
 
   // ── ADMIN: Get all users with their enrollment status ───────────────────────
-  adminGetUsersWithEnrollments: adminOnlyProcedure.query(async () => {
+  adminGetUsersWithEnrollments: adminOnlyProcedure.input(z.object({ tenantId: z.number().int().positive().nullable().optional() }).optional()).query(async ({ input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const selectedTenantId = input?.tenantId ?? null;
     const allUsers = await db
       .select({
         id: users.id,
@@ -313,6 +315,8 @@ export const productsRouter = router({
         createdAt: users.createdAt,
       })
       .from(users)
+      .innerJoin(tenantUsers, eq(users.id, tenantUsers.userId))
+      .where(selectedTenantId ? eq(tenantUsers.tenantId, selectedTenantId) : undefined)
       .orderBy(desc(users.createdAt));
 
     const allEnrollments = await db

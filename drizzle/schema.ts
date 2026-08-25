@@ -928,6 +928,7 @@ export const platformInvites = mysqlTable("platform_invites", {
   email: varchar("email", { length: 320 }).notNull(),
   name: varchar("name", { length: 255 }),
   invitedBy: int("invitedBy").references(() => users.id),
+  tenantId: int("tenantId").references(() => tenants.id),
   pilotApplicationId: int("pilotApplicationId").references(() => pilotApplications.id),
   status: mysqlEnum("status", ["pending", "accepted", "expired"]).default("pending").notNull(),
   expiresAt: timestamp("expiresAt").notNull(),

@@ -9,6 +9,10 @@ export function normaliseParticipantSearchQuery(query: string) {
   return query.trim().replace(/[%_]/g, "").slice(0, 100);
 }
 
+export function getScopedOrganisationCount(totalOrganisationCount: number, selectedTenantId: number | null) {
+  return selectedTenantId ? 1 : totalOrganisationCount;
+}
+
 async function assertTenantExists(tenantId: number) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
@@ -36,7 +40,7 @@ export const adminOperationsRouter = router({
       const db = selectedTenantId ? await assertTenantExists(selectedTenantId) : await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
       const [[organisationRow], [participantRow], [enrollmentRow]] = await Promise.all([
-        db.select({ total: count() }).from(tenants),
+        selectedTenantId ? Promise.resolve([{ total: 1 }]) : db.select({ total: count() }).from(tenants),
         selectedTenantId
           ? db.select({ total: count() }).from(tenantUsers).where(eq(tenantUsers.tenantId, selectedTenantId))
           : db.select({ total: count() }).from(users),
@@ -45,7 +49,7 @@ export const adminOperationsRouter = router({
           : db.select({ total: count() }).from(userProductEnrollments).where(eq(userProductEnrollments.isActive, true)),
       ]);
       return {
-        organisationCount: organisationRow?.total ?? 0,
+        organisationCount: getScopedOrganisationCount(organisationRow?.total ?? 0, selectedTenantId),
         participantCount: participantRow?.total ?? 0,
         activeEnrollmentCount: enrollmentRow?.total ?? 0,
         scope: selectedTenantId ? "organisation" : "all_organisations",

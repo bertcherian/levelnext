@@ -5,7 +5,7 @@
  */
 
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -14,14 +14,16 @@ import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
 
 // ─── Helper: get tenantId for current user (must be owner or admin) ───────────
-async function getTenantAdminId(userId: number): Promise<number> {
+async function getTenantAdminId(user: { id: number; role: string }, requestedTenantId?: number | null): Promise<number> {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+  if (requestedTenantId && user.role === "admin") return requestedTenantId;
 
   const [membership] = await db
     .select()
     .from(tenantUsers)
-    .where(eq(tenantUsers.userId, userId));
+    .where(requestedTenantId ? and(eq(tenantUsers.userId, user.id), eq(tenantUsers.tenantId, requestedTenantId)) : eq(tenantUsers.userId, user.id));
 
   if (!membership) {
     throw new TRPCError({ code: "FORBIDDEN", message: "You are not a member of any organisation." });
@@ -35,21 +37,19 @@ async function getTenantAdminId(userId: number): Promise<number> {
 
 export const orgContextRouter = router({
   /** Get the current org context for the user's tenant */
-  getOrgContext: protectedProcedure.query(async ({ ctx }) => {
+  getOrgContext: protectedProcedure.input(z.object({ tenantId: z.number().int().positive().nullable().optional() }).optional()).query(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-    const [membership] = await db
-      .select()
-      .from(tenantUsers)
-      .where(eq(tenantUsers.userId, ctx.user.id));
-
-    if (!membership) return null;
+    let tenantId: number;
+    try { tenantId = await getTenantAdminId(ctx.user, input?.tenantId); } catch (error) {
+      if (error instanceof TRPCError && error.code === "FORBIDDEN") return null;
+      throw error;
+    }
 
     const [context] = await db
       .select()
       .from(orgContext)
-      .where(eq(orgContext.tenantId, membership.tenantId));
+      .where(eq(orgContext.tenantId, tenantId));
 
     return context ?? null;
   }),
@@ -57,6 +57,7 @@ export const orgContextRouter = router({
   /** Save (upsert) org context */
   saveOrgContext: protectedProcedure
     .input(z.object({
+      tenantId: z.number().int().positive().optional(),
       websiteUrl: z.string().url().optional().or(z.literal("")),
       companyName: z.string().max(255).optional(),
       mission: z.string().max(5000).optional(),
@@ -66,7 +67,7 @@ export const orgContextRouter = router({
       values: z.array(z.string().max(200)).max(15).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const tenantId = await getTenantAdminId(ctx.user.id);
+      const tenantId = await getTenantAdminId(ctx.user, input.tenantId);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -99,12 +100,13 @@ export const orgContextRouter = router({
   /** Upload company logo — accepts base64 image, stores to S3, saves URL */
   uploadLogo: protectedProcedure
     .input(z.object({
+      tenantId: z.number().int().positive().optional(),
       fileName: z.string().min(1).max(500),
       mimeType: z.string().regex(/^image\//),
       base64Data: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const tenantId = await getTenantAdminId(ctx.user.id);
+      const tenantId = await getTenantAdminId(ctx.user, input.tenantId);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const buffer = Buffer.from(input.base64Data, "base64");
@@ -123,6 +125,7 @@ export const orgContextRouter = router({
   /** Save custom leadership frameworks */
   saveLeadershipFrameworks: protectedProcedure
     .input(z.object({
+      tenantId: z.number().int().positive().optional(),
       frameworks: z.array(z.object({
         name: z.string().min(1).max(200),
         description: z.string().max(2000).optional().default(""),
@@ -130,7 +133,7 @@ export const orgContextRouter = router({
       })).max(10),
     }))
     .mutation(async ({ ctx, input }) => {
-      const tenantId = await getTenantAdminId(ctx.user.id);
+      const tenantId = await getTenantAdminId(ctx.user, input.tenantId);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const [existing] = await db.select().from(orgContext).where(eq(orgContext.tenantId, tenantId));
@@ -144,9 +147,9 @@ export const orgContextRouter = router({
 
   /** Scrape a website URL and extract mission/vision/goals text using LLM */
   scrapeWebsite: protectedProcedure
-    .input(z.object({ url: z.string().url() }))
+    .input(z.object({ url: z.string().url(), tenantId: z.number().int().positive().optional() }))
     .mutation(async ({ ctx, input }) => {
-      await getTenantAdminId(ctx.user.id); // verify admin
+      await getTenantAdminId(ctx.user, input.tenantId); // verify scoped admin
 
       // Fetch the website HTML
       let rawHtml = "";

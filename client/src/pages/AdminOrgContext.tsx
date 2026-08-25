@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAdminTenantSelection } from "@/lib/adminTenantSelection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,8 +16,9 @@ const TABS = ["Identity", "Strategy", "Logo", "Frameworks"] as const;
 type Tab = typeof TABS[number];
 
 export default function AdminOrgContext() {
+  const { tenantId } = useAdminTenantSelection();
   const [activeTab, setActiveTab] = useState<Tab>("Identity");
-  const { data: context, refetch, isLoading } = trpc.orgContext.getOrgContext.useQuery();
+  const { data: context, refetch, isLoading } = trpc.orgContext.getOrgContext.useQuery({ tenantId });
 
   const saveMutation = trpc.orgContext.saveOrgContext.useMutation({
     onSuccess: () => { refetch(); toast.success("Organisation context saved."); },
@@ -89,6 +91,7 @@ export default function AdminOrgContext() {
 
   const handleSaveIdentity = () => {
     saveMutation.mutate({
+      tenantId: tenantId ?? undefined,
       websiteUrl: websiteUrl || undefined,
       companyName: companyName || undefined,
       mission: mission || undefined,
@@ -103,6 +106,7 @@ export default function AdminOrgContext() {
     const valid = frameworks.filter((f) => f.name.trim());
     if (!valid.length) { toast.error("Add at least one framework with a name."); return; }
     saveFrameworksMutation.mutate({
+      tenantId: tenantId ?? undefined,
       frameworks: valid.map((f) => ({
         name: f.name.trim(),
         description: f.description.trim(),
@@ -119,7 +123,7 @@ export default function AdminOrgContext() {
       const dataUrl = e.target?.result as string;
       setLogoPreview(dataUrl);
       const base64 = dataUrl.split(",")[1];
-      uploadLogoMutation.mutate({ fileName: file.name, mimeType: file.type, base64Data: base64 });
+      uploadLogoMutation.mutate({ tenantId: tenantId ?? undefined, fileName: file.name, mimeType: file.type, base64Data: base64 });
     };
     reader.readAsDataURL(file);
   };
@@ -190,7 +194,7 @@ export default function AdminOrgContext() {
               </p>
               <div className="flex gap-2">
                 <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://yourcompany.com" className="flex-1 text-sm" />
-                <Button variant="outline" onClick={() => { if (!websiteUrl) { toast.error("Enter a website URL first."); return; } scrapeMutation.mutate({ url: websiteUrl }); }} disabled={scrapeMutation.isPending} className="shrink-0">
+                <Button variant="outline" onClick={() => { if (!websiteUrl) { toast.error("Enter a website URL first."); return; } scrapeMutation.mutate({ url: websiteUrl, tenantId: tenantId ?? undefined }); }} disabled={scrapeMutation.isPending} className="shrink-0">
                   {scrapeMutation.isPending ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <RefreshCw size={14} className="mr-1.5" />}
                   Extract
                 </Button>
