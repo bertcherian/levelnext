@@ -58,4 +58,16 @@ describe("PlatformLayout role navigation wiring", () => {
     expect(within(drawer).getByText("Call Queue").parentElement?.className).toContain("text-ln-yellow");
     expect(within(drawer).queryByText("Admin Dashboard")).toBeNull();
   });
+
+  it("does not render the administrator section for a normal participant", () => {
+    authState.user = { id: 3, name: "Participant", email: "participant@example.com", role: "user" };
+    locationState.value = "/home";
+    render(<PlatformLayout><div>Page</div></PlatformLayout>);
+
+    fireEvent.click(screen.getByLabelText("Open menu"));
+    const drawer = document.querySelector("aside.fixed") as HTMLElement;
+    expect(within(drawer).queryByText("Admin")).toBeNull();
+    expect(within(drawer).queryByText("Admin Dashboard")).toBeNull();
+    expect(within(drawer).queryByText("Manage Invites")).toBeNull();
+  });
 });

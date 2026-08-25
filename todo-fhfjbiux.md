@@ -21,7 +21,8 @@
 - [x] Inventory all platform layouts and existing administrator-only controls, using Leader Intelligence as the reference pattern.
 - [x] Define a shared role-gated administrator navigation model that hides controls from non-admin participants.
 - [x] Add the required administrator controls to Manager Effectiveness and each other applicable platform shell.
-- [ ] Add automated tests for administrator visibility and participant non-visibility, validate in the browser, and publish the standardised controls.
+- [x] Add automated tests for administrator visibility and participant non-visibility, validate in the browser, and publish the standardised controls.
 - [x] Add the shared administrator control section to Career Access and replace Launch’s single shortcut with the full standard administrator control catalogue.
 - [x] Add behavioral administrator-versus-participant visibility tests for Manager, Professional Effectiveness, Early Career, Career Access, and Launch shells.
-- [ ] Verify the published controls in an authenticated administrator browser session for one dedicated shell and one shared-shell product.
+- [x] Verify the published controls in an authenticated administrator browser session for one dedicated shell and one shared-shell product.
+- [x] Add a behavioral shared-shell test proving normal participants cannot see the administrator section.
