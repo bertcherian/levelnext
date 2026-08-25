@@ -47,6 +47,7 @@ import { cn } from "@/lib/utils";
 import ProductSwitcher from "@/components/ProductSwitcher";
 import { getLeaderNavigationGroups, LEADER_BOTTOM_TABS } from "@/components/leaderNavigation";
 import { CI_NAV_ITEMS, CI_NAV_TOOLTIPS, CI_SEARCH_INDEX, MEP_NAV_ITEMS, type PlatformNavItem } from "@/components/platformNavigation";
+import AdminOperationsSidebar from "@/components/AdminOperationsSidebar";
 
 const ADMIN_NAV_ITEMS: PlatformNavItem[] = [
   { label: "Admin Dashboard", icon: LayoutDashboard, href: "/admin" },
@@ -532,6 +533,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             {/* Admin-only nav items */}
             {(user?.role === "admin" || user?.role === "success_partner") && <RoleNavigationByRole role={user.role} isNavActive={isNavActive} compact={false} onNavigate={() => setSidebarOpen(false)} />}
           </ul>
+          {user?.role === "admin" && <AdminOperationsSidebar />}
         </nav>
 
         {/* Drawer user profile */}
@@ -619,6 +621,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
             />
             {(user?.role === "admin" || user?.role === "success_partner") && <RoleNavigationByRole role={user.role} isNavActive={isNavActive} compact />}
           </ul>
+          {user?.role === "admin" && <AdminOperationsSidebar />}
         </nav>
 
         {/* Desktop user profile */}

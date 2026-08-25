@@ -17,6 +17,8 @@ import {
   ArrowRight,
   BookOpen,
 } from "lucide-react";
+import AdminParticipantSearch from "@/components/AdminParticipantSearch";
+import { useAdminTenantSelection } from "@/lib/adminTenantSelection";
 
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
@@ -150,6 +152,8 @@ function PlaybookStatsSection() {
 
 export default function AdminDashboard() {
   const { data, isLoading } = trpc.adminStats.getDashboardStats.useQuery();
+  const { tenantId } = useAdminTenantSelection();
+  const { data: scopedMetrics } = trpc.adminOperations.getQuickMetrics.useQuery({ tenantId });
 
   return (
     <PlatformLayout>
@@ -161,7 +165,7 @@ export default function AdminDashboard() {
             Admin Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Platform overview — pilot pipeline, engagement, and diagnostics
+            {tenantId ? "Organisation-scoped overview — use the sidebar switcher to change client context." : "Platform overview — pilot pipeline, engagement, and diagnostics"}
           </p>
         </div>
 
@@ -174,8 +178,8 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <StatCard
               label="Registered Users"
-              value={data.users.total}
-              sub={`+${data.users.newLast30Days} this month`}
+              value={scopedMetrics?.participantCount ?? data.users.total}
+              sub={tenantId ? "in active organisation" : `+${data.users.newLast30Days} this month`}
               icon={<Users size={18} className="text-blue-600" />}
               iconBg="bg-blue-500/12"
             />
@@ -224,6 +228,8 @@ export default function AdminDashboard() {
             />
           </div>
         ) : null}
+
+        <AdminParticipantSearch />
 
         {/* ── Two-column: Diagnostic Breakdown + Recent Users ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

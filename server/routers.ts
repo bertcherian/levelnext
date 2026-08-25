@@ -67,6 +67,7 @@ import { executiveIntelligenceRouter } from "./routers/executiveIntelligence";
 import { salesIntelligenceRouter } from "./routers/salesIntelligence";
 import { modelEvaluationRouter } from "./routers/modelEvaluation";
 import { aiSuggestionFeedbackRouter } from "./routers/aiSuggestionFeedback";
+import { adminOperationsRouter } from "./routers/adminOperations";
 
 export const appRouter = router({
   system: systemRouter,
@@ -95,6 +96,7 @@ export const appRouter = router({
   pilotApplication: pilotApplicationRouter,
   platformInvites: platformInvitesRouter,
   adminStats: adminStatsRouter,
+  adminOperations: adminOperationsRouter,
   successPartner: successPartnerRouter,
   cpiReport: cpiReportRouter,
   ciReport: ciReportRouter,

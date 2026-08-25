@@ -26,3 +26,8 @@
 - [x] Add behavioral administrator-versus-participant visibility tests for Manager, Professional Effectiveness, Early Career, Career Access, and Launch shells.
 - [x] Verify the published controls in an authenticated administrator browser session for one dedicated shell and one shared-shell product.
 - [x] Add a behavioral shared-shell test proving normal participants cannot see the administrator section.
+- [x] Audit tenant context, participant records, enrolments, and existing admin procedures for multi-client operations.
+- [ ] Add a role-gated organisation switcher that changes the active administrator workspace without exposing cross-tenant data to participants.
+- [ ] Add accurate administrator quick metrics to the shared sidebar using live tenant and participant data.
+- [ ] Build a consolidated cross-platform participant search with secure results, platform enrolment visibility, and administrator controls.
+- [ ] Add regression coverage, verify the administrator workflow in the browser, and publish the operations upgrade.
