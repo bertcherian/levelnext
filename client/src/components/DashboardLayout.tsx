@@ -187,10 +187,8 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed ? (
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate text-[#12345A]">
-                    LevelNext
-                  </span>
+                <div className="flex items-center min-w-0">
+                  <img src="/logo.png" alt="LevelNext" className="h-8 w-auto max-w-35 object-contain object-left" />
                 </div>
               ) : null}
             </div>

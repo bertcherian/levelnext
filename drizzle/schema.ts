@@ -79,6 +79,131 @@ export const tenantUsers = mysqlTable("tenant_users", {
 export type TenantUser = typeof tenantUsers.$inferSelect;
 export type InsertTenantUser = typeof tenantUsers.$inferInsert;
 
+// ─── Critical Thinking in Decision Making Diagnostic ───────────────────────────
+// The CTDM tables intentionally remain separate from the legacy generic assessment
+// tables because this developmental instrument has mixed response types, explicit
+// privacy controls, campaign reporting thresholds, and standalone score components.
+export const ctdmCampaigns = mysqlTable(
+  "ctdm_campaigns",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    name: varchar("name", { length: 255 }).notNull(),
+    reportingGroup: varchar("reportingGroup", { length: 255 }).notNull(),
+    targetAudience: text("targetAudience"),
+    targetRoles: text("targetRoles"),
+    industryContext: varchar("industryContext", { length: 150 }),
+    geographicContext: varchar("geographicContext", { length: 150 }),
+    intendedUse: varchar("intendedUse", { length: 120 }),
+    administrationFormat: varchar("administrationFormat", { length: 80 }).default("online").notNull(),
+    readingLevel: varchar("readingLevel", { length: 100 }).default("professional workplace English").notNull(),
+    reportingMode: mysqlEnum("reportingMode", ["individual", "team", "both"]).default("both").notNull(),
+    minTeamSize: int("minTeamSize").default(5).notNull(),
+    namedReportAccess: boolean("namedReportAccess").default(false).notNull(),
+    consentStatement: text("consentStatement"),
+    retentionDays: int("retentionDays").default(365).notNull(),
+    status: mysqlEnum("status", ["draft", "active", "closed", "archived"]).default("draft").notNull(),
+    startsAt: timestamp("startsAt"),
+    closesAt: timestamp("closesAt"),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("ctdm_campaigns_tenant_status_idx").on(table.tenantId, table.status),
+    index("ctdm_campaigns_creator_idx").on(table.createdByUserId),
+  ],
+);
+export type CtdmCampaign = typeof ctdmCampaigns.$inferSelect;
+
+export const ctdmParticipants = mysqlTable(
+  "ctdm_participants",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    campaignId: int("campaignId").notNull().references(() => ctdmCampaigns.id),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    userId: int("userId").references(() => users.id),
+    email: varchar("email", { length: 320 }),
+    displayName: varchar("displayName", { length: 255 }),
+    participantRole: varchar("participantRole", { length: 255 }),
+    status: mysqlEnum("status", ["invited", "in_progress", "completed", "withdrawn"]).default("invited").notNull(),
+    consentAt: timestamp("consentAt"),
+    invitedAt: timestamp("invitedAt").defaultNow().notNull(),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("ctdm_participants_campaign_user_unique").on(table.campaignId, table.userId),
+    uniqueIndex("ctdm_participants_campaign_email_unique").on(table.campaignId, table.email),
+    index("ctdm_participants_tenant_status_idx").on(table.tenantId, table.status),
+  ],
+);
+export type CtdmParticipant = typeof ctdmParticipants.$inferSelect;
+
+export const ctdmAssessments = mysqlTable(
+  "ctdm_assessments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    campaignId: int("campaignId").notNull().references(() => ctdmCampaigns.id),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    participantId: int("participantId").notNull().references(() => ctdmParticipants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    status: mysqlEnum("status", ["in_progress", "completed", "withdrawn"]).default("in_progress").notNull(),
+    currentSection: mysqlEnum("currentSection", ["profile", "behaviour", "scenarios", "environment", "reflection", "complete"]).default("profile").notNull(),
+    behaviourResponses: json("behaviourResponses").$type<Record<string, number>>(),
+    scenarioResponses: json("scenarioResponses").$type<Record<string, { optionId: string; confidence: number }>>(),
+    environmentResponses: json("environmentResponses").$type<Record<string, number>>(),
+    reflections: json("reflections").$type<Record<string, string>>(),
+    startedAt: timestamp("startedAt").defaultNow().notNull(),
+    completedAt: timestamp("completedAt"),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("ctdm_assessments_participant_unique").on(table.participantId),
+    index("ctdm_assessments_tenant_status_idx").on(table.tenantId, table.status),
+    index("ctdm_assessments_user_campaign_idx").on(table.userId, table.campaignId),
+  ],
+);
+export type CtdmAssessment = typeof ctdmAssessments.$inferSelect;
+
+export const ctdmReports = mysqlTable(
+  "ctdm_reports",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    campaignId: int("campaignId").notNull().references(() => ctdmCampaigns.id),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    participantId: int("participantId").notNull().references(() => ctdmParticipants.id),
+    assessmentId: int("assessmentId").notNull().references(() => ctdmAssessments.id),
+    userId: int("userId").notNull().references(() => users.id),
+    scoreSnapshot: json("scoreSnapshot").$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("ctdm_reports_assessment_unique").on(table.assessmentId),
+    index("ctdm_reports_tenant_campaign_idx").on(table.tenantId, table.campaignId),
+    index("ctdm_reports_user_idx").on(table.userId),
+  ],
+);
+export type CtdmReport = typeof ctdmReports.$inferSelect;
+
+export const ctdmAdminAudit = mysqlTable(
+  "ctdm_admin_audit",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    actorUserId: int("actorUserId").notNull().references(() => users.id),
+    action: varchar("action", { length: 120 }).notNull(),
+    targetType: varchar("targetType", { length: 80 }).notNull(),
+    targetId: int("targetId"),
+    metadata: json("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [index("ctdm_admin_audit_tenant_created_idx").on(table.tenantId, table.createdAt)],
+);
+export type CtdmAdminAudit = typeof ctdmAdminAudit.$inferSelect;
+
 // ─── Assessment Sessions ──────────────────────────────────────────────────────
 export const assessmentSessions = mysqlTable("assessment_sessions", {
   id: int("id").autoincrement().primaryKey(),

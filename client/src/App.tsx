@@ -116,6 +116,11 @@ const EarlyCareerPractice = lazy(() => import("./pages/earlyCareer/EarlyCareerPr
 const EarlyCareerHR = lazy(() => import("./pages/earlyCareer/EarlyCareerHR"));
 const ExecutiveIntelligence = lazy(() => import("./pages/ExecutiveIntelligence"));
 const SalesIntelligence = lazy(() => import("./pages/SalesIntelligence"));
+const CriticalThinkingHome = lazy(() => import("./pages/CriticalThinkingHome"));
+const CriticalThinkingAssessment = lazy(() => import("./pages/CriticalThinkingAssessment"));
+const CriticalThinkingReport = lazy(() => import("./pages/CriticalThinkingReport"));
+const CriticalThinkingAdmin = lazy(() => import("./pages/CriticalThinkingAdmin"));
+const CriticalThinkingPlatformAdmin = lazy(() => import("./pages/CriticalThinkingPlatformAdmin"));
 
 // Launch Intelligence is a self-contained experience. Loading its journeys on
 // demand keeps the platform's initial bundle focused on the page a learner chose.
@@ -201,6 +206,11 @@ function Router() {
       <Route path="/li-report/:moduleCode/:slug" component={LiReport} />
       <Route path="/playbook" component={LeaderPlaybook} />
       <Route path="/playbook/patterns" component={PlaybookPatterns} />
+      <Route path="/critical-thinking" component={CriticalThinkingHome} />
+      <Route path="/critical-thinking/assessment/:campaignId" component={CriticalThinkingAssessment} />
+      <Route path="/critical-thinking/report/:reportId" component={CriticalThinkingReport} />
+      <Route path="/critical-thinking/admin" component={CriticalThinkingAdmin} />
+      <Route path="/admin/critical-thinking" component={CriticalThinkingPlatformAdmin} />
 
       {/* Platform (authenticated) */}
       <Route path="/home" component={Home} />
