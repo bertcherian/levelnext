@@ -21,6 +21,7 @@ import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { useAuth } from "./_core/hooks/useAuth";
 import { trpc } from "./lib/trpc";
 import PEAccessGate from "./components/PEAccessGate";
+import MEPAccessGate from "./components/MEPAccessGate";
 
 const LS_KEY = "levelnext_join_product";
 
@@ -154,7 +155,9 @@ function LaunchRouteFallback() {
   );
 }
 
-const withMepLayout = (page: ReactNode) => () => <MEPLayout>{page}</MEPLayout>;
+const withMepLayout = (page: ReactNode) => () => (
+  <MEPAccessGate><MEPLayout>{page}</MEPLayout></MEPAccessGate>
+);
 
 const withPeAccess = (page: ReactNode) => () => <PEAccessGate>{page}</PEAccessGate>;
 
