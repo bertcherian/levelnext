@@ -43,8 +43,8 @@ const menuItems = [
   { icon: TrendingUp, label: "Insights", path: "/insights" },
   { icon: BarChart2, label: "Progress", path: "/progress" },
   { icon: Building2, label: "Organisation", path: "/organisation" },
-  { icon: Settings, label: "Settings", path: "/settings" },
 ];
+const settingsNavItem = { icon: Settings, label: "Settings", path: "/settings" };
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
@@ -177,7 +177,7 @@ function DashboardLayoutContent({
           className="border-r-0"
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-16 justify-center">
+          <SidebarHeader className="h-20 justify-center border-b border-slate-200/80 px-3">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
@@ -187,24 +187,26 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed ? (
-                <div className="flex items-center min-w-0">
-                  <img src="/logo.png" alt="LevelNext" className="h-8 w-auto max-w-35 object-contain object-left" />
+                <div className="flex min-w-0 flex-1 items-center">
+                  <div className="flex h-11 min-w-0 items-center rounded-lg bg-[#0A1A2F] px-2.5 shadow-sm ring-1 ring-[#12345A]/20">
+                    <img src="/logo.png" alt="LevelNext" className="h-7 w-auto max-w-35 object-contain object-left" />
+                  </div>
                 </div>
               ) : null}
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-1">
+          <SidebarContent className="gap-0 overflow-y-auto">
+            <SidebarMenu className="shrink-0 px-2 py-2">
               {menuItems.map(item => {
                 const isActive = location === item.path;
                 return (
-                  <SidebarMenuItem key={item.path}>
+                  <SidebarMenuItem key={item.path} className="shrink-0">
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
+                      className="h-11 min-w-0 px-2.5 font-normal transition-all [&>span]:min-w-0"
                     >
                       <item.icon
                         className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
@@ -215,22 +217,35 @@ function DashboardLayoutContent({
                 );
               })}
             </SidebarMenu>
+            <SidebarMenu className="mx-2 mt-2 shrink-0 border-t border-slate-200/80 px-0 pt-2">
+              <SidebarMenuItem className="shrink-0">
+                <SidebarMenuButton
+                  isActive={location === settingsNavItem.path}
+                  onClick={() => setLocation(settingsNavItem.path)}
+                  tooltip={settingsNavItem.label}
+                  className="h-11 min-w-0 px-2.5 font-normal transition-all [&>span]:min-w-0"
+                >
+                  <settingsNavItem.icon className={`h-4 w-4 ${location === settingsNavItem.path ? "text-primary" : ""}`} />
+                  <span>{settingsNavItem.label}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
             {/* Admin-only section */}
             {isOrgAdmin && (
               <>
-                <div className="px-4 pt-4 pb-1">
+                <div className="mx-2 mt-3 border-t border-slate-200/80 px-2 pt-3 pb-1">
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Admin</p>
                 </div>
-                <SidebarMenu className="px-2 pb-1">
+                <SidebarMenu className="shrink-0 px-2 pb-3">
                   {adminNavItems.map(item => {
                     const isActive = location === item.path || location.startsWith(item.path + "/");
                     return (
-                      <SidebarMenuItem key={item.path}>
+                      <SidebarMenuItem key={item.path} className="shrink-0">
                         <SidebarMenuButton
                           isActive={isActive}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
-                          className="h-10 transition-all font-normal"
+                          className="h-11 min-w-0 px-2.5 font-normal transition-all [&>span]:min-w-0"
                         >
                           <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
                           <span>{item.label}</span>

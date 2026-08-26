@@ -50,3 +50,7 @@
 - [x] Package the reusable diagnostic progress and controlled-report-sharing workflow as a project skill.
 - [x] Publish the completed Critical Thinking experience enhancement.
 - [x] Put “how well do you think?” on a separate Chrome Yellow line in the Critical Thinking hero headline and publish the refinement.
+- [x] Improve sidebar LevelNext logo clarity and contrast in the administration layout.
+- [x] Prevent Settings and Org Setup Wizard from overlapping in the administration sidebar.
+- [x] Add focused layout regression coverage and visual validation at the affected viewport.
+- [x] Publish the repaired administration sidebar.
