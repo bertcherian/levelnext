@@ -5,6 +5,13 @@ import { describe, expect, it } from "vitest";
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 
 describe("product route composition", () => {
+  it("wraps the Admin Dashboard lazy import with one-time stale-chunk recovery", () => {
+    expect(appSource).toContain('const AdminDashboard = lazyWithRouteRecovery(() => import("@/pages/AdminDashboard"), "admin-dashboard")');
+    const routePosition = appSource.indexOf('<Route path="/admin"');
+    expect(routePosition).toBeGreaterThan(-1);
+    expect(appSource.slice(routePosition, routePosition + 100)).toContain("component={AdminDashboard}");
+  });
+
   it("uses shared wrappers for Manager and Early Career routes while retaining legacy paths", () => {
     expect(appSource).toContain("const withMepLayout");
     expect(appSource).toContain("const withEarlyCareerLayout");

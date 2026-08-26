@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { AlertTriangle, Home, RotateCcw, ArrowLeft, Bug } from "lucide-react";
 import { Component, ReactNode } from "react";
+import { isLazyRouteLoadError } from "@/lib/lazyRouteRecovery";
 
 interface Props {
   children: ReactNode;
@@ -53,7 +54,7 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       const isChunkLoadError =
         this.state.error?.name === "ChunkLoadError" ||
-        /Loading chunk/.test(this.state.error?.message ?? "");
+        isLazyRouteLoadError(this.state.error);
 
       return (
         <div className="flex items-center justify-center min-h-screen p-4 sm:p-8 bg-background">

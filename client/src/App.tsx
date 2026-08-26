@@ -22,6 +22,7 @@ import { useAuth } from "./_core/hooks/useAuth";
 import { trpc } from "./lib/trpc";
 import PEAccessGate from "./components/PEAccessGate";
 import MEPAccessGate from "./components/MEPAccessGate";
+import { lazyWithRouteRecovery } from "./lib/lazyRouteRecovery";
 
 const LS_KEY = "levelnext_join_product";
 
@@ -51,7 +52,7 @@ const EnterpriseOnboardingWizard = lazy(() => import("@/pages/EnterpriseOnboardi
 const ApplyForPilot = lazy(() => import("@/pages/ApplyForPilot"));
 const AdminPilotApplications = lazy(() => import("@/pages/AdminPilotApplications"));
 const AdminManageInvites = lazy(() => import("@/pages/AdminManageInvites"));
-const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
+const AdminDashboard = lazyWithRouteRecovery(() => import("@/pages/AdminDashboard"), "admin-dashboard");
 const AdminSuccessPartnerQueue = lazy(() => import("@/pages/AdminSuccessPartnerQueue"));
 const AdminSuccessPartnerBrief = lazy(() => import("@/pages/AdminSuccessPartnerBrief"));
 const AdminEscalations = lazy(() => import("@/pages/AdminEscalations"));
