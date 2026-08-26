@@ -58,3 +58,10 @@
 - [x] Replace the Professional Intelligence right-side visual with an engaging, responsive capability map aligned to the supplied reference.
 - [x] Add focused visual validation for the refined landing-page composition at desktop and mobile widths.
 - [x] Publish the completed landing-page refinements.
+- [x] Add accessible, concise hover and focus tooltips explaining each Professional Intelligence capability.
+- [x] Apply a related connected visual system to the Manager Intelligence stage card.
+- [x] Apply a related connected visual system to the Executive Intelligence stage card.
+- [x] Add focused interaction and responsive visual validation for the enriched stage-card visuals.
+- [x] Publish the completed stage-card experience enhancements.
+- [x] Enable controlled Manager and Executive stage-state visual validation without changing the landing page’s default experience.
+- [x] Capture desktop and mobile validation for Manager and Executive connected stage-card visuals.

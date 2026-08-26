@@ -35,9 +35,15 @@ function sectionLink(id: string) {
   return `#${id}`;
 }
 
+function getStageIndexFromSearch(search: string) {
+  const requestedStage = new URLSearchParams(search).get("stage")?.trim().toLowerCase();
+  const requestedIndex = careerStages.findIndex((item) => item.key === requestedStage);
+  return requestedIndex >= 0 ? requestedIndex : defaultStageIndex;
+}
+
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeStage, setActiveStage] = useState(defaultStageIndex);
+  const [activeStage, setActiveStage] = useState(() => typeof window === "undefined" ? defaultStageIndex : getStageIndexFromSearch(window.location.search));
   const [activeAudience, setActiveAudience] = useState(() => typeof window === "undefined" ? 0 : getAudienceIndexFromSearch(window.location.search));
   const stage = getCareerStage(activeStage);
   const audience = audienceOptions[activeAudience];
@@ -159,10 +165,28 @@ export default function Landing() {
   );
 }
 
+const professionalCapabilities = [
+  ["Communication", "Make intent, risk and progress easy to understand."],
+  ["Ownership", "Follow through on commitments without waiting to be chased."],
+  ["Execution", "Turn priorities into reliable, visible progress."],
+  ["Collaboration", "Work across people and dependencies to move work forward."],
+  ["Judgement", "Use evidence and context to make sound trade-offs."],
+  ["Influence", "Build alignment without relying on formal authority."],
+  ["Adaptability", "Respond constructively as scope and context shift."],
+] as const;
+
+function ConnectedStageMap({ kind, core, caption, capabilities }: { kind: "manager" | "executive"; core: string; caption: string; capabilities: readonly string[] }) {
+  return <div className={`ln-stage-map ln-stage-map--${kind}`} aria-label={`${core} connected capability map`}><svg className="ln-stage-map__routes" viewBox="0 0 600 360" preserveAspectRatio="none" aria-hidden="true"><path d="M300 180 L300 48 M300 180 L495 94 M300 180 L516 248 M300 180 L84 248 M300 180 L105 94" /></svg><div className="ln-stage-map__core"><span>LevelNext</span><strong>{core}</strong><i /></div>{capabilities.map((capability, index) => <div className={`ln-stage-map__node ln-stage-map__node--${index + 1}`} key={capability}><b>{String(index + 1).padStart(2, "0")}</b><span>{capability}</span></div>)}<p>{caption}</p></div>;
+}
+
+function ProfessionalVisual() {
+  return <div className="ln-professional-visual" aria-label="Professional Intelligence capability map showing seven connected work capabilities"><svg className="ln-professional-visual__routes" viewBox="0 0 600 360" preserveAspectRatio="none" aria-hidden="true"><path d="M300 180 L300 48 M300 180 L498 91 M300 180 L525 224 M300 180 L300 314 M300 180 L76 224 M300 180 L61 174 M300 180 L102 91" /></svg><div className="ln-professional-visual__core"><span>Professional</span><strong>Intelligence</strong><i /></div>{professionalCapabilities.map(([capability, explanation], index) => <button type="button" className={`ln-professional-visual__cap ln-professional-visual__cap--${capability.toLowerCase()}`} key={capability} aria-label={`${capability}: ${explanation}`}><b>{String(index + 1).padStart(2, "0")}</b><span>{capability}</span><span className="ln-professional-visual__tooltip" role="tooltip">{explanation}</span></button>)}<p className="ln-professional-visual__caption">Hover or focus a capability to see how it supports reliable execution.</p></div>;
+}
+
 function StageVisual({ stage }: { stage: string }) {
   if (stage === "early-career") return <div className="ln-early-career-visual" aria-label="Preview of LevelNext Early Career Intelligence"><span>Orient</span><span>Deliver</span><span>Connect</span><span>Grow</span><i /><b>First 1,000 Days</b><p>Real-work intelligence for the earliest stage of a career.</p></div>;
-  if (stage === "manager") return <div className="ln-manager-visual" aria-label="The management transition from tasks to people and outcomes"><div className="ln-manager-visual__before"><b>Me</b><span>Tasks</span></div><div className="ln-manager-visual__arrow">→</div><div className="ln-manager-visual__after"><b>Manager</b><span>People</span><span>Outcomes</span></div></div>;
+  if (stage === "manager") return <ConnectedStageMap kind="manager" core="Manager Intelligence" caption="Better management comes from making these leadership moves work together." capabilities={["Clarity", "Coaching", "Trust", "Accountability", "Momentum"]} />;
   if (stage === "leader") return <div className="ln-leader-visual" aria-label="An expanding organisational network"><span className="ln-leader-visual__centre">Leader</span><i className="ln-leader-visual__node ln-leader-visual__node--1">Team</i><i className="ln-leader-visual__node ln-leader-visual__node--2">Functions</i><i className="ln-leader-visual__node ln-leader-visual__node--3">Stakeholders</i><i className="ln-leader-visual__node ln-leader-visual__node--4">Enterprise</i></div>;
-  if (stage === "executive") return <div className="ln-leader-visual" aria-label="Executive Intelligence decision and mandate cockpit"><span className="ln-leader-visual__centre">Executive</span><i className="ln-leader-visual__node ln-leader-visual__node--1">Mandate</i><i className="ln-leader-visual__node ln-leader-visual__node--2">Decisions</i><i className="ln-leader-visual__node ln-leader-visual__node--3">Stakeholders</i><i className="ln-leader-visual__node ln-leader-visual__node--4">Impact</i></div>;
-  return <div className="ln-professional-visual" aria-label="Professional Intelligence capability map showing seven connected work capabilities"><svg className="ln-professional-visual__routes" viewBox="0 0 600 360" preserveAspectRatio="none" aria-hidden="true"><path d="M300 180 L300 48 M300 180 L498 91 M300 180 L525 224 M300 180 L300 314 M300 180 L76 224 M300 180 L61 174 M300 180 L102 91" /></svg><div className="ln-professional-visual__core"><span>Professional</span><strong>Intelligence</strong><i /></div><div className="ln-professional-visual__cap ln-professional-visual__cap--communication"><b>01</b><span>Communication</span></div><div className="ln-professional-visual__cap ln-professional-visual__cap--ownership"><b>02</b><span>Ownership</span></div><div className="ln-professional-visual__cap ln-professional-visual__cap--execution"><b>03</b><span>Execution</span></div><div className="ln-professional-visual__cap ln-professional-visual__cap--collaboration"><b>04</b><span>Collaboration</span></div><div className="ln-professional-visual__cap ln-professional-visual__cap--judgement"><b>05</b><span>Judgement</span></div><div className="ln-professional-visual__cap ln-professional-visual__cap--influence"><b>06</b><span>Influence</span></div><div className="ln-professional-visual__cap ln-professional-visual__cap--adaptability"><b>07</b><span>Adaptability</span></div><p className="ln-professional-visual__caption">Reliable execution comes from the way these capabilities work together.</p></div>;
+  if (stage === "executive") return <ConnectedStageMap kind="executive" core="Executive Intelligence" caption="Enterprise impact depends on holding mandate, choices and stakeholders together." capabilities={["Mandate", "Choices", "Stakeholders", "Enterprise", "Impact"]} />;
+  return <ProfessionalVisual />;
 }
