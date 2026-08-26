@@ -54,3 +54,7 @@
 - [x] Prevent Settings and Org Setup Wizard from overlapping in the administration sidebar.
 - [x] Add focused layout regression coverage and visual validation at the affected viewport.
 - [x] Publish the repaired administration sidebar.
+- [x] Reduce excessive vertical gaps between primary LevelNext landing-page sections.
+- [x] Replace the Professional Intelligence right-side visual with an engaging, responsive capability map aligned to the supplied reference.
+- [x] Add focused visual validation for the refined landing-page composition at desktop and mobile widths.
+- [x] Publish the completed landing-page refinements.
