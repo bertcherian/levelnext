@@ -38,7 +38,7 @@ function buildDocumentHelpers(doc: any, logo: string | null, reportLabel: string
   return { page, wrapped, cover };
 }
 
-export async function exportCriticalThinkingIndividualPdf(data: { campaignName: string; completedAt: Date | string; score: Record<string, any>; dimensions: Dimension[] }) {
+async function buildCriticalThinkingIndividualPdf(data: { campaignName: string; completedAt: Date | string; score: Record<string, any>; dimensions: Dimension[] }) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const logo = await loadLevelNextLogo();
@@ -73,7 +73,17 @@ export async function exportCriticalThinkingIndividualPdf(data: { campaignName: 
   y = 40; doc.setFont("helvetica", "bold"); doc.setFontSize(17); doc.setTextColor(...NAVY); doc.text("Turn insight into practice", M, y); y += 10;
   const planDimensions = data.dimensions.filter((dimension) => priorities.has(dimension.id)).slice(0, 2);
   (planDimensions.length ? planDimensions : data.dimensions.slice(0, 2)).forEach((dimension, index) => { doc.setFillColor(255, 255, 255); doc.roundedRect(M, y, CONTENT_W, 48, 3, 3, "F"); doc.setFillColor(...GOLD); doc.roundedRect(M, y, 14, 48, 3, 3, "F"); doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(...NAVY); doc.text(String(index + 1).padStart(2, "0"), M + 7, y + 26, { align: "center" }); doc.setFontSize(10); doc.text(dimension.label, M + 20, y + 10); const action = dimension.individualPractice ?? dimension.feedback?.priority ?? "Test one deliberate practice in a live decision this month."; const nextY = wrapped(action, M + 20, y + 17, CONTENT_W - 26, 8.5); doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...GOLD); doc.text(`REFLECT: ${dimension.reflectionQuestion ?? "What changed in the quality of the decision?"}`, M + 20, Math.min(y + 42, nextY + 6)); y += 56; });
-  doc.save(`LevelNext_${safeFilename(data.campaignName)}_Individual_Development_Report.pdf`);
+  return { doc, filename: `LevelNext_${safeFilename(data.campaignName)}_Individual_Development_Report.pdf` };
+}
+
+export async function exportCriticalThinkingIndividualPdf(data: { campaignName: string; completedAt: Date | string; score: Record<string, any>; dimensions: Dimension[] }) {
+  const { doc, filename } = await buildCriticalThinkingIndividualPdf(data);
+  doc.save(filename);
+}
+
+export async function createCriticalThinkingIndividualPdfFile(data: { campaignName: string; completedAt: Date | string; score: Record<string, any>; dimensions: Dimension[] }) {
+  const { doc, filename } = await buildCriticalThinkingIndividualPdf(data);
+  return { blob: doc.output("blob") as Blob, filename };
 }
 
 export async function exportCriticalThinkingTeamPdf(data: { campaignName: string; reportingGroup: string; participantCount: number; aggregate: Record<string, any>; dimensions: Dimension[]; minimumGroupSize: number }) {

@@ -220,6 +220,8 @@ function Router() {
       <Route path="/critical-thinking/admin" component={CriticalThinkingAdmin} />
       <Route path="/critical-thinking/pilot" component={CriticalThinkingPilot} />
       {CriticalThinkingReportValidationFixture && <Route path="/critical-thinking/_report-validation/team" component={CriticalThinkingReportValidationFixture} />}
+      {CriticalThinkingReportValidationFixture && <Route path="/critical-thinking/_report-validation/share" component={CriticalThinkingReportValidationFixture} />}
+      {CriticalThinkingReportValidationFixture && <Route path="/critical-thinking/_report-validation/generating" component={CriticalThinkingReportValidationFixture} />}
       {CriticalThinkingReportValidationFixture && <Route path="/critical-thinking/_report-validation/individual" component={CriticalThinkingReportValidationFixture} />}
       {CriticalThinkingReportValidationFixture && <Route path="/critical-thinking/_report-validation" component={CriticalThinkingReportValidationFixture} />}
       <Route path="/admin/critical-thinking" component={CriticalThinkingPlatformAdmin} />

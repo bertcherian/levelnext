@@ -42,3 +42,10 @@
 - [x] Publish the completed report-preview and progress-comparison enhancement.
 - [x] Capture desktop and narrow-viewport visual validation for the report comparison and both PDF preview modals using safe non-production report data or a documented validation fixture.
 - [x] Update the Critical Thinking diagnostic hero headline to the user-supplied question and publish the change.
+- [x] Add a clear assessment progress bar with completed and remaining Critical Thinking question counts.
+- [x] Add a branded in-modal loading state while a Critical Thinking PDF preview is being prepared.
+- [x] Implement participant-controlled sharing of their individual Critical Thinking report with a manager.
+- [x] Enforce report ownership and explicit-sharing safeguards, without exposing team reports or private responses.
+- [x] Add focused tests and responsive visual validation for assessment progress, PDF preparation feedback, and report sharing.
+- [x] Package the reusable diagnostic progress and controlled-report-sharing workflow as a project skill.
+- [x] Publish the completed Critical Thinking experience enhancement.
