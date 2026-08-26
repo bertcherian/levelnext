@@ -65,3 +65,10 @@
 - [x] Publish the completed stage-card experience enhancements.
 - [x] Enable controlled Manager and Executive stage-state visual validation without changing the landing page’s default experience.
 - [x] Capture desktop and mobile validation for Manager and Executive connected stage-card visuals.
+- [x] Trace and repair the Organisation Context successful-scrape response mapping so extracted website content populates the setup fields.
+- [x] Preserve existing user-entered Organisation Context values when extraction omits a field.
+- [x] Add focused regression coverage for successful extraction, field population, and malformed extraction payloads.
+- [x] Validate the extraction flow with a Park Controls-style company URL and publish the repair.
+- [x] Normalise scheme-less Organisation Context URLs such as www.parkcontrols.com before extraction.
+- [x] Add page-level Organisation Context extraction validation proving successful output populates editable fields.
+- [x] Save and publish the fully validated Organisation Context extraction repair.

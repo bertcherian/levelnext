@@ -12,6 +12,7 @@ import { getDb } from "../db";
 import { orgContext, tenantUsers } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
+import { companyNameFromWebsiteMetadata, normalizeExtractedOrgContext, type ExtractedOrgContext } from "../orgContextExtraction";
 
 // ─── Helper: get tenantId for current user (must be owner or admin) ───────────
 async function getTenantAdminId(user: { id: number; role: string }, requestedTenantId?: number | null): Promise<number> {
@@ -149,7 +150,7 @@ export const orgContextRouter = router({
   scrapeWebsite: protectedProcedure
     .input(z.object({ url: z.string().url(), tenantId: z.number().int().positive().optional() }))
     .mutation(async ({ ctx, input }) => {
-      await getTenantAdminId(ctx.user, input.tenantId); // verify scoped admin
+      const tenantId = await getTenantAdminId(ctx.user, input.tenantId); // verify scoped admin
 
       // Fetch the website HTML
       let rawHtml = "";
@@ -180,14 +181,7 @@ export const orgContextRouter = router({
         .slice(0, 8000); // cap at 8k chars for LLM
 
       // Use LLM to extract structured org context
-      let extracted: {
-        companyName?: string;
-        mission?: string;
-        vision?: string;
-        northStar?: string;
-        strategicGoals?: string[];
-        values?: string[];
-      } = {};
+      let extracted: ExtractedOrgContext = {};
 
       try {
         const result = await invokeLLM({
@@ -217,28 +211,28 @@ Return ONLY valid JSON, no markdown, no explanation.`,
 
         const raw = result.choices[0]?.message?.content ?? "{}";
         const text = typeof raw === "string" ? raw : (raw as any[]).map((c: any) => c.text ?? "").join("");
-        extracted = JSON.parse(text);
+        extracted = normalizeExtractedOrgContext(JSON.parse(text));
       } catch {
         // Return raw text even if LLM fails
+      }
+
+      if (!extracted.companyName) {
+        const companyName = companyNameFromWebsiteMetadata(rawHtml);
+        if (companyName) extracted = { ...extracted, companyName };
       }
 
       // Save raw scraped text and extracted fields to DB
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const [membership] = await db
-        .select()
-        .from(tenantUsers)
-        .where(eq(tenantUsers.userId, ctx.user.id));
-
-      if (membership) {
+      {
         const [existing] = await db
           .select()
           .from(orgContext)
-          .where(eq(orgContext.tenantId, membership.tenantId));
+          .where(eq(orgContext.tenantId, tenantId));
 
         const payload = {
-          tenantId: membership.tenantId,
+          tenantId,
           websiteUrl: input.url,
           rawScrapedText: plainText,
           scrapedAt: new Date(),
@@ -252,7 +246,7 @@ Return ONLY valid JSON, no markdown, no explanation.`,
         };
 
         if (existing) {
-          await db.update(orgContext).set(payload).where(eq(orgContext.tenantId, membership.tenantId));
+          await db.update(orgContext).set(payload).where(eq(orgContext.tenantId, tenantId));
         } else {
           await db.insert(orgContext).values(payload);
         }

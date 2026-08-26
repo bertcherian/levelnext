@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAdminTenantSelection } from "@/lib/adminTenantSelection";
+import { mergeWebsiteExtraction, normaliseWebsiteUrl, populatedExtractionFieldCount, type WebsiteExtraction } from "@/lib/orgContextExtraction";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,17 +27,17 @@ export default function AdminOrgContext() {
   });
   const scrapeMutation = trpc.orgContext.scrapeWebsite.useMutation({
     onSuccess: (data) => {
-      refetch();
-      toast.success(`Website scraped — extracted ${data.rawTextLength.toLocaleString()} characters.`);
-      if (data.extracted) {
-        const ex = data.extracted;
-        if (ex.companyName) setCompanyName(ex.companyName);
-        if (ex.mission) setMission(ex.mission);
-        if (ex.vision) setVision(ex.vision);
-        if (ex.northStar) setNorthStar(ex.northStar);
-        if (ex.strategicGoals) setGoals(ex.strategicGoals);
-        if (ex.values) setValues(ex.values);
-      }
+      const extracted = data.extracted as WebsiteExtraction;
+      const merged = mergeWebsiteExtraction({ companyName, mission, vision, northStar, strategicGoals: goals, values }, extracted);
+      setCompanyName(merged.companyName);
+      setMission(merged.mission);
+      setVision(merged.vision);
+      setNorthStar(merged.northStar);
+      setGoals(merged.strategicGoals);
+      setValues(merged.values);
+      const populated = populatedExtractionFieldCount(extracted);
+      if (populated) toast.success(`Website scraped — populated ${populated} organisation context field${populated === 1 ? "" : "s"}.`);
+      else toast.warning("Website was captured, but no mission, vision, goals, or values were confidently detected. You can complete the fields manually.");
     },
     onError: (e) => toast.error(`Scrape failed: ${e.message}`),
   });
@@ -113,6 +114,16 @@ export default function AdminOrgContext() {
         competencies: f.competencies.filter(Boolean),
       })),
     });
+  };
+
+  const handleWebsiteExtraction = () => {
+    const normalizedUrl = normaliseWebsiteUrl(websiteUrl);
+    if (!normalizedUrl) {
+      toast.error("Enter a valid company website, such as www.parkcontrols.com.");
+      return;
+    }
+    setWebsiteUrl(normalizedUrl);
+    scrapeMutation.mutate({ url: normalizedUrl, tenantId: tenantId ?? undefined });
   };
 
   const handleLogoFile = (file: File) => {
@@ -194,7 +205,7 @@ export default function AdminOrgContext() {
               </p>
               <div className="flex gap-2">
                 <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://yourcompany.com" className="flex-1 text-sm" />
-                <Button variant="outline" onClick={() => { if (!websiteUrl) { toast.error("Enter a website URL first."); return; } scrapeMutation.mutate({ url: websiteUrl, tenantId: tenantId ?? undefined }); }} disabled={scrapeMutation.isPending} className="shrink-0">
+                <Button variant="outline" onClick={handleWebsiteExtraction} disabled={scrapeMutation.isPending} className="shrink-0">
                   {scrapeMutation.isPending ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <RefreshCw size={14} className="mr-1.5" />}
                   Extract
                 </Button>
