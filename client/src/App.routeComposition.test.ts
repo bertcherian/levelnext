@@ -12,6 +12,29 @@ describe("product route composition", () => {
     expect(appSource.slice(routePosition, routePosition + 100)).toContain("component={AdminDashboard}");
   });
 
+  it("extends stale-chunk recovery to all critical Admin route imports", () => {
+    const criticalRoutes = [
+      ["AdminPilotApplications", "admin-pilot-applications"],
+      ["AdminManageInvites", "admin-invites"],
+      ["AdminSuccessPartnerQueue", "admin-momentum"],
+      ["AdminSuccessPartnerBrief", "admin-momentum-brief"],
+      ["AdminEscalations", "admin-escalations"],
+      ["AdminProductEnrollments", "admin-enrollments"],
+      ["AdminCoachManagement", "admin-coaches"],
+      ["AdminSuccessPartners", "admin-success-partners"],
+      ["AdminOrgContext", "admin-org-context"],
+      ["AdminParticipantImport", "admin-participant-import"],
+      ["AdminModelEvaluator", "admin-model-evaluator"],
+      ["LSOSWorkspace", "admin-lsos"],
+      ["IntelligenceCoreDashboard", "admin-intelligence-core"],
+      ["CriticalThinkingPlatformAdmin", "admin-critical-thinking"],
+    ];
+    for (const [component, routeKey] of criticalRoutes) {
+      expect(appSource).toContain(`const ${component} = lazyWithRouteRecovery(`);
+      expect(appSource).toContain(`"${routeKey}"`);
+    }
+  });
+
   it("uses shared wrappers for Manager and Early Career routes while retaining legacy paths", () => {
     expect(appSource).toContain("const withMepLayout");
     expect(appSource).toContain("const withEarlyCareerLayout");

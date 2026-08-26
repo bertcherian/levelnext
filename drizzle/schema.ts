@@ -30,6 +30,24 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+// ─── Client Error Events ──────────────────────────────────────────────────────
+// Stores only categorical client load failures and query-free application routes.
+// User content, error messages, and request payloads are intentionally excluded.
+export const clientErrorEvents = mysqlTable(
+  "client_error_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id),
+    eventType: mysqlEnum("eventType", ["lazy_chunk_load_failure", "render_failure"]).notNull(),
+    route: varchar("route", { length: 255 }).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("client_error_events_created_idx").on(table.createdAt),
+    index("client_error_events_type_created_idx").on(table.eventType, table.createdAt),
+  ],
+);
+
 // ─── AI Suggestion Feedback ───────────────────────────────────────────────────
 // Stores a user-owned snapshot of a flagged AI card so product owners can inspect
 // quality issues without retaining the entire dashboard state.

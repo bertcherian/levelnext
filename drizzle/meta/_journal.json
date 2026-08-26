@@ -547,6 +547,13 @@
       "when": 1787676878456,
       "tag": "0077_medical_spyke",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "5",
+      "when": 1787713003144,
+      "tag": "0078_wooden_vampiro",
+      "breakpoints": true
     }
   ]
 }

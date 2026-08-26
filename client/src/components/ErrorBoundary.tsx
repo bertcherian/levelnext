@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { AlertTriangle, Home, RotateCcw, ArrowLeft, Bug } from "lucide-react";
 import { Component, ReactNode } from "react";
 import { isLazyRouteLoadError } from "@/lib/lazyRouteRecovery";
+import { emitClientTelemetry } from "@/lib/clientTelemetry";
 
 interface Props {
   children: ReactNode;
@@ -26,6 +27,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: { componentStack: string }) {
     this.setState({ errorInfo });
+    emitClientTelemetry(isLazyRouteLoadError(error) ? "lazy_chunk_load_failure" : "render_failure");
     // Log to console for debugging — in production this could be sent to an error tracking service
     console.error("[ErrorBoundary] Caught error:", error, errorInfo);
   }

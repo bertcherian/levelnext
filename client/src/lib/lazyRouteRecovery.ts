@@ -1,4 +1,5 @@
 import { lazy, type ComponentType } from "react";
+import { emitClientTelemetry } from "@/lib/clientTelemetry";
 
 type LazyModule<T extends ComponentType<any>> = { default: T };
 type StorageLike = Pick<Storage, "getItem" | "removeItem" | "setItem">;
@@ -59,6 +60,7 @@ export function lazyWithRouteRecovery<T extends ComponentType<any>>(
       return module;
     } catch (error) {
       const storage = getSessionStorage();
+      if (isLazyRouteLoadError(error)) emitClientTelemetry("lazy_chunk_load_failure");
       if (storage && shouldRecoverLazyRoute(error, routeKey, storage)) {
         window.location.reload();
         return new Promise<LazyModule<T>>(() => undefined);

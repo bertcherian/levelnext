@@ -12,3 +12,7 @@
 - [x] Reproduce and capture the first-load render error when navigating to the Admin Dashboard from MEP.
 - [x] Fix the Admin Dashboard route so it renders correctly on the first navigation without weakening authorization.
 - [x] Add regression coverage for Admin Dashboard first-load navigation and validate the route without reloading.
+- [x] Add a user-facing new-version banner with a controlled refresh action after deployments.
+- [x] Extend one-time stale-chunk recovery to all critical Admin route imports.
+- [x] Add privacy-conscious client-side telemetry for lazy-route and rendering load failures.
+- [x] Add regression coverage and validate the updated Admin deployment-resilience experience.

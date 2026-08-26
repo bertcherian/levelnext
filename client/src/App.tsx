@@ -23,6 +23,8 @@ import { trpc } from "./lib/trpc";
 import PEAccessGate from "./components/PEAccessGate";
 import MEPAccessGate from "./components/MEPAccessGate";
 import { lazyWithRouteRecovery } from "./lib/lazyRouteRecovery";
+import VersionUpdateBanner from "./components/VersionUpdateBanner";
+import ClientErrorTelemetry from "./components/ClientErrorTelemetry";
 
 const LS_KEY = "levelnext_join_product";
 
@@ -50,17 +52,17 @@ const ImportPriorAssessments = lazy(() => import("./pages/ImportPriorAssessments
 const GrowthProfile = lazy(() => import("@/pages/GrowthProfile"));
 const EnterpriseOnboardingWizard = lazy(() => import("@/pages/EnterpriseOnboardingWizard"));
 const ApplyForPilot = lazy(() => import("@/pages/ApplyForPilot"));
-const AdminPilotApplications = lazy(() => import("@/pages/AdminPilotApplications"));
-const AdminManageInvites = lazy(() => import("@/pages/AdminManageInvites"));
+const AdminPilotApplications = lazyWithRouteRecovery(() => import("@/pages/AdminPilotApplications"), "admin-pilot-applications");
+const AdminManageInvites = lazyWithRouteRecovery(() => import("@/pages/AdminManageInvites"), "admin-invites");
 const AdminDashboard = lazyWithRouteRecovery(() => import("@/pages/AdminDashboard"), "admin-dashboard");
-const AdminSuccessPartnerQueue = lazy(() => import("@/pages/AdminSuccessPartnerQueue"));
-const AdminSuccessPartnerBrief = lazy(() => import("@/pages/AdminSuccessPartnerBrief"));
-const AdminEscalations = lazy(() => import("@/pages/AdminEscalations"));
+const AdminSuccessPartnerQueue = lazyWithRouteRecovery(() => import("@/pages/AdminSuccessPartnerQueue"), "admin-momentum");
+const AdminSuccessPartnerBrief = lazyWithRouteRecovery(() => import("@/pages/AdminSuccessPartnerBrief"), "admin-momentum-brief");
+const AdminEscalations = lazyWithRouteRecovery(() => import("@/pages/AdminEscalations"), "admin-escalations");
 const CareerHome = lazy(() => import("@/pages/CareerHome"));
 const CareerMarketIntel = lazy(() => import("@/pages/career/CareerMarketIntel"));
 const CareerPrepare = lazy(() => import("@/pages/career/CareerPrepare"));
 const CareerMyJourney = lazy(() => import("@/pages/career/CareerMyJourney"));
-const AdminProductEnrollments = lazy(() => import("@/pages/AdminProductEnrollments"));
+const AdminProductEnrollments = lazyWithRouteRecovery(() => import("@/pages/AdminProductEnrollments"), "admin-enrollments");
 const ManagerEffectivenessLanding = lazy(() => import("@/pages/ManagerEffectivenessLanding"));
 const ManagerHome = lazy(() => import("@/pages/mep/ManagerHome"));
 const ManagerDiagnostics = lazy(() => import("@/pages/mep/ManagerDiagnostics"));
@@ -78,19 +80,19 @@ const NegotiationIntelligence = lazy(() => import("@/pages/NegotiationIntelligen
 const OrgIntelligence = lazy(() => import("@/pages/OrgIntelligence"));
 const MEPLayout = lazy(() => import("@/components/MEPLayout"));
 const CoachPortal = lazy(() => import("@/pages/CoachPortal"));
-const AdminCoachManagement = lazy(() => import("@/pages/AdminCoachManagement"));
-const AdminSuccessPartners = lazy(() => import("@/pages/AdminSuccessPartners"));
+const AdminCoachManagement = lazyWithRouteRecovery(() => import("@/pages/AdminCoachManagement"), "admin-coaches");
+const AdminSuccessPartners = lazyWithRouteRecovery(() => import("@/pages/AdminSuccessPartners"), "admin-success-partners");
 const MEPLeaderDocuments = lazy(() => import("@/pages/mep/MEPLeaderDocuments"));
-const AdminOrgContext = lazy(() => import("@/pages/AdminOrgContext"));
-const AdminParticipantImport = lazy(() => import("@/pages/AdminParticipantImport"));
-const AdminModelEvaluator = lazy(() => import("@/pages/AdminModelEvaluator"));
+const AdminOrgContext = lazyWithRouteRecovery(() => import("@/pages/AdminOrgContext"), "admin-org-context");
+const AdminParticipantImport = lazyWithRouteRecovery(() => import("@/pages/AdminParticipantImport"), "admin-participant-import");
+const AdminModelEvaluator = lazyWithRouteRecovery(() => import("@/pages/AdminModelEvaluator"), "admin-model-evaluator");
 const CareerLanding = lazy(() => import("@/pages/CareerLanding"));
 const CareerInvestment = lazy(() => import("@/pages/CareerInvestment"));
 const ResumeMakeover = lazy(() => import("@/pages/ci/ResumeMakeover"));
 const ResumeReport = lazy(() => import("@/pages/ci/ResumeReport"));
 const ResumeRewrite = lazy(() => import("@/pages/ci/ResumeRewrite"));
 const NextChapter = lazy(() => import("@/pages/NextChapter"));
-const LSOSWorkspace = lazy(() => import("@/pages/LSOSWorkspace"));
+const LSOSWorkspace = lazyWithRouteRecovery(() => import("@/pages/LSOSWorkspace"), "admin-lsos");
 const NextChapterPortfolio = lazy(() => import("@/pages/NextChapterPortfolio"));
 const IdentityClarityAssessment = lazy(() => import("@/pages/IdentityClarityAssessment"));
 const JoinPage = lazy(() => import("@/pages/JoinPage"));
@@ -103,7 +105,7 @@ const PECoach = lazy(() => import("./pages/pe/PECoach"));
 const PEPractice = lazy(() => import("./pages/pe/PEPractice"));
 const PEProgress = lazy(() => import("./pages/pe/PEProgress"));
 const PESettings = lazy(() => import("./pages/pe/PESettings"));
-const IntelligenceCoreDashboard = lazy(() => import("./pages/IntelligenceCoreDashboard"));
+const IntelligenceCoreDashboard = lazyWithRouteRecovery(() => import("./pages/IntelligenceCoreDashboard"), "admin-intelligence-core");
 const Intelligence = lazy(() => import("./pages/Intelligence"));
 const SimulatorStart = lazy(() => import("./pages/SimulatorStart"));
 const SimulatorSession = lazy(() => import("./pages/SimulatorSession"));
@@ -122,7 +124,7 @@ const CriticalThinkingHome = lazy(() => import("./pages/CriticalThinkingHome"));
 const CriticalThinkingAssessment = lazy(() => import("./pages/CriticalThinkingAssessment"));
 const CriticalThinkingReport = lazy(() => import("./pages/CriticalThinkingReport"));
 const CriticalThinkingAdmin = lazy(() => import("./pages/CriticalThinkingAdmin"));
-const CriticalThinkingPlatformAdmin = lazy(() => import("./pages/CriticalThinkingPlatformAdmin"));
+const CriticalThinkingPlatformAdmin = lazyWithRouteRecovery(() => import("./pages/CriticalThinkingPlatformAdmin"), "admin-critical-thinking");
 const CriticalThinkingPilot = lazy(() => import("./pages/CriticalThinkingPilot"));
 const CriticalThinkingReportValidationFixture = import.meta.env.DEV ? lazy(() => import("./pages/CriticalThinkingReportValidationFixture")) : null;
 
@@ -363,6 +365,8 @@ function App() {
             <Router />
           </Suspense>
           <PostLoginProductActivator />
+          <ClientErrorTelemetry />
+          <VersionUpdateBanner />
           <PWAInstallBanner />
         </TooltipProvider>
       </ThemeProvider>
