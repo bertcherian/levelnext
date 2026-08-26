@@ -1,41 +1,8 @@
 # Project TODO
 
-- [x] Trace the magic-link sign-up callback and confirm that the authenticated email and display name come from the redeeming user rather than a prior session.
-- [x] Trace the Manager Effectiveness onboarding flow and retain the selected Broadridge organization and onboarding user name through authentication.
-- [x] Identify and correct the client or server code path causing the `Cannot read properties of undefined (reading '0')` error after sign-in.
-- [x] Add focused regression tests for identity selection, organization-context preservation, and safe handling of empty Manager Effectiveness data.
-- [x] Run the relevant test suite, verify the repaired application in the browser, and create a published checkpoint.
-- [x] Capture the selected organisation name in the Manager Effectiveness sign-up flow and persist it with the magic-link request.
-- [x] Prefill first-time Manager Effectiveness onboarding with the selected organisation after the email link is redeemed.
-- [x] Add regression tests that prove the submitted organisation survives the magic-link handoff into onboarding.
-- [x] Add server-side tests for persisting the requested organisation in a magic-link token and using it when building the post-redemption onboarding redirect.
-- [x] Inspect the live magic-link request and redemption records for care@metaresults.com and reconcile them with the account shown after login.
-- [x] Eliminate any remaining credential precedence or cookie-domain path that can resolve a newly redeemed email link as Bert.
-- [x] Locate and guard the exact remaining `Cannot read properties of undefined (reading '0')` path observed immediately after Manager Effectiveness login.
-- [x] Add regression coverage for the care-account redemption path, run validation, and publish the corrective checkpoint.
-- [x] Use a dedicated magic-link session cookie and explicit precedence so a fresh care redemption cannot collide with any stale Bert standard-session cookie.
-- [x] Inspect the current Broadridge onboarding and organisation-management routes after Manager Effectiveness sign-in.
-- [x] Add a clear, reachable organisation setup or organisation settings entry point for Broadridge administrators.
-- [x] Validate the organisation-information path and publish the clarified experience.
-- [x] Browser-verify the Organisation Setup destinations from the Manager Effectiveness sidebar and dashboard card.
-- [x] Inventory all platform layouts and existing administrator-only controls, using Leader Intelligence as the reference pattern.
-- [x] Define a shared role-gated administrator navigation model that hides controls from non-admin participants.
-- [x] Add the required administrator controls to Manager Effectiveness and each other applicable platform shell.
-- [x] Add automated tests for administrator visibility and participant non-visibility, validate in the browser, and publish the standardised controls.
-- [x] Add the shared administrator control section to Career Access and replace Launch’s single shortcut with the full standard administrator control catalogue.
-- [x] Add behavioral administrator-versus-participant visibility tests for Manager, Professional Effectiveness, Early Career, Career Access, and Launch shells.
-- [x] Verify the published controls in an authenticated administrator browser session for one dedicated shell and one shared-shell product.
-- [x] Add a behavioral shared-shell test proving normal participants cannot see the administrator section.
-- [x] Audit tenant context, participant records, enrolments, and existing admin procedures for multi-client operations.
-- [x] Add a role-gated organisation switcher that changes the active administrator workspace without exposing cross-tenant data to participants.
-- [x] Add accurate administrator quick metrics to the shared sidebar using live tenant and participant data.
-- [x] Build a consolidated cross-platform participant search with secure results, platform enrolment visibility, and administrator controls.
-- [x] Add regression coverage, verify the administrator workflow in the browser, and publish the operations upgrade.
-- [x] Propagate the selected organisation context through relevant administrator routes and tools, not only the new dashboard widgets.
-- [x] Add explicit participant-level administrator actions from consolidated search and cover their access boundaries.
-- [x] Make selected tenant context scope the underlying data in existing admin dashboard, invite, enrolment, and organisation-context tools.
-- [x] Add tenant-scoped metric tests and complete an authenticated published-browser verification of the sidebar switcher and quick metrics.
-- [x] Add tenant identity to platform invites and scope invitation list, create, resend, revoke, and bulk flows to the active organisation.
-- [x] Add tenant filtering to the existing admin dashboard procedures and each organisation-specific dashboard section, then verify it in the published administrator workspace.
-- [x] Refresh the client asset cache version and verify the final tenant-scoped dashboard presentation on the published domain.
-- [x] Add tenant-mode dashboard visibility tests that assert global pilot panels and pilot shortcuts are absent, then verify this on the published domain.
+- [x] Review the current organisation switcher, sidebar metrics, participant search API, and UI state management.
+- [x] Add an administrator-only organisation search filter that retains selected tenant context.
+- [x] Add a sidebar quick-metrics refresh control with clear loading feedback and scoped-data refetching.
+- [x] Add secure server-backed participant search pagination with total-result metadata and client navigation controls.
+- [x] Add regression tests for organisation filtering, metric refresh behavior, and pagination bounds.
+- [ ] Validate the enhanced administrator workflow in the browser and publish the update.

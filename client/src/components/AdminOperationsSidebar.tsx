@@ -1,22 +1,30 @@
-import { Building2, Layers3, UsersRound } from "lucide-react";
+import { Building2, Layers3, RefreshCw, Search, UsersRound } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { getTenantScopedAdminHref, useAdminTenantSelection } from "@/lib/adminTenantSelection";
 
 export default function AdminOperationsSidebar({ compact = false }: { compact?: boolean }) {
   const { tenantId, setTenantId } = useAdminTenantSelection();
+  const [organisationFilter, setOrganisationFilter] = useState("");
   const { data: organisations = [] } = trpc.adminOperations.listOrganisations.useQuery();
-  const { data: metrics } = trpc.adminOperations.getQuickMetrics.useQuery({ tenantId });
+  const { data: metrics, refetch: refreshMetrics, isFetching: isRefreshingMetrics } = trpc.adminOperations.getQuickMetrics.useQuery({ tenantId });
+  const filteredOrganisations = useMemo(() => {
+    const needle = organisationFilter.trim().toLowerCase();
+    return needle ? organisations.filter((organisation) => `${organisation.name} ${organisation.industry ?? ""}`.toLowerCase().includes(needle)) : organisations;
+  }, [organisationFilter, organisations]);
   if (compact) return null;
 
   return (
     <section className="mx-2 mb-3 rounded-lg border p-3" style={{ borderColor: "oklch(from var(--color-ln-yellow) l c h / .28)", background: "oklch(from var(--color-ln-yellow) l c h / .08)" }} aria-label="Administrator organisation controls">
       <p className="mb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--color-ln-yellow)" }}>Active organisation</p>
+      <div className="relative mb-1.5"><Search size={12} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-white/55" /><input value={organisationFilter} onChange={(event) => setOrganisationFilter(event.target.value)} placeholder="Find a client" aria-label="Filter organisations" className="w-full rounded-md py-1.5 pl-7 pr-2 text-xs outline-none" style={{ color: "white", background: "oklch(21% .05 248.6)", border: "1px solid oklch(38% .05 248.6)" }} /></div>
       <select value={tenantId ?? ""} onChange={(event) => setTenantId(event.target.value ? Number(event.target.value) : null)} className="w-full rounded-md px-2 py-1.5 text-xs font-medium outline-none" style={{ color: "white", background: "oklch(21% .05 248.6)", border: "1px solid oklch(38% .05 248.6)" }} aria-label="Switch active organisation">
         <option value="">All organisations</option>
-        {organisations.map((organisation) => <option key={organisation.id} value={organisation.id}>{organisation.name} ({organisation.memberCount})</option>)}
+        {filteredOrganisations.map((organisation) => <option key={organisation.id} value={organisation.id}>{organisation.name} ({organisation.memberCount})</option>)}
       </select>
-      <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
+      <div className="mt-3 flex items-center justify-between"><p className="text-[10px] font-bold uppercase tracking-widest text-white/55">Live metrics</p><button type="button" onClick={() => refreshMetrics()} disabled={isRefreshingMetrics} className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-[10px] font-semibold text-white/75 hover:bg-white/10 disabled:opacity-50" aria-label="Refresh quick metrics"><RefreshCw size={11} className={isRefreshingMetrics ? "animate-spin" : ""} />Refresh</button></div>
+      <div className="mt-1.5 grid grid-cols-3 gap-1.5 text-center">
         <Metric icon={<Building2 size={12} />} value={metrics?.organisationCount ?? "—"} label="Orgs" />
         <Metric icon={<UsersRound size={12} />} value={metrics?.participantCount ?? "—"} label="People" />
         <Metric icon={<Layers3 size={12} />} value={metrics?.activeEnrollmentCount ?? "—"} label="Active" />

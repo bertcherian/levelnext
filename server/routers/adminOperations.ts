@@ -13,6 +13,10 @@ export function getScopedOrganisationCount(totalOrganisationCount: number, selec
   return selectedTenantId ? 1 : totalOrganisationCount;
 }
 
+export function getParticipantSearchOffset(page: number, pageSize: number) {
+  return (Math.max(1, page) - 1) * pageSize;
+}
+
 async function assertTenantExists(tenantId: number) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
@@ -57,7 +61,7 @@ export const adminOperationsRouter = router({
     }),
 
   searchParticipants: adminProcedure
-    .input(z.object({ query: z.string().max(120).default(""), tenantId: z.number().int().positive().nullable().optional(), limit: z.number().int().min(1).max(50).default(25) }))
+    .input(z.object({ query: z.string().max(120).default(""), tenantId: z.number().int().positive().nullable().optional(), page: z.number().int().min(1).default(1), pageSize: z.number().int().min(5).max(50).default(10) }))
     .query(async ({ input }) => {
       const db = input.tenantId ? await assertTenantExists(input.tenantId) : await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
@@ -67,7 +71,9 @@ export const adminOperationsRouter = router({
         : undefined;
       const filters = [queryFilter];
       if (input.tenantId) filters.push(eq(tenantUsers.tenantId, input.tenantId));
-      const participantRows = await db
+      const whereClause = and(...filters.filter(Boolean) as any);
+      const [participantRows, [totalRow]] = await Promise.all([
+        db
         .select({
           id: users.id,
           name: users.name,
@@ -81,9 +87,12 @@ export const adminOperationsRouter = router({
         .from(users)
         .leftJoin(tenantUsers, eq(users.id, tenantUsers.userId))
         .leftJoin(tenants, eq(tenantUsers.tenantId, tenants.id))
-        .where(and(...filters.filter(Boolean) as any))
+        .where(whereClause)
         .orderBy(desc(users.lastSignedIn))
-        .limit(input.limit);
+        .limit(input.pageSize)
+        .offset(getParticipantSearchOffset(input.page, input.pageSize)),
+        db.select({ total: count() }).from(users).leftJoin(tenantUsers, eq(users.id, tenantUsers.userId)).where(whereClause),
+      ]);
       const ids = participantRows.map((row) => row.id);
       const enrollmentRows = ids.length
         ? await db.select({ userId: userProductEnrollments.userId, productId: products.id, productName: products.name }).from(userProductEnrollments).innerJoin(products, eq(userProductEnrollments.productId, products.id)).where(and(inArray(userProductEnrollments.userId, ids), eq(userProductEnrollments.isActive, true)))
@@ -94,6 +103,11 @@ export const adminOperationsRouter = router({
         list.push({ id: row.productId, name: row.productName });
         enrolmentsByUser.set(row.userId, list);
       });
-      return participantRows.map((row) => ({ ...row, enrolments: enrolmentsByUser.get(row.id) ?? [] }));
+      return {
+        items: participantRows.map((row) => ({ ...row, enrolments: enrolmentsByUser.get(row.id) ?? [] })),
+        total: totalRow?.total ?? 0,
+        page: input.page,
+        pageSize: input.pageSize,
+      };
     }),
 });
