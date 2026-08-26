@@ -5,3 +5,7 @@
 - [x] Add regression coverage for MEP Admin tool visibility.
 - [x] Run targeted tests, type checks, and a visual verification of the repaired navigation.
 - [x] Confirm the published MEP sidebar as a signed-in Admin shows the Administrator section and all standard Admin tools.
+- [x] Add a visible signed-in user and access-role indicator to the MEP sidebar on desktop and mobile.
+- [x] Add an Admin-only dashboard shortcut that clearly leads to the central Admin workspace.
+- [x] Improve the MEP mobile sign-in redirect with a clear, accessible transition animation and status message.
+- [x] Add regression coverage and visually validate the new MEP access experience.

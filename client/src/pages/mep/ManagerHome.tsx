@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { MEP_DEFERRED_ORG_SETUP_KEY, MEP_POST_SKIP_WELCOME_KEY } from "@/lib/mepPostSkip";
 import { getMepOrganisationSetupHref } from "@/lib/mepOrganisationSetup";
+import { isPlatformAdministrator } from "@/lib/adminControls";
 import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
 import { normalizeAiData } from "@shared/citationSanitization";
 import { getBrowserTimeZone, getMepDailyBriefDateKey } from "@shared/modules/mepDailyBriefDate";
@@ -34,6 +35,7 @@ import {
   ThumbsUp,
   BarChart3,
   Building2,
+  LayoutDashboard,
   X,
 } from "lucide-react";
 
@@ -95,6 +97,7 @@ const QUICK_STATS = [
 export default function ManagerHome() {
   const { user } = useAuth();
   const firstName = user?.name?.split(" ")[0] ?? "Manager";
+  const isAdministrator = isPlatformAdministrator(user?.role);
   const [showDeferredOrgSetup, setShowDeferredOrgSetup] = React.useState(() => {
     const arrivedAfterSkip = new URLSearchParams(window.location.search).get("onboarding") === "skipped";
     return arrivedAfterSkip || window.localStorage.getItem(MEP_DEFERRED_ORG_SETUP_KEY) === "true";
@@ -212,6 +215,18 @@ export default function ManagerHome() {
               <p className="text-sm max-w-lg" style={{ color: "oklch(75% 0.02 248.6)" }}>
                 Your platform for becoming the manager your team deserves. Diagnose, learn, practise, and commit to lasting behaviour change.
               </p>
+              {isAdministrator && (
+                <Link
+                  href="/admin"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                  style={{ color: "#6ee7b7", background: "oklch(from #34d399 l c h / 0.12)", border: "1px solid oklch(from #34d399 l c h / 0.28)" }}
+                  aria-label="Open Admin workspace"
+                >
+                  <LayoutDashboard size={14} aria-hidden="true" />
+                  Open Admin workspace
+                  <ArrowRight size={13} aria-hidden="true" />
+                </Link>
+              )}
             </div>
             {/* Diagnostic completion progress ring */}
             <div className="hidden md:flex flex-col items-center justify-center flex-shrink-0">

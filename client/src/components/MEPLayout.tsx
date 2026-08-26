@@ -14,6 +14,7 @@ import {
   Home,
   Users,
   Building2,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -43,6 +44,13 @@ export default function MEPLayout({ children }: MEPLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isAdministrator = isPlatformAdministrator(user?.role);
+  const displayName = user?.name?.trim() || user?.email?.trim() || "Signed-in user";
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "LN";
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -62,6 +70,34 @@ export default function MEPLayout({ children }: MEPLayoutProps) {
   const isActive = (item: typeof MEP_NAV_ITEMS[0]) => {
     if (item.exact) return location === item.href;
     return location.startsWith(item.href);
+  };
+
+  const UserAccessIndicator = ({ compact = false }: { compact?: boolean }) => {
+    if (!user) return null;
+
+    const accessLabel = isAdministrator ? "Administrator access" : "Member access";
+    return (
+      <div className="flex-shrink-0 px-3 pb-3">
+        <div
+          className="flex items-center gap-2.5 rounded-xl px-2.5 py-2.5"
+          style={{ background: "oklch(from white 15% 0 0 / 0.07)", border: "1px solid oklch(from white 15% 0 0 / 0.1)" }}
+          title={`${displayName} · ${accessLabel}`}
+        >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold" style={{ background: "oklch(from #34d399 l c h / 0.18)", color: "#6ee7b7" }} aria-hidden="true">
+            {initials}
+          </div>
+          {!compact && (
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold text-white">{displayName}</p>
+              <p className="mt-0.5 flex items-center gap-1 text-[10px] font-medium" style={{ color: isAdministrator ? "#6ee7b7" : "oklch(65% 0.02 248.6)" }}>
+                <ShieldCheck size={11} aria-hidden="true" />
+                {accessLabel}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const NavContent = ({ onItemClick }: { onItemClick?: () => void }) => (
@@ -84,6 +120,7 @@ export default function MEPLayout({ children }: MEPLayoutProps) {
           Manager Effectiveness
         </p>
       </div>
+      <UserAccessIndicator />
 
       {/* Nav items */}
       <nav className="flex-1 px-2 py-2 space-y-0.5">
@@ -179,6 +216,7 @@ export default function MEPLayout({ children }: MEPLayoutProps) {
             </p>
           </div>
         )}
+        <UserAccessIndicator compact={collapsed} />
 
         {/* Nav items */}
         <nav className="flex-1 px-2 py-2 space-y-0.5">

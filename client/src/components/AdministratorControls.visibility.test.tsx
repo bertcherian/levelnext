@@ -58,4 +58,18 @@ describe("dedicated platform administrator controls", () => {
       view.unmount();
     }
   });
+
+  it("shows the signed-in identity and current access level in the MEP sidebar", () => {
+    authState.user = { id: 1, name: "Bert Cherian", email: "bert@example.com", role: "admin" };
+    locationState.value = "/manager";
+    const administratorView = render(<MEPLayout><div>Manager page</div></MEPLayout>);
+    expect(administratorView.getAllByText("Bert Cherian").length).toBeGreaterThan(0);
+    expect(administratorView.getAllByText("Administrator access").length).toBeGreaterThan(0);
+    administratorView.unmount();
+
+    authState.user = { id: 2, name: "Casey Manager", email: "casey@example.com", role: "user" };
+    const memberView = render(<MEPLayout><div>Manager page</div></MEPLayout>);
+    expect(memberView.getAllByText("Casey Manager").length).toBeGreaterThan(0);
+    expect(memberView.getAllByText("Member access").length).toBeGreaterThan(0);
+  });
 });
