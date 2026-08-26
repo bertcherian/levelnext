@@ -37,7 +37,7 @@ export default function CriticalThinkingHome() {
         <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[1.35fr_.65fr] lg:py-24">
           <div>
             <Badge className="mb-5 border border-[#F2B705]/30 bg-[#F2B705]/15 px-3 py-1 text-[#F2B705] hover:bg-[#F2B705]/15">LevelNext Developmental Diagnostic</Badge>
-            <h1 className="max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl">When the answer isn’t obvious, how well do you think?</h1>
+            <h1 className="max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl">When the answer isn’t obvious,<span className="block text-[#F2B705]">how well do you think?</span></h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">A practical reflection on how you frame, test, evidence, challenge, decide, and learn when workplace choices involve uncertainty, competing priorities, and real consequences.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button className="bg-[#F2B705] text-[#0A1A2F] hover:bg-[#ffd44b]" size="lg" onClick={() => document.getElementById("your-campaigns")?.scrollIntoView({ behavior: "smooth" })}>

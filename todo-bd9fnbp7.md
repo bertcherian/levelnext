@@ -49,3 +49,4 @@
 - [x] Add focused tests and responsive visual validation for assessment progress, PDF preparation feedback, and report sharing.
 - [x] Package the reusable diagnostic progress and controlled-report-sharing workflow as a project skill.
 - [x] Publish the completed Critical Thinking experience enhancement.
+- [x] Put “how well do you think?” on a separate Chrome Yellow line in the Critical Thinking hero headline and publish the refinement.
