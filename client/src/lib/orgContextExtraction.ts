@@ -7,6 +7,8 @@ export type WebsiteExtraction = {
   values?: string[];
 };
 
+export type WebsiteExtractionSources = Partial<Record<keyof WebsiteExtraction, { snippet: string; sourceUrl: string }>>;
+
 export type OrgContextFormValues = Required<Omit<WebsiteExtraction, "strategicGoals" | "values">> & {
   strategicGoals: string[];
   values: string[];

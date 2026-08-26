@@ -2091,6 +2091,7 @@ export const orgContext = mysqlTable("org_context", {
   strategicGoals: json("strategicGoals").$type<string[]>(),
   values: json("values").$type<string[]>(),
   rawScrapedText: text("rawScrapedText"),
+  extractionSources: json("extractionSources").$type<Partial<Record<"companyName" | "mission" | "vision" | "northStar" | "strategicGoals" | "values", { snippet: string; sourceUrl: string }>>>(),
   scrapedAt: timestamp("scrapedAt"),
   logoUrl: varchar("logoUrl", { length: 1000 }),
   leadershipFrameworks: json("leadershipFrameworks").$type<Array<{ name: string; description: string; competencies: string[] }>>(),

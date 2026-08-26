@@ -127,6 +127,7 @@ const CriticalThinkingAdmin = lazy(() => import("./pages/CriticalThinkingAdmin")
 const CriticalThinkingPlatformAdmin = lazyWithRouteRecovery(() => import("./pages/CriticalThinkingPlatformAdmin"), "admin-critical-thinking");
 const CriticalThinkingPilot = lazy(() => import("./pages/CriticalThinkingPilot"));
 const CriticalThinkingReportValidationFixture = import.meta.env.DEV ? lazy(() => import("./pages/CriticalThinkingReportValidationFixture")) : null;
+const OrgContextExtractionValidationFixture = import.meta.env.DEV ? lazy(() => import("./pages/OrgContextExtractionValidationFixture")) : null;
 
 // Launch Intelligence is a self-contained experience. Loading its journeys on
 // demand keeps the platform's initial bundle focused on the page a learner chose.
@@ -224,6 +225,7 @@ function Router() {
       {CriticalThinkingReportValidationFixture && <Route path="/critical-thinking/_report-validation/generating" component={CriticalThinkingReportValidationFixture} />}
       {CriticalThinkingReportValidationFixture && <Route path="/critical-thinking/_report-validation/individual" component={CriticalThinkingReportValidationFixture} />}
       {CriticalThinkingReportValidationFixture && <Route path="/critical-thinking/_report-validation" component={CriticalThinkingReportValidationFixture} />}
+      {OrgContextExtractionValidationFixture && <Route path="/_validation/org-context-extraction" component={OrgContextExtractionValidationFixture} />}
       <Route path="/admin/critical-thinking" component={CriticalThinkingPlatformAdmin} />
 
       {/* Platform (authenticated) */}

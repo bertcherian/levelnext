@@ -1,20 +1,30 @@
 import React, { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAdminTenantSelection } from "@/lib/adminTenantSelection";
-import { mergeWebsiteExtraction, normaliseWebsiteUrl, populatedExtractionFieldCount, type WebsiteExtraction } from "@/lib/orgContextExtraction";
+import { mergeWebsiteExtraction, normaliseWebsiteUrl, populatedExtractionFieldCount, type WebsiteExtraction, type WebsiteExtractionSources } from "@/lib/orgContextExtraction";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
-  Globe, Save, RefreshCw, Plus, X, Loader2, Building2, Target, Eye, Star,
-  ListChecks, Heart, Upload, ImageIcon, BookOpen, ChevronDown, ChevronUp,
+  Globe, Save, RefreshCw, RotateCcw, Plus, X, Loader2, Building2, Target, Eye, Star,
+  ListChecks, Heart, Upload, ImageIcon, BookOpen, ChevronDown, ChevronUp, Quote, ExternalLink,
 } from "lucide-react";
 
 type Framework = { name: string; description: string; competencies: string[] };
 
 const TABS = ["Identity", "Strategy", "Logo", "Frameworks"] as const;
 type Tab = typeof TABS[number];
+
+export function ExtractionSourceNote({ source }: { source?: { snippet: string; sourceUrl: string } }) {
+  if (!source) return null;
+  let hostname = source.sourceUrl;
+  try { hostname = new URL(source.sourceUrl).hostname; } catch { /* use the provided source URL */ }
+  return <div className="mt-2 flex gap-2 rounded-lg border px-3 py-2 text-xs" style={{ borderColor: "oklch(88% 0.03 85)", background: "oklch(97% 0.02 85)", color: "oklch(42% 0.02 248.6)" }}>
+    <Quote size={13} className="mt-0.5 shrink-0" style={{ color: "var(--color-ln-gold)" }} />
+    <p className="leading-relaxed">{source.snippet} <a href={source.sourceUrl} target="_blank" rel="noreferrer" className="ml-1 inline-flex items-center gap-0.5 font-medium underline" style={{ color: "var(--color-ln-navy)" }}>Source: {hostname}<ExternalLink size={10} /></a></p>
+  </div>;
+}
 
 export default function AdminOrgContext() {
   const { tenantId } = useAdminTenantSelection();
@@ -35,8 +45,11 @@ export default function AdminOrgContext() {
       setNorthStar(merged.northStar);
       setGoals(merged.strategicGoals);
       setValues(merged.values);
+      setExtractionSources((data.extractionSources ?? {}) as WebsiteExtractionSources);
+      setCanRetryAbout(!data.usedAboutFallback);
       const populated = populatedExtractionFieldCount(extracted);
-      if (populated) toast.success(`Website scraped — populated ${populated} organisation context field${populated === 1 ? "" : "s"}.`);
+      if (data.usedAboutFallback) toast.success("About page checked — additional organisation context was found and populated.");
+      else if (populated) toast.success(`Website scraped — populated ${populated} organisation context field${populated === 1 ? "" : "s"}.`);
       else toast.warning("Website was captured, but no mission, vision, goals, or values were confidently detected. You can complete the fields manually.");
     },
     onError: (e) => toast.error(`Scrape failed: ${e.message}`),
@@ -58,6 +71,8 @@ export default function AdminOrgContext() {
   const [northStar, setNorthStar] = useState("");
   const [goals, setGoals] = useState<string[]>([""]);
   const [values, setValues] = useState<string[]>([""]);
+  const [extractionSources, setExtractionSources] = useState<WebsiteExtractionSources>({});
+  const [canRetryAbout, setCanRetryAbout] = useState(false);
 
   // Logo
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -79,6 +94,7 @@ export default function AdminOrgContext() {
       setNorthStar(context.northStar ?? "");
       setGoals(context.strategicGoals?.length ? context.strategicGoals : [""]);
       setValues(context.values?.length ? context.values : [""]);
+      setExtractionSources((context.extractionSources ?? {}) as WebsiteExtractionSources);
       if (context.logoUrl) setLogoPreview(context.logoUrl);
       if (context.leadershipFrameworks?.length) {
         setFrameworks(context.leadershipFrameworks.map((f) => ({
@@ -116,14 +132,14 @@ export default function AdminOrgContext() {
     });
   };
 
-  const handleWebsiteExtraction = () => {
+  const handleWebsiteExtraction = (preferAbout = false) => {
     const normalizedUrl = normaliseWebsiteUrl(websiteUrl);
     if (!normalizedUrl) {
       toast.error("Enter a valid company website, such as www.parkcontrols.com.");
       return;
     }
     setWebsiteUrl(normalizedUrl);
-    scrapeMutation.mutate({ url: normalizedUrl, tenantId: tenantId ?? undefined });
+    scrapeMutation.mutate({ url: normalizedUrl, tenantId: tenantId ?? undefined, preferAbout });
   };
 
   const handleLogoFile = (file: File) => {
@@ -205,11 +221,12 @@ export default function AdminOrgContext() {
               </p>
               <div className="flex gap-2">
                 <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://yourcompany.com" className="flex-1 text-sm" />
-                <Button variant="outline" onClick={handleWebsiteExtraction} disabled={scrapeMutation.isPending} className="shrink-0">
+                <Button variant="outline" onClick={() => handleWebsiteExtraction()} disabled={scrapeMutation.isPending} className="shrink-0">
                   {scrapeMutation.isPending ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <RefreshCw size={14} className="mr-1.5" />}
                   Extract
                 </Button>
               </div>
+              {canRetryAbout && <Button variant="ghost" size="sm" onClick={() => handleWebsiteExtraction(true)} disabled={scrapeMutation.isPending} className="-ml-2 h-7 px-2 text-xs" style={{ color: navy }}><RotateCcw size={12} className="mr-1" /> Try About page</Button>}
               {context?.scrapedAt && <p className="text-xs" style={{ color: muted }}>Last scraped: {new Date(context.scrapedAt).toLocaleString()}</p>}
             </div>
 
@@ -217,27 +234,32 @@ export default function AdminOrgContext() {
             <div className="rounded-2xl p-6 border space-y-3" style={cardStyle}>
               <div className="flex items-center gap-2"><Building2 size={15} style={{ color: navy }} /><h2 className="text-sm font-semibold" style={{ color: navy }}>Company Name</h2></div>
               <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. Acme Corporation" className="text-sm" />
+              <ExtractionSourceNote source={extractionSources.companyName} />
             </div>
 
             {/* Mission */}
             <div className="rounded-2xl p-6 border space-y-3" style={cardStyle}>
               <div className="flex items-center gap-2"><Target size={15} style={{ color: navy }} /><h2 className="text-sm font-semibold" style={{ color: navy }}>Mission</h2><span className="text-xs ml-auto" style={{ color: muted }}>Why we exist</span></div>
               <Textarea value={mission} onChange={(e) => setMission(e.target.value)} placeholder="e.g. To empower every person and every organisation on the planet to achieve more." className="text-sm min-h-[80px] resize-none" rows={3} />
+              <ExtractionSourceNote source={extractionSources.mission} />
             </div>
 
             {/* Vision */}
             <div className="rounded-2xl p-6 border space-y-3" style={cardStyle}>
               <div className="flex items-center gap-2"><Eye size={15} style={{ color: navy }} /><h2 className="text-sm font-semibold" style={{ color: navy }}>Vision</h2><span className="text-xs ml-auto" style={{ color: muted }}>Where we are going</span></div>
               <Textarea value={vision} onChange={(e) => setVision(e.target.value)} placeholder="e.g. A world where every leader reaches their full potential." className="text-sm min-h-[80px] resize-none" rows={3} />
+              <ExtractionSourceNote source={extractionSources.vision} />
             </div>
 
             {/* North Star */}
             <div className="rounded-2xl p-6 border space-y-3" style={cardStyle}>
               <div className="flex items-center gap-2"><Star size={15} style={{ color: navy }} /><h2 className="text-sm font-semibold" style={{ color: navy }}>North Star</h2><span className="text-xs ml-auto" style={{ color: muted }}>Primary goal or metric</span></div>
               <Textarea value={northStar} onChange={(e) => setNorthStar(e.target.value)} placeholder="e.g. Become the most trusted leadership development platform in Asia by 2027." className="text-sm min-h-[60px] resize-none" rows={2} />
+              <ExtractionSourceNote source={extractionSources.northStar} />
             </div>
 
             {/* Strategic Goals */}
+            {extractionSources.strategicGoals && <ExtractionSourceNote source={extractionSources.strategicGoals} />}
             <div className="rounded-2xl p-6 border space-y-3" style={cardStyle}>
               <div className="flex items-center gap-2"><ListChecks size={15} style={{ color: navy }} /><h2 className="text-sm font-semibold" style={{ color: navy }}>Strategic Goals</h2><span className="text-xs ml-auto" style={{ color: muted }}>Up to 10</span></div>
               <div className="space-y-2">
@@ -252,6 +274,7 @@ export default function AdminOrgContext() {
             </div>
 
             {/* Values */}
+            {extractionSources.values && <ExtractionSourceNote source={extractionSources.values} />}
             <div className="rounded-2xl p-6 border space-y-3" style={cardStyle}>
               <div className="flex items-center gap-2"><Heart size={15} style={{ color: navy }} /><h2 className="text-sm font-semibold" style={{ color: navy }}>Company Values</h2><span className="text-xs ml-auto" style={{ color: muted }}>Up to 15</span></div>
               <div className="flex flex-wrap gap-2">

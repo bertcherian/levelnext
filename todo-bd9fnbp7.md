@@ -72,3 +72,11 @@
 - [x] Normalise scheme-less Organisation Context URLs such as www.parkcontrols.com before extraction.
 - [x] Add page-level Organisation Context extraction validation proving successful output populates editable fields.
 - [x] Save and publish the fully validated Organisation Context extraction repair.
+- [x] Return and display concise source text snippets for each Organisation Context field populated by website extraction.
+- [x] Add a one-click retry that safely attempts an About-page extraction when homepage context is insufficient.
+- [x] Preserve administrator-entered values, tenant scope, and safe website URL handling across retries.
+- [x] Add focused regression coverage for provenance snippets, fallback URL construction, retry outcomes, and field population.
+- [x] Validate the responsive Organisation Context verification and retry experience.
+- [x] Publish the completed Organisation Context verification and retry enhancement.
+- [x] Capture mobile visual validation of source snippets and the Try About page control.
+- [x] Add rendered compact-layout coverage for visible source notes and the About-page retry action.

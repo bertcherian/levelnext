@@ -554,6 +554,13 @@
       "when": 1787713003144,
       "tag": "0078_wooden_vampiro",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "5",
+      "when": 1787737262225,
+      "tag": "0079_dry_scarlet_witch",
+      "breakpoints": true
     }
   ]
 }

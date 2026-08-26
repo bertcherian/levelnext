@@ -37,7 +37,7 @@ describe("Organisation Context website extraction", () => {
     fireEvent.change(website, { target: { value: "www.parkcontrols.com" } });
     fireEvent.click(screen.getByRole("button", { name: /Extract/i }));
 
-    expect(mocks.scrape).toHaveBeenCalledWith({ url: "https://www.parkcontrols.com/", tenantId: 42 });
+    expect(mocks.scrape).toHaveBeenCalledWith({ url: "https://www.parkcontrols.com/", tenantId: 42, preferAbout: false });
 
     act(() => mocks.scrapeSuccess?.({
       rawTextLength: 8000,
@@ -49,6 +49,9 @@ describe("Organisation Context website extraction", () => {
         strategicGoals: ["Expand automation services"],
         values: ["Safety", "Reliability"],
       },
+      extractionSources: {
+        mission: { snippet: "Park Controls engineers reliable industrial controls for safer operations.", sourceUrl: "https://www.parkcontrols.com/about" },
+      },
     }));
 
     expect((screen.getByPlaceholderText("e.g. Acme Corporation") as HTMLInputElement).value).toBe("Park Controls");
@@ -57,5 +60,24 @@ describe("Organisation Context website extraction", () => {
     expect((screen.getByPlaceholderText(/Become the most trusted/i) as HTMLTextAreaElement).value).toContain("Trusted control partner");
     expect((screen.getByDisplayValue("Expand automation services") as HTMLInputElement).value).toBe("Expand automation services");
     expect((screen.getByDisplayValue("Safety") as HTMLInputElement).value).toBe("Safety");
+    expect(screen.getByText(/Park Controls engineers reliable industrial controls/i)).toBeTruthy();
+    expect(screen.getByText(/Source: www\.parkcontrols\.com/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /Try About page/i }));
+    expect(mocks.scrape).toHaveBeenLastCalledWith({ url: "https://www.parkcontrols.com/", tenantId: 42, preferAbout: true });
+  });
+
+  it("retains source verification and the About-page retry action in a compact viewport", () => {
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    render(<AdminOrgContext />);
+    fireEvent.change(screen.getByPlaceholderText("https://yourcompany.com"), { target: { value: "www.parkcontrols.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /Extract/i }));
+    act(() => mocks.scrapeSuccess?.({
+      extracted: { mission: "Engineer reliable industrial controls." },
+      extractionSources: { mission: { snippet: "Park Controls engineers reliable industrial controls for safer operations.", sourceUrl: "https://www.parkcontrols.com/about" } },
+    }));
+
+    expect(screen.getByText(/Source: www\.parkcontrols\.com/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Try About page/i })).toBeTruthy();
   });
 });

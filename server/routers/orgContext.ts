@@ -12,7 +12,7 @@ import { getDb } from "../db";
 import { orgContext, tenantUsers } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
-import { companyNameFromWebsiteMetadata, normalizeExtractedOrgContext, type ExtractedOrgContext } from "../orgContextExtraction";
+import { aboutPageUrl, buildExtractionSources, companyNameFromWebsiteMetadata, contextualFieldCount, normalizeExtractedOrgContext, type ExtractedOrgContext, type ExtractionSources } from "../orgContextExtraction";
 
 // ─── Helper: get tenantId for current user (must be owner or admin) ───────────
 async function getTenantAdminId(user: { id: number; role: string }, requestedTenantId?: number | null): Promise<number> {
@@ -34,6 +34,63 @@ async function getTenantAdminId(user: { id: number; role: string }, requestedTen
   }
 
   return membership.tenantId;
+}
+
+const websiteHeaders = {
+  "User-Agent": "Mozilla/5.0 (compatible; LevelNext/1.0; +https://levelnext.coach)",
+  Accept: "text/html,application/xhtml+xml",
+};
+
+function plainTextFromHtml(rawHtml: string) {
+  return rawHtml
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+    .slice(0, 8000);
+}
+
+async function fetchWebsiteHtml(url: string) {
+  const response = await fetch(url, { headers: websiteHeaders, signal: AbortSignal.timeout(10000) });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.text();
+}
+
+async function analyseOrganisationPage(rawHtml: string, sourceUrl: string) {
+  const plainText = plainTextFromHtml(rawHtml);
+  let extracted: ExtractedOrgContext = {};
+  try {
+    const result = await invokeLLM({
+      model: "claude-haiku-4-5",
+      messages: [
+        { role: "system", content: `You are an expert at extracting organisational context from company websites.
+Extract the following from the provided website text and return as JSON:
+- companyName: the company's name
+- mission: the company's mission statement (what they do and why)
+- vision: the company's vision (where they are going)
+- northStar: their north star metric or primary goal
+- strategicGoals: array of up to 5 strategic goals or focus areas
+- values: array of up to 8 company values
+
+Only return fields clearly supported by the website text. Return ONLY valid JSON.` },
+        { role: "user", content: `Website URL: ${sourceUrl}\n\nWebsite text:\n${plainText}` },
+      ],
+      response_format: { type: "json_object" },
+    });
+    const raw = result.choices[0]?.message?.content ?? "{}";
+    const json = typeof raw === "string" ? raw : (raw as any[]).map((chunk: any) => chunk.text ?? "").join("");
+    extracted = normalizeExtractedOrgContext(JSON.parse(json));
+  } catch {
+    // Raw text and metadata still support an explicit retry and manual completion.
+  }
+
+  if (!extracted.companyName) {
+    const companyName = companyNameFromWebsiteMetadata(rawHtml);
+    if (companyName) extracted = { ...extracted, companyName };
+  }
+
+  return { plainText, extracted, extractionSources: buildExtractionSources(extracted, plainText, sourceUrl) };
 }
 
 export const orgContextRouter = router({
@@ -148,22 +205,13 @@ export const orgContextRouter = router({
 
   /** Scrape a website URL and extract mission/vision/goals text using LLM */
   scrapeWebsite: protectedProcedure
-    .input(z.object({ url: z.string().url(), tenantId: z.number().int().positive().optional() }))
+    .input(z.object({ url: z.string().url(), tenantId: z.number().int().positive().optional(), preferAbout: z.boolean().optional().default(false) }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = await getTenantAdminId(ctx.user, input.tenantId); // verify scoped admin
 
-      // Fetch the website HTML
-      let rawHtml = "";
+      let homepageHtml = "";
       try {
-        const resp = await fetch(input.url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; LevelNext/1.0; +https://levelnext.io)",
-            Accept: "text/html,application/xhtml+xml",
-          },
-          signal: AbortSignal.timeout(10000),
-        });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        rawHtml = await resp.text();
+        homepageHtml = await fetchWebsiteHtml(input.url);
       } catch (err: any) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -171,54 +219,28 @@ export const orgContextRouter = router({
         });
       }
 
-      // Strip HTML tags to get readable text (basic)
-      const plainText = rawHtml
-        .replace(/<script[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style[\s\S]*?<\/style>/gi, " ")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/\s{2,}/g, " ")
-        .trim()
-        .slice(0, 8000); // cap at 8k chars for LLM
+      const homepage = await analyseOrganisationPage(homepageHtml, input.url);
+      let extracted = homepage.extracted;
+      let extractionSources: ExtractionSources = homepage.extractionSources;
+      let rawScrapedText = homepage.plainText;
+      let usedAboutFallback = false;
+      let aboutAttempted = false;
+      let aboutUrl: string | undefined;
 
-      // Use LLM to extract structured org context
-      let extracted: ExtractedOrgContext = {};
-
-      try {
-        const result = await invokeLLM({
-          model: "claude-haiku-4-5",
-          messages: [
-            {
-              role: "system",
-              content: `You are an expert at extracting organisational context from company websites.
-Extract the following from the provided website text and return as JSON:
-- companyName: the company's name
-- mission: the company's mission statement (what they do and why)
-- vision: the company's vision (where they are going)
-- northStar: their north star metric or primary goal
-- strategicGoals: array of up to 5 strategic goals or focus areas
-- values: array of up to 8 company values
-
-If a field is not clearly present in the text, omit it or return null.
-Return ONLY valid JSON, no markdown, no explanation.`,
-            },
-            {
-              role: "user",
-              content: `Website URL: ${input.url}\n\nWebsite text:\n${plainText}`,
-            },
-          ],
-          response_format: { type: "json_object" },
-        });
-
-        const raw = result.choices[0]?.message?.content ?? "{}";
-        const text = typeof raw === "string" ? raw : (raw as any[]).map((c: any) => c.text ?? "").join("");
-        extracted = normalizeExtractedOrgContext(JSON.parse(text));
-      } catch {
-        // Return raw text even if LLM fails
-      }
-
-      if (!extracted.companyName) {
-        const companyName = companyNameFromWebsiteMetadata(rawHtml);
-        if (companyName) extracted = { ...extracted, companyName };
+      if (input.preferAbout || contextualFieldCount(extracted) < 2) {
+        aboutAttempted = true;
+        aboutUrl = aboutPageUrl(input.url);
+        try {
+          const about = await analyseOrganisationPage(await fetchWebsiteHtml(aboutUrl), aboutUrl);
+          if (contextualFieldCount(about.extracted) > 0) {
+            extracted = { ...extracted, ...about.extracted };
+            extractionSources = { ...extractionSources, ...about.extractionSources };
+            rawScrapedText = `${homepage.plainText}\n\nAbout page: ${about.plainText}`.slice(0, 12000);
+            usedAboutFallback = true;
+          }
+        } catch {
+          // The homepage result remains available when an About page is unavailable.
+        }
       }
 
       // Save raw scraped text and extracted fields to DB
@@ -234,7 +256,8 @@ Return ONLY valid JSON, no markdown, no explanation.`,
         const payload = {
           tenantId,
           websiteUrl: input.url,
-          rawScrapedText: plainText,
+          rawScrapedText,
+          extractionSources,
           scrapedAt: new Date(),
           lastUpdatedBy: ctx.user.id,
           ...(extracted.companyName ? { companyName: extracted.companyName } : {}),
@@ -255,7 +278,11 @@ Return ONLY valid JSON, no markdown, no explanation.`,
       return {
         success: true,
         extracted,
-        rawTextLength: plainText.length,
+        extractionSources,
+        rawTextLength: rawScrapedText.length,
+        usedAboutFallback,
+        aboutAttempted,
+        aboutUrl,
       };
     }),
 });

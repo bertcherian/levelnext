@@ -7,6 +7,8 @@ export type ExtractedOrgContext = {
   values?: string[];
 };
 
+export type ExtractionSources = Partial<Record<keyof ExtractedOrgContext, { snippet: string; sourceUrl: string }>>;
+
 const text = (value: unknown, max = 5000) => typeof value === "string" && value.trim() ? value.trim().slice(0, max) : undefined;
 
 const stringList = (value: unknown, maxItems: number, maxLength: number) => {
@@ -36,4 +38,40 @@ export function companyNameFromWebsiteMetadata(html: string): string | undefined
   if (!siteName) return undefined;
   const cleaned = siteName.replace(/\s*[|–—-]\s*(home|official website|welcome).*$/i, "").trim();
   return cleaned && cleaned.length <= 255 ? cleaned : undefined;
+}
+
+export function aboutPageUrl(websiteUrl: string) {
+  const url = new URL(websiteUrl);
+  url.pathname = "/about";
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}
+
+export function contextualFieldCount(extracted: ExtractedOrgContext) {
+  return [extracted.mission, extracted.vision, extracted.northStar, extracted.strategicGoals?.length, extracted.values?.length].filter(Boolean).length;
+}
+
+function sourceSnippet(text: string, terms: string[]) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const hit = terms.map((term) => normalized.toLowerCase().indexOf(term.toLowerCase())).find((index) => index >= 0) ?? -1;
+  const start = Math.max(0, hit - 86);
+  const end = Math.min(normalized.length, (hit >= 0 ? hit : 0) + 214);
+  return normalized.slice(start, end).trim().replace(/^\S*\s/, "").slice(0, 250);
+}
+
+export function buildExtractionSources(extracted: ExtractedOrgContext, pageText: string, sourceUrl: string): ExtractionSources {
+  const source: ExtractionSources = {};
+  const add = (key: keyof ExtractedOrgContext, terms: string[]) => {
+    if (!terms.length) return;
+    const snippet = sourceSnippet(pageText, terms);
+    if (snippet) source[key] = { snippet, sourceUrl };
+  };
+  if (extracted.companyName) add("companyName", [extracted.companyName]);
+  if (extracted.mission) add("mission", [extracted.mission]);
+  if (extracted.vision) add("vision", [extracted.vision]);
+  if (extracted.northStar) add("northStar", [extracted.northStar]);
+  if (extracted.strategicGoals?.length) add("strategicGoals", extracted.strategicGoals);
+  if (extracted.values?.length) add("values", extracted.values);
+  return source;
 }
