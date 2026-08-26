@@ -241,6 +241,25 @@ export const criticalThinkingRouter = router({
     return { ...row, participantReportSpec: CTDM_PARTICIPANT_REPORT_SPEC, governance: CTDM_GOVERNANCE, dimensions: CTDM_DIMENSIONS };
   }),
 
+  myReportHistory: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    const rows = await db
+      .select({ report: ctdmReports, campaign: ctdmCampaigns })
+      .from(ctdmReports)
+      .innerJoin(ctdmCampaigns, eq(ctdmReports.campaignId, ctdmCampaigns.id))
+      .where(eq(ctdmReports.userId, ctx.user.id))
+      .orderBy(desc(ctdmReports.createdAt));
+    return rows.map(({ report, campaign }) => ({
+      id: report.id,
+      campaignId: campaign.id,
+      campaignName: campaign.name,
+      reportingGroup: campaign.reportingGroup,
+      completedAt: report.createdAt,
+      scoreSnapshot: report.scoreSnapshot,
+    }));
+  }),
+
   adminCampaigns: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return { membership: null, campaigns: [] };

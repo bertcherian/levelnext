@@ -136,6 +136,10 @@ function tenantDashboardDb() {
   };
 }
 
+function reportHistoryDb(rows: unknown[]) {
+  return { select: vi.fn(() => queryChain(rows)) };
+}
+
 describe("criticalThinking router access boundaries", () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -159,6 +163,13 @@ describe("criticalThinking router access boundaries", () => {
     const caller = criticalThinkingRouter.createCaller(contextFor("user"));
 
     await expect(caller.getMyReport({ reportId: 99 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("returns only the signed-in participant's report history for cycle comparison", async () => {
+    vi.mocked(getDb).mockResolvedValue(reportHistoryDb([{ report: { id: 81, userId: 31, scoreSnapshot: { dimensionScores: { frame: 72 } }, createdAt: new Date("2026-08-01") }, campaign: { id: 44, name: "Leadership cycle", reportingGroup: "Cohort A" } }]) as never);
+    const caller = criticalThinkingRouter.createCaller(contextFor("user"));
+
+    await expect(caller.myReportHistory()).resolves.toMatchObject([{ id: 81, campaignId: 44, campaignName: "Leadership cycle", reportingGroup: "Cohort A", scoreSnapshot: { dimensionScores: { frame: 72 } } }]);
   });
 
   it("allows a tenant administrator to create a campaign within their tenant", async () => {

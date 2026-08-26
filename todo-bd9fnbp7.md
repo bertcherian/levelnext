@@ -32,3 +32,12 @@
 - [x] Defer live authenticated PDF-download and pilot-mutation checks until approved non-production tenant data is available; complete component, authorization, PDF-generation, visual, type, and production-build validation without creating tenant records.
 - [x] Add rendered-form component tests for invalid pilot input and successful pilot completion state.
 - [x] Add component-level tests for pilot campaign creation, invalid-email blocking, sequential participant enrolment, and completion-state rendering.
+- [x] Add a LevelNext-branded individual-report preview modal before PDF download.
+- [x] Add a LevelNext-branded eligible team-report preview modal before PDF download.
+- [x] Implement participant-owned cross-cycle report retrieval and transparent score-delta calculations.
+- [x] Build an individual progress-comparison view with cycle selection, dimension changes, and careful developmental interpretation.
+- [x] Enforce ownership, tenant, and anonymity guards for report previews and comparisons.
+- [x] Add focused automated tests and responsive visual validation for report previews and cross-cycle comparison.
+- [x] Package the reusable report-preview and cross-cycle comparison workflow as a project skill.
+- [x] Publish the completed report-preview and progress-comparison enhancement.
+- [x] Capture desktop and narrow-viewport visual validation for the report comparison and both PDF preview modals using safe non-production report data or a documented validation fixture.
