@@ -41,3 +41,4 @@
 - [x] Package the reusable report-preview and cross-cycle comparison workflow as a project skill.
 - [x] Publish the completed report-preview and progress-comparison enhancement.
 - [x] Capture desktop and narrow-viewport visual validation for the report comparison and both PDF preview modals using safe non-production report data or a documented validation fixture.
+- [x] Update the Critical Thinking diagnostic hero headline to the user-supplied question and publish the change.
