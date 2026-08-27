@@ -11,7 +11,7 @@ export default function OrgContextExtractionValidationFixture() {
       <div className="rounded-2xl border p-5" style={{ background: "white", borderColor: "oklch(90% 0.01 248.6)" }}>
         <div className="flex items-center gap-2"><Globe size={16} /><span className="font-semibold">Auto-extract from Website</span></div>
         <p className="mt-2 text-sm text-slate-600">Homepage information was incomplete. Review the snippet below or retry the About page.</p>
-        <Button variant="ghost" size="sm" className="mt-3 px-1" style={{ color: "var(--color-ln-navy)" }}><RotateCcw size={13} className="mr-1" /> Try About page</Button>
+        <Button variant="ghost" size="sm" className="mt-3 px-1" style={{ color: "var(--color-ln-navy)" }}><RotateCcw size={13} className="mr-1" /> Try fallback pages</Button>
       </div>
       <div className="rounded-2xl border p-5" style={{ background: "white", borderColor: "oklch(90% 0.01 248.6)" }}>
         <div className="flex items-center gap-2"><Target size={16} /><span className="font-semibold">Mission</span></div>

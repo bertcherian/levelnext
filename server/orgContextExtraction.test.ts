@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aboutPageUrl, buildExtractionSources, companyNameFromWebsiteMetadata, contextualFieldCount, normalizeExtractedOrgContext } from "./orgContextExtraction";
+import { aboutPageUrl, buildExtractionSources, companyNameFromWebsiteMetadata, contextualFieldCount, normalizeExtractedOrgContext, organisationFallbackPages } from "./orgContextExtraction";
 
 describe("Organisation Context extraction normalisation", () => {
   it("keeps only valid, bounded fields from a successful extraction payload", () => {
@@ -17,5 +17,14 @@ describe("Organisation Context extraction normalisation", () => {
     expect(contextualFieldCount(extracted)).toBe(2);
     expect(sources.mission).toMatchObject({ sourceUrl: "https://www.parkcontrols.com/about" });
     expect(sources.values?.snippet).toContain("Safety");
+  });
+
+  it("tries same-origin About, Our Story, and Values pages in a safe order", () => {
+    expect(organisationFallbackPages("https://www.parkcontrols.com/")).toEqual([
+      { key: "about", label: "About page", url: "https://www.parkcontrols.com/about" },
+      { key: "our-story", label: "Our Story page", url: "https://www.parkcontrols.com/our-story" },
+      { key: "values", label: "Values page", url: "https://www.parkcontrols.com/values" },
+    ]);
+    expect(organisationFallbackPages("https://www.parkcontrols.com/values?ref=site").map((page) => page.key)).toEqual(["about", "our-story"]);
   });
 });

@@ -80,3 +80,12 @@
 - [x] Publish the completed Organisation Context verification and retry enhancement.
 - [x] Capture mobile visual validation of source snippets and the Try About page control.
 - [x] Add rendered compact-layout coverage for visible source notes and the About-page retry action.
+- [x] Extend Organisation Context automatic fallback extraction to try `/our-story` and `/values` after homepage and About-page attempts.
+- [x] Preserve safe same-origin URL construction, source provenance, tenant scoping, and existing administrator-entered values across all fallback candidates.
+- [x] Add focused tests for fallback ordering, candidate safety, successful later-page extraction, and exhausted fallback behavior.
+- [x] Validate expanded fallback feedback in the Organisation Context interface and publish the enhancement.
+- [x] Add testable extraction fallback orchestration for a later-page success and an exhausted-fallback outcome.
+- [x] Add regression coverage for Our Story or Values success and for all fallback pages failing or yielding no context.
+- [x] Capture successful responsive visual validation of the updated Try fallback pages interface.
+- [x] Save and publish the fully validated expanded fallback enhancement.
+- [x] Capture desktop validation of the updated Try fallback pages control and source-verification layout.

@@ -46,9 +46,10 @@ export default function AdminOrgContext() {
       setGoals(merged.strategicGoals);
       setValues(merged.values);
       setExtractionSources((data.extractionSources ?? {}) as WebsiteExtractionSources);
-      setCanRetryAbout(!data.usedAboutFallback);
+      setCanRetryAbout(!data.usedFallback);
       const populated = populatedExtractionFieldCount(extracted);
-      if (data.usedAboutFallback) toast.success("About page checked — additional organisation context was found and populated.");
+      const contributingFallback = data.fallbackPagesTried?.find((page) => page.contributed)?.label;
+      if (contributingFallback) toast.success(`${contributingFallback} checked — additional organisation context was found and populated.`);
       else if (populated) toast.success(`Website scraped — populated ${populated} organisation context field${populated === 1 ? "" : "s"}.`);
       else toast.warning("Website was captured, but no mission, vision, goals, or values were confidently detected. You can complete the fields manually.");
     },
@@ -226,7 +227,7 @@ export default function AdminOrgContext() {
                   Extract
                 </Button>
               </div>
-              {canRetryAbout && <Button variant="ghost" size="sm" onClick={() => handleWebsiteExtraction(true)} disabled={scrapeMutation.isPending} className="-ml-2 h-7 px-2 text-xs" style={{ color: navy }}><RotateCcw size={12} className="mr-1" /> Try About page</Button>}
+              {canRetryAbout && <Button variant="ghost" size="sm" onClick={() => handleWebsiteExtraction(true)} disabled={scrapeMutation.isPending} className="-ml-2 h-7 px-2 text-xs" style={{ color: navy }}><RotateCcw size={12} className="mr-1" /> Try fallback pages</Button>}
               {context?.scrapedAt && <p className="text-xs" style={{ color: muted }}>Last scraped: {new Date(context.scrapedAt).toLocaleString()}</p>}
             </div>
 

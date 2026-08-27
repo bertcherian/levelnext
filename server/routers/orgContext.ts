@@ -12,7 +12,8 @@ import { getDb } from "../db";
 import { orgContext, tenantUsers } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
-import { aboutPageUrl, buildExtractionSources, companyNameFromWebsiteMetadata, contextualFieldCount, normalizeExtractedOrgContext, type ExtractedOrgContext, type ExtractionSources } from "../orgContextExtraction";
+import { buildExtractionSources, companyNameFromWebsiteMetadata, normalizeExtractedOrgContext, type ExtractedOrgContext, type ExtractionSources } from "../orgContextExtraction";
+import { enrichWithOrganisationFallbacks } from "../orgContextFallback";
 
 // ─── Helper: get tenantId for current user (must be owner or admin) ───────────
 async function getTenantAdminId(user: { id: number; role: string }, requestedTenantId?: number | null): Promise<number> {
@@ -220,28 +221,13 @@ export const orgContextRouter = router({
       }
 
       const homepage = await analyseOrganisationPage(homepageHtml, input.url);
-      let extracted = homepage.extracted;
-      let extractionSources: ExtractionSources = homepage.extractionSources;
-      let rawScrapedText = homepage.plainText;
-      let usedAboutFallback = false;
-      let aboutAttempted = false;
-      let aboutUrl: string | undefined;
-
-      if (input.preferAbout || contextualFieldCount(extracted) < 2) {
-        aboutAttempted = true;
-        aboutUrl = aboutPageUrl(input.url);
-        try {
-          const about = await analyseOrganisationPage(await fetchWebsiteHtml(aboutUrl), aboutUrl);
-          if (contextualFieldCount(about.extracted) > 0) {
-            extracted = { ...extracted, ...about.extracted };
-            extractionSources = { ...extractionSources, ...about.extractionSources };
-            rawScrapedText = `${homepage.plainText}\n\nAbout page: ${about.plainText}`.slice(0, 12000);
-            usedAboutFallback = true;
-          }
-        } catch {
-          // The homepage result remains available when an About page is unavailable.
-        }
-      }
+      const fallbackResult = await enrichWithOrganisationFallbacks({
+        websiteUrl: input.url,
+        initial: homepage,
+        forceFallback: input.preferAbout,
+        analyseCandidate: async (url) => analyseOrganisationPage(await fetchWebsiteHtml(url), url),
+      });
+      const { extracted, extractionSources, rawScrapedText, usedAboutFallback, usedFallback, fallbackPagesTried } = fallbackResult;
 
       // Save raw scraped text and extracted fields to DB
       const db = await getDb();
@@ -281,8 +267,10 @@ export const orgContextRouter = router({
         extractionSources,
         rawTextLength: rawScrapedText.length,
         usedAboutFallback,
-        aboutAttempted,
-        aboutUrl,
+        usedFallback,
+        aboutAttempted: fallbackPagesTried.some((page) => page.key === "about"),
+        aboutUrl: fallbackPagesTried.find((page) => page.key === "about")?.url,
+        fallbackPagesTried,
       };
     }),
 });

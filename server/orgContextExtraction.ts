@@ -40,6 +40,29 @@ export function companyNameFromWebsiteMetadata(html: string): string | undefined
   return cleaned && cleaned.length <= 255 ? cleaned : undefined;
 }
 
+export type ExtractionFallbackPage = { key: "about" | "our-story" | "values"; label: string; url: string };
+
+/** Return same-origin, de-duplicated context pages in a deliberate fallback order. */
+export function organisationFallbackPages(websiteUrl: string): ExtractionFallbackPage[] {
+  const requested = new URL(websiteUrl);
+  const requestedPath = requested.pathname.replace(/\/+$/, "") || "/";
+  const candidates: Array<Pick<ExtractionFallbackPage, "key" | "label"> & { path: string }> = [
+    { key: "about", label: "About page", path: "/about" },
+    { key: "our-story", label: "Our Story page", path: "/our-story" },
+    { key: "values", label: "Values page", path: "/values" },
+  ];
+
+  return candidates
+    .filter((candidate) => candidate.path !== requestedPath)
+    .map((candidate) => {
+      const pageUrl = new URL(websiteUrl);
+      pageUrl.pathname = candidate.path;
+      pageUrl.search = "";
+      pageUrl.hash = "";
+      return { key: candidate.key, label: candidate.label, url: pageUrl.toString() };
+    });
+}
+
 export function aboutPageUrl(websiteUrl: string) {
   const url = new URL(websiteUrl);
   url.pathname = "/about";

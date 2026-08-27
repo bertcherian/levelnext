@@ -63,7 +63,7 @@ describe("Organisation Context website extraction", () => {
     expect(screen.getByText(/Park Controls engineers reliable industrial controls/i)).toBeTruthy();
     expect(screen.getByText(/Source: www\.parkcontrols\.com/i)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: /Try About page/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Try fallback pages/i }));
     expect(mocks.scrape).toHaveBeenLastCalledWith({ url: "https://www.parkcontrols.com/", tenantId: 42, preferAbout: true });
   });
 
@@ -78,6 +78,6 @@ describe("Organisation Context website extraction", () => {
     }));
 
     expect(screen.getByText(/Source: www\.parkcontrols\.com/i)).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Try About page/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Try fallback pages/i })).toBeTruthy();
   });
 });
