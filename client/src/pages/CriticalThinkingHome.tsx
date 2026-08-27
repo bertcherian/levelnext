@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CriticalThinkingEnterpriseEnquiryDialog } from "@/components/CriticalThinkingEnterpriseEnquiryDialog";
 import { trpc } from "@/lib/trpc";
 import { CTDM_DIMENSIONS, CTDM_DISCLAIMER } from "@shared/modules/criticalThinkingDiagnostic";
 import {
@@ -12,6 +13,8 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Compass,
+  FileDown,
+  FileText,
   Eye,
   Gauge,
   LockKeyhole,
@@ -19,6 +22,7 @@ import {
   ScanSearch,
   ShieldCheck,
   Sparkles,
+  UsersRound,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -56,6 +60,24 @@ const dimensionNarratives = [
   "Record predictions, review the outcome, and update future practice.",
 ];
 
+const practiceInteractionDetails = [
+  "Why it matters: it prevents an unowned conversation from being mistaken for a decision.",
+  "Why it matters: it keeps evidence from being confused with the first plausible story.",
+  "Why it matters: it makes the basis for confidence visible before commitment.",
+  "Why it matters: it stops urgency from disguising a narrow choice set as the only option.",
+  "Why it matters: it makes credible dissent useful before risk becomes expensive.",
+  "Why it matters: it turns trade-offs and review triggers into shared accountability.",
+  "Why it matters: it turns the result of one decision into better judgment for the next.",
+];
+
+const reportPreview = [
+  { number: "01", title: "A seven-practice profile", body: "A clear view of framing, questioning, evidence, options, challenge, decision quality, and learning." },
+  { number: "02", title: "Applied judgment and calibration", body: "Scenario choices and confidence are kept visible as distinct developmental signals." },
+  { number: "03", title: "Priorities into practice", body: "Specific routines, reflection prompts, and a 30-day plan turn the report into useful action." },
+];
+
+const SAMPLE_REPORT_URL = "/manus-storage/LevelNext-Critical-Thinking-Diagnostic-Sample-Report_5b7ecf90.pdf";
+
 function SectionMarker({ label }: { label: string }) {
   return <p className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-[#C89616]"><span className="h-px w-9 bg-[#C89616]" />{label}</p>;
 }
@@ -63,6 +85,8 @@ function SectionMarker({ label }: { label: string }) {
 export default function CriticalThinkingHome() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const [enterpriseEnquiryOpen, setEnterpriseEnquiryOpen] = React.useState(() => import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "enterprise");
+  const [activePractice, setActivePractice] = React.useState<string | null>(() => import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "practice" ? CTDM_DIMENSIONS[0]?.id ?? null : null);
   const { data: campaigns, isLoading } = trpc.criticalThinking.myCampaigns.useQuery(undefined, { enabled: isAuthenticated });
   const { data: tenantData } = trpc.tenant.myTenant.useQuery(undefined, { enabled: isAuthenticated });
   const canAdminister = tenantData?.role === "owner" || tenantData?.role === "admin";
@@ -105,6 +129,7 @@ export default function CriticalThinkingHome() {
                 View my diagnostic <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               {canAdminister && <Button variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white" size="lg" onClick={() => setLocation("/critical-thinking/pilot")}>Launch a pilot</Button>}
+              <Button variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white" size="lg" onClick={() => setEnterpriseEnquiryOpen(true)}>Enterprise enquiry</Button>
             </div>
           </div>
 
@@ -152,7 +177,29 @@ export default function CriticalThinkingHome() {
           </div>
           <div className="relative grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="pointer-events-none absolute left-[16%] right-[16%] top-1/2 hidden h-px bg-[#F2B705]/40 lg:block" />
-            {CTDM_DIMENSIONS.map((dimension, index) => <div key={dimension.id} className={`relative rounded-2xl border p-4 backdrop-blur ${index === 3 ? "border-[#F2B705]/50 bg-[#F2B705] text-[#0A1A2F]" : "border-white/15 bg-[#0A1A2F]/65 text-white"}`}><div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${index === 3 ? "bg-[#0A1A2F] text-[#F2B705]" : "bg-[#F2B705] text-[#0A1A2F]"}`}>{String(index + 1).padStart(2, "0")}</div><h3 className="mt-4 text-base font-bold">{dimension.label}</h3><p className={`mt-2 text-xs leading-5 ${index === 3 ? "text-[#0A1A2F]/75" : "text-slate-300"}`}>{dimensionNarratives[index]}</p></div>)}
+            {CTDM_DIMENSIONS.map((dimension, index) => {
+              const isActive = activePractice === dimension.id;
+              const isGold = index === 3;
+              return <button type="button" key={dimension.id} aria-pressed={isActive} onMouseEnter={() => setActivePractice(dimension.id)} onMouseLeave={() => setActivePractice(null)} onFocus={() => setActivePractice(dimension.id)} onBlur={() => setActivePractice(null)} onClick={() => setActivePractice(isActive ? null : dimension.id)} className={`relative min-h-40 rounded-2xl border p-4 text-left backdrop-blur transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F2B705] focus-visible:ring-offset-2 focus-visible:ring-offset-[#102C48] ${isGold ? "border-[#F2B705]/50 bg-[#F2B705] text-[#0A1A2F]" : "border-white/15 bg-[#0A1A2F]/65 text-white hover:-translate-y-1 hover:border-[#F2B705]/70 hover:bg-[#12345A]"} ${isActive ? "-translate-y-1 shadow-xl shadow-black/30" : ""}`}><div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isGold ? "bg-[#0A1A2F] text-[#F2B705]" : "bg-[#F2B705] text-[#0A1A2F]"}`}>{String(index + 1).padStart(2, "0")}</div><h3 className="mt-4 text-base font-bold">{dimension.label}</h3><p className={`mt-2 text-xs leading-5 transition-opacity ${isGold ? "text-[#0A1A2F]/75" : "text-slate-300"} ${isActive ? "opacity-100" : "opacity-80"}`}>{dimensionNarratives[index]}</p><span className={`block overflow-hidden text-xs leading-5 transition-[max-height,margin,opacity] duration-200 ${isGold ? "text-[#0A1A2F]/75" : "text-slate-200"} ${isActive ? "mt-3 max-h-16 opacity-100" : "max-h-0 opacity-0"}`}>{practiceInteractionDetails[index]}</span><span className={`mt-3 block text-[10px] font-bold uppercase tracking-[0.14em] ${isGold ? "text-[#0A1A2F]/65" : "text-[#F2B705]"}`}>{isActive ? "Practice detail shown" : "Hover, focus, or tap"}</span></button>;
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-b border-[#12345A]/10 bg-[#F8F5EE] py-16 sm:py-20">
+        <div className="pointer-events-none absolute -right-24 top-8 h-72 w-72 rounded-full border border-[#F2B705]/20" />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-5 sm:px-8 lg:grid-cols-[.78fr_1.22fr] lg:items-center">
+          <div>
+            <SectionMarker label="What your report includes" />
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#0A1A2F] sm:text-4xl">A sharper development conversation—ready to use.</h2>
+            <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">The report does not reduce decision making to a verdict. It combines distinct evidence, names useful strengths and development priorities, and turns the next conversation into practical action.</p>
+            <a href={SAMPLE_REPORT_URL} download="LevelNext-Critical-Thinking-Diagnostic-Sample-Report.pdf" className="mt-8 inline-flex"><Button className="bg-[#0A1A2F] text-white hover:bg-[#12345A]" size="lg"><FileDown className="mr-2 h-4 w-4" />Download the sample report</Button></a>
+            <p className="mt-3 text-xs text-slate-500">Illustrative sample only. It does not represent a real participant or organisation.</p>
+          </div>
+          <div className="relative rounded-3xl border border-[#12345A]/10 bg-white p-5 shadow-xl shadow-[#0A1A2F]/5 sm:p-7">
+            <div className="flex items-center justify-between border-b border-[#12345A]/10 pb-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A1A2F] text-[#F2B705]"><FileText className="h-5 w-5" /></div><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#C89616]">Developmental report</p><p className="font-semibold text-[#0A1A2F]">Decision intelligence profile</p></div></div><span className="rounded-full border border-[#F2B705]/35 bg-[#F2B705]/10 px-3 py-1 text-xs font-bold text-[#0A1A2F]">Illustrative</span></div>
+            <div className="mt-5 space-y-3">{reportPreview.map((item) => <div key={item.number} className="flex gap-4 rounded-2xl border border-slate-100 bg-[#FFFEFA] p-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F2B705] text-xs font-bold text-[#0A1A2F]">{item.number}</span><div><h3 className="font-bold text-[#0A1A2F]">{item.title}</h3><p className="mt-1 text-sm leading-6 text-slate-600">{item.body}</p></div></div>)}</div>
+            <div className="mt-5 flex items-center gap-3 rounded-xl bg-[#E8F0F4] p-4 text-sm text-[#12345A]"><UsersRound className="h-5 w-5 shrink-0 text-[#C89616]" /><span>Individual detail stays private; team insight is only generated when anonymity safeguards are met.</span></div>
           </div>
         </div>
       </section>
@@ -172,6 +219,7 @@ export default function CriticalThinkingHome() {
 
       <section className="border-y border-[#12345A]/10 bg-white"><div className="mx-auto grid max-w-7xl gap-6 px-5 py-10 sm:px-8 md:grid-cols-3"><div className="flex gap-3"><Sparkles className="mt-0.5 h-5 w-5 text-[#F2B705]" /><p className="text-sm leading-6"><strong>Applied, not theoretical.</strong> Behavioural practice, situational judgment, confidence calibration, and work environment remain distinct.</p></div><div className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 text-[#F2B705]" /><p className="text-sm leading-6"><strong>Developmental by design.</strong> Results identify useful practices and next experiments, not a fixed ability label.</p></div><div className="flex gap-3"><LockKeyhole className="mt-0.5 h-5 w-5 text-[#F2B705]" /><p className="text-sm leading-6"><strong>Responsible reporting.</strong> Team insight requires at least five completed participants and should never rank individuals.</p></div></div></section>
       <footer className="mx-auto max-w-7xl px-5 py-8 text-xs leading-5 text-slate-500 sm:px-8">{CTDM_DISCLAIMER}</footer>
+      <CriticalThinkingEnterpriseEnquiryDialog open={enterpriseEnquiryOpen} onOpenChange={setEnterpriseEnquiryOpen} />
     </main>
   );
 }

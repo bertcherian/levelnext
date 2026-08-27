@@ -12,6 +12,9 @@ export const leadsRouter = router({
       z.object({
         email: z.string().email("Please enter a valid email address"),
         name: z.string().max(200).optional(),
+        company: z.string().max(255).optional(),
+        jobTitle: z.string().max(200).optional(),
+        enquiry: z.string().max(2000).optional(),
         source: z.string().max(64).default("sample_report"),
         moduleCode: z.string().max(16).optional(),
       })
@@ -23,6 +26,9 @@ export const leadsRouter = router({
         await db.insert(leadCaptures).values({
           email: input.email.toLowerCase().trim(),
           name: input.name?.trim() ?? null,
+          company: input.company?.trim() ?? null,
+          jobTitle: input.jobTitle?.trim() ?? null,
+          enquiry: input.enquiry?.trim() ?? null,
           source: input.source,
           moduleCode: input.moduleCode ?? null,
         });

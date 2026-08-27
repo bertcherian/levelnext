@@ -1189,6 +1189,9 @@ export const leadCaptures = mysqlTable("lead_captures", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 320 }).notNull(),
   name: varchar("name", { length: 200 }),
+  company: varchar("company", { length: 255 }),
+  jobTitle: varchar("jobTitle", { length: 200 }),
+  enquiry: text("enquiry"),
   source: varchar("source", { length: 64 }).default("sample_report").notNull(), // e.g. sample_report, landing_cta
   moduleCode: varchar("moduleCode", { length: 16 }), // which sample PDF they requested
   createdAt: timestamp("createdAt").defaultNow().notNull(),

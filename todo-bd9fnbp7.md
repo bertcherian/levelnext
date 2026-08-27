@@ -101,3 +101,13 @@
 - [x] Capture reliable desktop and mobile visual validation for the upgraded Critical Thinking hero, evidence lenses, practice map, and access paths.
 - [x] Save a checkpoint that publishes the Critical Thinking landing-page upgrade to the live site.
 - [x] Re-verify the published Critical Thinking landing page after release.
+- [x] Add a “What your report includes” preview section below the Critical Thinking seven-practice map.
+- [x] Add a client-accessible CTA that downloads the LevelNext Critical Thinking sample report from durable storage.
+- [x] Add a lightweight enterprise enquiry contact-form modal beside the pilot-launch CTA with a real secure submission path.
+- [x] Add accessible hover and keyboard-focus detail interactions for each Critical Thinking practice-map card.
+- [x] Add focused tests and desktop/mobile visual validation for the Critical Thinking report preview, enquiry modal, and interactive practice map.
+- [x] Package the reusable Critical Thinking landing-page conversion enhancement workflow as a project skill.
+- [x] Publish the completed Critical Thinking landing-page conversion enhancements.
+- [x] Enable development-only visual validation states for the enterprise enquiry modal and an active practice-map card without changing the production experience.
+- [x] Capture desktop and mobile visual validation for the enterprise enquiry modal, sample-report preview, and interactive practice-map detail state.
+- [x] Save and publish a new checkpoint for the Critical Thinking landing-page conversion enhancements after the implemented CTA, enquiry modal, and interactive practice-map changes.

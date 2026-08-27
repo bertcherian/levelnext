@@ -561,6 +561,13 @@
       "when": 1787737262225,
       "tag": "0079_dry_scarlet_witch",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "5",
+      "when": 1787843346884,
+      "tag": "0080_fine_roland_deschain",
+      "breakpoints": true
     }
   ]
 }
