@@ -87,6 +87,7 @@ export default function CriticalThinkingHome() {
   const [, setLocation] = useLocation();
   const [enterpriseEnquiryOpen, setEnterpriseEnquiryOpen] = React.useState(() => import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "enterprise");
   const [activePractice, setActivePractice] = React.useState<string | null>(() => import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "practice" ? CTDM_DIMENSIONS[0]?.id ?? null : null);
+  const [heroImageMissing, setHeroImageMissing] = React.useState(false);
   const { data: campaigns, isLoading } = trpc.criticalThinking.myCampaigns.useQuery(undefined, { enabled: isAuthenticated });
   const { data: tenantData } = trpc.tenant.myTenant.useQuery(undefined, { enabled: isAuthenticated });
   const canAdminister = tenantData?.role === "owner" || tenantData?.role === "admin";
@@ -96,7 +97,7 @@ export default function CriticalThinkingHome() {
       <header className="sticky top-0 z-30 border-b border-[#12345A]/10 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
           <Link href="/" className="flex items-center gap-3" aria-label="LevelNext home">
-            <img src="/logo.png" alt="LevelNext" className="h-9 w-auto object-contain" />
+            <span className="flex h-12 w-[116px] shrink-0 items-center justify-center rounded-lg bg-[#0A1A2F] px-3 shadow-sm"><img src="/logo.png" alt="LevelNext" className="h-9 w-auto max-w-full object-contain" /></span>
             <span className="hidden border-l border-slate-300 pl-3 text-sm font-medium text-slate-600 sm:block">Critical Thinking Diagnostic</span>
           </Link>
           {loading ? null : user ? (
@@ -136,7 +137,7 @@ export default function CriticalThinkingHome() {
           <div className="relative mx-auto w-full max-w-xl lg:mx-0">
             <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-[#102C48]/80 p-3 shadow-2xl shadow-black/40">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(242,183,5,.16),transparent_55%)]" />
-              <img src="/manus-storage/critical-thinking-decision-intelligence-constellation_dc4ece5a.png" alt="Abstract constellation representing connected decision practices" className="relative h-[360px] w-full rounded-2xl object-cover object-center sm:h-[405px]" />
+              {heroImageMissing ? <div role="img" aria-label="Decision intelligence compass fallback visual" className="relative flex h-[360px] w-full items-center justify-center overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_50%_50%,rgba(242,183,5,.32),transparent_13%),radial-gradient(circle_at_50%_50%,rgba(29,110,153,.5),transparent_45%),linear-gradient(135deg,#102C48,#0A1A2F)] sm:h-[405px]"><div className="absolute h-52 w-52 rounded-full border border-[#F2B705]/60" /><div className="absolute h-36 w-36 rounded-full border border-white/20" /><Compass className="relative h-20 w-20 text-[#F2B705]" /><div className="absolute left-[18%] top-[24%] h-3 w-3 rounded-full bg-[#F2B705] shadow-[0_0_24px_7px_rgba(242,183,5,.35)]" /><div className="absolute bottom-[24%] right-[19%] h-3 w-3 rounded-full bg-[#F2B705] shadow-[0_0_24px_7px_rgba(242,183,5,.35)]" /><p className="absolute bottom-12 text-xs font-bold uppercase tracking-[.2em] text-slate-300">Decision practice constellation</p></div> : <img src="/manus-storage/critical-thinking-decision-intelligence-constellation_fb830e03.png" alt="Abstract constellation representing connected decision practices" onError={() => setHeroImageMissing(true)} className="relative h-[360px] w-full rounded-2xl object-cover object-center sm:h-[405px]" />}
               <div className="absolute inset-x-7 top-7 flex items-center justify-between rounded-full border border-white/15 bg-[#0A1A2F]/75 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200 backdrop-blur">
                 <span className="flex items-center gap-2"><Compass className="h-4 w-4 text-[#F2B705]" />Decision intelligence</span><span className="text-[#F2B705]">7 practices</span>
               </div>

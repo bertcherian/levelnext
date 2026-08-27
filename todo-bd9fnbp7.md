@@ -111,3 +111,9 @@
 - [x] Enable development-only visual validation states for the enterprise enquiry modal and an active practice-map card without changing the production experience.
 - [x] Capture desktop and mobile visual validation for the enterprise enquiry modal, sample-report preview, and interactive practice-map detail state.
 - [x] Save and publish a new checkpoint for the Critical Thinking landing-page conversion enhancements after the implemented CTA, enquiry modal, and interactive practice-map changes.
+- [x] Replace the unreliable Critical Thinking decision-intelligence hero visual asset with a durable published reference.
+- [x] Improve the Critical Thinking header logo treatment so the complete LevelNext mark is clearly visible.
+- [x] Add image-load resilience and focused regression coverage for the hero visual and full logo treatment.
+- [x] Validate the repaired hero at desktop and mobile widths and publish the fix.
+- [x] Save and publish a new checkpoint for the Critical Thinking hero asset and logo-clarity repair.
+- [x] Re-check the published Critical Thinking hero after the new checkpoint is live.

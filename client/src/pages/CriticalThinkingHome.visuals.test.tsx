@@ -42,6 +42,7 @@ describe("CriticalThinkingHome decision-intelligence visual system", () => {
     expect(screen.getByText("Seven practices. One stronger way to work through uncertainty.")).toBeTruthy();
     expect(screen.getByText(/^frame$/i)).toBeTruthy();
     expect(screen.getByText(/^learn$/i)).toBeTruthy();
+    expect(screen.getByAltText("LevelNext").closest("span")?.className).toContain("bg-[#0A1A2F]");
   });
 
   it("retains the campaign access path from the primary hero call to action", () => {
@@ -81,5 +82,12 @@ describe("CriticalThinkingHome decision-intelligence visual system", () => {
       source: "ctdm_enterprise_enquiry",
       moduleCode: "ctdm",
     }));
+  });
+
+  it("keeps a meaningful decision visual available if the hero asset fails to load", () => {
+    render(<CriticalThinkingHome />);
+
+    fireEvent.error(screen.getByRole("img", { name: /abstract constellation representing connected decision practices/i }));
+    expect(screen.getByRole("img", { name: /decision intelligence compass fallback visual/i })).toBeTruthy();
   });
 });
