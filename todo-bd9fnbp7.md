@@ -89,3 +89,15 @@
 - [x] Capture successful responsive visual validation of the updated Try fallback pages interface.
 - [x] Save and publish the fully validated expanded fallback enhancement.
 - [x] Capture desktop validation of the updated Try fallback pages control and source-verification layout.
+- [x] Review the live Critical Thinking landing-page visual system and conversion flow after recent shared-project updates.
+- [x] Apply only any targeted refinements found necessary during the current review.
+- [x] Verify the reviewed Critical Thinking landing page at desktop and mobile widths and publish if changed.
+- [x] Add a LevelNext-branded abstract decision-intelligence hero visual to the Critical Thinking landing page.
+- [x] Add concise explanatory visual sections for the three evidence lenses and the seven decision practices.
+- [x] Refine the Critical Thinking landing-page composition and spacing so visual storytelling supports comprehension and conversion.
+- [x] Preserve accessible content, responsive layout, campaign-entry paths, and tenant-administration links.
+- [x] Add focused regression tests and desktop/mobile visual validation for the upgraded Critical Thinking landing page.
+- [x] Publish the completed Critical Thinking landing-page upgrade.
+- [x] Capture reliable desktop and mobile visual validation for the upgraded Critical Thinking hero, evidence lenses, practice map, and access paths.
+- [x] Save a checkpoint that publishes the Critical Thinking landing-page upgrade to the live site.
+- [x] Re-verify the published Critical Thinking landing page after release.
