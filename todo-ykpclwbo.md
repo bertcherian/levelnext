@@ -16,3 +16,12 @@
 - [x] Prove seed-script idempotency by executing two seed passes within one rollback-only transaction and asserting one row per stable Engineering Intelligence key.
 - [x] Add focused frontend render tests for the Participant Diagnostic, Operating Profile, and Success Partner screens across their loaded, empty, and privacy states.
 - [x] Capture desktop and mobile protected-route verification where available, documenting the authentication boundary when a live enrolled session is unavailable. Desktop and mobile route shells rendered; controlled JSDOM covers populated/empty data states.
+- [x] Inspect existing admin operations, model evaluation, invite, and pilot patterns for safe reuse.
+- [x] Implement admin APIs to list tenants/members, assign or pause Engineering Success Partner relationships, and audit provisioning actions.
+- [x] Implement prompt-evaluation APIs and persistence for per-version agent runs, pass/fail evidence, and release-gate summaries.
+- [x] Build the Engineering Admin Provisioning screen with tenant/member selection, assignment history, and clear privacy boundaries.
+- [x] Build the Prompt Evaluation dashboard with agent/version filters, evidence detail, and pass/fail trends.
+- [x] Create a dedicated non-production pilot participant fixture and verify the authenticated diagnostic-to-profile walkthrough without production data.
+- [x] Add API and frontend tests, run type/build verification, checkpoint, and deliver the published version.
+- [x] Refine the public LevelNext landing page with a consistently displayed LevelNext logo and prominent demo pathways to the Engineering Intelligence tool.
+- [x] Add landing-page test coverage, verify desktop and mobile rendering, and checkpoint the focused public-site change.

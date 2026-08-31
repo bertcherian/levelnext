@@ -32,10 +32,14 @@
 .ln-nav__links a:hover, .ln-login:hover, .ln-footer a:hover { color: var(--ln-gold-light); }
 .ln-nav__actions { display: flex; align-items: center; gap: 18px; font-size: 12px; white-space: nowrap; }
 .ln-login { color: rgba(255,255,255,.7); }
+.ln-demo-link { display: inline-flex; align-items: center; gap: 6px; color: var(--ln-gold-light); font-size: 12px; font-weight: 800; }
+.ln-demo-link:hover { color: white; }
 .ln-button { min-height: 48px; padding: 0 21px; border-radius: 2px; background: var(--ln-gold); color: #172331 !important; display: inline-flex; align-items: center; justify-content: center; gap: 9px; font-size: 13px; font-weight: 700; transition: transform .18s cubic-bezier(.23,1,.32,1), background .18s cubic-bezier(.23,1,.32,1); }
 .ln-button:hover { background: var(--ln-gold-light); transform: translateY(-2px); }
 .ln-button:active { transform: scale(.97); }
 .ln-button--small { min-height: 38px; padding: 0 14px; font-size: 11px; }
+.ln-button--ghost { border: 1px solid rgba(255,255,255,.46); background: transparent; color: white !important; }
+.ln-button--ghost:hover { border-color: var(--ln-gold); background: rgba(255,255,255,.08); }
 .ln-menu-toggle { display: none; color: white; background: transparent; border: 0; padding: 8px; cursor: pointer; }
 .ln-mobile-nav { position: fixed; z-index: 19; inset: 76px 0 auto; padding: 18px 24px 26px; display: grid; gap: 13px; background: #0b1f33; border-bottom: 1px solid rgba(255,255,255,.12); box-shadow: 0 14px 32px rgba(0,0,0,.18); }
 .ln-mobile-nav a { color: rgba(255,255,255,.85); font-size: 15px; }
@@ -49,6 +53,7 @@
 .ln-hero h1 { max-width: 740px; margin-top: 23px; font-size: clamp(50px, 6.4vw, 94px); font-weight: 600; line-height: .98; letter-spacing: -.065em; }
 .ln-hero h1 em, .ln-section-heading h2 em, .ln-difference h2 em, .ln-loop h2 em, .ln-core h2 em, .ln-enterprise h2 em, .ln-personalisation h2 em, .ln-ecosystem h2 em, .ln-final-cta h2 em { color: var(--ln-gold); font-family: var(--ln-serif); font-weight: 400; letter-spacing: -.045em; }
 .ln-hero__copy { max-width: 575px; margin-top: 26px; color: rgba(255,255,255,.69) !important; font-size: clamp(15px, 1.5vw, 18px); line-height: 1.65; }
+.ln-hero__overline { margin-bottom: 16px; color: var(--ln-gold-light) !important; font-size: 10px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
 .ln-hero__actions, .ln-final-cta__actions, .ln-enterprise__actions { margin-top: 35px; display: flex; align-items: center; gap: 25px; flex-wrap: wrap; }
 .ln-text-link { display: inline-flex; align-items: center; gap: 8px; color: var(--ln-navy) !important; font-size: 13px; font-weight: 700; transition: gap .18s cubic-bezier(.23,1,.32,1), color .18s cubic-bezier(.23,1,.32,1); }
 .ln-text-link:hover { gap: 12px; color: #6e572b !important; }

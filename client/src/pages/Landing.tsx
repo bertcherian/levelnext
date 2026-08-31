@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowRight, Brain, CheckCircle2, ChevronDown, Compass, Menu, MessageSquare, Scale, Search, Sparkles, TrendingUp, X } from "lucide-react";
+import { ArrowRight, Brain, CheckCircle2, ChevronDown, Compass, Menu, MessageSquare, Play, Scale, Search, Sparkles, TrendingUp, X } from "lucide-react";
 import {
   careerStages,
   defaultStageIndex,
@@ -57,7 +57,7 @@ export default function Landing() {
           <a href={sectionLink("intelligence-core")}>Intelligence Core</a>
           <a href={sectionLink("organisations")}>For Organisations</a>
         </nav>
-        <div className="ln-nav__actions"><a className="ln-login" href="/login?returnTo=%2Fhome">Login</a></div>
+        <div className="ln-nav__actions"><a className="ln-demo-link" href="/demo"><Play size={13} fill="currentColor" /> View demo</a><a className="ln-login" href="/login?returnTo=%2Fhome">Login</a></div>
         <button type="button" className="ln-menu-toggle" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}>{mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}</button>
       </header>
 
@@ -65,15 +65,17 @@ export default function Landing() {
         <a href={sectionLink("platform")} onClick={() => setMobileMenuOpen(false)}>Platform</a>
         <a href={sectionLink("intelligence-core")} onClick={() => setMobileMenuOpen(false)}>Intelligence Core</a>
         <a href={sectionLink("organisations")} onClick={() => setMobileMenuOpen(false)}>For Organisations</a>
+        <a href="/demo" onClick={() => setMobileMenuOpen(false)}>View demo</a>
         <a href="/login?returnTo=%2Fhome" onClick={() => setMobileMenuOpen(false)}>Login</a>
       </nav>}
 
       <section className="ln-hero ln-hero--simple">
         <div className="ln-grid" aria-hidden="true" />
         <div className="ln-hero__content">
+          <p className="ln-hero__overline">The Leadership Intelligence Platform</p>
           <h1>Professional intelligence<br /><em>for what comes next.</em></h1>
-          <p className="ln-hero__copy">LevelNext helps people build the judgment and everyday capability required for the level they are stepping into.</p>
-          <div className="ln-hero__actions"><a className="ln-button" href={sectionLink("platform")}>Explore the platform <ArrowRight size={17} /></a></div>
+          <p className="ln-hero__copy">LevelNext helps people build the judgment and everyday capability required for the level they are stepping into. Through context-aware diagnostics, guided practice, and real-work action, it helps that learning become visible in the work.</p>
+          <div className="ln-hero__actions"><a className="ln-button" href="/demo"><Play size={15} fill="currentColor" /> View the demo</a><a className="ln-button ln-button--ghost" href={sectionLink("platform")}>Explore the platform <ArrowRight size={17} /></a></div>
           <div className="ln-audience-selector">
             <p>Who it is for</p>
             <div className="ln-audience-selector__choices" role="tablist" aria-label="Who LevelNext is for">

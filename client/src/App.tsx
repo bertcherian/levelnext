@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 // Pages
 import Landing from "./pages/Landing";
+import EngineeringDemo from "./pages/EngineeringDemo";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import MyEdge from "./pages/MyEdge";
@@ -129,6 +130,8 @@ const CriticalThinkingPilot = lazy(() => import("./pages/CriticalThinkingPilot")
 const EngineeringDiagnostic = lazy(() => import("./pages/engineering/EngineeringDiagnostic"));
 const EngineeringOperatingProfile = lazy(() => import("./pages/engineering/EngineeringOperatingProfile"));
 const EngineeringPartnerWorkspace = lazy(() => import("./pages/engineering/EngineeringPartnerWorkspace"));
+const EngineeringAdminProvisioning = lazy(() => import("./pages/engineering/EngineeringAdminProvisioning"));
+const EngineeringPromptEvaluation = lazy(() => import("./pages/engineering/EngineeringPromptEvaluation"));
 const CriticalThinkingReportValidationFixture = import.meta.env.DEV ? lazy(() => import("./pages/CriticalThinkingReportValidationFixture")) : null;
 const OrgContextExtractionValidationFixture = import.meta.env.DEV ? lazy(() => import("./pages/OrgContextExtractionValidationFixture")) : null;
 
@@ -210,6 +213,7 @@ function Router() {
     <Switch>
       {/* Public */}
       <Route path="/" component={Landing} />
+      <Route path="/demo" component={EngineeringDemo} />
       <Route path="/onboard" component={Onboarding} />
       <Route path="/report/:slug" component={Report} />
       <Route path="/cpi-report/:slug" component={CpiReport} />
@@ -242,6 +246,8 @@ function Router() {
       <Route path="/engineering/diagnostic" component={EngineeringDiagnostic} />
       <Route path="/engineering/profile" component={EngineeringOperatingProfile} />
       <Route path="/engineering/partner" component={EngineeringPartnerWorkspace} />
+      <Route path="/engineering/admin/provisioning" component={EngineeringAdminProvisioning} />
+      <Route path="/engineering/admin/prompt-evaluation" component={EngineeringPromptEvaluation} />
       <Route path="/import-eci" component={ImportEci} />
       <Route path="/import-chatgpt" component={ImportChatgpt} />
       <Route path="/import-ai" component={ImportChatgpt} />

@@ -11,6 +11,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "seed:engineering": "node scripts/seed-engineering-intelligence.mjs",
+    "seed:engineering-pilot": "node scripts/seed-engineering-pilot-walkthrough.mjs",
     "verify:engineering-schema": "node scripts/verify-engineering-intelligence-schema.mjs",
     "verify:engineering-seed": "node scripts/seed-engineering-intelligence.mjs",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"

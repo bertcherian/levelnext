@@ -575,6 +575,20 @@
       "when": 1788157736822,
       "tag": "0081_windy_roughhouse",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "5",
+      "when": 1788160129267,
+      "tag": "0082_worried_prodigy",
+      "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "5",
+      "when": 1788160319754,
+      "tag": "0083_lush_iron_lad",
+      "breakpoints": true
     }
   ]
 }

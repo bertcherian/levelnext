@@ -10,6 +10,7 @@ import {
   boolean,
   index,
   uniqueIndex,
+  foreignKey,
 } from "drizzle-orm/mysql-core";
 import type { SelfLeadershipAnalysis, SelfLeadershipCareerStage, SelfLeadershipConfidence, SelfLeadershipDimension } from "../shared/modules/selfLeadershipIntelligence";
 
@@ -3627,3 +3628,41 @@ export const eiPartnerNudges = mysqlTable("ei_partner_nudges", {
   index("ei_partner_nudges_queue_idx").on(table.tenantId, table.partnerUserId, table.status, table.priorityScore),
 ]);
 export type EiPartnerNudge = typeof eiPartnerNudges.$inferSelect;
+
+export const eiPromptVersions = mysqlTable("ei_prompt_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  agentCode: mysqlEnum("agentCode", ["self_leadership_intelligence", "success_partner_nudges"]).notNull(),
+  versionLabel: varchar("versionLabel", { length: 120 }).notNull(),
+  modelId: varchar("modelId", { length: 120 }).notNull(),
+  promptHash: varchar("promptHash", { length: 100 }).notNull(),
+  status: mysqlEnum("status", ["draft", "candidate", "approved", "retired"]).default("draft").notNull(),
+  createdByUserId: int("createdByUserId").references(() => users.id),
+  approvedByUserId: int("approvedByUserId").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("ei_prompt_versions_agent_version_uq").on(table.agentCode, table.versionLabel),
+  index("ei_prompt_versions_agent_status_idx").on(table.agentCode, table.status),
+  foreignKey({ columns: [table.createdByUserId], foreignColumns: [users.id], name: "ei_prompt_versions_created_by_fk" }),
+  foreignKey({ columns: [table.approvedByUserId], foreignColumns: [users.id], name: "ei_prompt_versions_approved_by_fk" }),
+]);
+export type EiPromptVersion = typeof eiPromptVersions.$inferSelect;
+
+export const eiPromptEvaluationRuns = mysqlTable("ei_prompt_evaluation_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  promptVersionId: int("promptVersionId").notNull().references(() => eiPromptVersions.id),
+  agentCode: mysqlEnum("agentCode", ["self_leadership_intelligence", "success_partner_nudges"]).notNull(),
+  caseCode: varchar("caseCode", { length: 120 }).notNull(),
+  status: mysqlEnum("status", ["passed", "failed", "blocked"]).notNull(),
+  score: int("score").notNull(),
+  evidence: json("evidence").$type<Record<string, unknown>>().notNull(),
+  failureReasons: json("failureReasons").$type<string[]>().notNull(),
+  runByUserId: int("runByUserId").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("ei_prompt_eval_runs_version_idx").on(table.promptVersionId, table.createdAt),
+  index("ei_prompt_eval_runs_agent_status_idx").on(table.agentCode, table.status, table.createdAt),
+  foreignKey({ columns: [table.promptVersionId], foreignColumns: [eiPromptVersions.id], name: "ei_prompt_eval_runs_version_fk" }),
+  foreignKey({ columns: [table.runByUserId], foreignColumns: [users.id], name: "ei_prompt_eval_runs_run_by_fk" }),
+]);
+export type EiPromptEvaluationRun = typeof eiPromptEvaluationRuns.$inferSelect;

@@ -1,0 +1,4 @@
+ALTER TABLE `ei_prompt_evaluation_runs` ADD CONSTRAINT `ei_prompt_eval_runs_version_fk` FOREIGN KEY (`promptVersionId`) REFERENCES `ei_prompt_versions`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `ei_prompt_evaluation_runs` ADD CONSTRAINT `ei_prompt_eval_runs_run_by_fk` FOREIGN KEY (`runByUserId`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `ei_prompt_versions` ADD CONSTRAINT `ei_prompt_versions_created_by_fk` FOREIGN KEY (`createdByUserId`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `ei_prompt_versions` ADD CONSTRAINT `ei_prompt_versions_approved_by_fk` FOREIGN KEY (`approvedByUserId`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;
