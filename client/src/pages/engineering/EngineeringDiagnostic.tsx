@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, Loader2, LockKeyhole, RotateCcw, ShieldCheck } from "lucide-react";

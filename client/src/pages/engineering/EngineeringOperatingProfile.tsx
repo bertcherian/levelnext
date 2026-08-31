@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { BrainCircuit, CheckCircle2, ChevronDown, Loader2, LockKeyhole, MessageCircleHeart, Sparkles } from "lucide-react";

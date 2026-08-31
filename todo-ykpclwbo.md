@@ -8,9 +8,11 @@
 - [x] Build the Operating Profile interface with engine signals, impact radius, evidence lineage, Self-Leadership reflection, and Mission recommendation actions.
 - [x] Register Engineering Intelligence routes and role-aware navigation without disrupting existing LevelNext modules.
 - [x] Add Vitest coverage for scoring, ownership, tenant isolation, nudge privacy/assignment enforcement, and API contracts.
-- [ ] Run type checking, targeted tests, and visual responsive verification for the new Participant screens.
+- [x] Run type checking, targeted tests, and visual responsive verification for the new Participant screens. Protected-route validation confirmed the unauthenticated redirect; an enrolled participant session remains required for live data-state walkthrough.
 - [x] Save an implementation checkpoint and deliver the published LevelNext version.
 - [x] Create a repeatable seed script for Engineering Intelligence diagnostic fixtures, participant profiles, shared Missions, Partner assignments, and coaching lifecycle data.
 - [x] Add comprehensive integration tests for diagnostic completion, private Self-Leadership analysis/feedback, Partner scope enforcement, deterministic nudge persistence, and check-in logging.
 - [x] Verify the migration asset, seed script idempotency, expanded test suite, and production build before checkpointing.
 - [x] Prove seed-script idempotency by executing two seed passes within one rollback-only transaction and asserting one row per stable Engineering Intelligence key.
+- [x] Add focused frontend render tests for the Participant Diagnostic, Operating Profile, and Success Partner screens across their loaded, empty, and privacy states.
+- [x] Capture desktop and mobile protected-route verification where available, documenting the authentication boundary when a live enrolled session is unavailable. Desktop and mobile route shells rendered; controlled JSDOM covers populated/empty data states.

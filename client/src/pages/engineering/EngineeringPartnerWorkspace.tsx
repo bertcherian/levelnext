@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Check, CircleAlert, Clock3, Loader2, MessageSquareText, RefreshCw, ShieldCheck } from "lucide-react";
