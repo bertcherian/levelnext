@@ -589,6 +589,20 @@
       "when": 1788160319754,
       "tag": "0083_lush_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "5",
+      "when": 1788175730533,
+      "tag": "0084_clever_multiple_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "5",
+      "when": 1788176048674,
+      "tag": "0085_bouncy_ulik",
+      "breakpoints": true
     }
   ]
 }

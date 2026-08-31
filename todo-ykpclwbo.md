@@ -25,3 +25,11 @@
 - [x] Add API and frontend tests, run type/build verification, checkpoint, and deliver the published version.
 - [x] Refine the public LevelNext landing page with a consistently displayed LevelNext logo and prominent demo pathways to the Engineering Intelligence tool.
 - [x] Add landing-page test coverage, verify desktop and mobile rendering, and checkpoint the focused public-site change.
+- [x] Inspect the current lead-capture data model and public-page implementation patterns before extending the demo experience.
+- [x] Add a consent-aware public demo lead-capture form with server-side validation, persistence, and duplicate handling.
+- [x] Add a narrated product-video placeholder to the demo page without embedding unapproved video media.
+- [x] Add evidence-led case-study and pilot-outcome content to the landing page without fabricated reviews, testimonials, or results.
+- [x] Add automated coverage, verify desktop/mobile public interactions, and checkpoint the marketing-page update.
+- [x] Add database-enforced demo lead deduplication and verify repeat submissions do not create duplicate records.
+- [x] Save the verified marketing-page update as a new published checkpoint.
+- [x] Prove duplicate handling against the real database inside a rollback-only transaction with no persisted visitor data.

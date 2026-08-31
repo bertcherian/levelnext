@@ -1195,8 +1195,13 @@ export const leadCaptures = mysqlTable("lead_captures", {
   enquiry: text("enquiry"),
   source: varchar("source", { length: 64 }).default("sample_report").notNull(), // e.g. sample_report, landing_cta
   moduleCode: varchar("moduleCode", { length: 16 }), // which sample PDF they requested
+  consentAt: timestamp("consentAt"),
+  consentTextVersion: varchar("consentTextVersion", { length: 32 }),
+  demoDedupeKey: varchar("demoDedupeKey", { length: 384 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => [
+  uniqueIndex("lead_captures_demo_dedupe_uq").on(table.demoDedupeKey),
+]);
 export type LeadCapture = typeof leadCaptures.$inferSelect;
 export type InsertLeadCapture = typeof leadCaptures.$inferInsert;
 

@@ -7,6 +7,7 @@ import {
 } from "./landingData";
 import { getAudienceIndexFromSearch } from "./landingAudience";
 import "./landing.css";
+import "./landingProof.css";
 
 const organisationConversationUrl =
   "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=organisation";
@@ -154,6 +155,18 @@ export default function Landing() {
           <div className="ln-enterprise__heading"><p className="ln-eyebrow ln-eyebrow--gold"><span /> For organisations</p><h2 id="enterprise-title">Capability development<br /><em>that fits the work.</em></h2><p>Give critical populations the right insight, practice and visibility without assembling disconnected programmes.</p></div>
           <div className="ln-enterprise__benefits"><article><span>01</span><h3>Focus</h3><p>Make the capability priority and the people carrying it visible.</p></article><article><span>02</span><h3>Activate</h3><p>Give each person a development move connected to real work.</p></article><article><span>03</span><h3>Learn</h3><p>Use aggregate signals to improve the next intervention.</p></article></div>
           <div className="ln-enterprise__actions"><a className="ln-button" href={organisationConversationUrl} target="_blank" rel="noreferrer">Explore for organisations <ArrowRight size={17} /></a></div>
+        </div>
+      </section>
+
+      <section className="ln-proof" id="pilot-evidence" aria-labelledby="pilot-evidence-title">
+        <div className="ln-section-frame ln-proof__frame">
+          <div className="ln-proof__intro"><p className="ln-eyebrow"><span /> Pilot evidence</p><h2 id="pilot-evidence-title">What would a LevelNext pilot<br /><em>make visible for your organisation?</em></h2><p>A pilot is designed to create useful evidence about the development challenge in front of you—not generic claims about transformation.</p><a className="ln-text-link" href={organisationConversationUrl} target="_blank" rel="noreferrer">Discuss a pilot <ArrowRight size={16} /></a></div>
+          <div className="ln-proof__cards">
+            <article><span>01</span><h3>Readiness signals</h3><p>Identify the capability patterns and next-level transitions that deserve the most deliberate focus.</p></article>
+            <article><span>02</span><h3>Practice adoption</h3><p>Understand which focused, real-work experiments participants are choosing and putting into practice.</p></article>
+            <article><span>03</span><h3>Support rhythm</h3><p>Learn where human coaching or manager support can best help participants turn insight into follow-through.</p></article>
+          </div>
+          <aside className="ln-proof__note"><p>Case studies &amp; outcomes</p><strong>Client-approved outcome stories will appear here as pilots mature.</strong><span>Until then, LevelNext will show the product experience and pilot learning agenda—not unverified results or anonymous testimonials.</span></aside>
         </div>
       </section>
 
