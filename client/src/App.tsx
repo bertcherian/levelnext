@@ -126,6 +126,9 @@ const CriticalThinkingReport = lazy(() => import("./pages/CriticalThinkingReport
 const CriticalThinkingAdmin = lazy(() => import("./pages/CriticalThinkingAdmin"));
 const CriticalThinkingPlatformAdmin = lazyWithRouteRecovery(() => import("./pages/CriticalThinkingPlatformAdmin"), "admin-critical-thinking");
 const CriticalThinkingPilot = lazy(() => import("./pages/CriticalThinkingPilot"));
+const EngineeringDiagnostic = lazy(() => import("./pages/engineering/EngineeringDiagnostic"));
+const EngineeringOperatingProfile = lazy(() => import("./pages/engineering/EngineeringOperatingProfile"));
+const EngineeringPartnerWorkspace = lazy(() => import("./pages/engineering/EngineeringPartnerWorkspace"));
 const CriticalThinkingReportValidationFixture = import.meta.env.DEV ? lazy(() => import("./pages/CriticalThinkingReportValidationFixture")) : null;
 const OrgContextExtractionValidationFixture = import.meta.env.DEV ? lazy(() => import("./pages/OrgContextExtractionValidationFixture")) : null;
 
@@ -236,6 +239,9 @@ function Router() {
       <Route path="/insights" component={Insights} />
       <Route path="/diagnostics" component={Diagnostics} />
       <Route path="/diagnostics/:moduleType" component={Assessment} />
+      <Route path="/engineering/diagnostic" component={EngineeringDiagnostic} />
+      <Route path="/engineering/profile" component={EngineeringOperatingProfile} />
+      <Route path="/engineering/partner" component={EngineeringPartnerWorkspace} />
       <Route path="/import-eci" component={ImportEci} />
       <Route path="/import-chatgpt" component={ImportChatgpt} />
       <Route path="/import-ai" component={ImportChatgpt} />

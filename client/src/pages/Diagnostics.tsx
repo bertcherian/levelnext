@@ -575,6 +575,16 @@ export default function Diagnostics() {
             <LiModuleCard key={mod.id} mod={mod} status={statusMap.get(mod.id)} completedModules={completedModules} reportSlug={liReportSlugMap.get(mod.id)} />
           ))}
         </div>
+        <div className="mt-6 overflow-hidden rounded-2xl border" style={{ borderColor: "#E7D69A", background: "linear-gradient(135deg, #10243E 0%, #18395F 100%)" }}>
+          <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 text-[#F0C73B]"><Brain size={16} /><span className="text-xs font-bold uppercase tracking-[0.14em]">New programme pathway</span></div>
+              <h2 className="mt-2 text-xl font-bold text-white">Engineering Intelligence</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-300">Explore how you create impact across self-leadership, collaboration, problem framing, systems thinking, business context, and human–AI judgment. Your operating profile is developmental—not a performance rating.</p>
+            </div>
+            <Link href="/engineering/diagnostic"><Button className="shrink-0 bg-[#F0C73B] font-semibold text-[#10243E] hover:bg-[#FFE27C]">Open Engineering Diagnostic <ArrowRight size={14} className="ml-1.5" /></Button></Link>
+          </div>
+        </div>
         {/* Prior Assessments Import Card */}
         <div className="mt-6 rounded-2xl p-5" style={{ background: "var(--color-ln-ivory-dark)", border: "1px solid var(--color-ln-border)" }}>
           <div className="flex items-start gap-4">

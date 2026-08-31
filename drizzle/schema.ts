@@ -3458,3 +3458,172 @@ export const modelEvaluations = mysqlTable(
 
 export type ModelEvaluation = typeof modelEvaluations.$inferSelect;
 export type InsertModelEvaluation = typeof modelEvaluations.$inferInsert;
+
+// ─── Engineering Intelligence ───────────────────────────────────────────────
+// This product namespace keeps developmental diagnostic, Mission, Partner, and
+// agent-operability data distinct from generic LevelNext assessments. Private
+// Self-Leadership reflections continue to use icSelfLeadershipMirrors.
+export const eiDiagnosticSessions = mysqlTable("ei_diagnostic_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id),
+  diagnosticVersion: varchar("diagnosticVersion", { length: 80 }).notNull(),
+  status: mysqlEnum("status", ["in_progress", "completed", "abandoned"]).default("in_progress").notNull(),
+  currentQuestionIndex: int("currentQuestionIndex").default(0).notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("ei_diagnostic_sessions_owner_idx").on(table.tenantId, table.userId, table.status),
+]);
+export type EiDiagnosticSession = typeof eiDiagnosticSessions.$inferSelect;
+
+export const eiDiagnosticResponses = mysqlTable("ei_diagnostic_responses", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull().references(() => eiDiagnosticSessions.id),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id),
+  questionCode: varchar("questionCode", { length: 120 }).notNull(),
+  answerValue: int("answerValue").notNull(),
+  answeredAt: timestamp("answeredAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("ei_diagnostic_responses_session_question_uq").on(table.sessionId, table.questionCode),
+  index("ei_diagnostic_responses_owner_idx").on(table.tenantId, table.userId, table.createdAt),
+]);
+export type EiDiagnosticResponse = typeof eiDiagnosticResponses.$inferSelect;
+
+export const eiDiagnosticResults = mysqlTable("ei_diagnostic_results", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull().references(() => eiDiagnosticSessions.id),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id),
+  diagnosticVersion: varchar("diagnosticVersion", { length: 80 }).notNull(),
+  engineScores: json("engineScores").$type<Record<string, number>>().notNull(),
+  impactRadius: mysqlEnum("impactRadius", ["self", "team", "system", "organisation"]).notNull(),
+  impactPattern: varchar("impactPattern", { length: 160 }).notNull(),
+  growthEdge: json("growthEdge").$type<{ engine: string; statement: string }>().notNull(),
+  scoringMethodVersion: varchar("scoringMethodVersion", { length: 80 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("ei_diagnostic_results_session_uq").on(table.sessionId),
+  index("ei_diagnostic_results_owner_idx").on(table.tenantId, table.userId, table.createdAt),
+]);
+export type EiDiagnosticResult = typeof eiDiagnosticResults.$inferSelect;
+
+export const eiEngineerProfiles = mysqlTable("ei_engineer_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id),
+  roleTitle: varchar("roleTitle", { length: 180 }),
+  discipline: varchar("discipline", { length: 120 }),
+  engineeringLevel: varchar("engineeringLevel", { length: 120 }),
+  aspiration: varchar("aspiration", { length: 180 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("ei_engineer_profiles_owner_uq").on(table.tenantId, table.userId),
+]);
+export type EiEngineerProfile = typeof eiEngineerProfiles.$inferSelect;
+
+export const eiAgentRuns = mysqlTable("ei_agent_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").references(() => tenants.id),
+  actorUserId: int("actorUserId").references(() => users.id),
+  subjectUserId: int("subjectUserId").references(() => users.id),
+  agentCode: varchar("agentCode", { length: 100 }).notNull(),
+  purposeCode: varchar("purposeCode", { length: 120 }).notNull(),
+  triggerType: varchar("triggerType", { length: 80 }).notNull(),
+  status: mysqlEnum("status", ["running", "succeeded", "fallback", "failed", "denied"]).default("running").notNull(),
+  inputManifest: json("inputManifest").$type<Record<string, unknown>>().notNull(),
+  modelId: varchar("modelId", { length: 120 }),
+  traceId: varchar("traceId", { length: 100 }).notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("ei_agent_runs_agent_created_idx").on(table.tenantId, table.agentCode, table.createdAt),
+]);
+export type EiAgentRun = typeof eiAgentRuns.$inferSelect;
+
+export const eiMissions = mysqlTable("ei_missions", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  userId: int("userId").notNull().references(() => users.id),
+  sourceResultId: int("sourceResultId").references(() => eiDiagnosticResults.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  status: mysqlEnum("status", ["recommended", "accepted", "preparing", "ready_to_act", "attempted", "complete", "deferred", "declined"]).default("recommended").notNull(),
+  dueAt: timestamp("dueAt"),
+  acceptedAt: timestamp("acceptedAt"),
+  attemptedAt: timestamp("attemptedAt"),
+  completedAt: timestamp("completedAt"),
+  partnerVisible: boolean("partnerVisible").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("ei_missions_owner_status_idx").on(table.tenantId, table.userId, table.status),
+  index("ei_missions_visible_queue_idx").on(table.tenantId, table.partnerVisible, table.updatedAt),
+]);
+export type EiMission = typeof eiMissions.$inferSelect;
+
+export const eiPartnerAssignments = mysqlTable("ei_partner_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  partnerUserId: int("partnerUserId").notNull().references(() => users.id),
+  participantUserId: int("participantUserId").notNull().references(() => users.id),
+  status: mysqlEnum("status", ["active", "paused", "ended"]).default("active").notNull(),
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("ei_partner_assignments_pair_status_uq").on(table.tenantId, table.partnerUserId, table.participantUserId, table.status),
+  index("ei_partner_assignments_partner_idx").on(table.tenantId, table.partnerUserId, table.status),
+]);
+export type EiPartnerAssignment = typeof eiPartnerAssignments.$inferSelect;
+
+export const eiPartnerCheckIns = mysqlTable("ei_partner_check_ins", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  partnerUserId: int("partnerUserId").notNull().references(() => users.id),
+  participantUserId: int("participantUserId").notNull().references(() => users.id),
+  nudgeId: int("nudgeId"),
+  channel: mysqlEnum("channel", ["in_app", "call", "voice_note", "email", "in_person"]).notNull(),
+  summaryShared: text("summaryShared").notNull(),
+  nextStep: text("nextStep"),
+  followUpAt: timestamp("followUpAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("ei_partner_check_ins_partner_idx").on(table.tenantId, table.partnerUserId, table.createdAt),
+  index("ei_partner_check_ins_participant_idx").on(table.tenantId, table.participantUserId, table.createdAt),
+]);
+export type EiPartnerCheckIn = typeof eiPartnerCheckIns.$inferSelect;
+
+export const eiPartnerNudges = mysqlTable("ei_partner_nudges", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().references(() => tenants.id),
+  partnerUserId: int("partnerUserId").notNull().references(() => users.id),
+  participantUserId: int("participantUserId").notNull().references(() => users.id),
+  missionId: int("missionId").notNull().references(() => eiMissions.id),
+  agentRunId: int("agentRunId").references(() => eiAgentRuns.id),
+  reasonCode: mysqlEnum("reasonCode", ["mission_due", "mission_stalled", "follow_up_due", "celebration"]).notNull(),
+  objective: text("objective").notNull(),
+  whyNow: text("whyNow").notNull(),
+  suggestedQuestion: text("suggestedQuestion").notNull(),
+  recommendedChannel: mysqlEnum("recommendedChannel", ["in_app", "call", "voice_note", "email"]).notNull(),
+  effort: mysqlEnum("effort", ["low", "medium", "high"]).notNull(),
+  urgency: mysqlEnum("urgency", ["low", "medium", "high", "critical"]).notNull(),
+  priorityScore: int("priorityScore").notNull(),
+  permittedContextKeys: json("permittedContextKeys").$type<string[]>().notNull(),
+  status: mysqlEnum("status", ["pending", "opened", "contacted", "completed", "snoozed", "skipped", "dismissed"]).default("pending").notNull(),
+  dedupeKey: varchar("dedupeKey", { length: 180 }).notNull(),
+  snoozedUntil: timestamp("snoozedUntil"),
+  openedAt: timestamp("openedAt"),
+  contactedAt: timestamp("contactedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("ei_partner_nudges_dedupe_uq").on(table.dedupeKey),
+  index("ei_partner_nudges_queue_idx").on(table.tenantId, table.partnerUserId, table.status, table.priorityScore),
+]);
+export type EiPartnerNudge = typeof eiPartnerNudges.$inferSelect;
