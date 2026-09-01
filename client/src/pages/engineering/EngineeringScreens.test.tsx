@@ -61,11 +61,11 @@ import EngineeringPartnerWorkspace from "./EngineeringPartnerWorkspace";
 
 afterEach(() => cleanup());
 
-describe("Engineering Intelligence protected screens", () => {
+describe("Tech Intelligence protected screens", () => {
   it("renders the participant diagnostic start state with timing and privacy cues", () => {
     render(<EngineeringDiagnostic />);
 
-    expect(screen.getByRole("heading", { name: "Engineering Impact Diagnostic" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Tech Impact Diagnostic" })).toBeTruthy();
     expect(screen.getByText("12 reflective prompts · approximately 6 minutes")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Begin diagnostic" })).toBeTruthy();
     expect(screen.getByText("Your privacy boundary")).toBeTruthy();
@@ -76,7 +76,7 @@ describe("Engineering Intelligence protected screens", () => {
     render(<EngineeringOperatingProfile />);
 
     expect(screen.getByRole("heading", { name: "Systems builder" })).toBeTruthy();
-    expect(screen.getByText("Engineering engines")).toBeTruthy();
+    expect(screen.getByText("Tech Intelligence engines")).toBeTruthy();
     expect(screen.getByText("Human–AI judgment")).toBeTruthy();
     expect(screen.getByText("Clarify an architecture decision")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Accept this Mission/i })).toBeTruthy();

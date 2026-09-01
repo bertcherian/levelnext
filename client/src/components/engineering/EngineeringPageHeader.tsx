@@ -31,7 +31,7 @@ export default function EngineeringPageHeader({
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#10243E] sm:text-4xl">{title}</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">{description}</p>
         </div>
-        <nav aria-label="Engineering Intelligence sections" className="flex flex-wrap gap-2">
+        <nav aria-label="Tech Intelligence sections" className="flex flex-wrap gap-2">
           {visibleLinks.map((item) => {
             const Icon = item.icon;
             const active = location === item.href;

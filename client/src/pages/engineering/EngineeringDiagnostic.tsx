@@ -51,7 +51,7 @@ export default function EngineeringDiagnostic() {
   const canAdvance = Boolean(sessionId && selected);
 
   const resumeLabel = stateQuery.data?.session ? "Resume diagnostic" : "Begin diagnostic";
-  const currentDescriptor = useMemo(() => question?.detail ?? "Engineering Intelligence", [question]);
+  const currentDescriptor = useMemo(() => question?.detail ?? "Tech Intelligence", [question]);
 
   async function startOrResume() {
     const result = await startMutation.mutateAsync();
@@ -78,17 +78,17 @@ export default function EngineeringDiagnostic() {
   }
 
   if (loading || stateQuery.isLoading) {
-    return <PlatformLayout title="Engineering Intelligence"><div className="mx-auto max-w-5xl px-4 py-8 sm:px-6"><Skeleton className="h-10 w-72" /><Skeleton className="mt-8 h-[440px] rounded-3xl" /></div></PlatformLayout>;
+    return <PlatformLayout title="Tech Intelligence"><div className="mx-auto max-w-5xl px-4 py-8 sm:px-6"><Skeleton className="h-10 w-72" /><Skeleton className="mt-8 h-[440px] rounded-3xl" /></div></PlatformLayout>;
   }
 
   if (stateQuery.error) {
-    return <PlatformLayout title="Engineering Intelligence"><div className="mx-auto max-w-3xl px-4 py-10 sm:px-6"><EngineeringPageHeader eyebrow="Engineering Intelligence" title="Your diagnostic needs organisation access" description="This experience is configured for members of an organisation programme." /><div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"><CircleAlert className="mb-2" size={20} /> {stateQuery.error.message}</div></div></PlatformLayout>;
+    return <PlatformLayout title="Tech Intelligence"><div className="mx-auto max-w-3xl px-4 py-10 sm:px-6"><EngineeringPageHeader eyebrow="Tech Intelligence" title="Your diagnostic needs organisation access" description="This experience is configured for members of an organisation programme." /><div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"><CircleAlert className="mb-2" size={20} /> {stateQuery.error.message}</div></div></PlatformLayout>;
   }
 
   return (
-    <PlatformLayout title="Engineering Intelligence">
+    <PlatformLayout title="Tech Intelligence">
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
-        <EngineeringPageHeader eyebrow="Engineering Intelligence" title="Engineering Impact Diagnostic" description="A focused reflection on how you work across self, teams, systems, and business context. This is developmental intelligence, not a performance rating." />
+        <EngineeringPageHeader eyebrow="Tech Intelligence" title="Tech Impact Diagnostic" description="A focused reflection on how you work across self, teams, systems, and business context. This is developmental intelligence, not a performance rating." />
 
         {!sessionId ? (
           <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_50px_rgba(16,36,62,0.08)]">
@@ -96,7 +96,7 @@ export default function EngineeringDiagnostic() {
               <div className="p-6 sm:p-9">
                 <p className="text-sm font-semibold text-[#A37C00]">12 reflective prompts · approximately 6 minutes</p>
                 <h2 className="mt-3 text-2xl font-bold tracking-tight text-[#10243E]">Find the next place to practise, not a label to live up to.</h2>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Your answers create an Operating Profile that shows developmental signals across six engineering engines and a single practical Mission. You can pause and resume; your raw responses are private.</p>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Your answers create an Operating Profile that shows developmental signals across six Tech Intelligence engines and a single practical Mission. You can pause and resume; your raw responses are private.</p>
                 <Button disabled={startMutation.isPending} onClick={startOrResume} className="mt-6 h-11 bg-[#10243E] px-5 font-semibold text-white hover:bg-[#18395F]">
                   {startMutation.isPending ? <Loader2 className="mr-2 animate-spin" size={16} /> : <ChevronRight className="mr-2" size={16} />} {resumeLabel}
                 </Button>

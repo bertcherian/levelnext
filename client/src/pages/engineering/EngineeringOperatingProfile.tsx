@@ -52,18 +52,18 @@ export default function EngineeringOperatingProfile() {
     await analyse.mutateAsync({ situation, observedBehaviour: observedBehaviour || undefined, careerStage: "professional", role: roleTitle || undefined });
   }
 
-  if (loading || profileQuery.isLoading) return <PlatformLayout title="Engineering Intelligence"><div className="mx-auto max-w-6xl px-4 py-8 sm:px-6"><div className="h-12 w-80 animate-pulse rounded-xl bg-slate-200" /><div className="mt-8 grid gap-5 lg:grid-cols-3"><div className="h-72 animate-pulse rounded-3xl bg-slate-100 lg:col-span-2" /><div className="h-72 animate-pulse rounded-3xl bg-slate-100" /></div></div></PlatformLayout>;
+  if (loading || profileQuery.isLoading) return <PlatformLayout title="Tech Intelligence"><div className="mx-auto max-w-6xl px-4 py-8 sm:px-6"><div className="h-12 w-80 animate-pulse rounded-xl bg-slate-200" /><div className="mt-8 grid gap-5 lg:grid-cols-3"><div className="h-72 animate-pulse rounded-3xl bg-slate-100 lg:col-span-2" /><div className="h-72 animate-pulse rounded-3xl bg-slate-100" /></div></div></PlatformLayout>;
 
-  if (profileQuery.error) return <PlatformLayout title="Engineering Intelligence"><div className="mx-auto max-w-4xl px-4 py-10 sm:px-6"><EngineeringPageHeader eyebrow="Engineering Intelligence" title="Operating Profile" description="Your personal development intelligence across the work you do." /><div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">{profileQuery.error.message}</div></div></PlatformLayout>;
+  if (profileQuery.error) return <PlatformLayout title="Tech Intelligence"><div className="mx-auto max-w-4xl px-4 py-10 sm:px-6"><EngineeringPageHeader eyebrow="Tech Intelligence" title="Operating Profile" description="Your personal development intelligence across the work you do." /><div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">{profileQuery.error.message}</div></div></PlatformLayout>;
 
   if (!result) {
-    return <PlatformLayout title="Engineering Intelligence"><main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8"><EngineeringPageHeader eyebrow="Engineering Intelligence" title="Your Operating Profile" description="A living view of how you develop impact across self, teams, systems, and business." /><section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_20px_50px_rgba(16,36,62,0.08)]"><BrainCircuit className="mx-auto text-[#D4A900]" size={36} /><h2 className="mt-4 text-xl font-bold text-[#10243E]">Your profile begins with a diagnostic</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Complete the Engineering Impact Diagnostic to create a developmental baseline and a practical Mission.</p><Link href="/engineering/diagnostic"><Button className="mt-6 bg-[#10243E] text-white hover:bg-[#18395F]">Start diagnostic</Button></Link></section></main></PlatformLayout>;
+    return <PlatformLayout title="Tech Intelligence"><main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8"><EngineeringPageHeader eyebrow="Tech Intelligence" title="Your Operating Profile" description="A living view of how you develop impact across self, teams, systems, and business." /><section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_20px_50px_rgba(16,36,62,0.08)]"><BrainCircuit className="mx-auto text-[#D4A900]" size={36} /><h2 className="mt-4 text-xl font-bold text-[#10243E]">Your profile begins with a diagnostic</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Complete the Tech Impact Diagnostic to create a developmental baseline and a practical Mission.</p><Link href="/engineering/diagnostic"><Button className="mt-6 bg-[#10243E] text-white hover:bg-[#18395F]">Start diagnostic</Button></Link></section></main></PlatformLayout>;
   }
 
   return (
-    <PlatformLayout title="Engineering Intelligence">
+    <PlatformLayout title="Tech Intelligence">
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-        <EngineeringPageHeader eyebrow="Engineering Intelligence" title="Your Operating Profile" description="A living developmental view: what is currently available to you, where your impact is extending, and one practical edge to work on next." />
+        <EngineeringPageHeader eyebrow="Tech Intelligence" title="Your Operating Profile" description="A living developmental view: what is currently available to you, where your impact is extending, and one practical edge to work on next." />
         <section className="overflow-hidden rounded-3xl bg-[#10243E] shadow-[0_20px_50px_rgba(16,36,62,0.14)]">
           <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-end">
             <div>
@@ -81,7 +81,7 @@ export default function EngineeringOperatingProfile() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
           <section>
-            <div className="mb-3 flex items-center justify-between"><div><h2 className="text-lg font-bold text-[#10243E]">Engineering engines</h2><p className="mt-0.5 text-xs text-slate-500">Signals describe current range, not fixed capability.</p></div><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-500">Assessment {new Date(result.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span></div>
+            <div className="mb-3 flex items-center justify-between"><div><h2 className="text-lg font-bold text-[#10243E]">Tech Intelligence engines</h2><p className="mt-0.5 text-xs text-slate-500">Signals describe current range, not fixed capability.</p></div><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-500">Assessment {new Date(result.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span></div>
             <div className="grid gap-3 sm:grid-cols-2">{engineScores.map(([engine, score]) => <EngineScoreBar key={engine} engine={engine} score={score} />)}</div>
           </section>
           <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

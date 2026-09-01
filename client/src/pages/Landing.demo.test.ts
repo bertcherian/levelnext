@@ -27,7 +27,7 @@ describe("LevelNext public demo pathway", () => {
   it("renders a product walkthrough without creating or displaying personal participant data", () => {
     const page = renderToStaticMarkup(createElement(EngineeringDemo));
     expect(page).toContain("Interactive product walkthrough");
-    expect(page).toContain("Engineering Impact Diagnostic");
+    expect(page).toContain("Tech Impact Diagnostic");
     expect(page).toContain("Operating Profile");
     expect(page).toContain("Partner support");
     expect(page).toContain("It contains no personal data");

@@ -8,6 +8,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 // Pages
 import Landing from "./pages/Landing";
 import EngineeringDemo from "./pages/EngineeringDemo";
+import TechIntelligenceLanding from "./pages/TechIntelligenceLanding";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import MyEdge from "./pages/MyEdge";
@@ -214,6 +215,7 @@ function Router() {
       {/* Public */}
       <Route path="/" component={Landing} />
       <Route path="/demo" component={EngineeringDemo} />
+      <Route path="/tech-intelligence" component={TechIntelligenceLanding} />
       <Route path="/onboard" component={Onboarding} />
       <Route path="/report/:slug" component={Report} />
       <Route path="/cpi-report/:slug" component={CpiReport} />

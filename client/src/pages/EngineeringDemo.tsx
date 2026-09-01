@@ -37,16 +37,16 @@ export default function EngineeringDemo() {
     <main className="ei-demo">
       <header className="ei-demo__nav">
         <a href="/" className="ei-demo__brand" aria-label="Return to LevelNext home"><img src="/logo.png" alt="LevelNext" /></a>
-        <div className="ei-demo__nav-copy"><span>Engineering Intelligence</span><strong>Interactive product walkthrough</strong></div>
+        <div className="ei-demo__nav-copy"><span>Tech Intelligence</span><strong>Interactive product walkthrough</strong></div>
         <a href="/engineering/diagnostic" className="ei-demo__open-tool">Open the tool <ArrowRight size={15} /></a>
       </header>
 
       <section className="ei-demo__hero">
-        <div><p className="ei-demo__eyebrow"><Play size={13} fill="currentColor" /> Product demo</p><h1>See how insight becomes<br /><em>a better next move.</em></h1><p>This walkthrough illustrates the Engineering Intelligence experience. It contains no personal data and does not create a participant record.</p></div>
+        <div><p className="ei-demo__eyebrow"><Play size={13} fill="currentColor" /> Product demo</p><h1>See how insight becomes<br /><em>a better next move.</em></h1><p>This walkthrough illustrates the Tech Intelligence experience. It contains no personal data and does not create a participant record.</p></div>
         <aside><ShieldCheck size={23} /><div><strong>Developmental by design</strong><span>Private reflection stays with the participant. Sharing a Mission with a Success Partner is optional.</span></div></aside>
       </section>
 
-      <section className="ei-demo__shell" aria-label="Engineering Intelligence product demo">
+      <section className="ei-demo__shell" aria-label="Tech Intelligence product demo">
         <div className="ei-demo__tabs" role="tablist" aria-label="Demo screens">
           {VIEWS.map((item) => { const Icon = item.icon; const active = view === item.id; return <button type="button" key={item.id} role="tab" aria-selected={active} className={active ? "is-active" : ""} onClick={() => setView(item.id)}><Icon size={16} /> {item.label}</button>; })}
         </div>
@@ -58,7 +58,7 @@ export default function EngineeringDemo() {
       </section>
 
       <section className="ei-demo__video" aria-labelledby="demo-video-title">
-        <div className="ei-demo__video-poster" role="img" aria-label="Placeholder for the narrated Engineering Intelligence product video">
+        <div className="ei-demo__video-poster" role="img" aria-label="Placeholder for the narrated Tech Intelligence product video">
           <div className="ei-demo__video-play"><Play size={20} fill="currentColor" /></div>
           <div className="ei-demo__video-lines"><i /><i /><i /></div>
           <span>Video placeholder</span>
@@ -89,7 +89,7 @@ export default function EngineeringDemo() {
 }
 
 function DiagnosticPreview() {
-  return <div className="ei-demo__screen"><div className="ei-demo__screen-top"><div><span>Engineering Intelligence</span><h2>Engineering Impact Diagnostic</h2></div><div className="ei-demo__progress"><small>Question 7 of 12</small><i><b /></i></div></div><div className="ei-demo__question"><p className="ei-demo__label">Systems thinking: trade-offs</p><h3>How consistently do you consider downstream consequences, dependencies, and trade-offs before changing a technical system?</h3><p>Choose the response that is most true across real work situations. There is no ideal answer.</p><div className="ei-demo__scale">{[[1,"Rarely"],[2,"Occasionally"],[3,"Sometimes"],[4,"Often"],[5,"Consistently"]].map(([score, label]) => <div key={score} className={score === 4 ? "is-selected" : ""}><b>{score}</b><span>{label}</span>{score === 4 && <Check size={17} />}</div>)}</div></div><p className="ei-demo__privacy"><LockKeyhole size={14} /> Responses remain private to the participant.</p></div>;
+  return <div className="ei-demo__screen"><div className="ei-demo__screen-top"><div><span>Tech Intelligence</span><h2>Tech Impact Diagnostic</h2></div><div className="ei-demo__progress"><small>Question 7 of 12</small><i><b /></i></div></div><div className="ei-demo__question"><p className="ei-demo__label">Systems thinking: trade-offs</p><h3>How consistently do you consider downstream consequences, dependencies, and trade-offs before changing a technical system?</h3><p>Choose the response that is most true across real work situations. There is no ideal answer.</p><div className="ei-demo__scale">{[[1,"Rarely"],[2,"Occasionally"],[3,"Sometimes"],[4,"Often"],[5,"Consistently"]].map(([score, label]) => <div key={score} className={score === 4 ? "is-selected" : ""}><b>{score}</b><span>{label}</span>{score === 4 && <Check size={17} />}</div>)}</div></div><p className="ei-demo__privacy"><LockKeyhole size={14} /> Responses remain private to the participant.</p></div>;
 }
 
 function ProfilePreview() {
