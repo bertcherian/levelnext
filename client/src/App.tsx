@@ -67,7 +67,7 @@ const CareerMyJourney = lazy(() => import("@/pages/career/CareerMyJourney"));
 const AdminProductEnrollments = lazyWithRouteRecovery(() => import("@/pages/AdminProductEnrollments"), "admin-enrollments");
 const ManagerEffectivenessLanding = lazy(() => import("@/pages/ManagerEffectivenessLanding"));
 const ManagerHome = lazy(() => import("@/pages/mep/ManagerHome"));
-const ManagerDiagnostics = lazy(() => import("@/pages/mep/ManagerDiagnostics"));
+const ManagerDiagnostics = lazyWithRouteRecovery(() => import("@/pages/mep/ManagerDiagnostics"), "manager-diagnostics");
 const ManagerGuide = lazy(() => import("@/pages/mep/ManagerGuide"));
 const ManagerPlaybook = lazy(() => import("@/pages/mep/ManagerPlaybook"));
 const ManagerBrief = lazy(() => import("@/pages/mep/ManagerBrief"));

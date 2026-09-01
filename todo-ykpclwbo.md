@@ -59,3 +59,6 @@
 - [x] Verify the scheduling section on desktop/mobile and publish the repair.
 - [x] Fix the Tech Intelligence personalised-demo button so its label and icon remain high-contrast on the navy background.
 - [x] Verify the booking call-to-action at desktop and mobile sizes and publish the contrast repair.
+- [x] Diagnose the failed dynamic import for the authenticated Manager Diagnostics route.
+- [x] Repair the Manager Diagnostics route/module loading failure and add focused regression coverage.
+- [x] Verify the manager diagnostics module response, lazy-route recovery behavior, and production build, then publish the repair. Browser access redirected to sign-in as expected without an authenticated session.

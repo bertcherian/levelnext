@@ -22,12 +22,12 @@ describe("lazy route recovery", () => {
     expect(isLazyRouteLoadError(new Error("Admin metrics request failed"))).toBe(false);
   });
 
-  it("permits exactly one refresh attempt for a stale lazy route", () => {
+  it("permits exactly one refresh attempt for the Manager Diagnostics route", () => {
     const storage = createStorage();
     const error = new Error("Failed to fetch dynamically imported module");
 
-    expect(shouldRecoverLazyRoute(error, "admin-dashboard", storage)).toBe(true);
-    expect(storage.getItem(lazyRouteRecoveryKey("admin-dashboard"))).toBe("attempted");
-    expect(shouldRecoverLazyRoute(error, "admin-dashboard", storage)).toBe(false);
+    expect(shouldRecoverLazyRoute(error, "manager-diagnostics", storage)).toBe(true);
+    expect(storage.getItem(lazyRouteRecoveryKey("manager-diagnostics"))).toBe("attempted");
+    expect(shouldRecoverLazyRoute(error, "manager-diagnostics", storage)).toBe(false);
   });
 });
