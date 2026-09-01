@@ -51,3 +51,6 @@
 - [x] Apply and verify the external coaching-evidence library UI and source/disclosure links after resolving its TypeScript contract.
 - [x] Assert the external ICF and downloadable evidence-brief link targets in the Tech Intelligence landing-page test suite.
 - [x] Save the fully verified external evidence-library revision as a new published checkpoint.
+- [x] Audit and update Tech Intelligence supporting-copy colours to an 80% black equivalent on light surfaces while preserving accessible light text on navy surfaces.
+- [x] Verify the text-contrast refinement across desktop/mobile and publish the updated page.
+- [x] Save the verified Tech Intelligence subtext-contrast refinement as a new published checkpoint.
