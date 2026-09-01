@@ -14,3 +14,13 @@
 - Attribute all evidence cards to their source and link to the primary source in the page’s sources panel.
 - Present the “cost of no coaching” as plausible operational risks—such as slower decisions, unresolved cross-functional friction, and repeated rework—not as unsubstantiated financial savings.
 - State that LevelNext Tech Intelligence is part of the broader LevelNext platform, and distinguish currently available components from future or organisation-configured modules.
+
+## External coaching evidence for the buyer-resource library
+
+| Finding | Publication-safe use | Source |
+|---|---|---|
+| ICF reports that 72% of respondents to the 2023 ICF/HCI *Defining New Coaching Cultures* study acknowledged a relationship between coaching and increased employee engagement. | Describe as external, survey-based evidence of a reported relationship; do not present it as a guaranteed LevelNext outcome. | [ICF, “Coaching Statistics: The ROI of Coaching in 2024” (2024)](https://coachingfederation.org/blog/coaching-statistics-the-roi-of-coaching-in-2024/) |
+| An ICF-published case discussion of Microsoft Customer and Partner Solutions cites more than USD 77 million in estimated cost savings and 670.4% ROI for that coaching ecosystem. | Attribute precisely to Microsoft Customer and Partner Solutions and the ICF page. Note that it is an external case example, not a LevelNext forecast or typical result. | [ICF, “The ROI of Coaching: Why It’s Worth the Investment” (2026)](https://coachingfederation.org/blog/the-roi-of-coaching-why-its-worth-the-investment/) |
+| The 2023 coaching meta-analysis reports significant prior meta-analytic effects from g = 0.43 (coping) to g = 0.74 (goal-directed self-regulation). | Retain the effect-size terminology and avoid translating it into an ROI claim. | [Cannon-Bowers et al., *Frontiers in Psychology* (2023)](https://pmc.ncbi.nlm.nih.gov/articles/PMC10597717/) |
+
+Gartner was considered but no publicly accessible Gartner ROI figure was found that could be directly verified for this page. No quantitative ROI or outcome claim is attributed to Gartner unless a primary, publishable Gartner source is later supplied.

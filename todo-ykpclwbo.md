@@ -39,3 +39,15 @@
 - [x] Add source-linked claim notes and content tests without inventing testimonials, client stories, or outcome statistics.
 - [x] Verify desktop/mobile rendering, production build, and publish the Tech Intelligence landing page.
 - [x] Save the verified Tech Intelligence landing page as a new published checkpoint.
+- [x] Inspect the live Tech Intelligence page styling, existing booking link, and available approved buyer-resource files before enhancement.
+- [x] Rebalance headline, supporting-copy, scenario-tab typography, and vertical spacing across the Tech Intelligence landing page.
+- [x] Add a live personalised Tech Intelligence demo-booking widget using the existing approved scheduling destination.
+- [x] Add an interactive Gap Selling cost calculator with transparent assumptions and non-ROI-guarantee language.
+- [x] Add a B2B buyer-resource library that exposes only approved downloadable case studies and pilot ROI reports, with honest unavailable states otherwise.
+- [x] Add calculation and interaction tests, verify desktop/mobile rendering, and publish the conversion update.
+- [x] Research and validate primary published coaching ROI or outcome sources from ICF, Gartner, and equivalent credible publishers.
+- [x] Replace unavailable first-party case-study/ROI language with a clearly labelled external coaching-evidence library, without implying LevelNext-specific results.
+- [x] Test source links and content disclosures, verify responsive rendering, and checkpoint the evidence-library revision.
+- [x] Apply and verify the external coaching-evidence library UI and source/disclosure links after resolving its TypeScript contract.
+- [x] Assert the external ICF and downloadable evidence-brief link targets in the Tech Intelligence landing-page test suite.
+- [x] Save the fully verified external evidence-library revision as a new published checkpoint.
