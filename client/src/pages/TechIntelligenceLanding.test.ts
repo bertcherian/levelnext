@@ -37,6 +37,11 @@ describe("LevelNext Tech Intelligence landing page", () => {
     expect(page).toContain("Illustrative annual friction exposure");
     expect(page).toContain("Live scheduling");
     expect(page).toContain("tidycal.com/metaresults/pilot");
+    expect(page).toContain("Open secure booking calendar");
+    expect(page).toContain("secure Meta Results booking calendar");
+    expect(page).not.toContain("tidycal-embed");
+    expect(page).not.toContain("embed.js");
+    expect(page).not.toContain("<iframe");
     expect(page).toContain("Buyer resources");
     expect(page).toContain("External Coaching Evidence Brief");
     expect(page).toContain("Microsoft coaching ecosystem");

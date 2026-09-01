@@ -56,6 +56,6 @@
 - [x] Save the verified Tech Intelligence subtext-contrast refinement as a new published checkpoint.
 - [x] Confirm a reliable supported launch method for the personalised Tech Intelligence booking calendar.
 - [x] Replace the blocked inline scheduler frame with a usable live booking interaction and visible fallback.
-- [ ] Verify the scheduling section on desktop/mobile and publish the repair.
+- [x] Verify the scheduling section on desktop/mobile and publish the repair.
 - [x] Fix the Tech Intelligence personalised-demo button so its label and icon remain high-contrast on the navy background.
 - [x] Verify the booking call-to-action at desktop and mobile sizes and publish the contrast repair.
