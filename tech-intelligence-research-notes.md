@@ -24,3 +24,7 @@
 | The 2023 coaching meta-analysis reports significant prior meta-analytic effects from g = 0.43 (coping) to g = 0.74 (goal-directed self-regulation). | Retain the effect-size terminology and avoid translating it into an ROI claim. | [Cannon-Bowers et al., *Frontiers in Psychology* (2023)](https://pmc.ncbi.nlm.nih.gov/articles/PMC10597717/) |
 
 Gartner was considered but no publicly accessible Gartner ROI figure was found that could be directly verified for this page. No quantitative ROI or outcome claim is attributed to Gartner unless a primary, publishable Gartner source is later supplied.
+
+## Live scheduling implementation note
+
+TidyCal’s official documentation states that a supported website embed uses its JavaScript loader together with a `div.tidycal-embed` whose `data-path` matches a booking page or booking-type slug. A direct iframe alone is not the documented integration. The booking destination `https://tidycal.com/metaresults/pilot` is publicly reachable. The Tech Intelligence booking section should use TidyCal’s documented embed loader and retain a direct booking-page link as a reliable fallback. Source: <https://help.tidycal.com/article/141-embeding-tidycal-on-your-site>

@@ -9,3 +9,12 @@
 /* Supporting copy on light and gold surfaces uses an 80% black equivalent.
    Navy surfaces intentionally retain light supporting text for readable contrast. */
 .ti-section-head>p:last-child,.ti-gap__selector button,.ti-gap__current p,.ti-gap__future p,.ti-platform__header>p,.ti-platform__grid p,.ti-platform__boundary,.ti-pilot>div>div>p:last-child,.ti-pilot aside>div,.ti-calculator__intro>p:nth-of-type(2),.ti-calculator__assumption,.ti-calc-input,.ti-calc-input i,.ti-calc-input em,.ti-resources__head>p,.ti-resources__grid article>span,.ti-resources__note,.ti-booking__copy>p:nth-of-type(2),.ti-booking__copy>div,.ti-booking__widget-label small{color:rgba(0,0,0,.8)}
+
+/* TidyCal's supported loader replaces this responsive container with its own
+   auto-resizing iframe. The direct option prevents a dead-end if a network or
+   privacy extension blocks the third-party calendar. */
+.ti-booking__embed-wrap{background:#fff}.ti-booking__fallback{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 16px;border-bottom:1px solid #ded8cc;background:#fbfaf6;color:rgba(0,0,0,.8);font-size:11px}.ti-booking__fallback a,.ti-booking__direct-link{display:inline-flex;align-items:center;justify-content:center;gap:7px;color:#18354d;font-size:11px;font-weight:800}.ti-booking__fallback a{text-decoration:underline;text-underline-offset:3px}.tidycal-embed{min-height:500px}.ti-booking__direct-link{width:100%;min-height:42px;border-top:1px solid #ded8cc}@media(max-width:820px){.ti-booking__fallback{align-items:flex-start;flex-direction:column}.tidycal-embed{min-height:500px}}
+
+/* The base page link rule is more specific than the button modifier. Restore
+   an explicit foreground so the booking CTA remains readable on navy. */
+.ti-page a.ti-button--navy,.ti-page a.ti-button--navy:visited,.ti-page a.ti-button--navy:hover{color:#fff}.ti-page a.ti-button--navy svg{color:#e6c865}

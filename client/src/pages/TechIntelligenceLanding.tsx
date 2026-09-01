@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowRight, Bot, Calculator, CalendarClock, CheckCircle2, ChevronRight, Compass, Cpu, Download, Eye, FileText, GitPullRequest, Layers3, LockKeyhole, Menu, Play, ShieldCheck, Sparkles, UsersRound, X } from "lucide-react";
 import { calculateTechGapCost } from "../../../shared/modules/techIntelligenceCalculator";
 import "./techIntelligenceLanding.css";
@@ -86,7 +86,7 @@ export default function TechIntelligenceLanding() {
 
       <section className="ti-journey"><div className="ti-wrap"><div className="ti-journey__lead"><p className="ti-kicker"><span /> From current state to future state</p><h2>Make the next<br /><em>right move visible.</em></h2></div><ol><li><span>01</span><div><h3>Understand the moment</h3><p>A Tech Impact Diagnostic and role context establish the current pattern—not a permanent label.</p></div></li><li><span>02</span><div><h3>Practise the choice</h3><p>AI coaching and scenario practice help technical professionals prepare for real conversations and decisions.</p></div></li><li><span>03</span><div><h3>Try it in the work</h3><p>A bounded Mission moves the development from insight to a workplace experiment.</p></div></li><li><span>04</span><div><h3>Learn with support</h3><p>Private reflection and opt-in Success Partner support strengthen follow-through without surveillance.</p></div></li></ol></div></section>
 
-      <section className="ti-booking" id="book-demo"><div className="ti-wrap ti-booking__grid"><div className="ti-booking__copy"><p className="ti-kicker ti-kicker--dark"><span /> Personalised demonstration</p><h2>Bring a real<br /><em>technical development gap.</em></h2><p>Book a focused conversation to explore the technical population, transition, or operating challenge you want to make visible. The session is designed around your context—not a generic product tour.</p><div><CheckCircle2 size={17} /> A 30-minute personalised Tech Intelligence walkthrough</div><div><CheckCircle2 size={17} /> A starting hypothesis for your diagnostic and practice design</div><div><CheckCircle2 size={17} /> A clear next step, whether or not a pilot is the right answer</div></div><div className="ti-booking__widget"><div className="ti-booking__widget-label"><CalendarClock size={18} /><span>Live scheduling</span><small>Choose a convenient time with Meta Results.</small></div><iframe title="Book a personalised LevelNext Tech Intelligence demo" src="https://tidycal.com/metaresults/pilot" loading="lazy" /><a href="https://tidycal.com/metaresults/pilot" target="_blank" rel="noreferrer">Open the booking calendar in a new window <ArrowRight size={14} /></a></div></div></section>
+      <section className="ti-booking" id="book-demo"><div className="ti-wrap ti-booking__grid"><div className="ti-booking__copy"><p className="ti-kicker ti-kicker--dark"><span /> Personalised demonstration</p><h2>Bring a real<br /><em>technical development gap.</em></h2><p>Book a focused conversation to explore the technical population, transition, or operating challenge you want to make visible. The session is designed around your context—not a generic product tour.</p><div><CheckCircle2 size={17} /> A 30-minute personalised Tech Intelligence walkthrough</div><div><CheckCircle2 size={17} /> A starting hypothesis for your diagnostic and practice design</div><div><CheckCircle2 size={17} /> A clear next step, whether or not a pilot is the right answer</div></div><div className="ti-booking__widget"><div className="ti-booking__widget-label"><CalendarClock size={18} /><span>Live scheduling</span><small>Choose a convenient time with Meta Results.</small></div><TidyCalBookingEmbed /></div></div></section>
 
       <section className="ti-pilot" id="pilot"><div className="ti-wrap ti-pilot__grid"><div><p className="ti-kicker ti-kicker--dark"><span /> Pilot conversation</p><h2>Could Tech Intelligence<br /><em>change the conversations your technical leaders are having?</em></h2><p>Explore a focused LevelNext pilot for a technical leadership population, an engineering capability priority, or a critical career transition.</p></div><aside><div><CheckCircle2 size={19} /><span>Start with a defined development challenge</span></div><div><CheckCircle2 size={19} /><span>See patterns through a diagnostic and real-work practice</span></div><div><CheckCircle2 size={19} /><span>Decide what to scale from evidence—not activity</span></div><a href="#book-demo" className="ti-button ti-button--navy">Book a personalised demo <ArrowRight size={16} /></a></aside></div></section>
 
@@ -105,4 +105,22 @@ function GapCostCalculator() {
 
 function CalculatorInput({ label, value, onChange, prefix, suffix, min, max, step = 1 }: { label: string; value: number; onChange: (value: string) => void; prefix?: string; suffix?: string; min: number; max: number; step?: number }) {
   return <label className="ti-calc-input"><span>{label}</span><div>{prefix && <i>{prefix}</i>}<input type="number" value={value} min={min} max={max} step={step} onChange={(event) => onChange(event.target.value)} />{suffix && <em>{suffix}</em>}</div></label>;
+}
+
+function TidyCalBookingEmbed() {
+  useEffect(() => {
+    const existingScript = document.getElementById("tidycal-embed-script");
+    if (existingScript) return;
+    const script = document.createElement("script");
+    script.id = "tidycal-embed-script";
+    script.src = "https://tidycal.com/js/embed.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
+  return <div className="ti-booking__embed-wrap">
+    <div className="ti-booking__fallback"><span>Calendar not appearing?</span><a href="https://tidycal.com/metaresults/pilot" target="_blank" rel="noreferrer">Book your personalised demo <ArrowRight size={14} /></a></div>
+    <div className="tidycal-embed" data-path="metaresults/pilot" data-showavatar="true" aria-label="Choose a time for a personalised LevelNext Tech Intelligence demo" />
+    <a className="ti-booking__direct-link" href="https://tidycal.com/metaresults/pilot" target="_blank" rel="noreferrer">Open the booking calendar in a new window <ArrowRight size={14} /></a>
+  </div>;
 }
