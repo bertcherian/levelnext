@@ -4,6 +4,8 @@ import { calculateTechGapCost } from "../../../shared/modules/techIntelligenceCa
 import "./techIntelligenceLanding.css";
 import "./techIntelligenceEnhancements.css";
 
+const LEVELNEXT_LOGO_URL = "/manus-storage/levelnext-tech-intelligence-logo_dfe8f8e6.png";
+
 const GAP_SCENARIOS = [
   {
     id: "delivery",
@@ -51,7 +53,7 @@ export default function TechIntelligenceLanding() {
   return (
     <main className="ti-page">
       <header className="ti-nav">
-        <a href="/" className="ti-nav__brand" aria-label="LevelNext home"><img src="/logo.png" alt="LevelNext" /></a>
+        <a href="/" className="ti-nav__brand" aria-label="LevelNext home"><img src={LEVELNEXT_LOGO_URL} alt="LevelNext" /></a>
         <nav className="ti-nav__links" aria-label="Tech Intelligence sections"><a href="#the-gap">The gap</a><a href="#cost-calculator">Calculator</a><a href="#platform">Platform</a><a href="#book-demo">Book a demo</a></nav>
         <div className="ti-nav__actions"><a href="/demo" className="ti-nav__demo"><Play size={12} fill="currentColor" /> View demo</a><a href="/login?returnTo=%2Fengineering%2Fdiagnostic" className="ti-nav__login">Log in</a></div>
         <button className="ti-nav__menu" type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="Toggle navigation" aria-expanded={menuOpen}>{menuOpen ? <X size={19} /> : <Menu size={19} />}</button>
@@ -90,7 +92,7 @@ export default function TechIntelligenceLanding() {
 
       <section className="ti-pilot" id="pilot"><div className="ti-wrap ti-pilot__grid"><div><p className="ti-kicker ti-kicker--dark"><span /> Pilot conversation</p><h2>Could Tech Intelligence<br /><em>change the conversations your technical leaders are having?</em></h2><p>Explore a focused LevelNext pilot for a technical leadership population, an engineering capability priority, or a critical career transition.</p></div><aside><div><CheckCircle2 size={19} /><span>Start with a defined development challenge</span></div><div><CheckCircle2 size={19} /><span>See patterns through a diagnostic and real-work practice</span></div><div><CheckCircle2 size={19} /><span>Decide what to scale from evidence—not activity</span></div><a href="#book-demo" className="ti-button ti-button--navy">Book a personalised demo <ArrowRight size={16} /></a></aside></div></section>
 
-      <footer className="ti-footer"><div className="ti-wrap"><div className="ti-footer__brand"><img src="/logo.png" alt="LevelNext" /><p>LevelNext Tech Intelligence is a specialist development experience within the LevelNext platform.</p></div><div className="ti-footer__sources"><p>Research sources</p><a id="source-1" href="https://www.weforum.org/press/2025/01/future-of-jobs-report-2025-78-million-new-job-opportunities-by-2030-but-urgent-upskilling-needed-to-prepare-workforces/" target="_blank" rel="noreferrer">[1] World Economic Forum, <em>Future of Jobs Report 2025</em></a><a id="source-2" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10597717/" target="_blank" rel="noreferrer">[2] Cannon-Bowers et al., <em>Workplace coaching: a meta-analysis</em> (2023)</a><a id="source-3" href="https://coachingfederation.org/blog/coaching-statistics-the-roi-of-coaching-in-2024/" target="_blank" rel="noreferrer">[3] International Coaching Federation, <em>Coaching Statistics: The ROI of Coaching</em> (2024)</a><a id="source-4" href="https://coachingfederation.org/blog/the-roi-of-coaching-why-its-worth-the-investment/" target="_blank" rel="noreferrer">[4] International Coaching Federation, <em>The ROI of Coaching: Why It’s Worth the Investment</em> (2026)</a></div><a className="ti-footer__top" href="#top">Back to top ↑</a></div></footer>
+      <footer className="ti-footer"><div className="ti-wrap"><div className="ti-footer__brand"><img src={LEVELNEXT_LOGO_URL} alt="LevelNext" /><p>LevelNext Tech Intelligence is a specialist development experience within the LevelNext platform.</p></div><div className="ti-footer__sources"><p>Research sources</p><a id="source-1" href="https://www.weforum.org/press/2025/01/future-of-jobs-report-2025-78-million-new-job-opportunities-by-2030-but-urgent-upskilling-needed-to-prepare-workforces/" target="_blank" rel="noreferrer">[1] World Economic Forum, <em>Future of Jobs Report 2025</em></a><a id="source-2" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10597717/" target="_blank" rel="noreferrer">[2] Cannon-Bowers et al., <em>Workplace coaching: a meta-analysis</em> (2023)</a><a id="source-3" href="https://coachingfederation.org/blog/coaching-statistics-the-roi-of-coaching-in-2024/" target="_blank" rel="noreferrer">[3] International Coaching Federation, <em>Coaching Statistics: The ROI of Coaching</em> (2024)</a><a id="source-4" href="https://coachingfederation.org/blog/the-roi-of-coaching-why-its-worth-the-investment/" target="_blank" rel="noreferrer">[4] International Coaching Federation, <em>The ROI of Coaching: Why It’s Worth the Investment</em> (2026)</a></div><a className="ti-footer__top" href="#top">Back to top ↑</a></div></footer>
     </main>
   );
 }
