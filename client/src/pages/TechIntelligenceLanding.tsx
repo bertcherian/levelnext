@@ -4,7 +4,7 @@ import { calculateTechGapCost } from "../../../shared/modules/techIntelligenceCa
 import "./techIntelligenceLanding.css";
 import "./techIntelligenceEnhancements.css";
 
-const LEVELNEXT_LOGO_URL = "/manus-storage/levelnext-tech-intelligence-logo_dfe8f8e6.png";
+const LEVELNEXT_LOGO_URL = "/manus-storage/levelnext-logo-supplied_39366b94.png";
 
 const GAP_SCENARIOS = [
   {

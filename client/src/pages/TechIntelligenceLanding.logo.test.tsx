@@ -14,7 +14,7 @@ describe("Tech Intelligence landing branding", () => {
 
     expect(logos).toHaveLength(2);
     for (const logo of logos) {
-      expect(logo.getAttribute("src")).toBe("/manus-storage/levelnext-tech-intelligence-logo_dfe8f8e6.png");
+      expect(logo.getAttribute("src")).toBe("/manus-storage/levelnext-logo-supplied_39366b94.png");
       expect(logo.getAttribute("src")).not.toBe("/logo.png");
     }
   });
