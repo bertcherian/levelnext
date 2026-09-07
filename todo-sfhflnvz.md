@@ -12,3 +12,6 @@
 - [x] Set the yellow Tech Intelligence hero CTA’s foreground to black for sufficient contrast.
 - [x] Increase the Tech Intelligence hero privacy note and graphic-caption text while retaining responsive readability.
 - [x] Add targeted style regression coverage, verify desktop and mobile rendering, and publish the improvements.
+- [x] Increase the visible stroke weight and contrast of the Tech Intelligence concentric rings.
+- [x] Add a subtle staggered ring animation that respects reduced-motion preferences.
+- [x] Add regression coverage, verify desktop and mobile rendering, and publish the visual enhancement.
