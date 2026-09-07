@@ -7,15 +7,15 @@ import TechIntelligenceLanding from "./TechIntelligenceLanding";
 afterEach(cleanup);
 
 describe("Tech Intelligence landing branding", () => {
-  it("uses the transparent LevelNext logo in both public-facing brand placements", () => {
+  it("uses the production-safe bundled LevelNext logo in both public-facing brand placements", () => {
     render(createElement(TechIntelligenceLanding));
 
     const logos = screen.getAllByAltText("LevelNext");
 
     expect(logos).toHaveLength(2);
     for (const logo of logos) {
-      expect(logo.getAttribute("src")).toBe("/manus-storage/levelnext-logo-supplied_39366b94.png");
-      expect(logo.getAttribute("src")).not.toBe("/logo.png");
+      expect(logo.getAttribute("src")).toBe("/logo.png");
+      expect(logo.getAttribute("src")).not.toBe("/manus-storage/levelnext-logo-supplied_39366b94.png");
     }
   });
 });
