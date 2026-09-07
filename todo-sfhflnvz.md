@@ -9,3 +9,6 @@
 - [x] Save a published checkpoint for the live landing-page logo correction.
 - [x] Replace the production-unreliable static-storage image URL with the bundled LevelNext logo path on Tech Intelligence.
 - [x] Verify the final published header logo has non-zero intrinsic dimensions and save the corrected checkpoint.
+- [x] Set the yellow Tech Intelligence hero CTA’s foreground to black for sufficient contrast.
+- [x] Increase the Tech Intelligence hero privacy note and graphic-caption text while retaining responsive readability.
+- [x] Add targeted style regression coverage, verify desktop and mobile rendering, and publish the improvements.
