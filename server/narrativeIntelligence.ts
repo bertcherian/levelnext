@@ -1166,6 +1166,87 @@ export async function getParticipantPrivacyActivity(userId: number) {
   }));
 }
 
+// ── 15. Success Partner Cohort Consent Overview ─────────────────────────────────
+
+export async function getSuccessPartnerCohortConsentOverview(partnerUserId: number, partnerRole: string) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+  const visibleIds = partnerRole === "admin"
+    ? (await db.select({ id: users.id }).from(users).where(eq(users.role, "user"))).map((user) => user.id)
+    : (await db
+        .select({ managedUserId: spAssignments.managedUserId })
+        .from(spAssignments)
+        .where(eq(spAssignments.spUserId, partnerUserId)))
+        .map((assignment) => assignment.managedUserId);
+
+  if (visibleIds.length === 0) {
+    return { summary: { total: 0, active: 0, limited: 0, private: 0 }, participants: [] };
+  }
+
+  const visibleUsers = await db
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .where(inArray(users.id, visibleIds));
+
+  const participants = await Promise.all(
+    visibleUsers.map(async (participant) => {
+      const [grant] = await db
+        .select({
+          status: niSharingGrants.status,
+          updatedAt: niSharingGrants.updatedAt,
+          shareNextChapter: niSharingGrants.shareNextChapter,
+          shareBehaviours: niSharingGrants.shareBehaviours,
+          shareExperimentCount: niSharingGrants.shareExperimentCount,
+          shareEvidenceSummary: niSharingGrants.shareEvidenceSummary,
+        })
+        .from(niSharingGrants)
+        .where(
+          and(
+            eq(niSharingGrants.userId, participant.id),
+            eq(niSharingGrants.recipientRole, "success_partner"),
+          ),
+        )
+        .orderBy(desc(niSharingGrants.updatedAt))
+        .limit(1);
+
+      const isActive = grant?.status === "active";
+      const sharedSectionCount = grant
+        ? [grant.shareNextChapter, grant.shareBehaviours, grant.shareExperimentCount, grant.shareEvidenceSummary].filter(Boolean).length
+        : 0;
+      const state = !isActive ? "private" as const : sharedSectionCount === 4 ? "active" as const : "limited" as const;
+
+      return {
+        participant: { id: participant.id, name: participant.name, email: participant.email },
+        state,
+        grantUpdatedAt: grant?.updatedAt ?? null,
+        sharedSectionCount,
+        sharedSections: grant
+          ? {
+              nextChapter: grant.shareNextChapter,
+              commitments: grant.shareBehaviours,
+              experimentCounts: grant.shareExperimentCount,
+              evidenceSummary: grant.shareEvidenceSummary,
+            }
+          : { nextChapter: false, commitments: false, experimentCounts: false, evidenceSummary: false },
+      };
+    }),
+  );
+
+  return {
+    summary: {
+      total: participants.length,
+      active: participants.filter((participant) => participant.state === "active").length,
+      limited: participants.filter((participant) => participant.state === "limited").length,
+      private: participants.filter((participant) => participant.state === "private").length,
+    },
+    participants: participants.sort((a, b) => {
+      const order = { limited: 0, private: 1, active: 2 } as const;
+      return order[a.state] - order[b.state] || (a.participant.name ?? a.participant.email ?? "").localeCompare(b.participant.name ?? b.participant.email ?? "");
+    }),
+  };
+}
+
 // ── 12. Simulator & Practice Evidence Adapters ──────────────────────────────────
 
 export async function logSimulatorEvidenceIfApplicable(

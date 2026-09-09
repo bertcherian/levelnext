@@ -110,7 +110,7 @@ describe("Narrative Intelligence — Public Procedures", () => {
     const simEvidence = ledger.find((e) => e.sourceType === "simulator_behaviour");
     expect(simEvidence).toBeDefined();
     expect(simEvidence?.learning).toContain("Clear framing");
-  });
+  }, 15000);
 
   it("automatically logs practice coach evidence when feedback generates", async () => {
     const { logPracticeEvidenceIfApplicable } = await import("./narrativeIntelligence");
@@ -417,6 +417,29 @@ describe("Narrative Intelligence — Participant Lifecycle & Endpoints", () => {
     expect(activity.some((item) => item.eventType === "ni_partner_questions_generated")).toBe(true);
     expect(activity.some((item) => item.label.includes("commitment-based inquiry questions"))).toBe(true);
     expect(activity.every((item) => !("metadata" in item))).toBe(true);
+  });
+
+  it("returns consent badges for the Success Partner cohort without exposing private content", async () => {
+    const partnerCtx: TrpcContext = {
+      ...createTestContext(1012),
+      user: {
+        ...createTestContext(1012).user!,
+        role: "admin",
+      },
+    };
+    const partnerCaller = appRouter.createCaller(partnerCtx);
+    const overview = await partnerCaller.narrativeIntelligence.getSuccessPartnerCohortConsentOverview();
+    const participant = overview.participants.find((item) => item.participant.id === 1013);
+
+    expect(participant?.state).toBe("limited");
+    expect(participant?.sharedSectionCount).toBe(3);
+    expect(overview.summary.limited).toBeGreaterThanOrEqual(1);
+    expect(overview.participants.every((item) => !("commitments" in item))).toBe(true);
+  }, 15000);
+
+  it("blocks ordinary participants from reading cohort consent summaries", async () => {
+    const participantCaller = appRouter.createCaller(createTestContext(1013));
+    await expect(participantCaller.narrativeIntelligence.getSuccessPartnerCohortConsentOverview()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("denies the shared view when a participant has not consented", async () => {

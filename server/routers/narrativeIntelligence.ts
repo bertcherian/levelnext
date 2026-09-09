@@ -46,6 +46,7 @@ import {
   getSuccessPartnerSharedView,
   generateSuccessPartnerInquiryQuestions,
   getParticipantPrivacyActivity,
+  getSuccessPartnerCohortConsentOverview,
 } from "../narrativeIntelligence";
 import { getDb } from "../db";
 import { niNarratives, niOperatingProfiles, niExperiments, niEvidence, niSharingGrants } from "../../drizzle/schema";
@@ -210,4 +211,8 @@ export const narrativeIntelligenceRouter = router({
     .mutation(({ ctx, input }) => generateSuccessPartnerInquiryQuestions(ctx.user.id, input.participantUserId, input.focus)),
 
   getPrivacyActivity: protectedProcedure.query(({ ctx }) => getParticipantPrivacyActivity(ctx.user.id)),
+
+  getSuccessPartnerCohortConsentOverview: successPartnerProcedure.query(({ ctx }) =>
+    getSuccessPartnerCohortConsentOverview(ctx.user.id, ctx.user.role),
+  ),
 });

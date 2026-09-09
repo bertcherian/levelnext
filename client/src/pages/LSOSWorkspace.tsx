@@ -34,6 +34,18 @@ type ManagerHealth = {
   daysSinceActive: number;
 };
 
+type ConsentState = "active" | "limited" | "private";
+type ConsentParticipant = {
+  participant: { id: number; name: string | null; email: string | null };
+  state: ConsentState;
+  grantUpdatedAt: Date | null;
+  sharedSectionCount: number;
+};
+type CohortConsentOverview = {
+  summary: { total: number; active: number; limited: number; private: number };
+  participants: ConsentParticipant[];
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const CHANNEL_ICONS: Record<string, string> = {
   call: "📞", whatsapp: "💬", email: "✉️", voice_note: "🎙️", in_person: "🤝",
@@ -172,7 +184,7 @@ function MissionCard({ mission, managerName, onComplete }: {
   );
 }
 
-function ManagerHealthCard({ mh, onClick, onNarrative }: { mh: ManagerHealth; onClick: () => void; onNarrative: () => void }) {
+function ManagerHealthCard({ mh, consent, onClick, onNarrative }: { mh: ManagerHealth; consent?: ConsentParticipant; onClick: () => void; onNarrative: () => void }) {
   return (
     <div
       onClick={onClick}
@@ -183,6 +195,7 @@ function ManagerHealthCard({ mh, onClick, onNarrative }: { mh: ManagerHealth; on
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-slate-900 text-sm truncate">{mh.manager.name ?? "Unknown"}</p>
           <p className="text-xs text-slate-500">{mh.lhs.zone}</p>
+          {consent && <ConsentBadge state={consent.state} compact />}
           {mh.latestReport && (
             <p className="text-xs text-slate-400 truncate">{mh.latestReport.archetype ?? mh.latestReport.moduleType}</p>
           )}
@@ -210,6 +223,49 @@ function ManagerHealthCard({ mh, onClick, onNarrative }: { mh: ManagerHealth; on
         View consented Narrative summary
       </Button>
 </div>
+  );
+}
+
+function ConsentBadge({ state, compact = false }: { state: ConsentState; compact?: boolean }) {
+  const metadata = {
+    active: { label: "Sharing active", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+    limited: { label: "Sharing limited", className: "border-amber-200 bg-amber-50 text-amber-700" },
+    private: { label: "Private", className: "border-slate-200 bg-slate-50 text-slate-500" },
+  }[state];
+
+  return (
+    <Badge variant="outline" className={`${compact ? "mt-1 text-[10px] px-1.5 py-0" : "text-xs"} ${metadata.className}`}>
+      <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${state === "active" ? "bg-emerald-500" : state === "limited" ? "bg-amber-500" : "bg-slate-400"}`} />
+      {metadata.label}
+    </Badge>
+  );
+}
+
+function CohortConsentOverview({ overview }: { overview: CohortConsentOverview }) {
+  return (
+    <div className="mx-auto max-w-6xl border-b border-slate-100 bg-white px-4 py-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Narrative Intelligence Consent</p>
+          <p className="mt-1 text-xs text-slate-400">Assignment-scoped visibility of participant-approved development context.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <ConsentBadge state="active" />
+          <span className="text-sm font-semibold text-emerald-700">{overview.summary.active}</span>
+          <ConsentBadge state="limited" />
+          <span className="text-sm font-semibold text-amber-700">{overview.summary.limited}</span>
+          <ConsentBadge state="private" />
+          <span className="text-sm font-semibold text-slate-500">{overview.summary.private}</span>
+        </div>
+      </div>
+      {overview.summary.total > 0 && (
+        <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-slate-100" title="Cohort consent distribution">
+          {overview.summary.active > 0 && <div className="bg-emerald-500" style={{ width: `${(overview.summary.active / overview.summary.total) * 100}%` }} />}
+          {overview.summary.limited > 0 && <div className="bg-amber-400" style={{ width: `${(overview.summary.limited / overview.summary.total) * 100}%` }} />}
+          {overview.summary.private > 0 && <div className="bg-slate-300" style={{ width: `${(overview.summary.private / overview.summary.total) * 100}%` }} />}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -394,6 +450,9 @@ export default function LSOSWorkspace() {
   const { data, isLoading, refetch } = trpc.lsos.getWorkspaceData.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
+  const { data: consentOverview } = trpc.narrativeIntelligence.getSuccessPartnerCohortConsentOverview.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
 
   const generateMissions = trpc.lsos.generateMissions.useMutation({
     onSuccess: (result) => {
@@ -428,6 +487,7 @@ export default function LSOSWorkspace() {
   }
 
   const { managerHealth = [], pendingMissions = [], todayBrief, cohortSummary } = data ?? {};
+  const consentByParticipantId = new Map((consentOverview?.participants ?? []).map((item) => [item.participant.id, item]));
 
   // Build manager name lookup
   const managerMap = Object.fromEntries(managerHealth.map((m) => [m.manager.id, m.manager.name ?? "Unknown"]));
@@ -473,6 +533,7 @@ export default function LSOSWorkspace() {
             pendingMissions={pendingMissions}
           />
         )}
+        {consentOverview && <CohortConsentOverview overview={consentOverview} />}
 
         {/* Tabs */}
         <div className="max-w-6xl mx-auto px-4 flex gap-1 border-t border-slate-100">
@@ -572,6 +633,7 @@ export default function LSOSWorkspace() {
                   <ManagerHealthCard
                     key={mh.manager.id}
                     mh={mh as ManagerHealth}
+                    consent={consentByParticipantId.get(mh.manager.id)}
                     onClick={() => navigate(`/admin/success-partner/brief/${mh.manager.id}`)}
                     onNarrative={() => navigate(`/admin/success-partner/narrative/${mh.manager.id}`)}
                   />
