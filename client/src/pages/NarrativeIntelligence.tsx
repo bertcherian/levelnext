@@ -656,7 +656,7 @@ export default function NarrativeIntelligence() {
                     <Compass className="w-4 h-4 text-[#D4AF37]" />
                     Developmental Pattern Library (Non-Diagnostic Reference)
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-sm text-slate-300 leading-relaxed">
                     Recognising common career transition dynamics without putting people in boxes.
                   </p>
                 </div>
@@ -667,7 +667,7 @@ export default function NarrativeIntelligence() {
                   <div key={pattern.id} className="bg-slate-950/70 p-3.5 rounded-lg border border-slate-800 space-y-1.5">
                     <div className="text-xs font-semibold text-white">{pattern.archetypeTitle}</div>
                     <div className="text-[11px] text-[#D4AF37] italic font-serif">{pattern.characteristicVoice}</div>
-                    <div className="text-[11px] text-slate-400 line-clamp-3 mt-1">{pattern.safeExplorationPrompt}</div>
+                    <div className="text-sm text-slate-200 leading-relaxed line-clamp-4 mt-1">{pattern.safeExplorationPrompt}</div>
                   </div>
                 ))}
               </div>
