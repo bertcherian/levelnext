@@ -6,7 +6,7 @@
  * 90-second resets, and privacy-preserving audit logging.
  */
 
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "./db";
@@ -21,6 +21,7 @@ import {
   mepDiagnosticResults,
   icAuditEvents,
   users,
+  spAssignments,
   type NiOperatingProfile,
   type NiNarrative,
   type NiExperiment,
@@ -898,6 +899,129 @@ export async function saveSharingGrant(
   });
 
   return created;
+}
+
+// ── 12. Consent-Gated Success Partner Shared View ───────────────────────────────
+
+/**
+ * Return only the participant-approved Narrative Intelligence summary for an
+ * authenticated Success Partner. Raw narratives, reflections, evidence text,
+ * predictions, and private reset content are deliberately excluded.
+ */
+export async function getSuccessPartnerSharedView(partnerUserId: number, participantUserId: number) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+  const [participant] = await db
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, participantUserId))
+    .limit(1);
+  if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant not found" });
+
+  const [assignment] = await db
+    .select({ id: spAssignments.id })
+    .from(spAssignments)
+    .where(and(eq(spAssignments.spUserId, partnerUserId), eq(spAssignments.managedUserId, participantUserId)))
+    .limit(1);
+  if (!assignment) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "You are not assigned to this participant." });
+  }
+
+  const [grant] = await db
+    .select()
+    .from(niSharingGrants)
+    .where(
+      and(
+        eq(niSharingGrants.userId, participantUserId),
+        eq(niSharingGrants.recipientRole, "success_partner"),
+        eq(niSharingGrants.status, "active"),
+        or(isNull(niSharingGrants.recipientUserId), eq(niSharingGrants.recipientUserId, partnerUserId)),
+      )
+    )
+    .orderBy(desc(niSharingGrants.updatedAt))
+    .limit(1);
+
+  if (!grant) {
+    await logNarrativeAuditEvent({
+      actorUserId: partnerUserId,
+      subjectUserId: participantUserId,
+      eventType: "ni_shared_view_denied",
+      resourceType: "ni_shared_view",
+      authorizationResult: "denied",
+      metadata: { recipientRole: "success_partner" },
+    });
+    throw new TRPCError({ code: "FORBIDDEN", message: "The participant has not enabled this shared view." });
+  }
+
+  const [profile] = await db
+    .select({
+      toIdentity: niOperatingProfiles.toIdentity,
+      emergingAssumption: niOperatingProfiles.emergingAssumption,
+      commitments: niOperatingProfiles.commitments,
+      currentWeek: niOperatingProfiles.currentWeek,
+      evidenceCount: niOperatingProfiles.evidenceCount,
+      lastActivityAt: niOperatingProfiles.lastActivityAt,
+    })
+    .from(niOperatingProfiles)
+    .where(eq(niOperatingProfiles.userId, participantUserId))
+    .limit(1);
+
+  const experiments = await db
+    .select({ status: niExperiments.status })
+    .from(niExperiments)
+    .where(eq(niExperiments.userId, participantUserId));
+
+  const completedExperimentCount = experiments.filter((experiment) => experiment.status === "completed").length;
+  const plannedExperimentCount = experiments.filter((experiment) => experiment.status === "planned" || experiment.status === "in_progress").length;
+
+  await logNarrativeAuditEvent({
+    actorUserId: partnerUserId,
+    subjectUserId: participantUserId,
+    eventType: "ni_shared_view_opened",
+    resourceType: "ni_shared_view",
+    authorizationResult: "allowed",
+    metadata: {
+      grantId: grant.id,
+      shareNextChapter: grant.shareNextChapter,
+      shareBehaviours: grant.shareBehaviours,
+      shareExperimentCount: grant.shareExperimentCount,
+    },
+  });
+
+  return {
+    participant: { id: participant.id, name: participant.name, email: participant.email },
+    consent: {
+      grantId: grant.id,
+      updatedAt: grant.updatedAt,
+      shareNextChapter: grant.shareNextChapter,
+      shareBehaviours: grant.shareBehaviours,
+      shareExperimentCount: grant.shareExperimentCount,
+      shareSupportRequest: grant.shareSupportRequest,
+    },
+    nextChapter: grant.shareNextChapter
+      ? { toIdentity: profile?.toIdentity ?? null, emergingAssumption: profile?.emergingAssumption ?? null }
+      : null,
+    commitments: grant.shareBehaviours ? (profile?.commitments ?? []) : [],
+    experimentCounts: grant.shareExperimentCount
+      ? {
+          total: experiments.length,
+          completed: completedExperimentCount,
+          planned: plannedExperimentCount,
+          evidenceCount: profile?.evidenceCount ?? 0,
+        }
+      : null,
+    progress: {
+      currentWeek: profile?.currentWeek ?? 1,
+      lastActivityAt: profile?.lastActivityAt ?? null,
+    },
+    privacy: {
+      rawNarrativesIncluded: false,
+      reflectionTextIncluded: false,
+      evidenceTextIncluded: false,
+      privateResetLogsIncluded: false,
+    },
+  };
 }
 
 // ── 12. Simulator & Practice Evidence Adapters ──────────────────────────────────

@@ -16,7 +16,7 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router, successPartnerProcedure } from "../_core/trpc";
 import {
   CURATED_ROLE_TRANSITIONS,
   NARRATIVE_LENSES,
@@ -43,6 +43,7 @@ import {
   runNarrativeReset,
   getDashboardPayload,
   saveSharingGrant,
+  getSuccessPartnerSharedView,
 } from "../narrativeIntelligence";
 import { getDb } from "../db";
 import { niNarratives, niOperatingProfiles, niExperiments, niEvidence, niSharingGrants } from "../../drizzle/schema";
@@ -193,4 +194,12 @@ export const narrativeIntelligenceRouter = router({
       .where(eq(niSharingGrants.userId, ctx.user.id))
       .orderBy(desc(niSharingGrants.updatedAt));
   }),
+
+  /**
+   * Success Partner-only, participant-consented summary. The service enforces
+   * both active assignment and an active participant sharing grant.
+   */
+  getSuccessPartnerSharedView: successPartnerProcedure
+    .input(z.object({ participantUserId: z.number().int().positive() }))
+    .query(({ ctx, input }) => getSuccessPartnerSharedView(ctx.user.id, input.participantUserId)),
 });

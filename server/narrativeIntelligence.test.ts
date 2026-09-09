@@ -320,4 +320,105 @@ describe("Narrative Intelligence — Participant Lifecycle & Endpoints", () => {
     expect(dashboard.currentRoleTransition).toBeDefined();
     expect(dashboard.currentRoleTransition.module).toBe("manager");
   });
+
+  it("blocks ordinary participants from opening the Success Partner shared view", async () => {
+    const ctx = createTestContext(1011);
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.narrativeIntelligence.getSuccessPartnerSharedView({ participantUserId: 1001 }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("serves only approved commitments and experiment counts to an assigned partner", async () => {
+    const { getDb } = await import("./db");
+    const { spAssignments, users } = await import("../drizzle/schema");
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+
+    const partnerId = 1012;
+    const participantId = 1013;
+
+    await db.insert(users).values([
+      { id: partnerId, openId: `sp-${partnerId}`, name: "Success Partner Test", email: "sp@example.com", role: "user" },
+      { id: participantId, openId: `participant-${participantId}`, name: "Participant Test", email: "participant@example.com", role: "user" },
+    ]).onDuplicateKeyUpdate({ set: { lastSignedIn: new Date() } });
+
+    await db.insert(spAssignments).values({
+      spUserId: partnerId,
+      managedUserId: participantId,
+    });
+
+    const participantCtx = createTestContext(participantId);
+    const participantCaller = appRouter.createCaller(participantCtx);
+
+    await participantCaller.narrativeIntelligence.chooseNextChapter({
+      transitionId: "mep_expert_to_enabler",
+      fromIdentity: "The Technical Problem Solver",
+      toIdentity: "The Capability Multiplier",
+      emergingAssumption: "My value increasingly comes from creating capability and problem-solving capacity in my team.",
+      commitments: ["Ask 3 coaching questions before answering."],
+    });
+
+    await participantCaller.narrativeIntelligence.saveSharingGrant({
+      recipientRole: "success_partner",
+      shareNextChapter: true,
+      shareBehaviours: true,
+      shareExperimentCount: true,
+      shareEvidenceSummary: false,
+      shareSupportRequest: "Ask me about my coaching questions on Friday.",
+    });
+
+    const partnerCtx: TrpcContext = {
+      ...createTestContext(partnerId),
+      user: {
+        ...createTestContext(partnerId).user!,
+        role: "admin", // Admin bypasses procedure role gate while exercising the assignment query
+      },
+    };
+    const partnerCaller = appRouter.createCaller(partnerCtx);
+
+    const shared = await partnerCaller.narrativeIntelligence.getSuccessPartnerSharedView({
+      participantUserId: participantId,
+    });
+
+    expect(shared.nextChapter?.toIdentity).toBe("The Capability Multiplier");
+    expect(shared.commitments).toContain("Ask 3 coaching questions before answering.");
+    expect(shared.experimentCounts?.total).toBe(0);
+    expect(shared.consent.shareSupportRequest).toContain("coaching questions");
+    expect(shared.privacy.rawNarrativesIncluded).toBe(false);
+  }, 15000);
+
+  it("denies the shared view when a participant has not consented", async () => {
+    const { getDb } = await import("./db");
+    const { spAssignments, users } = await import("../drizzle/schema");
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+
+    const partnerId = 1014;
+    const participantId = 1015;
+
+    await db.insert(users).values([
+      { id: partnerId, openId: `sp-${partnerId}`, name: "Success Partner Without Consent", email: "sp2@example.com", role: "user" },
+      { id: participantId, openId: `participant-${participantId}`, name: "Unconsented Participant", email: "p2@example.com", role: "user" },
+    ]).onDuplicateKeyUpdate({ set: { lastSignedIn: new Date() } });
+
+    await db.insert(spAssignments).values({
+      spUserId: partnerId,
+      managedUserId: participantId,
+    });
+
+    const partnerCtx: TrpcContext = {
+      ...createTestContext(partnerId),
+      user: {
+        ...createTestContext(partnerId).user!,
+        role: "admin",
+      },
+    };
+    const partnerCaller = appRouter.createCaller(partnerCtx);
+
+    await expect(
+      partnerCaller.narrativeIntelligence.getSuccessPartnerSharedView({ participantUserId: participantId }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
 });

@@ -172,7 +172,7 @@ function MissionCard({ mission, managerName, onComplete }: {
   );
 }
 
-function ManagerHealthCard({ mh, onClick }: { mh: ManagerHealth; onClick: () => void }) {
+function ManagerHealthCard({ mh, onClick, onNarrative }: { mh: ManagerHealth; onClick: () => void; onNarrative: () => void }) {
   return (
     <div
       onClick={onClick}
@@ -193,12 +193,23 @@ function ManagerHealthCard({ mh, onClick }: { mh: ManagerHealth; onClick: () => 
               {mh.daysSinceActive}d inactive
             </span>
           )}
-          {mh.activeCommitment && (
-            <p className="text-xs text-slate-400 mt-1 max-w-[100px] truncate">{mh.activeCommitment.text}</p>
-          )}
-        </div>
-      </div>
+      {mh.activeCommitment && (
+        <p className="text-xs text-slate-400 mt-1 max-w-[100px] truncate">{mh.activeCommitment.text}</p>
+      )}
     </div>
+  </div>
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-3 w-full border-[#D4AF37]/50 text-xs text-[#0A1A2F] hover:bg-[#D4AF37]/10"
+        onClick={(event) => {
+          event.stopPropagation();
+          onNarrative();
+        }}
+      >
+        View consented Narrative summary
+      </Button>
+</div>
   );
 }
 
@@ -562,6 +573,7 @@ export default function LSOSWorkspace() {
                     key={mh.manager.id}
                     mh={mh as ManagerHealth}
                     onClick={() => navigate(`/admin/success-partner/brief/${mh.manager.id}`)}
+                    onNarrative={() => navigate(`/admin/success-partner/narrative/${mh.manager.id}`)}
                   />
                 ))}
               </div>

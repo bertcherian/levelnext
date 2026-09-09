@@ -82,6 +82,7 @@ const NegotiationIntelligence = lazy(() => import("@/pages/NegotiationIntelligen
 const OrgIntelligence = lazy(() => import("@/pages/OrgIntelligence"));
 const MEPLayout = lazy(() => import("@/components/MEPLayout"));
 const CoachPortal = lazy(() => import("@/pages/CoachPortal"));
+const SuccessPartnerNarrativeView = lazy(() => import("@/pages/SuccessPartnerNarrativeView"));
 const AdminCoachManagement = lazyWithRouteRecovery(() => import("@/pages/AdminCoachManagement"), "admin-coaches");
 const AdminSuccessPartners = lazyWithRouteRecovery(() => import("@/pages/AdminSuccessPartners"), "admin-success-partners");
 const MEPLeaderDocuments = lazy(() => import("@/pages/mep/MEPLeaderDocuments"));
@@ -314,6 +315,7 @@ function Router() {
       <Route path="/next-chapter/portfolio" component={NextChapterPortfolio} />
       <Route path="/next-chapter/identity-assessment" component={IdentityClarityAssessment} />
       <Route path="/coach" component={CoachPortal} />
+      <Route path="/admin/success-partner/narrative/:participantUserId" component={SuccessPartnerNarrativeView} />
       <Route path="/career-landing" component={CareerLanding} />
       <Route path="/career-intelligence" component={CareerLanding} />
       <Route path="/career-investment" component={CareerInvestment} />
