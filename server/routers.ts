@@ -72,6 +72,7 @@ import { criticalThinkingRouter } from "./routers/criticalThinking";
 import { clientTelemetryRouter } from "./routers/clientTelemetry";
 import { engineeringIntelligenceRouter } from "./routers/engineeringIntelligence";
 import { engineeringAdminRouter } from "./routers/engineeringAdmin";
+import { narrativeIntelligenceRouter } from "./routers/narrativeIntelligence";
 
 export const appRouter = router({
   system: systemRouter,
@@ -153,6 +154,7 @@ export const appRouter = router({
   clientTelemetry: clientTelemetryRouter,
   engineering: engineeringIntelligenceRouter,
   engineeringAdmin: engineeringAdminRouter,
+  narrativeIntelligence: narrativeIntelligenceRouter,
 });
 
 export type AppRouter = typeof appRouter;

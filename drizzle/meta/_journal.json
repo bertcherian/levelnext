@@ -603,6 +603,13 @@
       "when": 1788176048674,
       "tag": "0085_bouncy_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "5",
+      "when": 1788932982591,
+      "tag": "0086_right_stark_industries",
+      "breakpoints": true
     }
   ]
 }

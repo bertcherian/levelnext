@@ -804,6 +804,13 @@ export const practiceRouter = router({
         .set({ status: "feedback" })
         .where(eq(practiceSessions.id, attempt.sessionId));
 
+      try {
+        const { logPracticeEvidenceIfApplicable } = await import("../narrativeIntelligence");
+        await logPracticeEvidenceIfApplicable(ctx.user.id, input.attemptId, scenario.conversationType || "Practice Conversation", feedback);
+      } catch (bridgeErr) {
+        console.warn("[NarrativePracticeBridge] Failed to record practice evidence:", bridgeErr);
+      }
+
       return { feedback, attemptId: input.attemptId };
     }),
 

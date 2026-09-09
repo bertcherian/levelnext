@@ -8,4 +8,11 @@ describe("Manager Effectiveness navigation", () => {
       href: "/onboard?returnTo=/manager",
     }));
   });
+
+  it("provides a direct entry point for Narrative Intelligence", () => {
+    expect(MEP_NAV_ITEMS).toContainEqual(expect.objectContaining({
+      label: "Narrative",
+      href: "/manager/narrative",
+    }));
+  });
 });

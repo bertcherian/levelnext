@@ -3671,3 +3671,202 @@ export const eiPromptEvaluationRuns = mysqlTable("ei_prompt_evaluation_runs", {
   foreignKey({ columns: [table.runByUserId], foreignColumns: [users.id], name: "ei_prompt_eval_runs_run_by_fk" }),
 ]);
 export type EiPromptEvaluationRun = typeof eiPromptEvaluationRuns.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NARRATIVE INTELLIGENCE™ — Shared Development Intelligence Schema
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const niOperatingProfiles = mysqlTable(
+  "ni_operating_profiles",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    currentRole: varchar("currentRole", { length: 180 }),
+    currentRoleTransition: varchar("currentRoleTransition", { length: 180 }),
+    fromIdentity: varchar("fromIdentity", { length: 180 }),
+    toIdentity: varchar("toIdentity", { length: 180 }),
+    emergingAssumption: text("emergingAssumption"),
+    commitments: json("commitments").$type<string[]>(),
+    futureSelfNarrative: text("futureSelfNarrative"),
+    status: mysqlEnum("status", ["onboarding", "active", "completed", "refreshed"]).default("active").notNull(),
+    currentWeek: int("currentWeek").default(1).notNull(),
+    completedWeeks: json("completedWeeks").$type<number[]>(),
+    activeNarrativeCount: int("activeNarrativeCount").default(0).notNull(),
+    experimentCount: int("experimentCount").default(0).notNull(),
+    evidenceCount: int("evidenceCount").default(0).notNull(),
+    lastActivityAt: timestamp("lastActivityAt").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("ni_profiles_user_uq").on(table.userId),
+    index("ni_profiles_tenant_user_idx").on(table.tenantId, table.userId),
+  ]
+);
+export type NiOperatingProfile = typeof niOperatingProfiles.$inferSelect;
+export type InsertNiOperatingProfile = typeof niOperatingProfiles.$inferInsert;
+
+export const niNarratives = mysqlTable(
+  "ni_narratives",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    profileId: int("profileId").notNull().references(() => niOperatingProfiles.id),
+    userId: int("userId").notNull().references(() => users.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    category: mysqlEnum("category", ["self", "relational", "work_world", "future"]).notNull(),
+    statement: text("statement").notNull(),
+    status: mysqlEnum("status", ["keep", "expand", "test", "retire", "create"]).default("test").notNull(),
+    sourceModule: varchar("sourceModule", { length: 50 }).default("mep").notNull(),
+    participantResonance: mysqlEnum("participantResonance", [
+      "strongly_resonates",
+      "partly_resonates",
+      "does_not_resonate",
+      "explore",
+      "edit",
+      "dismiss",
+    ]).default("explore").notNull(),
+    participantReflection: text("participantReflection"),
+    historicalStrength: text("historicalStrength"),
+    currentCost: text("currentCost"),
+    emergingAssumption: text("emergingAssumption"),
+    convictionScore: int("convictionScore"),
+    isHighPriority: boolean("isHighPriority").default(false).notNull(),
+    factDescription: text("factDescription"),
+    storyInterpretation: text("storyInterpretation"),
+    predictionMade: text("predictionMade"),
+    evidenceFor: json("evidenceFor").$type<string[]>(),
+    evidenceAgainst: json("evidenceAgainst").$type<string[]>(),
+    exceptionHunt: text("exceptionHunt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("ni_narratives_profile_idx").on(table.profileId, table.status),
+    index("ni_narratives_user_idx").on(table.userId, table.status),
+  ]
+);
+export type NiNarrative = typeof niNarratives.$inferSelect;
+export type InsertNiNarrative = typeof niNarratives.$inferInsert;
+
+export const niExperiments = mysqlTable(
+  "ni_experiments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    profileId: int("profileId").notNull().references(() => niOperatingProfiles.id),
+    narrativeId: int("narrativeId").notNull().references(() => niNarratives.id),
+    userId: int("userId").notNull().references(() => users.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    title: varchar("title", { length: 255 }).notNull(),
+    contextSituation: text("contextSituation").notNull(),
+    oldAssumption: text("oldAssumption").notNull(),
+    alternativeHypothesis: text("alternativeHypothesis").notNull(),
+    behaviourToTest: text("behaviourToTest").notNull(),
+    predictedOutcome: text("predictedOutcome").notNull(),
+    predictedProbability: int("predictedProbability").default(70).notNull(),
+    experimentType: mysqlEnum("experimentType", ["real_world", "simulator", "practice"]).default("real_world").notNull(),
+    status: mysqlEnum("status", ["planned", "in_progress", "completed", "cancelled"]).default("planned").notNull(),
+    targetDate: timestamp("targetDate"),
+    actualOutcome: text("actualOutcome"),
+    whatRealityTaught: text("whatRealityTaught"),
+    narrativeImpact: mysqlEnum("narrativeImpact", [
+      "strongly_challenged",
+      "partly_challenged",
+      "confirmed_old",
+      "inconclusive",
+    ]),
+    convictionShiftOld: int("convictionShiftOld"),
+    convictionShiftEmerging: int("convictionShiftEmerging"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("ni_experiments_user_status_idx").on(table.userId, table.status),
+    index("ni_experiments_narrative_idx").on(table.narrativeId),
+  ]
+);
+export type NiExperiment = typeof niExperiments.$inferSelect;
+export type InsertNiExperiment = typeof niExperiments.$inferInsert;
+
+export const niEvidence = mysqlTable(
+  "ni_evidence",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    profileId: int("profileId").notNull().references(() => niOperatingProfiles.id),
+    narrativeId: int("narrativeId").references(() => niNarratives.id),
+    experimentId: int("experimentId").references(() => niExperiments.id),
+    userId: int("userId").notNull().references(() => users.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    sourceType: mysqlEnum("sourceType", [
+      "self_report",
+      "simulator_behaviour",
+      "practice_attempt",
+      "real_world_outcome",
+      "stakeholder_feedback",
+    ]).notNull(),
+    sourceReferenceId: int("sourceReferenceId"),
+    situation: text("situation").notNull(),
+    trigger: varchar("trigger", { length: 255 }),
+    oldPrediction: text("oldPrediction"),
+    actionTaken: text("actionTaken").notNull(),
+    outcome: text("outcome").notNull(),
+    learning: text("learning").notNull(),
+    identityImplication: text("identityImplication"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("ni_evidence_profile_idx").on(table.profileId, table.sourceType),
+    index("ni_evidence_user_idx").on(table.userId, table.createdAt),
+  ]
+);
+export type NiEvidence = typeof niEvidence.$inferSelect;
+export type InsertNiEvidence = typeof niEvidence.$inferInsert;
+
+export const niResetLogs = mysqlTable(
+  "ni_reset_logs",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    triggerSituation: text("triggerSituation").notNull(),
+    noticeStory: text("noticeStory").notNull(),
+    separateFacts: text("separateFacts").notNull(),
+    alternativeView: text("alternativeView").notNull(),
+    chosenAssumption: text("chosenAssumption").notNull(),
+    immediateAction: text("immediateAction").notNull(),
+    savedAsEvidence: boolean("savedAsEvidence").default(false).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("ni_reset_user_idx").on(table.userId, table.createdAt),
+  ]
+);
+export type NiResetLog = typeof niResetLogs.$inferSelect;
+export type InsertNiResetLog = typeof niResetLogs.$inferInsert;
+
+export const niSharingGrants = mysqlTable(
+  "ni_sharing_grants",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    profileId: int("profileId").notNull().references(() => niOperatingProfiles.id),
+    userId: int("userId").notNull().references(() => users.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    recipientRole: mysqlEnum("recipientRole", ["success_partner", "coach", "manager"]).notNull(),
+    recipientUserId: int("recipientUserId").references(() => users.id),
+    shareNextChapter: boolean("shareNextChapter").default(true).notNull(),
+    shareBehaviours: boolean("shareBehaviours").default(true).notNull(),
+    shareExperimentCount: boolean("shareExperimentCount").default(true).notNull(),
+    shareEvidenceSummary: boolean("shareEvidenceSummary").default(true).notNull(),
+    shareSupportRequest: text("shareSupportRequest"),
+    status: mysqlEnum("status", ["active", "revoked"]).default("active").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("ni_sharing_user_idx").on(table.userId, table.status),
+    index("ni_sharing_recipient_idx").on(table.recipientUserId, table.status),
+  ]
+);
+export type NiSharingGrant = typeof niSharingGrants.$inferSelect;
+export type InsertNiSharingGrant = typeof niSharingGrants.$inferInsert;

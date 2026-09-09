@@ -377,6 +377,13 @@ Be specific, honest, and constructive. Reference actual things the user said.`,
           completedAt: new Date(),
         }).where(eq(simSessions.id, input.sessionId));
 
+        try {
+          const { logSimulatorEvidenceIfApplicable } = await import("../narrativeIntelligence");
+          await logSimulatorEvidenceIfApplicable(ctx.user.id, input.sessionId, debrief);
+        } catch (bridgeErr) {
+          console.warn("[NarrativeSimulatorBridge] Failed to record simulator evidence:", bridgeErr);
+        }
+
         return { debrief, sessionId: input.sessionId };
       } catch {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not generate debrief" });
