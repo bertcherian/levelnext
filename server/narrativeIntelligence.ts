@@ -867,6 +867,15 @@ export async function saveSharingGrant(
       .where(eq(niSharingGrants.id, existing.id));
 
     const [updated] = await db.select().from(niSharingGrants).where(eq(niSharingGrants.id, existing.id));
+    await logNarrativeAuditEvent({
+      tenantId,
+      actorUserId: userId,
+      subjectUserId: userId,
+      eventType: "ni_sharing_grant_saved",
+      resourceType: "ni_sharing_grant",
+      resourceId: updated.id,
+      metadata: { recipientRole: input.recipientRole },
+    });
     return updated;
   }
 
@@ -1113,6 +1122,48 @@ export async function generateSuccessPartnerInquiryQuestions(
     generatedBy: structuredResult.status === "fallback" ? "safe_fallback" as const : "ai" as const,
     approvedCommitmentCount: commitments.length,
   };
+}
+
+// ── 14. Participant Privacy Activity ─────────────────────────────────────────────
+
+export async function getParticipantPrivacyActivity(userId: number) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+  const events = await db
+    .select({
+      eventType: icAuditEvents.eventType,
+      authorizationResult: icAuditEvents.authorizationResult,
+      occurredAt: icAuditEvents.occurredAt,
+    })
+    .from(icAuditEvents)
+    .where(
+      and(
+        eq(icAuditEvents.subjectUserId, userId),
+        inArray(icAuditEvents.eventType, [
+          "ni_shared_view_opened",
+          "ni_shared_view_denied",
+          "ni_partner_questions_generated",
+          "ni_sharing_grant_saved",
+        ]),
+      ),
+    )
+    .orderBy(desc(icAuditEvents.occurredAt))
+    .limit(20);
+
+  return events.map((event) => ({
+    occurredAt: event.occurredAt,
+    authorizationResult: event.authorizationResult,
+    eventType: event.eventType,
+    label:
+      event.eventType === "ni_partner_questions_generated"
+        ? "A Success Partner drafted commitment-based inquiry questions"
+        : event.eventType === "ni_shared_view_opened"
+          ? "A Success Partner opened your approved shared view"
+          : event.eventType === "ni_shared_view_denied"
+            ? "A shared-view access attempt was blocked"
+            : "Your Narrative Intelligence sharing preferences were updated",
+  }));
 }
 
 // ── 12. Simulator & Practice Evidence Adapters ──────────────────────────────────

@@ -410,6 +410,15 @@ describe("Narrative Intelligence — Participant Lifecycle & Endpoints", () => {
     expect(["ai", "safe_fallback"]).toContain(result.generatedBy);
   }, 15000);
 
+  it("shows question-generation activity to the participant without exposing prompt content", async () => {
+    const participantCaller = appRouter.createCaller(createTestContext(1013));
+    const activity = await participantCaller.narrativeIntelligence.getPrivacyActivity();
+
+    expect(activity.some((item) => item.eventType === "ni_partner_questions_generated")).toBe(true);
+    expect(activity.some((item) => item.label.includes("commitment-based inquiry questions"))).toBe(true);
+    expect(activity.every((item) => !("metadata" in item))).toBe(true);
+  });
+
   it("denies the shared view when a participant has not consented", async () => {
     const { getDb } = await import("./db");
     const { spAssignments, users } = await import("../drizzle/schema");

@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, CheckCircle2, Clock3, Eye, Lock, MessageSquare, ShieldCheck, Sparkles, Target, TrendingUp, UserRound } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, Clock3, Copy, Eye, Lock, MessageSquare, ShieldCheck, Sparkles, Target, TrendingUp, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -21,6 +21,7 @@ export default function SuccessPartnerNarrativeView({ params }: { params: { part
     coachingFrame: string;
     generatedBy: "ai" | "safe_fallback";
   } | null>(null);
+  const [copiedQuestions, setCopiedQuestions] = useState(false);
   const { data, isLoading, error } = trpc.narrativeIntelligence.getSuccessPartnerSharedView.useQuery(
     { participantUserId },
     { enabled: Number.isFinite(participantUserId), retry: false },
@@ -28,6 +29,18 @@ export default function SuccessPartnerNarrativeView({ params }: { params: { part
   const generateQuestions = trpc.narrativeIntelligence.generateSuccessPartnerInquiryQuestions.useMutation({
     onSuccess: (result) => setGeneratedQuestions(result),
   });
+
+  async function handleCopyQuestions() {
+    if (!generatedQuestions) return;
+    const text = [
+      "Success Partner inquiry questions",
+      ...generatedQuestions.questions.map((question, index) => `${index + 1}. ${question}`),
+      `\nCoaching frame: ${generatedQuestions.coachingFrame}`,
+    ].join("\n");
+    await navigator.clipboard.writeText(text);
+    setCopiedQuestions(true);
+    window.setTimeout(() => setCopiedQuestions(false), 2000);
+  }
 
   if (isLoading) {
     return (
@@ -190,9 +203,14 @@ export default function SuccessPartnerNarrativeView({ params }: { params: { part
                 <div className="space-y-3 rounded-xl bg-[#F8F5F0] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-semibold uppercase tracking-wider text-[#0A1A2F]">Suggested questions</p>
-                    <Badge variant="outline" className="border-emerald-600/30 text-emerald-700">
-                      {generatedQuestions.generatedBy === "ai" ? "AI drafted" : "Safe fallback"}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="border-emerald-600/30 text-emerald-700">
+                        {generatedQuestions.generatedBy === "ai" ? "AI drafted" : "Safe fallback"}
+                      </Badge>
+                      <Button variant="ghost" size="sm" onClick={handleCopyQuestions} className="h-7 px-2 text-xs text-slate-600 hover:bg-white">
+                        <Copy className="mr-1.5 h-3.5 w-3.5" /> {copiedQuestions ? "Copied" : "Copy"}
+                      </Button>
+                    </div>
                   </div>
                   <ol className="space-y-2">
                     {generatedQuestions.questions.map((question, index) => (

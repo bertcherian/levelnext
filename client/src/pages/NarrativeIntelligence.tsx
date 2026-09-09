@@ -75,6 +75,7 @@ export default function NarrativeIntelligence() {
   const { data: patternLibrary = [] } = trpc.narrativeIntelligence.getPatternLibrary.useQuery();
   const { data: evidenceLedger = [] } = trpc.narrativeIntelligence.getEvidenceLedger.useQuery(undefined, { enabled: Boolean(user) });
   const { data: sharingGrants = [] } = trpc.narrativeIntelligence.getSharingGrants.useQuery(undefined, { enabled: Boolean(user) });
+  const { data: privacyActivity = [] } = trpc.narrativeIntelligence.getPrivacyActivity.useQuery(undefined, { enabled: Boolean(user) });
 
   // Mutations
   const generateHypothesesMutation = trpc.narrativeIntelligence.generateHypotheses.useMutation({
@@ -155,6 +156,7 @@ export default function NarrativeIntelligence() {
       toast.success("Sharing preferences updated.");
       setIsSharingOpen(false);
       utils.narrativeIntelligence.getSharingGrants.invalidate();
+      utils.narrativeIntelligence.getPrivacyActivity.invalidate();
     },
   });
 
@@ -1604,6 +1606,27 @@ export default function NarrativeIntelligence() {
                 placeholder="e.g. In our Friday 15-minute sync, ask me if I took the 10-minute coaching pause."
                 className="bg-slate-950 border-slate-800 text-xs text-white"
               />
+            </div>
+
+            <div className="space-y-2 border-t border-slate-800 pt-4">
+              <div>
+                <div className="font-semibold text-white">Recent privacy activity</div>
+                <div className="text-[11px] text-slate-400">You can see when your approved shared view was accessed or when commitment-based questions were drafted.</div>
+              </div>
+              {privacyActivity.length > 0 ? (
+                <div className="space-y-2">
+                  {privacyActivity.slice(0, 6).map((activity) => (
+                    <div key={`${activity.eventType}-${activity.occurredAt}`} className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2">
+                      <div className="text-[11px] leading-relaxed text-slate-300">{activity.label}</div>
+                      <div className="mt-0.5 text-[10px] text-slate-500">
+                        {new Date(activity.occurredAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-lg border border-dashed border-slate-800 px-3 py-3 text-[11px] text-slate-500">No shared-view activity recorded yet.</p>
+              )}
             </div>
           </div>
 

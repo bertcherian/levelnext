@@ -49,11 +49,17 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
 
   const { data, isLoading } = trpc.successPartner.getPreCallBrief.useQuery({ userId });
   const generateScript = trpc.successPartner.generateOpeningScript.useMutation();
+  const generateNarrativeQuestions = trpc.narrativeIntelligence.generateSuccessPartnerInquiryQuestions.useMutation();
   const scheduleCall = trpc.successPartner.scheduleCall.useMutation();
   const logOutcome = trpc.successPartner.logOutcome.useMutation();
   const markMissed = trpc.successPartner.markMissed.useMutation();
 
   const [generatedScript, setGeneratedScript] = useState<string>("");
+  const [generatedNarrativeQuestions, setGeneratedNarrativeQuestions] = useState<{
+    questions: string[];
+    coachingFrame: string;
+    generatedBy: "ai" | "safe_fallback";
+  } | null>(null);
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -86,6 +92,17 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
     await navigator.clipboard.writeText(generatedScript);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleCopyNarrativeQuestions() {
+    if (!generatedNarrativeQuestions) return;
+    const text = [
+      "Commitment-based inquiry questions",
+      ...generatedNarrativeQuestions.questions.map((question, index) => `${index + 1}. ${question}`),
+      `\nCoaching frame: ${generatedNarrativeQuestions.coachingFrame}`,
+    ].join("\n");
+    await navigator.clipboard.writeText(text);
+    toast.success("Inquiry questions copied to clipboard");
   }
 
   async function handleScheduleCall() {
@@ -261,6 +278,55 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
             <p className="text-sm text-muted-foreground italic">No active commitment recorded yet. Ask the leader to set one via their Guide session.</p>
           )}
         </div>
+
+        {primaryCommitment && (
+          <div className="rounded-xl border p-5 space-y-4" style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Commitment-Based Inquiry</h2>
+                <p className="mt-1 text-xs text-muted-foreground">Draft open questions using only the participant-approved Narrative Intelligence commitments.</p>
+              </div>
+              <Button
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const result = await generateNarrativeQuestions.mutateAsync({ participantUserId: userId });
+                    setGeneratedNarrativeQuestions(result);
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "The participant has not enabled commitment sharing.");
+                  }
+                }}
+                disabled={generateNarrativeQuestions.isPending}
+                className="shrink-0 bg-[var(--color-ln-navy)] text-white hover:opacity-90"
+              >
+                <Sparkles size={14} className="mr-1.5" />
+                {generateNarrativeQuestions.isPending ? "Drafting…" : "Draft questions"}
+              </Button>
+            </div>
+            {generatedNarrativeQuestions && (
+              <div className="rounded-lg bg-black/5 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold text-[var(--color-ln-navy)]">Suggested questions</p>
+                  <Button variant="ghost" size="sm" onClick={handleCopyNarrativeQuestions} className="h-7 px-2 text-xs">
+                    <Copy size={13} className="mr-1.5" /> Copy
+                  </Button>
+                </div>
+                <ol className="space-y-2">
+                  {generatedNarrativeQuestions.questions.map((question, index) => (
+                    <li key={`${question}-${index}`} className="flex gap-2 text-sm leading-relaxed">
+                      <span className="font-semibold text-[var(--color-ln-yellow)]">{index + 1}.</span>
+                      <span>{question}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="border-t pt-3 text-xs leading-relaxed text-muted-foreground">
+                  <span className="font-semibold text-[var(--color-ln-navy)]">Coaching frame:</span> {generatedNarrativeQuestions.coachingFrame}
+                </p>
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground">Private narratives, reflections, and evidence are not used.</p>
+          </div>
+        )}
 
         {/* ── Last Call Notes ── */}
         {data.lastCompletedCall && (
