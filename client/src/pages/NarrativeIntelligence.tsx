@@ -61,6 +61,7 @@ import {
   type NarrativeStatus,
   type ParticipantResonance,
   type EvidenceSource,
+  type NarrativePattern,
 } from "@shared/modules/narrativeIntelligence";
 
 export default function NarrativeIntelligence() {
@@ -169,6 +170,10 @@ export default function NarrativeIntelligence() {
   const [isLogEvidenceOpen, setIsLogEvidenceOpen] = useState(false);
   const [selectedNarrativeId, setSelectedNarrativeId] = useState<number | null>(null);
   const [selectedExperimentId, setSelectedExperimentId] = useState<number | null>(null);
+  const [selectedPattern, setSelectedPattern] = useState<NarrativePattern | null>(null);
+  const [isPatternDialogOpen, setIsPatternDialogOpen] = useState(false);
+  const [isPatternReflectionOpen, setIsPatternReflectionOpen] = useState(false);
+  const [patternReflectionNote, setPatternReflectionNote] = useState("");
 
   // Week 2 Question Form State
   const [factText, setFactText] = useState("");
@@ -265,6 +270,13 @@ export default function NarrativeIntelligence() {
       }
     }
   }, [selectedNarrative?.id]);
+
+  const explorePattern = (pattern: NarrativePattern) => {
+    setSelectedPattern(pattern);
+    setPatternReflectionNote(`Exploring ${pattern.archetypeTitle}: ${pattern.safeExplorationPrompt}`);
+    setIsPatternDialogOpen(false);
+    setIsPatternReflectionOpen(true);
+  };
 
   if (authLoading || isDashboardLoading) {
     return (
@@ -664,10 +676,31 @@ export default function NarrativeIntelligence() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {patternLibrary.map((pattern) => (
-                  <div key={pattern.id} className="bg-slate-950/70 p-3.5 rounded-lg border border-slate-800 space-y-1.5">
-                    <div className="text-xs font-semibold text-white">{pattern.archetypeTitle}</div>
-                    <div className="text-[11px] text-[#D4AF37] italic font-serif">{pattern.characteristicVoice}</div>
-                    <div className="text-sm text-slate-200 leading-relaxed line-clamp-4 mt-1">{pattern.safeExplorationPrompt}</div>
+                  <div key={pattern.id} className="bg-slate-950/70 p-3.5 rounded-lg border border-slate-800 space-y-2">
+                    <div className="text-base font-semibold text-white">{pattern.archetypeTitle}</div>
+                    <div className="text-sm text-[#D4AF37] italic font-serif">{pattern.characteristicVoice}</div>
+                    <div className="text-base text-slate-200 leading-relaxed line-clamp-4 mt-1">{pattern.safeExplorationPrompt}</div>
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedPattern(pattern);
+                          setIsPatternDialogOpen(true);
+                        }}
+                        className="h-8 px-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"
+                      >
+                        <Eye className="w-3.5 h-3.5 mr-1.5" /> Read full pattern
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => explorePattern(pattern)}
+                        className="h-8 px-2 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37]"
+                      >
+                        Explore <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -680,10 +713,10 @@ export default function NarrativeIntelligence() {
           <TabsContent value="week2" className="space-y-6">
             <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800 space-y-1">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-[#D4AF37]" />
-                Question: The Fact / Story / Prediction Analysis
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+                  <HelpCircle className="w-5 h-5 text-[#D4AF37]" />
+                  Question: The Fact / Story / Prediction Analysis
+                </h2>
+              <p className="text-base leading-relaxed text-slate-300 max-w-2xl">
                 Take an active operating assumption and unpack it. High-performing leaders often treat interpretations and catastrophic predictions as indisputable facts.
               </p>
             </div>
@@ -717,7 +750,7 @@ export default function NarrativeIntelligence() {
                     1. Objective Facts
                   </Badge>
                   <CardTitle className="text-sm font-semibold text-white">What actually happened?</CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-base leading-relaxed text-slate-300">
                     Observable timestamps, verbatim words, or indisputable data points.
                   </CardDescription>
                 </CardHeader>
@@ -726,7 +759,7 @@ export default function NarrativeIntelligence() {
                     value={factText}
                     onChange={(e) => setFactText(e.target.value)}
                     placeholder="e.g. A direct report submitted a deliverable with 2 calculation errors."
-                    className="bg-slate-950 border-slate-800 text-xs text-white min-h-[140px]"
+                    className="bg-slate-950 border-slate-800 text-base leading-relaxed text-white min-h-[140px]"
                   />
                 </CardContent>
               </Card>
@@ -738,7 +771,7 @@ export default function NarrativeIntelligence() {
                     2. The Internal Story
                   </Badge>
                   <CardTitle className="text-sm font-semibold text-white">What meaning did you make?</CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-base leading-relaxed text-slate-300">
                     Your automatic interpretation or belief about what this says about you or them.
                   </CardDescription>
                 </CardHeader>
@@ -747,7 +780,7 @@ export default function NarrativeIntelligence() {
                     value={storyText}
                     onChange={(e) => setStoryText(e.target.value)}
                     placeholder="e.g. If I don't review every line myself, standards will drop and credibility will be lost."
-                    className="bg-slate-950 border-slate-800 text-xs text-white min-h-[140px]"
+                    className="bg-slate-950 border-slate-800 text-base leading-relaxed text-white min-h-[140px]"
                   />
                 </CardContent>
               </Card>
@@ -759,7 +792,7 @@ export default function NarrativeIntelligence() {
                     3. The Prediction
                   </Badge>
                   <CardTitle className="text-sm font-semibold text-white">What catastrophe are you avoiding?</CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-base leading-relaxed text-slate-300">
                     The unspoken future risk driving your protective impulse.
                   </CardDescription>
                 </CardHeader>
@@ -768,7 +801,7 @@ export default function NarrativeIntelligence() {
                     value={predictionText}
                     onChange={(e) => setPredictionText(e.target.value)}
                     placeholder="e.g. Senior leadership will conclude I run a careless, sloppy operation."
-                    className="bg-slate-950 border-slate-800 text-xs text-white min-h-[140px]"
+                    className="bg-slate-950 border-slate-800 text-base leading-relaxed text-white min-h-[140px]"
                   />
                 </CardContent>
               </Card>
@@ -782,7 +815,7 @@ export default function NarrativeIntelligence() {
                     <Target className="w-4 h-4 text-emerald-400" />
                     The Exception Hunt
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-base leading-relaxed text-slate-300">
                     When did this assumption NOT hold true in your actual career?
                   </CardDescription>
                 </CardHeader>
@@ -791,7 +824,7 @@ export default function NarrativeIntelligence() {
                     value={exceptionHuntText}
                     onChange={(e) => setExceptionHuntText(e.target.value)}
                     placeholder="e.g. In Sprint 4, Sarah handled the client presentation autonomously and received client praise without my intervention."
-                    className="bg-slate-950 border-slate-800 text-xs text-white min-h-[90px]"
+                    className="bg-slate-950 border-slate-800 text-base leading-relaxed text-white min-h-[90px]"
                   />
                 </CardContent>
               </Card>
@@ -802,7 +835,7 @@ export default function NarrativeIntelligence() {
                     <TrendingDown className="w-4 h-4 text-amber-400" />
                     Narrative Tax (Current Cost)
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-base leading-relaxed text-slate-300">
                     What is this assumption currently costing you in energy, delegation, or speed?
                   </CardDescription>
                 </CardHeader>
@@ -811,7 +844,7 @@ export default function NarrativeIntelligence() {
                     value={narrativeTaxCost}
                     onChange={(e) => setNarrativeTaxCost(e.target.value)}
                     placeholder="e.g. 60-hour work weeks, team members waiting for approvals, and zero time for strategic planning."
-                    className="bg-slate-950 border-slate-800 text-xs text-white min-h-[90px]"
+                    className="bg-slate-950 border-slate-800 text-base leading-relaxed text-white min-h-[90px]"
                   />
                 </CardContent>
               </Card>
@@ -999,7 +1032,7 @@ export default function NarrativeIntelligence() {
                   <Zap className="w-5 h-5 text-[#D4AF37]" />
                   Test: Behavioral Experiment Engine
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+                <p className="text-base leading-relaxed text-slate-300 max-w-2xl">
                   Run safe, bounded experiments. Test your predicted catastrophe against actual reality in real-world meetings, AI simulations, or practice coach sessions.
                 </p>
               </div>
@@ -1037,24 +1070,24 @@ export default function NarrativeIntelligence() {
                           </span>
                         </div>
                         <CardTitle className="text-sm font-semibold text-white">{exp.title}</CardTitle>
-                        <CardDescription className="text-xs text-slate-400 line-clamp-1">{exp.contextSituation}</CardDescription>
+                        <CardDescription className="text-base leading-relaxed text-slate-300 line-clamp-2">{exp.contextSituation}</CardDescription>
                       </CardHeader>
 
-                      <CardContent className="space-y-2 text-xs pt-0">
+                      <CardContent className="space-y-2 text-base pt-0">
                         <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
                           <div className="text-[10px] text-amber-400 uppercase font-medium">Behaviour to Test:</div>
-                          <div className="text-slate-200">{exp.behaviourToTest}</div>
+                          <div className="text-base leading-relaxed text-slate-200">{exp.behaviourToTest}</div>
                         </div>
 
                         <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
                           <div className="text-[10px] text-rose-400 uppercase font-medium">Predicted Catastrophe:</div>
-                          <div className="text-slate-300 italic">&ldquo;{exp.predictedOutcome}&rdquo;</div>
+                          <div className="text-base leading-relaxed text-slate-300 italic">&ldquo;{exp.predictedOutcome}&rdquo;</div>
                         </div>
 
                         {exp.status === "completed" ? (
                           <div className="bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-900/50 space-y-1 mt-2">
                             <div className="text-[10px] text-emerald-400 uppercase font-medium">What Reality Taught:</div>
-                            <div className="text-slate-200">{exp.whatRealityTaught}</div>
+                            <div className="text-base leading-relaxed text-slate-200">{exp.whatRealityTaught}</div>
                           </div>
                         ) : (
                           <div className="pt-2 flex justify-end">
@@ -1077,7 +1110,7 @@ export default function NarrativeIntelligence() {
               ) : (
                 <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-8 text-center space-y-3">
                   <Zap className="w-8 h-8 text-slate-600 mx-auto" />
-                  <p className="text-slate-400 text-xs max-w-sm mx-auto">
+                  <p className="text-slate-300 text-base leading-relaxed max-w-sm mx-auto">
                     No experiments designed yet. Pick an operating assumption and test your prediction in an upcoming meeting or 1-on-1.
                   </p>
                   <Button
@@ -1178,6 +1211,104 @@ export default function NarrativeIntelligence() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          FULL PATTERN READING DIALOG
+         ══════════════════════════════════════════════════════════════════════ */}
+      <Dialog open={isPatternDialogOpen} onOpenChange={setIsPatternDialogOpen}>
+        <DialogContent className="bg-[#0A1A2F] text-white border-slate-800 max-w-xl">
+          {selectedPattern && (
+            <>
+              <DialogHeader>
+                <div className="inline-flex items-center gap-2 text-[#D4AF37] text-xs uppercase tracking-wider font-semibold mb-1">
+                  <Compass className="w-3.5 h-3.5" />
+                  Non-diagnostic developmental reference
+                </div>
+                <DialogTitle className="text-2xl font-bold text-white">{selectedPattern.archetypeTitle}</DialogTitle>
+                <DialogDescription className="text-base leading-relaxed text-[#D4AF37] italic font-serif">
+                  {selectedPattern.characteristicVoice}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4 py-2 sm:grid-cols-2 text-base">
+                <div className="rounded-lg border border-rose-900/50 bg-rose-950/20 p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-rose-300">Underlying fear</div>
+                  <p className="mt-2 leading-relaxed text-slate-200">{selectedPattern.underlyingFear}</p>
+                </div>
+                <div className="rounded-lg border border-emerald-900/50 bg-emerald-950/20 p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Strengths to retain</div>
+                  <p className="mt-2 leading-relaxed text-slate-200">{selectedPattern.strengthsToRetain}</p>
+                </div>
+                <div className="rounded-lg border border-indigo-900/50 bg-indigo-950/20 p-4 sm:col-span-2">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-indigo-300">Growth edge</div>
+                  <p className="mt-2 leading-relaxed text-slate-200">{selectedPattern.growthEdge}</p>
+                </div>
+                <div className="rounded-lg border border-[#D4AF37]/30 bg-[#D4AF37]/5 p-4 sm:col-span-2">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[#D4AF37]">Safe exploration prompt</div>
+                  <p className="mt-2 leading-relaxed text-slate-100">{selectedPattern.safeExplorationPrompt}</p>
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setIsPatternDialogOpen(false)} className="text-slate-400 hover:text-white text-sm">
+                  Close
+                </Button>
+                <Button size="sm" onClick={() => explorePattern(selectedPattern)} className="bg-[#D4AF37] hover:bg-[#c49f2e] text-[#0A1A2F] font-semibold text-sm">
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Explore this pattern
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          PATTERN EXPLORATION NOTE DIALOG
+         ══════════════════════════════════════════════════════════════════════ */}
+      <Dialog open={isPatternReflectionOpen} onOpenChange={setIsPatternReflectionOpen}>
+        <DialogContent className="bg-[#0A1A2F] text-white border-slate-800 max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-white">Explore {selectedPattern?.archetypeTitle}</DialogTitle>
+            <DialogDescription className="text-base leading-relaxed text-slate-300">
+              Start a tentative Week 1 reflection. This is a private note attached to your selected hypothesis—not a diagnostic label.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">Selected hypothesis</div>
+              <p className="mt-2 text-base leading-relaxed text-slate-200">{selectedNarrative ? `“${selectedNarrative.statement}”` : "Select or generate a hypothesis in Week 1 first."}</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-base font-semibold text-[#D4AF37]">Your exploratory reflection note</Label>
+              <Textarea
+                value={patternReflectionNote}
+                onChange={(e) => setPatternReflectionNote(e.target.value)}
+                className="min-h-[150px] bg-slate-950 border-slate-800 text-base leading-relaxed text-white"
+                placeholder="What, if anything, does this pattern help you notice about your current operating assumptions?"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setIsPatternReflectionOpen(false)} className="text-slate-400 hover:text-white text-sm">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={!selectedNarrativeId || patternReflectionNote.trim().length < 5 || respondToHypothesisMutation.isPending}
+              onClick={() => {
+                if (!selectedNarrativeId) return;
+                respondToHypothesisMutation.mutate(
+                  { narrativeId: selectedNarrativeId, resonance: "explore", reflectionNote: patternReflectionNote },
+                  { onSuccess: () => setIsPatternReflectionOpen(false) },
+                );
+              }}
+              className="bg-[#D4AF37] hover:bg-[#c49f2e] text-[#0A1A2F] font-semibold text-sm"
+            >
+              {respondToHypothesisMutation.isPending ? "Saving note…" : "Save private reflection"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ══════════════════════════════════════════════════════════════════════
           90-SECOND NARRATIVE RESET DIALOG
