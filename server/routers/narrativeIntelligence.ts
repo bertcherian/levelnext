@@ -44,6 +44,7 @@ import {
   getDashboardPayload,
   saveSharingGrant,
   getSuccessPartnerSharedView,
+  generateSuccessPartnerInquiryQuestions,
 } from "../narrativeIntelligence";
 import { getDb } from "../db";
 import { niNarratives, niOperatingProfiles, niExperiments, niEvidence, niSharingGrants } from "../../drizzle/schema";
@@ -202,4 +203,8 @@ export const narrativeIntelligenceRouter = router({
   getSuccessPartnerSharedView: successPartnerProcedure
     .input(z.object({ participantUserId: z.number().int().positive() }))
     .query(({ ctx, input }) => getSuccessPartnerSharedView(ctx.user.id, input.participantUserId)),
+
+  generateSuccessPartnerInquiryQuestions: successPartnerProcedure
+    .input(z.object({ participantUserId: z.number().int().positive(), focus: z.string().trim().max(240).optional() }))
+    .mutation(({ ctx, input }) => generateSuccessPartnerInquiryQuestions(ctx.user.id, input.participantUserId, input.focus)),
 });

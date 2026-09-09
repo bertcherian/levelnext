@@ -1,4 +1,5 @@
-import { ArrowLeft, CheckCircle2, Clock3, Eye, Lock, ShieldCheck, Target, TrendingUp, UserRound } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, Clock3, Eye, Lock, MessageSquare, ShieldCheck, Sparkles, Target, TrendingUp, UserRound } from "lucide-react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +15,19 @@ function formatDate(value: Date | string | null | undefined) {
 export default function SuccessPartnerNarrativeView({ params }: { params: { participantUserId: string } }) {
   const [, navigate] = useLocation();
   const participantUserId = Number.parseInt(params.participantUserId, 10);
+  const [focus, setFocus] = useState("");
+  const [generatedQuestions, setGeneratedQuestions] = useState<{
+    questions: string[];
+    coachingFrame: string;
+    generatedBy: "ai" | "safe_fallback";
+  } | null>(null);
   const { data, isLoading, error } = trpc.narrativeIntelligence.getSuccessPartnerSharedView.useQuery(
     { participantUserId },
     { enabled: Number.isFinite(participantUserId), retry: false },
   );
+  const generateQuestions = trpc.narrativeIntelligence.generateSuccessPartnerInquiryQuestions.useMutation({
+    onSuccess: (result) => setGeneratedQuestions(result),
+  });
 
   if (isLoading) {
     return (
@@ -60,7 +70,7 @@ export default function SuccessPartnerNarrativeView({ params }: { params: { part
       <header className="bg-[#0A1A2F] px-6 py-5 text-white">
         <div className="mx-auto flex max-w-3xl items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => navigate("/admin/success-partner")} className="text-white/70 hover:bg-white/10 hover:text-white">
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> Coach Portal
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Success Partner Workspace
           </Button>
           <div className="h-5 w-px bg-white/20" />
           <div className="min-w-0">
@@ -142,6 +152,67 @@ export default function SuccessPartnerNarrativeView({ params }: { params: { part
             )}
           </CardContent>
         </Card>
+
+        {data.consent.shareBehaviours && commitments.length > 0 && (
+          <Card className="border-[#D4AF37]/50 bg-white shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-[#D4AF37]" />
+                <CardTitle className="text-base text-[#0A1A2F]">Draft inquiry questions</CardTitle>
+                <Badge variant="outline" className="ml-auto border-[#D4AF37] text-[#0A1A2F]">Commitment-based</Badge>
+              </div>
+              <CardDescription>
+                Generate open, non-leading questions using only the commitments the participant has approved for sharing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  value={focus}
+                  onChange={(event) => setFocus(event.target.value)}
+                  placeholder="Optional focus, e.g. Friday check-in or delegation"
+                  className="h-9 flex-1 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none ring-[#D4AF37] placeholder:text-slate-400 focus:ring-2"
+                  maxLength={240}
+                />
+                <Button
+                  onClick={() => generateQuestions.mutate({ participantUserId, focus: focus.trim() || undefined })}
+                  disabled={generateQuestions.isPending}
+                  className="bg-[#0A1A2F] text-white hover:bg-[#142c4c]"
+                >
+                  <Sparkles className="mr-2 h-4 w-4 text-[#D4AF37]" />
+                  {generateQuestions.isPending ? "Drafting…" : "Draft questions"}
+                </Button>
+              </div>
+              {generateQuestions.error && (
+                <p className="text-sm text-rose-600">{generateQuestions.error.message}</p>
+              )}
+              {generatedQuestions && (
+                <div className="space-y-3 rounded-xl bg-[#F8F5F0] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#0A1A2F]">Suggested questions</p>
+                    <Badge variant="outline" className="border-emerald-600/30 text-emerald-700">
+                      {generatedQuestions.generatedBy === "ai" ? "AI drafted" : "Safe fallback"}
+                    </Badge>
+                  </div>
+                  <ol className="space-y-2">
+                    {generatedQuestions.questions.map((question, index) => (
+                      <li key={`${question}-${index}`} className="flex gap-2 text-sm leading-relaxed text-slate-700">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0A1A2F] text-[11px] font-semibold text-white">{index + 1}</span>
+                        <span>{question}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="border-t border-slate-200 pt-3 text-xs leading-relaxed text-slate-500">
+                    <span className="font-semibold text-[#0A1A2F]">Coaching frame:</span> {generatedQuestions.coachingFrame}
+                  </div>
+                </div>
+              )}
+              <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                <Check className="h-3.5 w-3.5 text-emerald-600" /> Generated from approved commitments only; private narratives and evidence are not used.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="border-slate-200 bg-white shadow-sm">
           <CardHeader className="pb-3">

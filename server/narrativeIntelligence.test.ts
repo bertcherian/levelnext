@@ -259,7 +259,7 @@ describe("Narrative Intelligence — Participant Lifecycle & Endpoints", () => {
     const logged = ledger.find((e) => e.experimentId === experiment.id);
     expect(logged).toBeDefined();
     expect(logged?.learning).toContain("space");
-  });
+  }, 15000);
 
   it("executes the 90-Second Narrative Reset flow", async () => {
     const ctx = createTestContext(1006);
@@ -387,6 +387,27 @@ describe("Narrative Intelligence — Participant Lifecycle & Endpoints", () => {
     expect(shared.experimentCounts?.total).toBe(0);
     expect(shared.consent.shareSupportRequest).toContain("coaching questions");
     expect(shared.privacy.rawNarrativesIncluded).toBe(false);
+  }, 15000);
+
+  it("generates inquiry questions only from the participant-approved commitments", async () => {
+    const partnerCtx: TrpcContext = {
+      ...createTestContext(1012),
+      user: {
+        ...createTestContext(1012).user!,
+        role: "admin",
+      },
+    };
+    const partnerCaller = appRouter.createCaller(partnerCtx);
+
+    const result = await partnerCaller.narrativeIntelligence.generateSuccessPartnerInquiryQuestions({
+      participantUserId: 1013,
+      focus: "delegation check-in",
+    });
+
+    expect(result.questions.length).toBeGreaterThanOrEqual(3);
+    expect(result.approvedCommitmentCount).toBe(1);
+    expect(result.coachingFrame).toContain("open invitations");
+    expect(["ai", "safe_fallback"]).toContain(result.generatedBy);
   }, 15000);
 
   it("denies the shared view when a participant has not consented", async () => {

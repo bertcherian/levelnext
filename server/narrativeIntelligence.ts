@@ -1024,6 +1024,97 @@ export async function getSuccessPartnerSharedView(partnerUserId: number, partici
   };
 }
 
+// ── 13. Consent-Scoped Coaching Inquiry Generator ───────────────────────────────
+
+const coachingInquiryQuestionsSchema = z.object({
+  questions: z.array(z.string().trim().min(12).max(320)).min(3).max(5),
+  coachingFrame: z.string().trim().min(20).max(500),
+});
+
+type CoachingInquiryQuestions = z.infer<typeof coachingInquiryQuestionsSchema>;
+
+const fallbackCoachingQuestions = (commitments: string[]): CoachingInquiryQuestions => ({
+  questions: [
+    `What would it look like to practise “${commitments[0]}” in your next relevant conversation?`,
+    "What signal will tell you that you are operating from this commitment rather than reverting to the old pattern?",
+    "What support or accountability would make this behaviour easier to sustain this week?",
+  ],
+  coachingFrame: "Use these as open invitations. Let the participant define the example, meaning, and next step; do not infer a private narrative from the commitment.",
+});
+
+/**
+ * Generate coaching questions from participant-approved commitments only.
+ * This function intentionally calls the consent-gated shared view first, so
+ * question generation can never bypass assignment or sharing permissions.
+ */
+export async function generateSuccessPartnerInquiryQuestions(
+  partnerUserId: number,
+  participantUserId: number,
+  focus?: string,
+) {
+  const shared = await getSuccessPartnerSharedView(partnerUserId, participantUserId);
+  if (!shared.consent.shareBehaviours || shared.commitments.length === 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "The participant has not shared active commitments for coaching inquiry.",
+    });
+  }
+
+  const commitments = shared.commitments.slice(0, 8);
+  const fallback = fallbackCoachingQuestions(commitments);
+  const structuredResult = await invokeStructured({
+    context: "success_partner_inquiry_questions",
+    schemaName: "success_partner_inquiry_questions",
+    schema: coachingInquiryQuestionsSchema,
+    fallback,
+    request: {
+      messages: [
+        {
+          role: "system",
+          content: [
+            "You are a skilled executive coach supporting a participant through a consented development conversation.",
+            "Generate 3 to 5 short, non-leading inquiry questions based ONLY on the participant-approved commitments below.",
+            "Do not diagnose, label, interpret hidden motives, mention private narratives, or invent context.",
+            "Questions must invite concrete examples, observable behaviour, learning, or the participant's chosen next step.",
+            "Use a respectful coaching tone. Do not prescribe advice or tell the participant what their answer should be.",
+            "Return JSON matching the schema with a brief coachingFrame explaining how to use the questions.",
+            "",
+            "Approved commitments:",
+            ...commitments.map((commitment, index) => `${index + 1}. ${commitment}`),
+          ].join("\\n"),
+        },
+        {
+          role: "user",
+          content: focus?.trim()
+            ? `Draft the questions with this optional conversation focus: ${focus.trim()}`
+            : "Draft the questions for the next Success Partner check-in.",
+        },
+      ],
+      maxTokens: 800,
+    },
+  });
+
+  await logNarrativeAuditEvent({
+    actorUserId: partnerUserId,
+    subjectUserId: participantUserId,
+    eventType: "ni_partner_questions_generated",
+    resourceType: "ni_shared_view",
+    authorizationResult: "allowed",
+    metadata: {
+      grantId: shared.consent.grantId,
+      questionCount: structuredResult.value.questions.length,
+      fallbackUsed: structuredResult.status === "fallback",
+      focusProvided: Boolean(focus?.trim()),
+    },
+  });
+
+  return {
+    ...structuredResult.value,
+    generatedBy: structuredResult.status === "fallback" ? "safe_fallback" as const : "ai" as const,
+    approvedCommitmentCount: commitments.length,
+  };
+}
+
 // ── 12. Simulator & Practice Evidence Adapters ──────────────────────────────────
 
 export async function logSimulatorEvidenceIfApplicable(
