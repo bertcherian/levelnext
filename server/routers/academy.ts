@@ -133,4 +133,55 @@ export const academyRouter = router({
 
       return { success: true };
     }),
+
+  getProductMapProgress: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const profile = await getOrCreateAcademyProfile(ctx.user.id);
+
+    const events = await db
+      .select({ objectKey: academyProgressEvents.objectKey, evidenceRef: academyProgressEvents.evidenceRef, createdAt: academyProgressEvents.createdAt })
+      .from(academyProgressEvents)
+      .where(eq(academyProgressEvents.profileId, profile.id))
+      .orderBy(desc(academyProgressEvents.createdAt));
+
+    const progress: Record<string, boolean> = {};
+    for (const event of events) {
+      if (!event.objectKey || event.evidenceRef?.sectionKey === undefined || progress[event.objectKey] !== undefined) continue;
+      progress[event.objectKey] = event.evidenceRef.understood === true;
+    }
+
+    return progress;
+  }),
+
+  markSectionUnderstood: protectedProcedure
+    .input(
+      z.object({
+        slug: z.string().min(1),
+        sectionKey: z.string().min(1),
+        sectionTitle: z.string().min(1),
+        understood: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const profile = await getOrCreateAcademyProfile(ctx.user.id);
+      const objectKey = `${input.slug}::${input.sectionKey}`;
+
+      await db.insert(academyProgressEvents).values({
+        profileId: profile.id,
+        eventType: input.understood ? "section_understood" : "section_ununderstood",
+        objectKey,
+        dimension: "understand",
+        evidenceRef: {
+          sectionKey: input.sectionKey,
+          sectionTitle: input.sectionTitle,
+          understood: input.understood,
+          updatedAt: new Date().toISOString(),
+        },
+      });
+
+      return { success: true, objectKey, understood: input.understood };
+    }),
 });
