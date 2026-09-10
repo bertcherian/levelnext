@@ -411,6 +411,14 @@ export default function LiReport() {
     onError: () => { setGenerating(false); toast.error("Analysis generation failed. Please try again."); },
   });
 
+  const createBehaviouralMomentMutation = trpc.behaviouralIntelligence.createFromLdi.useMutation({
+    onSuccess: (moment) => {
+      toast.success("Behavioural Move seeded from your LDI report.");
+      window.location.href = `/behavioural-intelligence?momentId=${moment.id}`;
+    },
+    onError: (error) => toast.error(error.message || "Could not seed a Behavioural Move."),
+  });
+
   const handleGenerate = () => {
     if (!report?.id) return;
     setGenerating(true);
@@ -477,6 +485,25 @@ export default function LiReport() {
     }
   }
 
+  const priorityLdiDimension = Object.entries(displayDimScores)
+    .sort(([, a], [, b]) => a - b)[0];
+
+  const handleTransformIntoBehaviouralMove = () => {
+    if (!isLdi || !priorityLdiDimension || !report) {
+      toast.error("This report does not contain an LDI dimension to transform yet.");
+      return;
+    }
+    const [dimensionId, score] = priorityLdiDimension;
+    createBehaviouralMomentMutation.mutate({
+      dimensionId,
+      dimensionName: dimensionId.replace(/_/g, " ").replace(/\b\w/g, (character) => character.toUpperCase()),
+      score,
+      riskBand: report.zone ?? undefined,
+      archetypeLabel: report.archetype ?? undefined,
+      reportId: report.id,
+    });
+  };
+
   // ── Loading ──
   if (reportLoading) {
     return (
@@ -537,6 +564,17 @@ export default function LiReport() {
                   ? <><CheckCircle2 size={12} /> Downloaded</>
                   : <><Download size={12} /> Export PDF</>}
               </button>
+              {isLdi && (
+                <button
+                  onClick={handleTransformIntoBehaviouralMove}
+                  disabled={createBehaviouralMomentMutation.isPending || !priorityLdiDimension}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all duration-150 active:scale-[0.97] disabled:opacity-60"
+                  style={{ background: "#D4AF37", color: NAVY }}
+                >
+                  <Sparkles size={12} />
+                  {createBehaviouralMomentMutation.isPending ? "Seeding…" : "Transform into Behavioural Move"}
+                </button>
+              )}
             </div>
           </div>
         </div>

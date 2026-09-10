@@ -22,6 +22,7 @@ import {
   biEvidence,
   biReflections,
   icAuditEvents,
+  tenantUsers,
   type BiMoment,
   type BiAnalysisSnapshot,
   type BiMove,
@@ -57,13 +58,18 @@ export async function createMomentService(params: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  const tenantMembership = params.tenantId === undefined
+    ? await db.select({ tenantId: tenantUsers.tenantId }).from(tenantUsers).where(eq(tenantUsers.userId, params.userId)).limit(1)
+    : [];
+  const resolvedTenantId = params.tenantId ?? tenantMembership[0]?.tenantId ?? null;
+
   const sanitizedSituation = sanitizeBehaviouralInterventionLanguage(params.input.situation).cleanText;
   const sanitizedDesiredOutcome = params.input.desiredOutcome
     ? sanitizeBehaviouralInterventionLanguage(params.input.desiredOutcome).cleanText
     : null;
 
   const [inserted] = await db.insert(biMoments).values({
-    tenantId: params.tenantId ?? null,
+    tenantId: resolvedTenantId,
     userId: params.userId,
     sourceApp: params.input.sourceApp ?? "behavioural_intelligence",
     sourceEntityType: params.input.sourceEntityType ?? null,
@@ -89,7 +95,7 @@ export async function createMomentService(params: {
 
   // Log non-sensitive audit event
   await logBiAuditEvent({
-    tenantId: params.tenantId ?? null,
+    tenantId: resolvedTenantId,
     userId: params.userId,
     eventType: "bi_moment_created",
     resourceId: momentId,

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, ChevronRight, BarChart3, Clock, Loader2, History, TrendingUp, Calendar, Info } from "lucide-react";
+import { CheckCircle2, ChevronRight, BarChart3, Clock, Loader2, History, TrendingUp, Calendar, Info, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import DiagnosticRadarChart from "@/components/DiagnosticRadarChart";
 import { exportMepReportPdf, type MepReportFactor } from "@/lib/mepReportPdf";
@@ -67,6 +67,14 @@ export default function ManagerDiagnostics() {
         },
       });
     },
+  });
+
+  const createBehaviouralMomentMutation = trpc.behaviouralIntelligence.createFromMep.useMutation({
+    onSuccess: (moment) => {
+      toast.success("Behavioural Move seeded from your diagnostic.");
+      navigate(`/behavioural-intelligence?momentId=${moment.id}`);
+    },
+    onError: (error) => toast.error(error.message || "Could not seed a Behavioural Move."),
   });
 
   const startDiagnostic = (code: string) => {
@@ -633,6 +641,24 @@ export default function ManagerDiagnostics() {
             successSignal: `Ask the team for evidence that ${factor.label.toLowerCase()} is becoming more consistent.`,
           }));
 
+    const priorityDimension = dimArray
+      .slice()
+      .sort((a: any, b: any) => Number(a.score ?? 0) - Number(b.score ?? 0))[0];
+
+    const handleTransformIntoBehaviouralMove = () => {
+      if (!priorityDimension) {
+        toast.error("This report does not contain a dimension to transform yet.");
+        return;
+      }
+      createBehaviouralMomentMutation.mutate({
+        diagnosticCode: String(displayResult.diagnosticCode ?? latestDiagCode ?? "MEP"),
+        dimensionId: String(priorityDimension.dimension),
+        dimensionLabel: String(priorityDimension.dimension).replace(/_/g, " ").replace(/\b\w/g, (character: string) => character.toUpperCase()),
+        score: Number(priorityDimension.score ?? 0),
+        reportId: Number(displayResult.id ?? 0) || undefined,
+      });
+    };
+
     const handleDownloadReport = async () => {
       if (!diag) return;
       setIsExporting(true);
@@ -678,6 +704,15 @@ export default function ManagerDiagnostics() {
               {getScoreLabel(displayResult.overallScore)}
             </p>
             <MepReportDownloadButton onClick={handleDownloadReport} isExporting={isExporting} disabled={!diag} />
+            <Button
+              size="sm"
+              onClick={handleTransformIntoBehaviouralMove}
+              disabled={createBehaviouralMomentMutation.isPending || !priorityDimension}
+              className="mt-3 border border-[#D4AF37] bg-[#D4AF37] text-[#0A1A2F] hover:bg-[#E2C45A]"
+            >
+              <Sparkles size={14} className="mr-1.5" />
+              {createBehaviouralMomentMutation.isPending ? "Seeding your move…" : "Transform into Behavioural Move"}
+            </Button>
           </div>
 
           {/* Dimension scores — radar chart + bar breakdown */}

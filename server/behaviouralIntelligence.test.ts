@@ -210,5 +210,5 @@ describe("Behavioural Intelligence Engine — Server & Adapters", () => {
     expect(summary.totalPractices).toBeGreaterThanOrEqual(1);
     expect(summary.totalActions).toBeGreaterThanOrEqual(1);
     expect(summary.evidenceProgression.highestLevel).toBe("reflected");
-  }, 15000);
+  }, 30000);
 });

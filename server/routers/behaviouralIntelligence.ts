@@ -34,6 +34,7 @@ import {
 } from "../../shared/modules/behaviouralIntelligence";
 import { buildMepBehaviouralMomentInput } from "../adapters/mepBehaviouralAdapter";
 import { buildLdiBehaviouralMomentInput } from "../adapters/ldiBehaviouralAdapter";
+import { getBehaviouralSponsorHeatmap } from "../behaviouralSponsorAnalytics";
 
 export const behaviouralIntelligenceRouter = router({
   // ── Moments ─────────────────────────────────────────────────────────────────
@@ -201,6 +202,14 @@ export const behaviouralIntelligenceRouter = router({
   // ── Capacity Summary ────────────────────────────────────────────────────────
   getCapacitySummary: protectedProcedure.query(async ({ ctx }) => {
     return getCapacitySummaryService(ctx.user.id);
+  }),
+
+  /**
+   * Organisation-owner/admin view. The service returns cohort-level values
+   * only and suppresses all dimensions below the five-participant threshold.
+   */
+  getSponsorHeatmap: protectedProcedure.query(async ({ ctx }) => {
+    return getBehaviouralSponsorHeatmap({ id: ctx.user.id, role: ctx.user.role });
   }),
 
   // ── Application Adapters ────────────────────────────────────────────────────

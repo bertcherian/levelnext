@@ -39,6 +39,12 @@ const PLATFORM_BG: Record<string, string> = {
 const NUM_BARS = 7;
 
 type Message = { role: "user" | "assistant"; content: string; timestamp: number };
+type ActiveBehaviouralMove = {
+  moveTitle: string;
+  moveDescription: string;
+  suggestedLanguage: string[];
+  successSignal: string;
+};
 
 export default function SimulatorSession() {
   const [, params] = useRoute("/simulator/:sessionId");
@@ -55,6 +61,14 @@ export default function SimulatorSession() {
   const [interimText, setInterimText] = useState("");
   const [waveformBars, setWaveformBars] = useState<number[]>(Array(NUM_BARS).fill(3));
   const [voiceError, setVoiceError] = useState<"unsupported" | "permission" | null>(null);
+  const [activeBehaviouralMove] = useState<ActiveBehaviouralMove | null>(() => {
+    try {
+      const raw = localStorage.getItem("levelnext_active_behavioural_move");
+      return raw ? JSON.parse(raw) as ActiveBehaviouralMove : null;
+    } catch {
+      return null;
+    }
+  });
 
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -364,6 +378,19 @@ export default function SimulatorSession() {
           </div>
         </div>
       </div>
+
+      {activeBehaviouralMove && (
+        <div className="flex-shrink-0 border-b border-[#D4AF37]/20 px-4 py-3" style={{ background: "rgba(212,175,55,0.08)" }}>
+          <div className="max-w-3xl mx-auto">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-[#D4AF37]">Behavioural Move in rehearsal</p>
+            <p className="mt-1 text-white text-sm font-semibold">{activeBehaviouralMove.moveTitle}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {activeBehaviouralMove.suggestedLanguage.map((phrase) => <span key={phrase} className="rounded-full border border-[#D4AF37]/30 px-2.5 py-1 text-[11px] italic text-white/75">“{phrase}”</span>)}
+            </div>
+            <p className="mt-2 text-[11px] text-[#D4AF37]">Success signal: {activeBehaviouralMove.successSignal}</p>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6">

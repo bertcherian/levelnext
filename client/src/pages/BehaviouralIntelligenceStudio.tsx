@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Clock,
   RotateCcw,
+  Volume2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CURATED_MOVE_LIBRARY, type BehaviouralCareerStage } from "@shared/modules/behaviouralIntelligence";
@@ -74,6 +75,15 @@ export default function BehaviouralIntelligenceStudio(props?: {
   const sourceApp = props?.sourceApp ?? "behavioural_intelligence";
   const [activeTab, setActiveTab] = useState<"capture" | "active" | "ledger">("capture");
   const [selectedMomentId, setSelectedMomentId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const queryMomentId = new URLSearchParams(window.location.search).get("momentId");
+    const momentId = Number(queryMomentId ?? props?.defaultMomentId ?? 0);
+    if (Number.isInteger(momentId) && momentId > 0) {
+      setSelectedMomentId(momentId);
+      setActiveTab("active");
+    }
+  }, [props?.defaultMomentId]);
 
   // Form State
   const [situation, setSituation] = useState("");
@@ -188,6 +198,33 @@ export default function BehaviouralIntelligenceStudio(props?: {
       refetchCapacity();
     } catch (err: any) {
       toast.error(err.message);
+    }
+  };
+
+  const handleVoiceRehearsal = async (move: {
+    id: number;
+    title: string;
+    description: string;
+    suggestedLanguage: string[] | null;
+    successSignal: string;
+    status: string;
+  }) => {
+    if (!selectedMomentId) return;
+    try {
+      if (move.status === "proposed") {
+        await selectMoveMutation.mutateAsync({ moveId: move.id, momentId: selectedMomentId });
+      }
+      localStorage.setItem("levelnext_behavioural_rehearsal", JSON.stringify({
+        moveId: move.id,
+        momentId: selectedMomentId,
+        moveTitle: move.title,
+        moveDescription: move.description,
+        suggestedLanguage: move.suggestedLanguage ?? [],
+        successSignal: move.successSignal,
+      }));
+      window.location.href = "/manager/simulate";
+    } catch (err: any) {
+      toast.error(err.message || "Could not prepare the voice rehearsal.");
     }
   };
 
@@ -681,6 +718,15 @@ export default function BehaviouralIntelligenceStudio(props?: {
                         >
                           <Zap className="w-3.5 h-3.5 mr-1 text-[#D4AF37]" />
                           Rehearse / Micro-Practice Now
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleVoiceRehearsal(activeMove)}
+                          className="border-[#0A1A2F] text-[#0A1A2F] hover:bg-[#0A1A2F]/10"
+                        >
+                          <Volume2 className="w-3.5 h-3.5 mr-1 text-[#D4AF37]" />
+                          Rehearse with Voice Simulator
                         </Button>
                       </div>
                     </CardContent>

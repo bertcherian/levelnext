@@ -43,6 +43,7 @@ const EXPLORE_ITEMS: LeaderNavigationItem[] = [
 
 const WORKSPACE_ITEMS: LeaderNavigationItem[] = [
   { label: "Organisation", icon: Building2, href: "/organisation" },
+  { label: "Behavioural Heatmap", icon: Activity, href: "/organisation/behavioural-intelligence" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 

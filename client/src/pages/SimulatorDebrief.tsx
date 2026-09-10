@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -144,11 +144,40 @@ export default function SimulatorDebrief() {
   const [actionPlan,     setActionPlan]     = useState<ActionPlan | null>(null);
   const [checked,        setChecked]        = useState<Record<number, boolean>>({});
   const reportRef = useRef<HTMLDivElement>(null);
+  const behaviouralCompletionRef = useRef(false);
 
   const { data: session, isLoading } = trpc.simulator.getSession.useQuery(
     { sessionId },
     { enabled: !!sessionId }
   );
+
+  const recordBehaviouralPractice = trpc.behaviouralIntelligence.recordPracticeResult.useMutation();
+
+  useEffect(() => {
+    if (!session || session.status !== "completed" || behaviouralCompletionRef.current) return;
+    try {
+      const raw = localStorage.getItem("levelnext_behavioural_practice_link");
+      const handoff = raw ? JSON.parse(raw) as { linkId?: number; sessionId?: number } : null;
+      if (!handoff?.linkId || handoff.sessionId !== sessionId) return;
+      behaviouralCompletionRef.current = true;
+      recordBehaviouralPractice.mutate({
+        practiceLinkId: handoff.linkId,
+        practiceStatus: "completed",
+        feedbackScores: {
+          overallScore: session.overallScore ?? null,
+          behaviourScores: session.behaviourScores ?? [],
+        },
+      }, {
+        onSuccess: () => {
+          localStorage.removeItem("levelnext_behavioural_practice_link");
+          localStorage.removeItem("levelnext_active_behavioural_move");
+        },
+        onError: () => { behaviouralCompletionRef.current = false; },
+      });
+    } catch {
+      // A malformed handoff must not block the simulator debrief.
+    }
+  }, [session, sessionId, recordBehaviouralPractice]);
 
   const generatePlanMutation = trpc.simulator.generateActionPlan.useMutation({
     onSuccess: (data) => {

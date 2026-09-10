@@ -112,6 +112,7 @@ const IntelligenceCoreDashboard = lazyWithRouteRecovery(() => import("./pages/In
 const Intelligence = lazy(() => import("./pages/Intelligence"));
 const NarrativeIntelligence = lazy(() => import("./pages/NarrativeIntelligence"));
 const BehaviouralIntelligenceStudio = lazy(() => import("@/pages/BehaviouralIntelligenceStudio"));
+const BehaviouralSponsorHeatmap = lazy(() => import("@/pages/BehaviouralSponsorHeatmap"));
 const SimulatorStart = lazy(() => import("./pages/SimulatorStart"));
 const SimulatorSession = lazy(() => import("./pages/SimulatorSession"));
 const SimulatorDebrief = lazy(() => import("./pages/SimulatorDebrief"));
@@ -250,6 +251,7 @@ function Router() {
       <Route path="/narrative" component={NarrativeIntelligence} />
       <Route path="/narrative-intelligence" component={NarrativeIntelligence} />
       <Route path="/behavioural-intelligence" component={() => <BehaviouralIntelligenceStudio />} />
+      <Route path="/organisation/behavioural-intelligence" component={BehaviouralSponsorHeatmap} />
       <Route path="/diagnostics/:moduleType" component={Assessment} />
       <Route path="/engineering/diagnostic" component={EngineeringDiagnostic} />
       <Route path="/engineering/profile" component={EngineeringOperatingProfile} />

@@ -291,6 +291,15 @@ interface ScenarioCard {
   followUpQuestion: string | null;
 }
 
+type BehaviouralRehearsalHandoff = {
+  moveId: number;
+  momentId: number;
+  moveTitle: string;
+  moveDescription: string;
+  suggestedLanguage: string[];
+  successSignal: string;
+};
+
 function isTransientGenerationError(error: unknown): boolean {
   const message = typeof (error as { message?: unknown })?.message === "string"
     ? (error as { message: string }).message
@@ -316,7 +325,17 @@ export default function SimulatorStart() {
     : "leadership";
 
   const meta = PLATFORM_META[platform];
-  const [prompt, setPrompt] = useState("");
+  const [behaviouralHandoff] = useState<BehaviouralRehearsalHandoff | null>(() => {
+    try {
+      const raw = localStorage.getItem("levelnext_behavioural_rehearsal");
+      return raw ? JSON.parse(raw) as BehaviouralRehearsalHandoff : null;
+    } catch {
+      return null;
+    }
+  });
+  const [prompt, setPrompt] = useState(() => behaviouralHandoff
+    ? `Rehearse the Behavioural Move "${behaviouralHandoff.moveTitle}" in a realistic ${platform} conversation. The move is: ${behaviouralHandoff.moveDescription}. Use these phrases naturally: ${behaviouralHandoff.suggestedLanguage.join(" | ")}. Success looks like: ${behaviouralHandoff.successSignal}`
+    : "");
   const [scenario, setScenario] = useState<ScenarioCard | null>(null);
   const [followUpAnswer, setFollowUpAnswer] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<VoiceId>("shubh");
@@ -420,12 +439,12 @@ export default function SimulatorStart() {
   const [startingLabel, setStartingLabel] = useState("Starting...");
 
   const startMutation = trpc.simulator.startSession.useMutation({
-    onSuccess: (data) => navigate(`/simulator/${data.sessionId}`),
     onError: (err) => {
       console.error("[SimulatorStart] startSession error:", err.message);
       toast.error("Could not start session — please try again.", { duration: 4000 });
     },
   });
+  const createBehaviouralPracticeLinkMutation = trpc.behaviouralIntelligence.createPracticeLink.useMutation();
 
   // Cycle loading messages while session is being created
   useEffect(() => {
@@ -451,7 +470,7 @@ export default function SimulatorStart() {
     if (lastScenarioPrompt) handleInfer(lastScenarioPrompt);
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!scenario) return;
     // Persist speed so SimulatorSession can read it
     localStorage.setItem("sim_playback_speed", String(selectedSpeed));
@@ -459,19 +478,53 @@ export default function SimulatorStart() {
       ? `${prompt}. ${followUpAnswer}`
       : prompt;
     const effectiveDifficulty = adjustedDifficulty ?? scenario.difficulty;
-    startMutation.mutate({
-      platform,
-      userPrompt: finalPrompt,
-      conversationType: scenario.conversationType,
-      stakeholder: scenario.stakeholder,
-      objective: scenario.objective,
-      expectedChallenge: scenario.expectedChallenge,
-      difficulty: effectiveDifficulty,
-      estimatedMinutes: scenario.estimatedMinutes,
-      characterName: scenario.characterName,
-      characterStyle: scenario.characterStyle,
-      voice: selectedVoice,
-    });
+    try {
+      const data = await startMutation.mutateAsync({
+        platform,
+        userPrompt: finalPrompt,
+        conversationType: scenario.conversationType,
+        stakeholder: scenario.stakeholder,
+        objective: scenario.objective,
+        expectedChallenge: scenario.expectedChallenge,
+        difficulty: effectiveDifficulty,
+        estimatedMinutes: scenario.estimatedMinutes,
+        characterName: scenario.characterName,
+        characterStyle: scenario.characterStyle,
+        voice: selectedVoice,
+      });
+
+      if (behaviouralHandoff) {
+        try {
+          const link = await createBehaviouralPracticeLinkMutation.mutateAsync({
+            moveId: behaviouralHandoff.moveId,
+            momentId: behaviouralHandoff.momentId,
+            providerType: "voice_simulator",
+            providerSessionId: data.sessionId,
+            scenarioContext: {
+              moveTitle: behaviouralHandoff.moveTitle,
+              suggestedLanguage: behaviouralHandoff.suggestedLanguage,
+              successSignal: behaviouralHandoff.successSignal,
+            },
+          });
+          localStorage.setItem("levelnext_behavioural_practice_link", JSON.stringify({
+            linkId: link.id,
+            sessionId: data.sessionId,
+          }));
+          localStorage.setItem("levelnext_active_behavioural_move", JSON.stringify({
+            ...behaviouralHandoff,
+            linkId: link.id,
+            sessionId: data.sessionId,
+          }));
+          localStorage.removeItem("levelnext_behavioural_rehearsal");
+        } catch (error) {
+          console.warn("[BehaviouralIntelligence] Voice practice link failed:", error);
+        }
+      }
+
+      navigate(`/simulator/${data.sessionId}`);
+    } catch {
+      // startMutation.onError owns the user-facing error toast.
+    }
   };
 
   if (!user) {
@@ -521,6 +574,23 @@ export default function SimulatorStart() {
             Describe the situation in your own words — the AI will build a realistic scenario and character for you.
           </p>
         </div>
+
+        {behaviouralHandoff && (
+          <div className="mb-6 rounded-2xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 p-5 text-left">
+            <div className="flex items-center gap-2 text-[#D4AF37] text-xs font-semibold uppercase tracking-widest">
+              <Sparkles className="w-4 h-4" />
+              Behavioural Move rehearsal
+            </div>
+            <h2 className="mt-2 text-white font-semibold">{behaviouralHandoff.moveTitle}</h2>
+            <p className="mt-1 text-white/65 text-sm leading-relaxed">{behaviouralHandoff.moveDescription}</p>
+            <div className="mt-3 space-y-1.5">
+              {behaviouralHandoff.suggestedLanguage.map((phrase) => (
+                <p key={phrase} className="text-[#F8F5F0] text-xs italic">“{phrase}”</p>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-[#D4AF37]">Success signal: {behaviouralHandoff.successSignal}</p>
+          </div>
+        )}
 
         {/* Custom scenario composer */}
         <div className="mb-5">
