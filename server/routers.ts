@@ -74,6 +74,7 @@ import { engineeringIntelligenceRouter } from "./routers/engineeringIntelligence
 import { engineeringAdminRouter } from "./routers/engineeringAdmin";
 import { narrativeIntelligenceRouter } from "./routers/narrativeIntelligence";
 import { behaviouralIntelligenceRouter } from "./routers/behaviouralIntelligence";
+import { academyRouter } from "./routers/academy";
 import { accountRouter } from "./routers/account";
 
 export const appRouter = router({
@@ -159,6 +160,7 @@ export const appRouter = router({
   engineeringAdmin: engineeringAdminRouter,
   narrativeIntelligence: narrativeIntelligenceRouter,
   behaviouralIntelligence: behaviouralIntelligenceRouter,
+  academy: academyRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -113,6 +113,11 @@ const Intelligence = lazy(() => import("./pages/Intelligence"));
 const NarrativeIntelligence = lazy(() => import("./pages/NarrativeIntelligence"));
 const BehaviouralIntelligenceStudio = lazy(() => import("@/pages/BehaviouralIntelligenceStudio"));
 const BehaviouralSponsorHeatmap = lazy(() => import("@/pages/BehaviouralSponsorHeatmap"));
+const AcademyHome = lazy(() => import("@/pages/AcademyHome"));
+const AcademyDiagnostic = lazy(() => import("@/pages/AcademyDiagnostic"));
+const AcademyProductMap = lazy(() => import("@/pages/AcademyProductMap"));
+const AcademyPassport = lazy(() => import("@/pages/AcademyPassport"));
+const AcademyMentor = lazy(() => import("@/pages/AcademyMentor"));
 const SimulatorStart = lazy(() => import("./pages/SimulatorStart"));
 const SimulatorSession = lazy(() => import("./pages/SimulatorSession"));
 const SimulatorDebrief = lazy(() => import("./pages/SimulatorDebrief"));
@@ -252,6 +257,12 @@ function Router() {
       <Route path="/narrative-intelligence" component={NarrativeIntelligence} />
       <Route path="/behavioural-intelligence" component={() => <BehaviouralIntelligenceStudio />} />
       <Route path="/organisation/behavioural-intelligence" component={BehaviouralSponsorHeatmap} />
+      {/* LevelNext Academy */}
+      <Route path="/academy" component={AcademyHome} />
+      <Route path="/academy/diagnostic" component={AcademyDiagnostic} />
+      <Route path="/academy/map" component={AcademyProductMap} />
+      <Route path="/academy/passport" component={AcademyPassport} />
+      <Route path="/academy/mentor" component={AcademyMentor} />
       <Route path="/diagnostics/:moduleType" component={Assessment} />
       <Route path="/engineering/diagnostic" component={EngineeringDiagnostic} />
       <Route path="/engineering/profile" component={EngineeringOperatingProfile} />

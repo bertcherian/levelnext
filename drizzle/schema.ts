@@ -4076,3 +4076,147 @@ export const biReflections = mysqlTable(
 );
 export type BiReflection = typeof biReflections.$inferSelect;
 export type InsertBiReflection = typeof biReflections.$inferInsert;
+
+
+// ─── LevelNext Academy: Product Fluency ──────────────────────────────────────
+export const academyProfiles = mysqlTable(
+  "academy_profiles",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    roleTrack: varchar("roleTrack", { length: 80 }).default("other").notNull(),
+    stage: varchar("stage", { length: 80 }).default("orientation").notNull(),
+    fluencyLevel: varchar("fluencyLevel", { length: 80 }).default("product_aware").notNull(),
+    dimensionScores: json("dimensionScores").$type<Record<string, number>>().notNull(),
+    gaps: json("gaps").$type<string[]>().notNull(),
+    startedAt: timestamp("startedAt").defaultNow().notNull(),
+    lastActiveAt: timestamp("lastActiveAt").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("academy_profiles_user_idx").on(table.userId),
+    index("academy_profiles_tenant_idx").on(table.tenantId),
+  ],
+);
+export type AcademyProfile = typeof academyProfiles.$inferSelect;
+export type InsertAcademyProfile = typeof academyProfiles.$inferInsert;
+
+export const academyKnowledgeObjects = mysqlTable(
+  "academy_knowledge_objects",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").references(() => tenants.id),
+    objectType: varchar("objectType", { length: 80 }).notNull(),
+    slug: varchar("slug", { length: 160 }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    summary: text("summary").notNull(),
+    content: json("content").$type<Record<string, unknown>>().notNull(),
+    disclosureBand: varchar("disclosureBand", { length: 40 }).default("need_now").notNull(),
+    approvalStatus: varchar("approvalStatus", { length: 40 }).default("approved").notNull(),
+    version: int("version").default(1).notNull(),
+    ownerId: int("ownerId").references(() => users.id),
+    productCode: varchar("productCode", { length: 100 }),
+    roleRelevance: json("roleRelevance").$type<string[]>().notNull(),
+    replacementId: int("replacementId"),
+    obsoleteAt: timestamp("obsoleteAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("academy_knowledge_slug_idx").on(table.slug),
+    index("academy_knowledge_type_status_idx").on(table.objectType, table.approvalStatus),
+    index("academy_knowledge_product_idx").on(table.productCode),
+  ],
+);
+export type AcademyKnowledgeObject = typeof academyKnowledgeObjects.$inferSelect;
+export type InsertAcademyKnowledgeObject = typeof academyKnowledgeObjects.$inferInsert;
+
+export const academyAssessmentAttempts = mysqlTable(
+  "academy_assessment_attempts",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    profileId: int("profileId").notNull().references(() => academyProfiles.id),
+    assessmentType: varchar("assessmentType", { length: 50 }).notNull(),
+    score: int("score").default(0).notNull(),
+    dimensionScores: json("dimensionScores").$type<Record<string, number>>().notNull(),
+    confidenceSignals: json("confidenceSignals").$type<Record<string, number>>().notNull(),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("academy_attempts_profile_idx").on(table.profileId, table.createdAt),
+  ],
+);
+export type AcademyAssessmentAttempt = typeof academyAssessmentAttempts.$inferSelect;
+export type InsertAcademyAssessmentAttempt = typeof academyAssessmentAttempts.$inferInsert;
+
+export const academyAssessmentResponses = mysqlTable(
+  "academy_assessment_responses",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    attemptId: int("attemptId").notNull().references(() => academyAssessmentAttempts.id),
+    itemKey: varchar("itemKey", { length: 120 }).notNull(),
+    response: varchar("response", { length: 255 }).notNull(),
+    confidence: varchar("confidence", { length: 20 }).default("medium").notNull(),
+    isCorrect: boolean("isCorrect").default(false).notNull(),
+    dimension: varchar("dimension", { length: 40 }).notNull(),
+    gapCode: varchar("gapCode", { length: 120 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("academy_response_attempt_item_unique").on(table.attemptId, table.itemKey),
+    index("academy_responses_attempt_idx").on(table.attemptId),
+  ],
+);
+export type AcademyAssessmentResponse = typeof academyAssessmentResponses.$inferSelect;
+export type InsertAcademyAssessmentResponse = typeof academyAssessmentResponses.$inferInsert;
+
+export const academyProgressEvents = mysqlTable(
+  "academy_progress_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    profileId: int("profileId").notNull().references(() => academyProfiles.id),
+    eventType: varchar("eventType", { length: 80 }).notNull(),
+    objectKey: varchar("objectKey", { length: 160 }),
+    dimension: varchar("dimension", { length: 40 }),
+    evidenceRef: json("evidenceRef").$type<Record<string, unknown>>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("academy_events_profile_idx").on(table.profileId, table.createdAt),
+    index("academy_events_type_idx").on(table.eventType),
+  ],
+);
+export type AcademyProgressEvent = typeof academyProgressEvents.$inferSelect;
+export type InsertAcademyProgressEvent = typeof academyProgressEvents.$inferInsert;
+
+export const academyMentorThreads = mysqlTable(
+  "academy_mentor_threads",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    profileId: int("profileId").notNull().references(() => academyProfiles.id),
+    mode: varchar("mode", { length: 40 }).default("ask").notNull(),
+    contextSnapshot: json("contextSnapshot").$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    lastActiveAt: timestamp("lastActiveAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [index("academy_threads_profile_idx").on(table.profileId, table.lastActiveAt)],
+);
+export type AcademyMentorThread = typeof academyMentorThreads.$inferSelect;
+
+export const academyMentorMessages = mysqlTable(
+  "academy_mentor_messages",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    threadId: int("threadId").notNull().references(() => academyMentorThreads.id),
+    role: varchar("role", { length: 20 }).notNull(),
+    content: text("content").notNull(),
+    citations: json("citations").$type<string[]>().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [index("academy_messages_thread_idx").on(table.threadId, table.createdAt)],
+);
+export type AcademyMentorMessage = typeof academyMentorMessages.$inferSelect;
