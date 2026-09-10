@@ -1,18 +1,87 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import AcademyLayout from "../components/AcademyLayout";
 import { trpc } from "../lib/trpc";
 import { toast } from "sonner";
 import {
   Map,
-  Compass,
   ArrowRight,
   ShieldCheck,
   Zap,
   BookOpen,
-  Layers,
-  Sparkles,
 } from "lucide-react";
 import { Link } from "wouter";
+
+function humanizeKey(key: string) {
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/[_-]/g, " ")
+    .replace(/^./, (letter) => letter.toUpperCase())
+    .trim();
+}
+
+function renderAcademyValue(value: unknown): ReactNode {
+  if (value === null || value === undefined) return null;
+
+  if (Array.isArray(value)) {
+    const objectItems = value.every(
+      (item) => item !== null && typeof item === "object" && !Array.isArray(item),
+    );
+
+    if (objectItems) {
+      return (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {value.map((item, index) => {
+            const entries = Object.entries(item as Record<string, unknown>);
+            const labelEntry = entries.find(([key]) => key === "label" || key === "title");
+            const supportingEntries = entries.filter(([key]) => key !== "label" && key !== "title");
+
+            return (
+              <div key={index} className="rounded-lg border border-white/10 bg-[#0A1A2F]/70 p-3.5 space-y-2">
+                {labelEntry && (
+                  <p className="text-sm font-bold text-white">{renderAcademyValue(labelEntry[1])}</p>
+                )}
+                <div className="space-y-1.5">
+                  {supportingEntries.map(([key, itemValue]) => (
+                    <div key={key} className="text-xs leading-relaxed">
+                      <span className="font-semibold text-[#D4AF37]">{humanizeKey(key)}: </span>
+                      <span className="text-[#F8F5F0]/75">{renderAcademyValue(itemValue)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return (
+      <ul className="space-y-2">
+        {value.map((item, index) => (
+          <li key={index} className="flex items-start gap-2 text-xs leading-relaxed text-[#F8F5F0]/80">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#D4AF37]" />
+            <span>{renderAcademyValue(item)}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (typeof value === "object") {
+    return (
+      <div className="space-y-2">
+        {Object.entries(value as Record<string, unknown>).map(([key, itemValue]) => (
+          <div key={key} className="text-xs leading-relaxed">
+            <span className="font-semibold text-white">{humanizeKey(key)}: </span>
+            <span className="text-[#F8F5F0]/75">{renderAcademyValue(itemValue)}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return String(value);
+}
 
 export default function AcademyProductMap() {
   const { data: objects, isLoading } = trpc.academy.getProductMap.useQuery();
@@ -129,48 +198,14 @@ export default function AcademyProductMap() {
 
                 {/* Structured Teaching Sections */}
                 <div className="space-y-4 pt-2">
-                  {Object.entries((selectedObject.content as Record<string, any>) ?? {}).map(([key, val]) => {
-                    if (typeof val === "object" && !Array.isArray(val)) {
-                      return (
-                        <div key={key} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-2">
-                          <p className="text-xs font-bold text-[#D4AF37] capitalize">
-                            {key.replace(/([A-Z])/g, " $1")}
-                          </p>
-                          <div className="text-xs text-[#F8F5F0]/80 space-y-1">
-                            {Object.entries(val).map(([subK, subV]) => (
-                              <p key={subK}>
-                                <strong className="text-white capitalize">{subK}:</strong> {String(subV)}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    if (Array.isArray(val)) {
-                      return (
-                        <div key={key} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-2">
-                          <p className="text-xs font-bold text-[#D4AF37] capitalize">
-                            {key.replace(/([A-Z])/g, " $1")}
-                          </p>
-                          <ul className="text-xs text-[#F8F5F0]/80 list-disc list-inside space-y-1">
-                            {val.map((item, idx) => (
-                              <li key={idx}>{typeof item === "object" ? JSON.stringify(item) : String(item)}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div key={key} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-1">
-                        <p className="text-xs font-bold text-[#D4AF37] capitalize">
-                          {key.replace(/([A-Z])/g, " $1")}
-                        </p>
-                        <p className="text-xs text-[#F8F5F0]/80 leading-relaxed">{String(val)}</p>
+                  {Object.entries((selectedObject.content as Record<string, unknown>) ?? {}).map(([key, val]) => (
+                    <div key={key} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-2">
+                      <p className="text-xs font-bold text-[#D4AF37]">{humanizeKey(key)}</p>
+                      <div className="text-xs text-[#F8F5F0]/80 leading-relaxed">
+                        {renderAcademyValue(val)}
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
 
                 {/* Live Platform Link if available */}
