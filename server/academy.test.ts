@@ -53,4 +53,15 @@ describe("Academy Product Fluency calculations", () => {
     expect(tiers.every((tier) => Array.isArray(tier.targetPersonas))).toBe(true);
     expect(tiers.every((tier) => Array.isArray(tier.recommendedBehaviouralMoves))).toBe(true);
   });
+
+  it("explains every Behavioural Intelligence stage for newcomers", () => {
+    const engine = ACADEMY_SEED_KNOWLEDGE.find((item) => item.slug === "engine-behavioural-intelligence");
+    const stages = (engine?.content as Record<string, unknown>).stages as Array<Record<string, unknown>>;
+
+    expect(stages).toHaveLength(6);
+    expect(stages.every((stage) => typeof stage.label === "string")).toBe(true);
+    expect(stages.every((stage) => typeof stage.whatItMeans === "string" && String(stage.whatItMeans).length > 40)).toBe(true);
+    expect(stages.every((stage) => typeof stage.example === "string" && String(stage.example).length > 20)).toBe(true);
+    expect(stages.every((stage) => typeof stage.output === "string" && String(stage.output).length > 20)).toBe(true);
+  });
 });
