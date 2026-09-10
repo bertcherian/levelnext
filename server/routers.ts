@@ -73,6 +73,7 @@ import { clientTelemetryRouter } from "./routers/clientTelemetry";
 import { engineeringIntelligenceRouter } from "./routers/engineeringIntelligence";
 import { engineeringAdminRouter } from "./routers/engineeringAdmin";
 import { narrativeIntelligenceRouter } from "./routers/narrativeIntelligence";
+import { accountRouter } from "./routers/account";
 
 export const appRouter = router({
   system: systemRouter,
@@ -84,6 +85,7 @@ export const appRouter = router({
       return { success: true } as const;
     }),
   }),
+  account: accountRouter,
   tenant: tenantRouter,
   assessment: assessmentRouter,
   pdfReport: pdfReportRouter,

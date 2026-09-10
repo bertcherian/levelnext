@@ -11,8 +11,9 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
+import { buildWhatsappNumber, DEFAULT_WHATSAPP_COUNTRY_CODE, WHATSAPP_COUNTRY_CODES } from "@shared/whatsapp";
 import { useState, useEffect } from "react";
-import { CheckCircle2, ArrowRight, Brain, Target, Zap, TrendingUp, Shield, AlertTriangle, RefreshCw, Mail, MessageCircle } from "lucide-react";
+import { CheckCircle2, ArrowRight, Brain, Target, Zap, TrendingUp, Shield, AlertTriangle, RefreshCw, Mail } from "lucide-react";
 
 const LOGO_URL = "/logo.png";
 
@@ -67,7 +68,8 @@ export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [organisation, setOrganisation] = useState("");
-  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [whatsappCountryCode, setWhatsappCountryCode] = useState(DEFAULT_WHATSAPP_COUNTRY_CODE);
+  const [whatsappLocalNumber, setWhatsappLocalNumber] = useState("");
   const [state, setState] = useState<"form" | "check_inbox" | "link_error">("form");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [devToken, setDevToken] = useState<string | null>(null);
@@ -82,6 +84,7 @@ export default function Signup() {
      platformParam === "career" ? "/career" :
      platformParam === "leadership" ? "/home" : undefined);
   const isManagerEffectivenessSignup = platformParam === "mep";
+  const whatsappNumber = buildWhatsappNumber(whatsappCountryCode, whatsappLocalNumber);
 
   useEffect(() => {
     if (errorParam === "invalid_or_expired" || errorParam === "missing_token") {
@@ -314,18 +317,32 @@ export default function Signup() {
                     <label className="block text-sm font-medium mb-1.5" style={{ color: "#12345A" }}>
                       WhatsApp number <span className="text-xs font-normal" style={{ color: "#666" }}>(optional)</span>
                     </label>
-                    <div className="relative">
-                      <MessageCircle size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#999" }} />
-                      <Input
-                        type="tel"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        placeholder="+91 98765 43210"
-                        value={whatsappNumber}
-                        onChange={(e) => setWhatsappNumber(e.target.value)}
-                        className="h-12 text-base pl-10"
-                        style={{ borderColor: "#d1cfc9" }}
-                      />
+                    <div>
+                        <div className="flex gap-2">
+                          <select
+                            aria-label="WhatsApp country code"
+                            value={whatsappCountryCode}
+                            onChange={(e) => setWhatsappCountryCode(e.target.value)}
+                            className="h-12 w-[145px] rounded-md border bg-white px-2 text-base"
+                            style={{ borderColor: "#d1cfc9", color: "#12345A" }}
+                          >
+                            {WHATSAPP_COUNTRY_CODES.map((country) => (
+                              <option key={`${country.code}-${country.dialCode}`} value={country.dialCode}>
+                                {country.name} ({country.dialCode})
+                              </option>
+                            ))}
+                          </select>
+                          <Input
+                            type="tel"
+                            inputMode="tel"
+                            autoComplete="tel"
+                            placeholder="98765 43210"
+                            value={whatsappLocalNumber}
+                            onChange={(e) => setWhatsappLocalNumber(e.target.value)}
+                            className="h-12 flex-1 text-base"
+                            style={{ borderColor: "#d1cfc9" }}
+                          />
+                        </div>
                     </div>
                     <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "#000" }}>
                       Add this if you would like your Success Partner to contact you on WhatsApp later. We will only use it for LevelNext support and agreed follow-up.

@@ -23,8 +23,10 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { whatsappHref } from "@shared/whatsapp";
 
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
@@ -41,6 +43,24 @@ const OUTCOME_OPTIONS = [
   { value: "not_implemented", label: "Not Done", desc: "Leader disengaged or forgot", icon: <XCircle size={18} />, color: "text-red-700", bg: "bg-red-500/10 border-red-500/30 hover:bg-red-500/20" },
   { value: "no_show", label: "No Show", desc: "Leader did not pick up", icon: <PhoneMissed size={18} />, color: "text-gray-600", bg: "bg-gray-500/10 border-gray-500/30 hover:bg-gray-500/20" },
 ];
+
+const WHATSAPP_TEMPLATES = [
+  {
+    id: "warm_check_in",
+    label: "Warm check-in",
+    build: (name: string) => `Hi ${name}, this is your LevelNext Success Partner. I wanted to check in and see how things are going since your last session. Is there anything you would like to talk through?`,
+  },
+  {
+    id: "commitment_follow_up",
+    label: "Commitment follow-up",
+    build: (name: string, commitment: string) => `Hi ${name}, I wanted to follow up on your LevelNext commitment: “${commitment}”. What progress have you noticed, and where would a little support help?`,
+  },
+  {
+    id: "call_reminder",
+    label: "Call reminder",
+    build: (name: string) => `Hi ${name}, a quick reminder from your LevelNext Success Partner about our upcoming conversation. Please let me know if the scheduled time still works for you.`,
+  },
+] as const;
 
 export default function AdminMomentumBrief({ params }: { params: { userId: string } }) {
   const userId = parseInt(params.userId, 10);
@@ -61,6 +81,8 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
     generatedBy: "ai" | "safe_fallback";
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selectedWhatsappTemplate, setSelectedWhatsappTemplate] = useState<(typeof WHATSAPP_TEMPLATES)[number]["id"]>("warm_check_in");
+  const [whatsappCopied, setWhatsappCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
   // Outcome form state
@@ -165,6 +187,10 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
   const latestReport = data.allReports[0] ?? null;
   const primaryCommitment = data.activeCommitments[0] ?? null;
   const hasScheduledCall = !!data.scheduledCall;
+  const participantName = data.user.name?.split(" ")[0] || "there";
+  const template = WHATSAPP_TEMPLATES.find((item) => item.id === selectedWhatsappTemplate) ?? WHATSAPP_TEMPLATES[0];
+  const whatsappMessage = template.build(participantName, primaryCommitment?.text ?? "your current LevelNext commitment");
+  const whatsappUrl = whatsappHref(data.user.whatsappNumber);
 
   return (
     <PlatformLayout>
@@ -203,6 +229,55 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
             </div>
           </div>
         </div>
+
+        {whatsappUrl && (
+          <div className="rounded-xl border p-5 space-y-4" style={{ background: "#F0FDF4", borderColor: "#BBF7D0" }}>
+            <div className="flex items-start gap-3">
+              <MessageCircle className="mt-0.5 text-emerald-700" size={20} />
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-emerald-900">WhatsApp follow-up</h2>
+                <p className="mt-1 text-sm text-emerald-900">Use a prepared message as a starting point. Review it before sending.</p>
+              </div>
+            </div>
+            <select
+              aria-label="WhatsApp message template"
+              value={selectedWhatsappTemplate}
+              onChange={(event) => setSelectedWhatsappTemplate(event.target.value as typeof selectedWhatsappTemplate)}
+              className="h-10 w-full rounded-md border border-emerald-200 bg-white px-3 text-sm text-emerald-950"
+            >
+              {WHATSAPP_TEMPLATES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+            </select>
+            <textarea
+              readOnly
+              value={whatsappMessage}
+              aria-label="WhatsApp message preview"
+              className="min-h-[110px] w-full resize-y rounded-md border border-emerald-200 bg-white p-3 text-sm leading-relaxed text-black"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(whatsappMessage);
+                  setWhatsappCopied(true);
+                  setTimeout(() => setWhatsappCopied(false), 2000);
+                  toast.success("WhatsApp message copied");
+                }}
+              >
+                {whatsappCopied ? <Check size={14} className="mr-1.5" /> : <Copy size={14} className="mr-1.5" />}
+                {whatsappCopied ? "Copied" : "Copy message"}
+              </Button>
+              <Button
+                size="sm"
+                className="bg-emerald-700 text-white hover:bg-emerald-800"
+                onClick={() => window.open(`${whatsappUrl}?text=${encodeURIComponent(whatsappMessage)}`, "_blank", "noopener,noreferrer")}
+              >
+                <MessageCircle size={14} className="mr-1.5" /> Open WhatsApp
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* ── Context Card ── */}
         <div className="rounded-xl border p-5 space-y-4" style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}>
