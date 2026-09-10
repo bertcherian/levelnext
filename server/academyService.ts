@@ -151,7 +151,7 @@ export async function ensureAcademySeedKnowledge(): Promise<void> {
 
   for (const item of ACADEMY_SEED_KNOWLEDGE) {
     const existing = await db
-      .select({ id: academyKnowledgeObjects.id })
+      .select({ id: academyKnowledgeObjects.id, version: academyKnowledgeObjects.version })
       .from(academyKnowledgeObjects)
       .where(eq(academyKnowledgeObjects.slug, item.slug))
       .limit(1);
@@ -164,11 +164,26 @@ export async function ensureAcademySeedKnowledge(): Promise<void> {
         summary: item.summary,
         disclosureBand: item.disclosureBand,
         approvalStatus: "approved",
-        version: 1,
+        version: 2,
         productCode: item.productCode ?? null,
         roleRelevance: item.roleRelevance,
         content: item.content,
       });
+    } else if ((existing[0]?.version ?? 0) < 2) {
+      await db
+        .update(academyKnowledgeObjects)
+        .set({
+          title: item.title,
+          objectType: item.objectType,
+          summary: item.summary,
+          disclosureBand: item.disclosureBand,
+          approvalStatus: "approved",
+          version: 2,
+          productCode: item.productCode ?? null,
+          roleRelevance: item.roleRelevance,
+          content: item.content,
+        })
+        .where(eq(academyKnowledgeObjects.id, existing[0]!.id));
     }
   }
 }

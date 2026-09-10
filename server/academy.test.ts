@@ -7,6 +7,7 @@ import {
   type AcademyDimensionScores,
 } from "../shared/modules/academy";
 import { ACADEMY_DIAGNOSTIC_ITEMS } from "./academyService";
+import { ACADEMY_SEED_KNOWLEDGE } from "./academySeedData";
 
 describe("Academy Product Fluency calculations", () => {
   it("calculates weighted fluency score correctly across 4 dimensions", () => {
@@ -36,5 +37,20 @@ describe("Academy Product Fluency calculations", () => {
     expect(dimensions.has("navigate")).toBe(true);
     expect(dimensions.has("apply")).toBe(true);
     expect(dimensions.has("explain")).toBe(true);
+  });
+
+  it("includes newcomer guidance and deep-link metadata for leadership transition tiers", () => {
+    const family = ACADEMY_SEED_KNOWLEDGE.find((item) => item.slug === "product-family-leadership-core");
+    const content = family?.content as Record<string, unknown>;
+    const tiers = content.tiers as Array<Record<string, unknown>>;
+
+    expect(content.howToUnderstand).toBeTruthy();
+    expect(content.definitions).toBeTruthy();
+    expect(content.tooltips).toBeTruthy();
+    expect(tiers).toHaveLength(5);
+    expect(tiers.every((tier) => typeof tier.route === "string")).toBe(true);
+    expect(tiers.every((tier) => Array.isArray(tier.primaryDerailers))).toBe(true);
+    expect(tiers.every((tier) => Array.isArray(tier.targetPersonas))).toBe(true);
+    expect(tiers.every((tier) => Array.isArray(tier.recommendedBehaviouralMoves))).toBe(true);
   });
 });
