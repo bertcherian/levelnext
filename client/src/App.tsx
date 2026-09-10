@@ -111,6 +111,7 @@ const PESettings = lazy(() => import("./pages/pe/PESettings"));
 const IntelligenceCoreDashboard = lazyWithRouteRecovery(() => import("./pages/IntelligenceCoreDashboard"), "admin-intelligence-core");
 const Intelligence = lazy(() => import("./pages/Intelligence"));
 const NarrativeIntelligence = lazy(() => import("./pages/NarrativeIntelligence"));
+const BehaviouralIntelligenceStudio = lazy(() => import("@/pages/BehaviouralIntelligenceStudio"));
 const SimulatorStart = lazy(() => import("./pages/SimulatorStart"));
 const SimulatorSession = lazy(() => import("./pages/SimulatorSession"));
 const SimulatorDebrief = lazy(() => import("./pages/SimulatorDebrief"));
@@ -248,6 +249,7 @@ function Router() {
       <Route path="/diagnostics" component={Diagnostics} />
       <Route path="/narrative" component={NarrativeIntelligence} />
       <Route path="/narrative-intelligence" component={NarrativeIntelligence} />
+      <Route path="/behavioural-intelligence" component={() => <BehaviouralIntelligenceStudio />} />
       <Route path="/diagnostics/:moduleType" component={Assessment} />
       <Route path="/engineering/diagnostic" component={EngineeringDiagnostic} />
       <Route path="/engineering/profile" component={EngineeringOperatingProfile} />
@@ -297,6 +299,7 @@ function Router() {
       <Route path="/manager/coach" component={withMepLayout(<ManagerCoach />)} />
       <Route path="/manager/practice" component={withMepLayout(<ManagerPractice />)} />
       <Route path="/manager/narrative" component={withMepLayout(<NarrativeIntelligence />)} />
+      <Route path="/manager/behavioural-intelligence" component={withMepLayout(<BehaviouralIntelligenceStudio sourceApp="mep" />)} />
       <Route path="/manager/team" component={withMepLayout(<TeamIntelligence />)} />
       <Route path="/manager/progress" component={withMepLayout(<ManagerProgress />)} />
       {/* Legacy redirects — old routes still work */}

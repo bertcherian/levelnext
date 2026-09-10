@@ -10,6 +10,7 @@ import {
   Lightbulb,
   MessageSquare,
   Settings,
+  Sparkles,
   Zap,
 } from "lucide-react";
 
@@ -62,6 +63,7 @@ export const MEP_NAV_ITEMS: PlatformNavItem[] = [
   { label: "Playbook", icon: BookOpen, href: "/manager/playbook" },
   { label: "Daily Brief", icon: Lightbulb, href: "/manager/brief" },
   { label: "Practice Partner", icon: Zap, href: "/manager/practice" },
+  { label: "Behavioural Moves", icon: Sparkles, href: "/manager/behavioural-intelligence" },
   { label: "Commitments", icon: Activity, href: "/manager/commitments" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];

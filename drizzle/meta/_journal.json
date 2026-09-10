@@ -617,6 +617,13 @@
       "when": 1789017192377,
       "tag": "0087_lush_cannonball",
       "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "5",
+      "when": 1789027055840,
+      "tag": "0088_fast_pandemic",
+      "breakpoints": true
     }
   ]
 }

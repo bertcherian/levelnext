@@ -3872,3 +3872,206 @@ export const niSharingGrants = mysqlTable(
 );
 export type NiSharingGrant = typeof niSharingGrants.$inferSelect;
 export type InsertNiSharingGrant = typeof niSharingGrants.$inferInsert;
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BEHAVIOURAL INTELLIGENCE ENGINE™ — Core Schema
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── BI: Moments (Participant-owned real workplace moments) ───────────────────
+export const biMoments = mysqlTable(
+  "bi_moments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    sourceApp: varchar("sourceApp", { length: 80 }).default("behavioural_intelligence").notNull(),
+    sourceEntityType: varchar("sourceEntityType", { length: 80 }),
+    sourceEntityId: int("sourceEntityId"),
+    moduleType: varchar("moduleType", { length: 50 }),
+    situation: text("situation").notNull(),
+    desiredOutcome: text("desiredOutcome"),
+    observedBehaviour: text("observedBehaviour"),
+    role: varchar("role", { length: 255 }),
+    careerStage: mysqlEnum("careerStage", ["early_career", "professional", "manager", "leader", "cxo"]).default("manager").notNull(),
+    authorityLevel: varchar("authorityLevel", { length: 160 }),
+    stakeholders: text("stakeholders"),
+    organisationalContext: text("organisationalContext"),
+    culturalContext: text("culturalContext"),
+    powerDynamics: text("powerDynamics"),
+    consequences: text("consequences"),
+    evidence: json("evidence").$type<string[]>(),
+    diagnosticContext: json("diagnosticContext").$type<Record<string, unknown>>(),
+    status: mysqlEnum("status", ["draft", "analysed", "in_practice", "in_action", "completed", "archived"]).default("draft").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("bi_moments_user_idx").on(table.userId, table.createdAt),
+    index("bi_moments_tenant_source_idx").on(table.tenantId, table.sourceApp),
+  ]
+);
+export type BiMoment = typeof biMoments.$inferSelect;
+export type InsertBiMoment = typeof biMoments.$inferInsert;
+
+// ─── BI: Analysis Snapshots (Immutable versioned intelligence output) ─────────
+export const biAnalysisSnapshots = mysqlTable(
+  "bi_analysis_snapshots",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    momentId: int("momentId").notNull().references(() => biMoments.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    engineVersion: varchar("engineVersion", { length: 40 }).notNull(),
+    diagnosticLens: mysqlEnum("diagnosticLens", ["knowing", "seeing", "choosing", "mixed"]).notNull(),
+    primaryGap: mysqlEnum("primaryGap", ["capability", "judgment", "self_leadership", "observer", "environment_system", "mixed"]).notNull(),
+    primaryDistinctionId: varchar("primaryDistinctionId", { length: 64 }),
+    secondaryDistinctionId: varchar("secondaryDistinctionId", { length: 64 }),
+    confidence: mysqlEnum("confidence", ["low", "moderate", "high"]).notNull(),
+    analysis: json("analysis").$type<import("../shared/modules/behaviouralIntelligence").BehaviouralAnalysis>().notNull(),
+    modelStatus: mysqlEnum("modelStatus", ["success", "fallback"]).notNull(),
+    fallbackReason: varchar("fallbackReason", { length: 120 }),
+    traceId: varchar("traceId", { length: 80 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("bi_snapshots_moment_idx").on(table.momentId, table.createdAt),
+    index("bi_snapshots_user_idx").on(table.userId, table.createdAt),
+  ]
+);
+export type BiAnalysisSnapshot = typeof biAnalysisSnapshots.$inferSelect;
+export type InsertBiAnalysisSnapshot = typeof biAnalysisSnapshots.$inferInsert;
+
+// ─── BI: Moves (Specific, observable, actionable behavioural moves) ───────────
+export const biMoves = mysqlTable(
+  "bi_moves",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    momentId: int("momentId").notNull().references(() => biMoments.id),
+    analysisSnapshotId: int("analysisSnapshotId").references(() => biAnalysisSnapshots.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    moveCode: varchar("moveCode", { length: 100 }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description").notNull(),
+    suggestedLanguage: json("suggestedLanguage").$type<string[]>(),
+    successSignal: text("successSignal").notNull(),
+    doNotDo: json("doNotDo").$type<string[]>(),
+    recommendedDepth: varchar("recommendedDepth", { length: 40 }).default("D2_practice").notNull(),
+    status: mysqlEnum("status", ["proposed", "selected", "practised", "committed", "applied", "dismissed"]).default("proposed").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("bi_moves_moment_status_idx").on(table.momentId, table.status),
+    index("bi_moves_user_idx").on(table.userId, table.createdAt),
+  ]
+);
+export type BiMove = typeof biMoves.$inferSelect;
+export type InsertBiMove = typeof biMoves.$inferInsert;
+
+// ─── BI: Practice Links (Rehearsal in micro-practice, roleplay or simulator) ───
+export const biPracticeLinks = mysqlTable(
+  "bi_practice_links",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    moveId: int("moveId").notNull().references(() => biMoves.id),
+    momentId: int("momentId").notNull().references(() => biMoments.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    providerType: varchar("providerType", { length: 60 }).notNull(),
+    providerSessionId: int("providerSessionId"),
+    attemptNumber: int("attemptNumber").default(1).notNull(),
+    scenarioContext: json("scenarioContext").$type<Record<string, unknown>>(),
+    practiceStatus: mysqlEnum("practiceStatus", ["planned", "in_progress", "completed", "abandoned"]).default("planned").notNull(),
+    feedbackScores: json("feedbackScores").$type<Record<string, unknown>>(),
+    evidenceLevel: mysqlEnum("evidenceLevel", ["prepared", "practised", "applied", "reflected", "repeated", "demonstrated_consistently"]).default("prepared").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("bi_practice_move_idx").on(table.moveId, table.attemptNumber),
+    index("bi_practice_user_idx").on(table.userId, table.createdAt),
+  ]
+);
+export type BiPracticeLink = typeof biPracticeLinks.$inferSelect;
+export type InsertBiPracticeLink = typeof biPracticeLinks.$inferInsert;
+
+// ─── BI: Actions (Real-world behavioural action commitments) ───────────────────
+export const biActions = mysqlTable(
+  "bi_actions",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    moveId: int("moveId").notNull().references(() => biMoves.id),
+    momentId: int("momentId").notNull().references(() => biMoments.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    actionDescription: text("actionDescription").notNull(),
+    personOrGroup: varchar("personOrGroup", { length: 255 }),
+    dueAt: timestamp("dueAt"),
+    status: mysqlEnum("status", ["planned", "in_progress", "completed", "cancelled"]).default("planned").notNull(),
+    completionNotes: text("completionNotes"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("bi_actions_moment_status_idx").on(table.momentId, table.status),
+    index("bi_actions_user_idx").on(table.userId, table.createdAt),
+  ]
+);
+export type BiAction = typeof biActions.$inferSelect;
+export type InsertBiAction = typeof biActions.$inferInsert;
+
+// ─── BI: Evidence (Observable evidence of action taken & shift created) ────────
+export const biEvidence = mysqlTable(
+  "bi_evidence",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    momentId: int("momentId").notNull().references(() => biMoments.id),
+    moveId: int("moveId").references(() => biMoves.id),
+    actionId: int("actionId").references(() => biActions.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    sourceType: mysqlEnum("sourceType", ["self_report", "simulator_behaviour", "practice_attempt", "real_world_outcome", "stakeholder_feedback"]).default("self_report").notNull(),
+    situation: text("situation").notNull(),
+    actionTaken: text("actionTaken").notNull(),
+    outcome: text("outcome").notNull(),
+    learning: text("learning").notNull(),
+    evidenceLevel: mysqlEnum("evidenceLevel", ["prepared", "practised", "applied", "reflected", "repeated", "demonstrated_consistently"]).default("applied").notNull(),
+    verificationStatus: mysqlEnum("verificationStatus", ["unverified", "pending", "verified", "disputed"]).default("unverified").notNull(),
+    verifiedByUserId: int("verifiedByUserId").references(() => users.id),
+    verifiedAt: timestamp("verifiedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("bi_evidence_moment_level_idx").on(table.momentId, table.evidenceLevel),
+    index("bi_evidence_user_idx").on(table.userId, table.createdAt),
+  ]
+);
+export type BiEvidence = typeof biEvidence.$inferSelect;
+export type InsertBiEvidence = typeof biEvidence.$inferInsert;
+
+// ─── BI: Reflections (Participant reflection & capacity shift) ─────────────────
+export const biReflections = mysqlTable(
+  "bi_reflections",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    evidenceId: int("evidenceId").notNull().references(() => biEvidence.id),
+    momentId: int("momentId").notNull().references(() => biMoments.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    reflectionText: text("reflectionText").notNull(),
+    capacitySignal: text("capacitySignal"),
+    oldPatternShift: text("oldPatternShift"),
+    newPossibility: text("newPossibility"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("bi_reflections_evidence_idx").on(table.evidenceId),
+    index("bi_reflections_user_idx").on(table.userId, table.createdAt),
+  ]
+);
+export type BiReflection = typeof biReflections.$inferSelect;
+export type InsertBiReflection = typeof biReflections.$inferInsert;
