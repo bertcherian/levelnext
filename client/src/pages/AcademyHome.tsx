@@ -66,7 +66,7 @@ export default function AcademyHome() {
               <Sparkles size={14} /> LevelNext Internal Academy
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F8F5F0] tracking-tight">
-              Move from knowing about LevelNext to applying it with conviction.
+              LevelNext: Know about Us. Apply with Conviction.
             </h1>
             <p className="text-sm text-[#F8F5F0]/80 leading-relaxed">
               Product Fluency is not video completion. It is the ability to diagnose the true problem, navigate the platform, apply the right intervention, and explain the change clearly.
