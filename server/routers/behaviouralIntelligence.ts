@@ -123,13 +123,21 @@ export const behaviouralIntelligenceRouter = router({
         practiceLinkId: z.number().int().positive(),
         feedbackScores: z.record(z.string(), z.unknown()).optional(),
         practiceStatus: z.enum(["completed", "abandoned"]),
+        phraseTelemetry: z.array(z.object({
+          phraseKey: z.string().trim().min(1).max(40),
+          matched: z.boolean(),
+          matchCount: z.number().int().min(0).max(50),
+        })).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return recordPracticeResultService({
         practiceLinkId: input.practiceLinkId,
         userId: ctx.user.id,
-        feedbackScores: input.feedbackScores,
+        feedbackScores: {
+          ...(input.feedbackScores ?? {}),
+          ...(input.phraseTelemetry ? { phraseTelemetry: input.phraseTelemetry } : {}),
+        },
         practiceStatus: input.practiceStatus,
       });
     }),

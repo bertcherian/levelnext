@@ -319,7 +319,14 @@ RULES:
     }),
 
   endSession: protectedProcedure
-    .input(z.object({ sessionId: z.number().int() }))
+    .input(z.object({
+      sessionId: z.number().int(),
+      phraseTelemetry: z.array(z.object({
+        phraseKey: z.string().trim().min(1).max(40),
+        matched: z.boolean(),
+        matchCount: z.number().int().min(0).max(50),
+      })).optional(),
+    }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -374,6 +381,7 @@ Be specific, honest, and constructive. Reference actual things the user said.`,
           improvements: debrief.improvements,
           coachingInsights: debrief.coachingInsights,
           keyTakeaway: debrief.keyTakeaway,
+          phraseTelemetry: input.phraseTelemetry ?? null,
           completedAt: new Date(),
         }).where(eq(simSessions.id, input.sessionId));
 

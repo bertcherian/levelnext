@@ -2181,6 +2181,7 @@ export const simSessions = mysqlTable("sim_sessions", {
   improvements: json("improvements").$type<string[]>(),
   coachingInsights: json("coachingInsights").$type<Array<{ moment: string; tryInstead: string }>>(),
   keyTakeaway: text("keyTakeaway"),
+  phraseTelemetry: json("phraseTelemetry").$type<Array<{ phraseKey: string; matched: boolean; matchCount: number }>>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   completedAt: timestamp("completedAt"),
 });

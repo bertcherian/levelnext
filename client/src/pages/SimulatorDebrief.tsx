@@ -145,6 +145,18 @@ export default function SimulatorDebrief() {
   const [checked,        setChecked]        = useState<Record<number, boolean>>({});
   const reportRef = useRef<HTMLDivElement>(null);
   const behaviouralCompletionRef = useRef(false);
+  const [rehearsalContext] = useState<{
+    moveTitle?: string;
+    suggestedLanguage?: string[];
+    phraseTelemetry?: Array<{ phraseKey: string; matched: boolean; matchCount: number }>;
+  } | null>(() => {
+    try {
+      const raw = localStorage.getItem("levelnext_active_behavioural_move");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const { data: session, isLoading } = trpc.simulator.getSession.useQuery(
     { sessionId },
@@ -160,17 +172,19 @@ export default function SimulatorDebrief() {
       const handoff = raw ? JSON.parse(raw) as { linkId?: number; sessionId?: number } : null;
       if (!handoff?.linkId || handoff.sessionId !== sessionId) return;
       behaviouralCompletionRef.current = true;
+      const telemetryPayload = (session as any).phraseTelemetry ?? rehearsalContext?.phraseTelemetry;
       recordBehaviouralPractice.mutate({
         practiceLinkId: handoff.linkId,
         practiceStatus: "completed",
         feedbackScores: {
           overallScore: session.overallScore ?? null,
           behaviourScores: session.behaviourScores ?? [],
+          ...(telemetryPayload ? { phraseTelemetry: telemetryPayload } : {}),
         },
+        phraseTelemetry: telemetryPayload,
       }, {
         onSuccess: () => {
           localStorage.removeItem("levelnext_behavioural_practice_link");
-          localStorage.removeItem("levelnext_active_behavioural_move");
         },
         onError: () => { behaviouralCompletionRef.current = false; },
       });
@@ -391,12 +405,60 @@ export default function SimulatorDebrief() {
             <div className="text-6xl font-bold mb-2" style={{ color: scoreColor }}>{overallScore}</div>
             <div className="text-white/40 text-sm mb-4">out of 100</div>
             {session.keyTakeaway && (
-              <div className="rounded-xl px-4 py-3 text-sm text-white/80 italic border"
-                style={{ borderColor: accent + "20", background: accent + "08" }}>
+              <div className="mt-4 p-3 rounded-lg text-sm text-white/80 italic border"
+                style={{ background: accent + "10", borderColor: accent + "20" }}>
                 "{session.keyTakeaway as string}"
               </div>
             )}
           </div>
+
+          {/* Targeted Behavioural Move Phrase Telemetry & Encouragement */}
+          {rehearsalContext?.suggestedLanguage?.length ? (
+            <div className="rounded-2xl p-6 border" style={{ borderColor: `${accent}40`, background: "rgba(212,175,55,0.06)" }}>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: accent }}>Target phrase telemetry</p>
+                  <h2 className="text-white font-semibold text-base mt-0.5">{rehearsalContext.moveTitle ?? "Behavioural Move Rehearsal"}</h2>
+                </div>
+                {(() => {
+                  const telemetry = (session as any).phraseTelemetry ?? rehearsalContext.phraseTelemetry ?? [];
+                  const matchedCount = telemetry.filter((item: any) => item.matched).length;
+                  const totalCount = rehearsalContext.suggestedLanguage.length;
+                  return (
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full border" style={{ borderColor: `${accent}50`, color: accent, background: `${accent}18` }}>
+                      {matchedCount}/{totalCount} target phrases spoken
+                    </span>
+                  );
+                })()}
+              </div>
+              <div className="mt-4 space-y-2">
+                {rehearsalContext.suggestedLanguage.map((phrase, index) => {
+                  const telemetry = (session as any).phraseTelemetry ?? rehearsalContext.phraseTelemetry ?? [];
+                  const item = telemetry.find((entry: any) => entry.phraseKey === `phrase_${index + 1}`);
+                  const matched = Boolean(item?.matched);
+                  const count = Number(item?.matchCount ?? 0);
+                  return (
+                    <div key={phrase} className="rounded-xl border p-3 flex items-start justify-between gap-3" style={{ borderColor: matched ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.08)", background: matched ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.02)" }}>
+                      <div className="min-w-0">
+                        <p className="text-xs italic text-white/85">“{phrase}”</p>
+                        <p className="text-[11px] mt-1" style={{ color: matched ? "#86efac" : "rgba(255,255,255,0.45)" }}>
+                          {matched
+                            ? `Spoken naturally during rehearsal (${count} ${count === 1 ? "time" : "times"}).`
+                            : "Not detected yet in speech. Rehearse saying this aloud in your next practice."}
+                        </p>
+                      </div>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded ${matched ? "bg-[#4ade80]/20 text-[#4ade80]" : "bg-white/10 text-white/50"}`}>
+                        {matched ? "Spoken ✓" : "Pending"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="mt-4 text-xs leading-relaxed text-white/70">
+                Spoken rehearsal builds muscle memory: verbalising these phrases in the simulator lowers cognitive load when you make this move in real stakes.
+              </p>
+            </div>
+          ) : null}
 
           {/* Behaviour Scores */}
           {behaviourScores.length > 0 && (

@@ -98,6 +98,18 @@ export const BEHAVIOURAL_MOVE_STATUSES = [
 ] as const;
 export type BehaviouralMoveStatus = (typeof BEHAVIOURAL_MOVE_STATUSES)[number];
 
+export type BehaviouralPhraseTelemetry = {
+  phraseKey: string;
+  matched: boolean;
+  matchCount: number;
+};
+
+export const behaviouralPhraseTelemetrySchema = z.object({
+  phraseKey: z.string().trim().min(1).max(40),
+  matched: z.boolean(),
+  matchCount: z.number().int().min(0).max(20),
+});
+
 export const BEHAVIOURAL_ACTION_STATUSES = [
   "planned",
   "in_progress",

@@ -61,6 +61,7 @@ export default function SimulatorSession() {
   const [interimText, setInterimText] = useState("");
   const [waveformBars, setWaveformBars] = useState<number[]>(Array(NUM_BARS).fill(3));
   const [voiceError, setVoiceError] = useState<"unsupported" | "permission" | null>(null);
+  const [matchedPhrases, setMatchedPhrases] = useState<Record<string, number>>({});
   const [activeBehaviouralMove] = useState<ActiveBehaviouralMove | null>(() => {
     try {
       const raw = localStorage.getItem("levelnext_active_behavioural_move");
@@ -69,6 +70,35 @@ export default function SimulatorSession() {
       return null;
     }
   });
+
+  const normalisePhrase = (text: string) =>
+    text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+
+  const evaluatePhraseTelemetry = (text: string) => {
+    if (!activeBehaviouralMove?.suggestedLanguage?.length) return;
+    const normalisedSpoken = normalisePhrase(text);
+    if (!normalisedSpoken) return;
+
+    setMatchedPhrases((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      activeBehaviouralMove.suggestedLanguage.forEach((targetPhrase, index) => {
+        const phraseKey = `phrase_${index + 1}`;
+        const cleanTarget = normalisePhrase(targetPhrase);
+        const tokens = cleanTarget.split(" ").filter((word) => word.length > 2);
+        const matchFound = cleanTarget && (
+          normalisedSpoken.includes(cleanTarget) ||
+          (tokens.length >= 3 && tokens.filter((token) => normalisedSpoken.includes(token)).length >= Math.ceil(tokens.length * 0.75))
+        );
+        if (matchFound) {
+          const currentCount = next[phraseKey] ?? 0;
+          next[phraseKey] = currentCount + 1;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  };
 
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -232,6 +262,7 @@ export default function SimulatorSession() {
       if (final) {
         setInputText(prev => (prev + " " + final).trim());
         setInterimText("");
+        evaluatePhraseTelemetry(final);
       }
     };
 
@@ -262,13 +293,40 @@ export default function SimulatorSession() {
     const userMsg: Message = { role: "user", content: text, timestamp: Date.now() };
     setLocalMessages(prev => [...prev, userMsg]);
     setInputText("");
+    evaluatePhraseTelemetry(text);
     sendMutation.mutate({ sessionId, message: text });
   };
 
   const handleEnd = () => {
     setIsEnding(true);
     window.speechSynthesis?.cancel();
-    endMutation.mutate({ sessionId });
+    const telemetryPayload = (activeBehaviouralMove?.suggestedLanguage ?? []).map((_, index) => {
+      const phraseKey = `phrase_${index + 1}`;
+      const matchCount = matchedPhrases[phraseKey] ?? 0;
+      return {
+        phraseKey,
+        matched: matchCount > 0,
+        matchCount,
+      };
+    });
+
+    try {
+      const raw = localStorage.getItem("levelnext_active_behavioural_move");
+      if (raw) {
+        const current = JSON.parse(raw);
+        localStorage.setItem("levelnext_active_behavioural_move", JSON.stringify({
+          ...current,
+          phraseTelemetry: telemetryPayload,
+        }));
+      }
+    } catch {
+      // Local telemetry persistence should never block session conclusion.
+    }
+
+    endMutation.mutate({
+      sessionId,
+      phraseTelemetry: telemetryPayload.length ? telemetryPayload : undefined,
+    });
   };
 
   if (isLoading || !session) {
@@ -385,7 +443,21 @@ export default function SimulatorSession() {
             <p className="text-[10px] uppercase tracking-wider font-semibold text-[#D4AF37]">Behavioural Move in rehearsal</p>
             <p className="mt-1 text-white text-sm font-semibold">{activeBehaviouralMove.moveTitle}</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {activeBehaviouralMove.suggestedLanguage.map((phrase) => <span key={phrase} className="rounded-full border border-[#D4AF37]/30 px-2.5 py-1 text-[11px] italic text-white/75">“{phrase}”</span>)}
+              {activeBehaviouralMove.suggestedLanguage.map((phrase, index) => {
+                const count = matchedPhrases[`phrase_${index + 1}`] ?? 0;
+                return (
+                  <span
+                    key={phrase}
+                    className={`rounded-full border px-2.5 py-1 text-[11px] italic transition-colors ${
+                      count > 0
+                        ? "border-[#4ade80] bg-[#4ade80]/20 text-[#86efac]"
+                        : "border-[#D4AF37]/30 text-white/75"
+                    }`}
+                  >
+                    “{phrase}” {count > 0 && <span className="not-italic font-semibold text-[10px] ml-1">✓ spoken</span>}
+                  </span>
+                );
+              })}
             </div>
             <p className="mt-2 text-[11px] text-[#D4AF37]">Success signal: {activeBehaviouralMove.successSignal}</p>
           </div>
