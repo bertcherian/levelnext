@@ -164,12 +164,12 @@ export async function ensureAcademySeedKnowledge(): Promise<void> {
         summary: item.summary,
         disclosureBand: item.disclosureBand,
         approvalStatus: "approved",
-        version: 3,
+        version: 4,
         productCode: item.productCode ?? null,
         roleRelevance: item.roleRelevance,
         content: item.content,
       });
-    } else if ((existing[0]?.version ?? 0) < 3) {
+    } else if ((existing[0]?.version ?? 0) < 4) {
       await db
         .update(academyKnowledgeObjects)
         .set({
@@ -178,7 +178,7 @@ export async function ensureAcademySeedKnowledge(): Promise<void> {
           summary: item.summary,
           disclosureBand: item.disclosureBand,
           approvalStatus: "approved",
-          version: 3,
+          version: 4,
           productCode: item.productCode ?? null,
           roleRelevance: item.roleRelevance,
           content: item.content,

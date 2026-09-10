@@ -241,6 +241,50 @@ function GuidePanel({
   );
 }
 
+function DiagnosticsSection({
+  diagnostics,
+  understood,
+  pending,
+  onToggle,
+}: {
+  diagnostics: ContentRecord[];
+  understood: boolean;
+  pending: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className={`rounded-xl border p-4 space-y-3 transition ${understood ? "border-emerald-400/30 bg-emerald-400/[0.04]" : "border-white/5 bg-white/[0.02]"}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-bold text-[#D4AF37]">Diagnostics on the Platform</p>
+          <InfoTip text="A diagnostic is a structured way to make a capability, risk, or readiness pattern visible before choosing the right behavioural practice." />
+        </div>
+        <SectionStatusButton understood={understood} pending={pending} onToggle={onToggle} />
+      </div>
+      <p className="text-xs leading-relaxed text-[#F8F5F0]/65">Use the audience and focus description to understand which diagnostic is the right starting point. Open a live diagnostic only when you are ready to explore that product experience.</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {diagnostics.map((diagnostic, index) => {
+          const route = typeof diagnostic.route === "string" ? diagnostic.route : undefined;
+          return (
+            <div key={`${String(diagnostic.code ?? diagnostic.label)}-${index}`} className="rounded-lg border border-white/10 bg-[#0A1A2F]/70 p-3.5 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-sm font-bold text-white">{String(diagnostic.label ?? "Diagnostic")}</p>
+                  {typeof diagnostic.code === "string" && <span className="text-[10px] font-bold uppercase tracking-wider text-[#D4AF37]">{diagnostic.code}</span>}
+                </div>
+                {typeof diagnostic.status === "string" && <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">{diagnostic.status}</span>}
+              </div>
+              <p className="text-[11px] leading-relaxed text-[#F8F5F0]/75"><span className="font-semibold text-[#D4AF37]">For: </span>{String(diagnostic.audience ?? "Relevant platform users")}</p>
+              <p className="text-[11px] leading-relaxed text-[#F8F5F0]/65">{String(diagnostic.focus ?? "")}</p>
+              {route && <Link href={route} className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#D4AF37] hover:text-white transition"><ExternalLink size={12} /> Open diagnostic</Link>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function TierCard({ tier, expanded, onToggle }: { tier: ContentRecord; expanded: boolean; onToggle: () => void }) {
   const tierLabel = String(tier.label ?? tier.title ?? "Product tier");
   const route = typeof tier.route === "string" ? tier.route : undefined;
@@ -301,8 +345,9 @@ export default function AcademyProductMap() {
   const selectedObject = visibleObjects.find((object) => object.slug === selectedSlug) ?? visibleObjects[0];
   const selectedContent = (selectedObject?.content as ContentRecord | undefined) ?? {};
   const tiers = Array.isArray(selectedContent.tiers) ? selectedContent.tiers.filter(isRecord) : [];
+  const diagnostics = Array.isArray(selectedContent.diagnostics) ? selectedContent.diagnostics.filter(isRecord) : [];
   const tooltips = isRecord(selectedContent.tooltips) ? selectedContent.tooltips : {};
-  const metadataKeys = new Set(["howToUnderstand", "definitions", "tooltips", "tiers", "route"]);
+  const metadataKeys = new Set(["howToUnderstand", "definitions", "tooltips", "tiers", "diagnostics", "route"]);
   const progressState = { ...(savedProgress ?? {}), ...localProgress };
   const sectionKey = (key: string) => selectedObject ? `${selectedObject.slug}::${key}` : key;
   const isUnderstood = (key: string) => progressState[sectionKey(key)] === true;
@@ -379,6 +424,8 @@ export default function AcademyProductMap() {
               <GuidePanel content={selectedContent} understood={isUnderstood("orientation")} glossaryUnderstood={isUnderstood("glossary")} pending={progressMutation.isPending} onToggle={() => toggleSection("orientation", "How to Understand This Section")} onToggleGlossary={() => toggleSection("glossary", "Newcomer Glossary")} />
 
               {tiers.length > 0 && <div className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><h3 className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">Leadership Transition Tiers</h3><InfoTip text={String(tooltips.tiers ?? "Click any tier to reveal who it serves, what can derail progress, and which behavioural moves to practise next.")} /></div><SectionStatusButton understood={isUnderstood("tiers")} pending={progressMutation.isPending} onToggle={() => toggleSection("tiers", "Leadership Transition Tiers")} /></div><div className="space-y-3">{tiers.map((tier) => { const code = String(tier.code ?? tier.label ?? "tier"); return <TierCard key={code} tier={tier} expanded={expandedTierCode === code} onToggle={() => setExpandedTierCode(expandedTierCode === code ? null : code)} />; })}</div></div>}
+
+              {diagnostics.length > 0 && <DiagnosticsSection diagnostics={diagnostics} understood={isUnderstood("diagnostics")} pending={progressMutation.isPending} onToggle={() => toggleSection("diagnostics", "Diagnostics on the Platform")} />}
 
               <div className="space-y-4 pt-2">{Object.entries(selectedContent).filter(([key]) => !metadataKeys.has(key)).map(([key, val]) => <SectionCard key={key} title={humanizeKey(key)} tooltip={typeof tooltips[key] === "string" ? String(tooltips[key]) : undefined} value={val} understood={isUnderstood(key)} pending={progressMutation.isPending} onToggle={() => toggleSection(key, humanizeKey(key))} />)}</div>
 

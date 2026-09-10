@@ -64,4 +64,16 @@ describe("Academy Product Fluency calculations", () => {
     expect(stages.every((stage) => typeof stage.example === "string" && String(stage.example).length > 20)).toBe(true);
     expect(stages.every((stage) => typeof stage.output === "string" && String(stage.output).length > 20)).toBe(true);
   });
+
+  it("lists all platform diagnostics and the requested connected products", () => {
+    const engine = ACADEMY_SEED_KNOWLEDGE.find((item) => item.slug === "engine-behavioural-intelligence");
+    const content = engine?.content as Record<string, unknown>;
+    const diagnostics = content.diagnostics as Array<Record<string, unknown>>;
+    const connectedProducts = content.connectedProducts as string[];
+
+    expect(diagnostics.length).toBeGreaterThanOrEqual(14);
+    expect(diagnostics.every((diagnostic) => typeof diagnostic.label === "string" && typeof diagnostic.route === "string")).toBe(true);
+    expect(connectedProducts).toContain("Tech Intelligence");
+    expect(connectedProducts).toContain("Professional Intelligence");
+  });
 });
