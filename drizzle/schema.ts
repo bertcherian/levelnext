@@ -20,6 +20,7 @@ export const users = mysqlTable("users", {
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
+  whatsappNumber: varchar("whatsappNumber", { length: 32 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin", "success_partner"]).default("user").notNull(),
   // Leadership Graph: cumulative cross-diagnostic intelligence profile
@@ -1174,6 +1175,7 @@ export const magicLinkTokens = mysqlTable("magic_link_tokens", {
   email: varchar("email", { length: 320 }).notNull(),
   requestedName: varchar("requestedName", { length: 255 }), // name verified when the recipient redeems the link
   requestedOrganisation: varchar("requestedOrganisation", { length: 120 }), // prefill for first-time enterprise setup
+  requestedWhatsappNumber: varchar("requestedWhatsappNumber", { length: 32 }), // optional contact captured at signup
   userId: int("userId").references(() => users.id), // set after first use (user created)
   inviteToken: varchar("inviteToken", { length: 64 }), // platform invite token to auto-accept
   returnTo: varchar("returnTo", { length: 255 }), // post-login redirect path (e.g. /career, /manager)

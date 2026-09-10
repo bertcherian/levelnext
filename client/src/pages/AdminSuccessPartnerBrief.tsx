@@ -190,6 +190,16 @@ export default function AdminMomentumBrief({ params }: { params: { userId: strin
                 {data.user.name || data.user.email}
               </h1>
               <p className="text-sm text-muted-foreground">{data.user.email}</p>
+              {data.user.whatsappNumber && (
+                <a
+                  href={`https://wa.me/${data.user.whatsappNumber.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-900"
+                >
+                  <span aria-hidden="true">💬</span> WhatsApp: {data.user.whatsappNumber}
+                </a>
+              )}
             </div>
           </div>
         </div>

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
-import { CheckCircle2, ArrowRight, Brain, Target, Zap, TrendingUp, Shield, AlertTriangle, RefreshCw, Mail } from "lucide-react";
+import { CheckCircle2, ArrowRight, Brain, Target, Zap, TrendingUp, Shield, AlertTriangle, RefreshCw, Mail, MessageCircle } from "lucide-react";
 
 const LOGO_URL = "/logo.png";
 
@@ -67,6 +67,7 @@ export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [organisation, setOrganisation] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [state, setState] = useState<"form" | "check_inbox" | "link_error">("form");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [devToken, setDevToken] = useState<string | null>(null);
@@ -111,6 +112,7 @@ export default function Signup() {
       origin: window.location.origin,
       name: name.trim() || undefined,
       organisation: isManagerEffectivenessSignup ? organisation.trim() || undefined : undefined,
+      whatsappNumber: whatsappNumber.trim() || undefined,
       returnTo: resolvedReturnTo,
     });
   };
@@ -212,7 +214,7 @@ export default function Signup() {
                     e.preventDefault();
                     if (!email.trim()) return;
                     setErrorMsg(null);
-                    requestMagicLink.mutate({ email: email.trim().toLowerCase(), origin: window.location.origin, name: name || undefined, organisation: isManagerEffectivenessSignup ? organisation.trim() || undefined : undefined, returnTo: resolvedReturnTo });
+                    requestMagicLink.mutate({ email: email.trim().toLowerCase(), origin: window.location.origin, name: name || undefined, organisation: isManagerEffectivenessSignup ? organisation.trim() || undefined : undefined, whatsappNumber: whatsappNumber.trim() || undefined, returnTo: resolvedReturnTo });
                   }}
                   className="space-y-3 mb-4"
                 >
@@ -307,6 +309,28 @@ export default function Signup() {
                       </p>
                     </div>
                   )}
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5" style={{ color: "#12345A" }}>
+                      WhatsApp number <span className="text-xs font-normal" style={{ color: "#666" }}>(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <MessageCircle size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#999" }} />
+                      <Input
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        placeholder="+91 98765 43210"
+                        value={whatsappNumber}
+                        onChange={(e) => setWhatsappNumber(e.target.value)}
+                        className="h-12 text-base pl-10"
+                        style={{ borderColor: "#d1cfc9" }}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "#000" }}>
+                      Add this if you would like your Success Partner to contact you on WhatsApp later. We will only use it for LevelNext support and agreed follow-up.
+                    </p>
+                  </div>
 
                   <Button
                     type="submit"

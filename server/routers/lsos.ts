@@ -110,7 +110,7 @@ export const lsosRouter = router({
     const managers = assignedIds.length === 0
       ? []
       : await db
-          .select({ id: users.id, name: users.name, email: users.email, lastSignedIn: users.lastSignedIn, createdAt: users.createdAt })
+          .select({ id: users.id, name: users.name, email: users.email, whatsappNumber: users.whatsappNumber, lastSignedIn: users.lastSignedIn, createdAt: users.createdAt })
           .from(users)
           .where(eq(users.role, "user"))
           .orderBy(desc(users.lastSignedIn))

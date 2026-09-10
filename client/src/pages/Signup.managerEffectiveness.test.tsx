@@ -34,12 +34,14 @@ describe("Manager Effectiveness sign-up", () => {
     fireEvent.change(screen.getByPlaceholderText("Priya Sharma"), { target: { value: "Bert Cherian" } });
     fireEvent.change(screen.getByPlaceholderText("you@company.com"), { target: { value: "bert@example.com" } });
     fireEvent.change(screen.getByPlaceholderText("Broadridge"), { target: { value: "Broadridge" } });
+    fireEvent.change(screen.getByPlaceholderText("+91 98765 43210"), { target: { value: "+91 98765 43210" } });
     fireEvent.click(screen.getByRole("button", { name: /get started free/i }));
 
     expect(mutate).toHaveBeenCalledWith({
       email: "bert@example.com",
       name: "Bert Cherian",
       organisation: "Broadridge",
+      whatsappNumber: "+91 98765 43210",
       origin: window.location.origin,
       returnTo: "/manager",
     });

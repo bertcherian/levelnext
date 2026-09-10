@@ -26,7 +26,7 @@ type Mission = {
 };
 
 type ManagerHealth = {
-  manager: { id: number; name: string | null; email: string | null; lastSignedIn: Date | null };
+  manager: { id: number; name: string | null; email: string | null; whatsappNumber: string | null; lastSignedIn: Date | null };
   lhs: { total: number; zone: string; color: string; description: string; breakdown: Record<string, number> };
   latestReport: { edgeScore: number; archetype: string | null; zone: string | null; moduleType: string } | null;
   activeCommitment: { text: string; dueDate: Date | null } | null;
@@ -195,6 +195,17 @@ function ManagerHealthCard({ mh, consent, onClick, onNarrative }: { mh: ManagerH
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-slate-900 text-sm truncate">{mh.manager.name ?? "Unknown"}</p>
           <p className="text-xs text-slate-500">{mh.lhs.zone}</p>
+          {mh.manager.whatsappNumber && (
+            <a
+              href={`https://wa.me/${mh.manager.whatsappNumber.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(event) => event.stopPropagation()}
+              className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900"
+            >
+              <span aria-hidden="true">💬</span> WhatsApp
+            </a>
+          )}
           {consent && <ConsentBadge state={consent.state} compact />}
           {mh.latestReport && (
             <p className="text-xs text-slate-400 truncate">{mh.latestReport.archetype ?? mh.latestReport.moduleType}</p>

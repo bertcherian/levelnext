@@ -40,6 +40,13 @@ export const emailAuthRouter = router({
         inviteToken: z.string().optional(),
         name: z.string().trim().min(1).max(255).optional(),
         organisation: z.string().trim().min(2).max(120).optional(),
+        whatsappNumber: z
+          .string()
+          .trim()
+          .min(7, "Enter a valid WhatsApp number")
+          .max(32, "WhatsApp number is too long")
+          .regex(/^\+?[0-9()\-\s.]+$/, "Enter a valid WhatsApp number")
+          .optional(),
         returnTo: z.string().optional(), // post-login redirect path e.g. /career, /manager
       })
     )
@@ -48,7 +55,11 @@ export const emailAuthRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
       const email = input.email.toLowerCase().trim();
-      const { requestedName, requestedOrganisation } = getMagicLinkRequestedProfile(input.name, input.organisation);
+      const { requestedName, requestedOrganisation, requestedWhatsappNumber } = getMagicLinkRequestedProfile(
+        input.name,
+        input.organisation,
+        input.whatsappNumber
+      );
       const firstName = requestedName?.split(" ")[0] ?? null;
       const token = crypto.randomBytes(48).toString("hex");
       const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MINUTES * 60 * 1000);
@@ -59,6 +70,7 @@ export const emailAuthRouter = router({
         email,
         requestedName,
         requestedOrganisation,
+        requestedWhatsappNumber,
         inviteToken: input.inviteToken ?? null,
         returnTo: input.returnTo ?? null,
         expiresAt,
@@ -283,6 +295,7 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
 
       const email = magicLink.email;
       const requestedName = magicLink.requestedName?.trim() || null;
+      const requestedWhatsappNumber = magicLink.requestedWhatsappNumber?.trim() || null;
 
       // Find or create the user
       // For magic link users, openId is derived from their email (email-based identity)
@@ -316,6 +329,7 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
             openId,
             email,
             name: getMagicLinkUserName(email, requestedName),
+            whatsappNumber: requestedWhatsappNumber,
             loginMethod: "magic_link",
             lastSignedIn: new Date(),
           });
@@ -341,6 +355,16 @@ export async function registerMagicLinkVerifyRoute(app: import("express").Expres
           .set({ name: requestedName })
           .where(eq(users.id, existingUser.id));
         existingUser = { ...existingUser, name: requestedName };
+      }
+
+      // Carry the optional signup contact into the account. Do not overwrite a
+      // previously saved number when an existing user requests another link.
+      if (requestedWhatsappNumber && !existingUser.whatsappNumber) {
+        await db
+          .update(users)
+          .set({ whatsappNumber: requestedWhatsappNumber })
+          .where(eq(users.id, existingUser.id));
+        existingUser = { ...existingUser, whatsappNumber: requestedWhatsappNumber };
       }
 
       // Mark token as used
