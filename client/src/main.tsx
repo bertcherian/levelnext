@@ -99,9 +99,32 @@ const trpcClient = trpc.createClient({
         return {};
       },
       fetch(input, init) {
-        return globalThis.fetch(input, {
+        const requestUrl = typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+        const isAuthMeRequest = requestUrl.includes("/auth.me");
+        const controller = isAuthMeRequest ? new AbortController() : null;
+        const timeoutId = controller ? setTimeout(() => controller.abort(), 12000) : null;
+        const upstreamSignal = init?.signal;
+        const abortFromUpstream = () => controller?.abort();
+
+        if (controller && upstreamSignal) {
+          if (upstreamSignal.aborted) controller.abort();
+          else upstreamSignal.addEventListener("abort", abortFromUpstream, { once: true });
+        }
+
+        const request = globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          ...(controller ? { signal: controller.signal } : {}),
+        });
+
+        if (!controller) return request;
+        return request.finally(() => {
+          if (timeoutId) clearTimeout(timeoutId);
+          upstreamSignal?.removeEventListener("abort", abortFromUpstream);
         });
       },
     }),

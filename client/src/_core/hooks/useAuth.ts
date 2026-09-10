@@ -7,13 +7,22 @@ type UseAuthOptions = {
   redirectPath?: string;
 };
 
+/** Retry a transient preview/network failure, but not a confirmed auth failure. */
+export function shouldRetryAuthQuery(failureCount: number, error: unknown) {
+  if (error instanceof TRPCClientError && error.data?.code === "UNAUTHORIZED") {
+    return false;
+  }
+  return failureCount < 2;
+}
+
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = "/login" } =
     options ?? {};
   const utils = trpc.useUtils();
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
-    retry: false,
+    retry: shouldRetryAuthQuery,
+    retryDelay: attemptIndex => Math.min(500 * 2 ** attemptIndex, 2000),
     refetchOnWindowFocus: false,
   });
 
