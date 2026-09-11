@@ -76,4 +76,20 @@ describe("Academy Product Fluency calculations", () => {
     expect(connectedProducts).toContain("Tech Intelligence");
     expect(connectedProducts).toContain("Professional Intelligence");
   });
+
+  it("documents the underlying engines and their background responsibilities", () => {
+    const engine = ACADEMY_SEED_KNOWLEDGE.find((item) => item.slug === "engine-behavioural-intelligence");
+    const content = engine?.content as Record<string, unknown>;
+    const underlyingEngines = content.underlyingEngines as Array<Record<string, unknown>>;
+    const names = underlyingEngines.map((item) => item.label);
+
+    expect(underlyingEngines.length).toBeGreaterThanOrEqual(12);
+    expect(names).toContain("Intelligence Core");
+    expect(names).toContain("Ontology and Distinction Engine");
+    expect(names).toContain("Practice and Voice Simulator Engine");
+    expect(underlyingEngines.every((item) => typeof item.whatItDoes === "string")).toBe(true);
+    expect(underlyingEngines.every((item) => typeof item.inTheBackground === "string")).toBe(true);
+    expect(underlyingEngines.every((item) => typeof item.learnerBenefit === "string")).toBe(true);
+    expect(underlyingEngines.every((item) => typeof item.guardrail === "string")).toBe(true);
+  });
 });
