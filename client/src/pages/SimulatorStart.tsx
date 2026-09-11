@@ -319,6 +319,8 @@ export default function SimulatorStart() {
 
   // Detect platform from URL
   const path = window.location.pathname;
+  const simulatorParams = new URLSearchParams(window.location.search);
+  const samplePreset = simulatorParams.get("sample") === "voice-simulator";
   const platform: Platform = path.includes("/manager") ? "manager"
     : path.includes("/career") ? "career"
     : path.includes("/young") ? "young"
@@ -335,7 +337,9 @@ export default function SimulatorStart() {
   });
   const [prompt, setPrompt] = useState(() => behaviouralHandoff
     ? `Rehearse the Behavioural Move "${behaviouralHandoff.moveTitle}" in a realistic ${platform} conversation. The move is: ${behaviouralHandoff.moveDescription}. Use these phrases naturally: ${behaviouralHandoff.suggestedLanguage.join(" | ")}. Success looks like: ${behaviouralHandoff.successSignal}`
-    : "");
+    : samplePreset
+      ? "Explain a difficult workplace situation to a manager, then practise using one clear behavioural move: name the observable facts, ask one clarifying question, and agree the next action. The stakeholder should challenge me once so I can rehearse staying clear and composed."
+      : "");
   const [scenario, setScenario] = useState<ScenarioCard | null>(null);
   const [followUpAnswer, setFollowUpAnswer] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<VoiceId>("shubh");
@@ -589,6 +593,17 @@ export default function SimulatorStart() {
               ))}
             </div>
             <p className="mt-3 text-xs text-[#D4AF37]">Success signal: {behaviouralHandoff.successSignal}</p>
+          </div>
+        )}
+
+        {samplePreset && !behaviouralHandoff && (
+          <div className="mb-6 rounded-2xl border border-emerald-300/35 bg-emerald-300/10 p-5 text-left">
+            <div className="flex items-center gap-2 text-emerald-200 text-xs font-semibold uppercase tracking-widest">
+              <Sparkles className="w-4 h-4" />
+              Platform Architecture Sample
+            </div>
+            <h2 className="mt-2 text-white font-semibold">Try a Behavioural Move in a realistic conversation</h2>
+            <p className="mt-1 text-white/65 text-sm leading-relaxed">The scenario brief is prefilled from the Voice Simulator engine. Edit it freely, then build the scenario to experience how an insight becomes a rehearsable action.</p>
           </div>
         )}
 

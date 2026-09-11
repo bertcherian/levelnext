@@ -41,6 +41,11 @@ vi.mock("@/lib/trpc", () => ({
         useMutation: () => ({ mutate: mocks.startMutate, isPending: false }),
       },
     },
+    behaviouralIntelligence: {
+      createPracticeLink: {
+        useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+      },
+    },
   },
 }));
 

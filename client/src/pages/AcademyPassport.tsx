@@ -29,6 +29,10 @@ export default function AcademyPassport() {
 
   const { profile, compositeScore, fluencyLevel, dimensionScores, gaps, recentAttempts, evidenceLedger } = passport;
 
+  const architectureExplored = evidenceLedger.some((event) => event.eventType === "step_explored" && event.objectKey === "engine-behavioural-intelligence" && event.evidenceRef?.stepTitle === "Underlying Engines Architecture Flow");
+  const enginesUnderstood = evidenceLedger.some((event) => event.eventType === "section_understood" && event.objectKey === "engine-behavioural-intelligence::underlyingEngines" && event.evidenceRef?.understood === true);
+  const hasPlatformArchitectureBadge = architectureExplored && enginesUnderstood;
+
   const dimensions: { key: AcademyDimension; label: string; desc: string }[] = [
     { key: "understand", label: "Understand", desc: "Why LevelNext exists, failure modes of traditional workshops, and change logic." },
     { key: "navigate", label: "Navigate", desc: "Ability to locate diagnostics, behavioural studio, voice simulator, and sponsor heatmaps." },
@@ -81,6 +85,24 @@ export default function AcademyPassport() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        <div className={`rounded-2xl border p-5 ${hasPlatformArchitectureBadge ? "border-[#D4AF37]/60 bg-[#D4AF37]/[0.08]" : "border-white/10 bg-[#1C1C1C]"}`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${hasPlatformArchitectureBadge ? "bg-[#D4AF37] text-[#0A1A2F]" : "bg-white/10 text-[#D4AF37]"}`}><Award size={20} /></div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">Passport Badge</p>
+                <h2 className="mt-1 text-base font-bold text-white">Platform Architecture</h2>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#F8F5F0]/65">Understand how diagnostics, Intelligence Core, practice, and evidence connect behind the LevelNext experience.</p>
+              </div>
+            </div>
+            {hasPlatformArchitectureBadge ? (
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 text-[10px] font-bold text-emerald-300"><CheckCircle2 size={12} /> Earned</span>
+            ) : (
+              <Link href="/academy/map" className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-[#D4AF37] hover:underline">Explore in Product Map <ArrowRight size={12} /></Link>
+            )}
           </div>
         </div>
 

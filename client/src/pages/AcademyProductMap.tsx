@@ -312,9 +312,22 @@ const ENGINE_FLOW_STEPS = [
   },
 ] as const;
 
-function EngineArchitectureFlow() {
+function EngineArchitectureFlow({ onExplore }: { onExplore: () => void }) {
   const [activeStep, setActiveStep] = useState<(typeof ENGINE_FLOW_STEPS)[number]["key"]>("diagnostics");
+  const [visitedSteps, setVisitedSteps] = useState<Set<(typeof ENGINE_FLOW_STEPS)[number]["key"]>>(() => new Set<(typeof ENGINE_FLOW_STEPS)[number]["key"]>(["diagnostics"]));
+  const [explored, setExplored] = useState(false);
   const selectedStep = ENGINE_FLOW_STEPS.find((step) => step.key === activeStep) ?? ENGINE_FLOW_STEPS[0];
+
+  const visitStep = (key: (typeof ENGINE_FLOW_STEPS)[number]["key"]) => {
+    setActiveStep(key);
+    setVisitedSteps((current) => new Set(current).add(key));
+  };
+
+  const recordCheckpoint = () => {
+    if (visitedSteps.size < ENGINE_FLOW_STEPS.length) return;
+    setExplored(true);
+    onExplore();
+  };
 
   return (
     <div className="rounded-xl border border-[#D4AF37]/30 bg-gradient-to-br from-[#0E243F] to-[#0A1A2F] p-4 sm:p-5 space-y-4">
@@ -328,7 +341,7 @@ function EngineArchitectureFlow() {
       <div className="flex flex-col gap-2 md:flex-row md:items-stretch">
         {ENGINE_FLOW_STEPS.map((step, index) => (
           <div key={step.key} className="flex min-w-0 flex-1 items-center gap-2">
-            <button type="button" onClick={() => setActiveStep(step.key)} aria-pressed={activeStep === step.key} className={`min-w-0 flex-1 rounded-lg border p-3 text-left transition ${activeStep === step.key ? "border-[#D4AF37] bg-[#D4AF37] text-[#0A1A2F] shadow-lg" : "border-white/15 bg-white/[0.04] text-[#F8F5F0]/80 hover:border-[#D4AF37]/60 hover:bg-white/[0.08]"}`}>
+            <button type="button" onClick={() => visitStep(step.key)} aria-pressed={activeStep === step.key} className={`min-w-0 flex-1 rounded-lg border p-3 text-left transition ${activeStep === step.key ? "border-[#D4AF37] bg-[#D4AF37] text-[#0A1A2F] shadow-lg" : "border-white/15 bg-white/[0.04] text-[#F8F5F0]/80 hover:border-[#D4AF37]/60 hover:bg-white/[0.08]"}`}>
               <span className={`text-[10px] font-bold uppercase tracking-wider ${activeStep === step.key ? "text-[#0A1A2F]/65" : "text-[#D4AF37]"}`}>0{index + 1}</span>
               <p className="mt-1 text-xs font-bold">{step.label}</p>
               <p className={`mt-1 text-[10px] leading-relaxed ${activeStep === step.key ? "text-[#0A1A2F]/75" : "text-[#F8F5F0]/55"}`}>{step.short}</p>
@@ -340,6 +353,56 @@ function EngineArchitectureFlow() {
       <div className="rounded-lg border border-white/10 bg-black/15 p-3 text-xs leading-relaxed text-[#F8F5F0]/80">
         <span className="font-bold text-[#D4AF37]">{selectedStep.label}: </span>{selectedStep.detail}
       </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
+        <p className="text-[11px] text-[#F8F5F0]/55">{explored ? "This architecture checkpoint is in your Product Passport." : visitedSteps.size < ENGINE_FLOW_STEPS.length ? `Visit ${ENGINE_FLOW_STEPS.length - visitedSteps.size} more stage${ENGINE_FLOW_STEPS.length - visitedSteps.size === 1 ? "" : "s"} to unlock the checkpoint.` : "You have visited every stage. Record this architecture checkpoint in your Product Passport."}</p>
+        <button type="button" disabled={visitedSteps.size < ENGINE_FLOW_STEPS.length || explored} onClick={recordCheckpoint} className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] font-bold transition ${explored ? "bg-emerald-400/15 text-emerald-300" : "bg-[#D4AF37] text-[#0A1A2F] hover:bg-[#c49f2e] disabled:cursor-not-allowed disabled:opacity-40"}`}>
+          <ShieldCheck size={12} /> {explored ? "Architecture Explored" : "Record Architecture Checkpoint"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EngineComparisonDrawer({
+  engines,
+  labels,
+  onClose,
+}: {
+  engines: ContentRecord[];
+  labels: string[];
+  onClose: () => void;
+}) {
+  const selected = labels.map((label) => engines.find((engine) => String(engine.label ?? "") === label)).filter((engine): engine is ContentRecord => Boolean(engine));
+  if (selected.length < 2) return null;
+
+  const comparisonFields = [
+    ["Layer", "layer"],
+    ["What it does", "whatItDoes"],
+    ["Behind the scenes", "inTheBackground"],
+    ["Why it matters", "learnerBenefit"],
+    ["Guardrail", "guardrail"],
+  ] as const;
+
+  return (
+    <div className="fixed inset-0 z-50" role="presentation">
+      <button type="button" aria-label="Close engine comparison" onClick={onClose} className="absolute inset-0 bg-black/65" />
+      <aside role="dialog" aria-modal="true" aria-label="Compare underlying engines" className="absolute inset-y-0 right-0 w-full max-w-3xl overflow-y-auto border-l border-[#D4AF37]/35 bg-[#0A1A2F] p-5 shadow-2xl sm:p-7">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">Engine comparison</p>
+            <h2 className="mt-1 text-xl font-black text-white">How the two engines differ</h2>
+            <p className="mt-1 text-xs leading-relaxed text-[#F8F5F0]/65">Compare responsibilities and boundaries without needing to understand the implementation code.</p>
+          </div>
+          <button type="button" aria-label="Close comparison drawer" onClick={onClose} className="rounded-md p-2 text-white/60 hover:bg-white/10 hover:text-white"><X size={18} /></button>
+        </div>
+        <div className="mt-5 space-y-4">
+          {comparisonFields.map(([label, key]) => (
+            <div key={key} className="grid gap-3 sm:grid-cols-2">
+              {selected.map((engine) => <div key={`${String(engine.label)}-${key}`} className="rounded-lg border border-white/10 bg-white/[0.04] p-3.5"><p className="text-[10px] font-bold uppercase tracking-wider text-[#D4AF37]">{label}</p><p className="mt-1 text-xs leading-relaxed text-[#F8F5F0]/80">{String(engine[key] ?? "Not specified")}</p></div>)}
+            </div>
+          ))}
+        </div>
+      </aside>
     </div>
   );
 }
@@ -349,12 +412,24 @@ function UnderlyingEnginesSection({
   understood,
   pending,
   onToggle,
+  onArchitectureExplored,
 }: {
   engines: ContentRecord[];
   understood: boolean;
   pending: boolean;
   onToggle: () => void;
+  onArchitectureExplored: () => void;
 }) {
+  const [comparisonLabels, setComparisonLabels] = useState<string[]>([]);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+
+  const toggleComparison = (label: string) => {
+    setComparisonLabels((current) => {
+      if (current.includes(label)) return current.filter((item) => item !== label);
+      return current.length >= 2 ? [current[1]!, label] : [...current, label];
+    });
+  };
+
   return (
     <div className={`rounded-xl border p-4 space-y-4 transition ${understood ? "border-emerald-400/30 bg-emerald-400/[0.04]" : "border-white/5 bg-white/[0.02]"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -364,7 +439,11 @@ function UnderlyingEnginesSection({
         </div>
         <SectionStatusButton understood={understood} pending={pending} onToggle={onToggle} />
       </div>
-      <EngineArchitectureFlow />
+      <EngineArchitectureFlow onExplore={onArchitectureExplored} />
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+        <p className="text-[11px] text-[#F8F5F0]/65">Select two engines to compare their roles, background responsibilities, learner benefits, and guardrails.</p>
+        <button type="button" disabled={comparisonLabels.length !== 2} onClick={() => setComparisonOpen(true)} className="inline-flex items-center gap-1.5 rounded-md border border-[#D4AF37]/45 px-2.5 py-1.5 text-[10px] font-bold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-[#0A1A2F] disabled:cursor-not-allowed disabled:opacity-40"><ArrowRight size={12} /> Compare selected ({comparisonLabels.length}/2)</button>
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {engines.map((engine, index) => {
           const label = String(engine.label ?? "Underlying engine");
@@ -381,11 +460,14 @@ function UnderlyingEnginesSection({
               <p className="text-[11px] leading-relaxed text-[#F8F5F0]/80"><span className="font-semibold text-[#D4AF37]">What it does: </span>{String(engine.whatItDoes ?? "")}</p>
               <p className="text-[11px] leading-relaxed text-[#F8F5F0]/65"><span className="font-semibold text-white/80">Behind the scenes: </span>{String(engine.inTheBackground ?? "")}</p>
               <p className="text-[11px] leading-relaxed text-emerald-200/75"><span className="font-semibold text-emerald-300">Why it matters: </span>{String(engine.learnerBenefit ?? "")}</p>
+              <button type="button" aria-pressed={comparisonLabels.includes(label)} onClick={() => toggleComparison(label)} className={`mr-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[10px] font-bold transition ${comparisonLabels.includes(label) ? "border-[#D4AF37] bg-[#D4AF37] text-[#0A1A2F]" : "border-white/15 text-white/65 hover:border-[#D4AF37]/60 hover:text-white"}`}><ArrowRight size={12} /> {comparisonLabels.includes(label) ? "Selected" : "Compare"}</button>
               <Link href={`/academy/mentor?mode=explain&engine=${encodeURIComponent(label)}&question=${encodeURIComponent(question)}`} className="inline-flex items-center gap-1.5 rounded-md border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-2.5 py-1.5 text-[10px] font-bold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-[#0A1A2F]"><HelpCircle size={12} /> Ask Product Mentor</Link>
+              {label.toLowerCase().includes("voice simulator") && <Link href="/manager/simulate?sample=voice-simulator" className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-emerald-300/35 bg-emerald-300/10 px-2.5 py-1.5 text-[10px] font-bold text-emerald-200 transition hover:bg-emerald-300 hover:text-[#0A1A2F]"><ArrowRight size={12} /> Launch Sample Scenario</Link>}
             </div>
           );
         })}
       </div>
+      {comparisonOpen && <EngineComparisonDrawer engines={engines} labels={comparisonLabels} onClose={() => setComparisonOpen(false)} />}
     </div>
   );
 }
@@ -483,6 +565,16 @@ export default function AcademyProductMap() {
     }
   };
 
+  const handleArchitectureExplored = async () => {
+    if (!selectedObject) return;
+    try {
+      await exploreMutation.mutateAsync({ slug: selectedObject.slug, stepTitle: "Underlying Engines Architecture Flow", dimension: "navigate" });
+      toast.success("Architecture checkpoint recorded in your Product Passport.");
+    } catch {
+      toast.error("Could not record the architecture checkpoint.");
+    }
+  };
+
   const filters: { key: MapFilter; label: string }[] = [
     { key: "all", label: "All Nodes" },
     { key: "product", label: "Products" },
@@ -533,7 +625,7 @@ export default function AcademyProductMap() {
 
               {diagnostics.length > 0 && <DiagnosticsSection diagnostics={diagnostics} understood={isUnderstood("diagnostics")} pending={progressMutation.isPending} onToggle={() => toggleSection("diagnostics", "Diagnostics on the Platform")} />}
 
-              {underlyingEngines.length > 0 && <UnderlyingEnginesSection engines={underlyingEngines} understood={isUnderstood("underlyingEngines")} pending={progressMutation.isPending} onToggle={() => toggleSection("underlyingEngines", "Underlying Engines")} />}
+              {underlyingEngines.length > 0 && <UnderlyingEnginesSection engines={underlyingEngines} understood={isUnderstood("underlyingEngines")} pending={progressMutation.isPending} onToggle={() => toggleSection("underlyingEngines", "Underlying Engines")} onArchitectureExplored={handleArchitectureExplored} />}
 
               <div className="space-y-4 pt-2">{Object.entries(selectedContent).filter(([key]) => !metadataKeys.has(key)).map(([key, val]) => <SectionCard key={key} title={humanizeKey(key)} tooltip={typeof tooltips[key] === "string" ? String(tooltips[key]) : undefined} value={val} understood={isUnderstood(key)} pending={progressMutation.isPending} onToggle={() => toggleSection(key, humanizeKey(key))} />)}</div>
 
