@@ -424,6 +424,16 @@ export default function SimulatorStart() {
     if (previewTimeoutRef.current !== null) window.clearTimeout(previewTimeoutRef.current);
   }, []);
 
+  useEffect(() => {
+    if (!samplePreset || behaviouralHandoff) return;
+    localStorage.setItem("levelnext_sample_rehearsal", JSON.stringify({
+      preset: "voice-simulator",
+      steps: ["observable_facts", "clarifying_question", "agreed_next_action"],
+      sessionId: null,
+      startedAt: new Date().toISOString(),
+    }));
+  }, [samplePreset, behaviouralHandoff]);
+
   const inferMutation = trpc.simulator.inferScenario.useMutation({
     onSuccess: (data) => {
       setScenario(data);
@@ -496,6 +506,15 @@ export default function SimulatorStart() {
         characterStyle: scenario.characterStyle,
         voice: selectedVoice,
       });
+
+      if (samplePreset && !behaviouralHandoff) {
+        localStorage.setItem("levelnext_sample_rehearsal", JSON.stringify({
+          preset: "voice-simulator",
+          steps: ["observable_facts", "clarifying_question", "agreed_next_action"],
+          sessionId: data.sessionId,
+          startedAt: new Date().toISOString(),
+        }));
+      }
 
       if (behaviouralHandoff) {
         try {

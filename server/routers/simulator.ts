@@ -4,8 +4,9 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { extractJsonObject, invokeLLM } from "../_core/llm";
-import { simSessions } from "../../drizzle/schema";
+import { academyProgressEvents, simSessions } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
+import { getOrCreateAcademyProfile } from "../academyService";
 
 const PLATFORM_CONTEXT: Record<string, { label: string; coachingStyle: string; behaviourDimensions: string[] }> = {
   leadership: {
@@ -384,6 +385,24 @@ Be specific, honest, and constructive. Reference actual things the user said.`,
           phraseTelemetry: input.phraseTelemetry ?? null,
           completedAt: new Date(),
         }).where(eq(simSessions.id, input.sessionId));
+
+        try {
+          const academyProfile = await getOrCreateAcademyProfile(ctx.user.id);
+          await db.insert(academyProgressEvents).values({
+            profileId: academyProfile.id,
+            eventType: "simulator_practice_completed",
+            objectKey: "voice_simulator_practice",
+            dimension: "apply",
+            evidenceRef: {
+              sessionId: input.sessionId,
+              platform: session.platform,
+              overallScore: debrief.overallScore,
+              completedAt: new Date().toISOString(),
+            },
+          });
+        } catch (academyBridgeError) {
+          console.warn("[AcademySimulatorBridge] Failed to record Passport timeline event:", academyBridgeError);
+        }
 
         try {
           const { logSimulatorEvidenceIfApplicable } = await import("../narrativeIntelligence");

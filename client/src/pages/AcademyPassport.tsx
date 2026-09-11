@@ -32,6 +32,26 @@ export default function AcademyPassport() {
   const architectureExplored = evidenceLedger.some((event) => event.eventType === "step_explored" && event.objectKey === "engine-behavioural-intelligence" && event.evidenceRef?.stepTitle === "Underlying Engines Architecture Flow");
   const enginesUnderstood = evidenceLedger.some((event) => event.eventType === "section_understood" && event.objectKey === "engine-behavioural-intelligence::underlyingEngines" && event.evidenceRef?.understood === true);
   const hasPlatformArchitectureBadge = architectureExplored && enginesUnderstood;
+  const checkpointTimeline = [
+    {
+      key: "baseline",
+      label: "Baseline Diagnostic",
+      description: "Your starting fluency and learning gaps were recorded.",
+      event: evidenceLedger.find((item) => item.eventType === "diagnostic_completed" && item.objectKey === "baseline_diagnostic"),
+    },
+    {
+      key: "architecture",
+      label: "Platform Architecture",
+      description: "You explored how Diagnostics, Intelligence Core, Practice, and Evidence connect.",
+      event: evidenceLedger.find((item) => item.eventType === "step_explored" && item.objectKey === "engine-behavioural-intelligence" && item.evidenceRef?.stepTitle === "Underlying Engines Architecture Flow"),
+    },
+    {
+      key: "practice",
+      label: "Simulator Practice",
+      description: "A completed simulator conversation added observable application evidence.",
+      event: evidenceLedger.find((item) => item.eventType === "simulator_practice_completed" && item.objectKey === "voice_simulator_practice"),
+    },
+  ];
 
   const dimensions: { key: AcademyDimension; label: string; desc: string }[] = [
     { key: "understand", label: "Understand", desc: "Why LevelNext exists, failure modes of traditional workshops, and change logic." },
@@ -103,6 +123,30 @@ export default function AcademyPassport() {
             ) : (
               <Link href="/academy/map" className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-[#D4AF37] hover:underline">Explore in Product Map <ArrowRight size={12} /></Link>
             )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-[#1C1C1C] p-6 space-y-5">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#D4AF37]"><Calendar size={16} /> Passport Checkpoint Timeline</h2>
+            <p className="mt-1 text-xs leading-relaxed text-[#F8F5F0]/60">A chronological record of the moments when product fluency moved from knowing to applying.</p>
+          </div>
+          <div className="relative space-y-4 before:absolute before:bottom-4 before:left-[15px] before:top-4 before:w-px before:bg-white/10">
+            {checkpointTimeline.map((checkpoint) => (
+              <div key={checkpoint.key} className="relative flex items-start gap-3">
+                <div className={`z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${checkpoint.event ? "border-emerald-300/50 bg-emerald-300/15 text-emerald-300" : "border-white/15 bg-[#1C1C1C] text-white/35"}`}>
+                  {checkpoint.event ? <CheckCircle2 size={15} /> : <Compass size={14} />}
+                </div>
+                <div className="min-w-0 flex-1 rounded-xl border border-white/5 bg-white/[0.02] p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className={`text-xs font-bold ${checkpoint.event ? "text-white" : "text-white/50"}`}>{checkpoint.label}</p>
+                    <span className={`text-[10px] font-semibold ${checkpoint.event ? "text-emerald-300" : "text-white/35"}`}>{checkpoint.event ? new Date(checkpoint.event.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Not completed"}</span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-[#F8F5F0]/60">{checkpoint.description}</p>
+                  {checkpoint.key === "practice" && checkpoint.event?.evidenceRef?.overallScore !== undefined && <p className="mt-2 text-[10px] font-semibold text-[#D4AF37]">Recorded simulator score: {String(checkpoint.event.evidenceRef.overallScore)}/100</p>}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

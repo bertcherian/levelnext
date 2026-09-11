@@ -7,6 +7,7 @@ import {
   Lightbulb, MessageSquare, RotateCcw, Download, Sparkles,
   BookOpen, Mic, Users, Brain, CheckCircle2, Target,
 } from "lucide-react";
+import { evaluateSampleRehearsal, type SampleRehearsalEvaluation } from "@shared/modules/sampleRehearsal";
 
 /* ─── brand maps ─────────────────────────────────────────────── */
 const PLATFORM_ACCENT: Record<string, string> = {
@@ -155,6 +156,15 @@ export default function SimulatorDebrief() {
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
+    }
+  });
+  const [sampleRehearsal] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem("levelnext_sample_rehearsal");
+      const marker = raw ? JSON.parse(raw) as { preset?: string; sessionId?: number | null } : null;
+      return marker?.preset === "voice-simulator" && marker.sessionId === sessionId;
+    } catch {
+      return false;
     }
   });
 
@@ -347,6 +357,9 @@ export default function SimulatorDebrief() {
   const messages        = (session.messages as Array<{ role: string; content: string; timestamp: number }>) ?? [];
   const overallScore    = session.overallScore ?? 0;
   const scoreColor      = overallScore >= 80 ? "#4ade80" : overallScore >= 60 ? accent : "#f87171";
+  const sampleEvaluation: SampleRehearsalEvaluation | null = sampleRehearsal
+    ? evaluateSampleRehearsal(messages)
+    : null;
 
   return (
     <>
@@ -411,6 +424,34 @@ export default function SimulatorDebrief() {
               </div>
             )}
           </div>
+
+          {sampleEvaluation && (
+            <div className="rounded-2xl p-6 border" style={{ borderColor: "rgba(74,222,128,0.3)", background: "rgba(74,222,128,0.04)" }}>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-emerald-300">Sample rehearsal evaluator</p>
+                  <h2 className="mt-1 text-white font-semibold text-base">Did you apply the three-step behavioural move?</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-white/60">This deterministic check looks only at your words in this practice session. It is a coaching prompt, not a performance grade.</p>
+                </div>
+                <div className="shrink-0 rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-2 text-center">
+                  <p className="text-2xl font-black text-emerald-200">{sampleEvaluation.score}/{sampleEvaluation.total}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-emerald-300/80">steps applied</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                {sampleEvaluation.steps.map((step) => (
+                  <div key={step.key} className={`rounded-lg border p-3 ${step.matched ? "border-emerald-300/30 bg-emerald-300/10" : "border-white/10 bg-white/[0.03]"}`}>
+                    <div className="flex items-center gap-2">
+                      {step.matched ? <CheckCircle2 size={14} className="text-emerald-300" /> : <Target size={14} className="text-white/45" />}
+                      <p className={`text-xs font-bold ${step.matched ? "text-emerald-200" : "text-white/75"}`}>{step.label}</p>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-relaxed text-white/55">{step.matched ? step.evidence : step.prompt}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-xs leading-relaxed text-white/70">{sampleEvaluation.score === sampleEvaluation.total ? "Strong rehearsal: you made the facts visible, opened the conversation with a question, and moved toward an actionable agreement." : "Next time, focus on the missing card above. A small, specific sentence is enough to make the behavioural move more repeatable."}</p>
+            </div>
+          )}
 
           {/* Targeted Behavioural Move Phrase Telemetry & Encouragement */}
           {rehearsalContext?.suggestedLanguage?.length ? (
