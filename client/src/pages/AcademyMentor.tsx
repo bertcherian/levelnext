@@ -17,6 +17,16 @@ import { Streamdown } from "streamdown";
 
 type MentorMode = "ask" | "explain" | "show" | "test" | "challenge";
 
+function getMentorHandoff(): { engine?: string; question?: string; mode: MentorMode } {
+  if (typeof window === "undefined") return { mode: "ask" };
+  const params = new URLSearchParams(window.location.search);
+  const requestedMode = params.get("mode");
+  const mode: MentorMode = requestedMode === "ask" || requestedMode === "explain" || requestedMode === "show" || requestedMode === "test" || requestedMode === "challenge" ? requestedMode : "ask";
+  const engine = params.get("engine") || undefined;
+  const question = params.get("question") || (engine ? `Explain how the ${engine} works in the background and why it matters to a LevelNext learner.` : undefined);
+  return { engine, question, mode };
+}
+
 interface MentorMessageItem {
   role: "user" | "assistant";
   content: string;
@@ -27,14 +37,16 @@ interface MentorMessageItem {
 }
 
 export default function AcademyMentor() {
-  const [mode, setMode] = useState<MentorMode>("ask");
-  const [inputQuestion, setInputQuestion] = useState("");
+  const [handoff] = useState(getMentorHandoff);
+  const [mode, setMode] = useState<MentorMode>(handoff.mode);
+  const [inputQuestion, setInputQuestion] = useState(handoff.question ?? "");
   const [messages, setMessages] = useState<MentorMessageItem[]>([
     {
       role: "assistant",
-      content:
-        "Hello! I am your LevelNext Product Mentor. Ask me why traditional offsites fade, how our Behavioural Intelligence Engine functions, or challenge me with an enterprise objection on privacy.",
-      citations: ["levelnext-change-thesis", "engine-behavioural-intelligence"],
+      content: handoff.engine
+        ? `Let's examine the **${handoff.engine}**. I have prefilled a background question for you below. Send it as-is, or edit it to focus on the part you want to understand.`
+        : "Hello! I am your LevelNext Product Mentor. Ask me why traditional offsites fade, how our Behavioural Intelligence Engine functions, or challenge me with an enterprise objection on privacy.",
+      citations: handoff.engine ? ["engine-behavioural-intelligence", handoff.engine] : ["levelnext-change-thesis", "engine-behavioural-intelligence"],
     },
   ]);
 
@@ -100,6 +112,13 @@ export default function AcademyMentor() {
             Powered by approved LevelNext knowledge. Rigorously differentiates from legacy training and validates workplace transfer.
           </p>
         </div>
+
+        {handoff.engine && (
+          <div className="flex items-start gap-2 rounded-xl border border-[#D4AF37]/35 bg-[#D4AF37]/[0.08] p-3 text-xs leading-relaxed text-[#F8F5F0]/80">
+            <MessageSquare size={14} className="mt-0.5 shrink-0 text-[#D4AF37]" />
+            <span><strong className="text-[#D4AF37]">Engine drill-down:</strong> You came from the {handoff.engine} card. Ask the prefilled question or edit it to explore a different architectural angle.</span>
+          </div>
+        )}
 
         {/* 5 Mode Selector Tabs */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">

@@ -285,6 +285,111 @@ function DiagnosticsSection({
   );
 }
 
+const ENGINE_FLOW_STEPS = [
+  {
+    key: "diagnostics",
+    label: "Diagnostics",
+    short: "Make the pattern visible",
+    detail: "A diagnostic surfaces a capability, risk, or readiness pattern that gives the next conversation a useful starting point.",
+  },
+  {
+    key: "core",
+    label: "Intelligence Core",
+    short: "Connect the right context",
+    detail: "The core coordinates approved module context, judgement rules, access boundaries, and the next permitted intelligence action.",
+  },
+  {
+    key: "practice",
+    label: "Practice Simulator",
+    short: "Rehearse the new move",
+    detail: "The selected behavioural move and, where relevant, verbatim phrases are carried into a realistic role-play before the real workplace moment.",
+  },
+  {
+    key: "evidence",
+    label: "Evidence Ledger",
+    short: "Learn from what happened",
+    detail: "Actions, practice signals, commitments, and reflections create a private record of application that can inform the next move.",
+  },
+] as const;
+
+function EngineArchitectureFlow() {
+  const [activeStep, setActiveStep] = useState<(typeof ENGINE_FLOW_STEPS)[number]["key"]>("diagnostics");
+  const selectedStep = ENGINE_FLOW_STEPS.find((step) => step.key === activeStep) ?? ENGINE_FLOW_STEPS[0];
+
+  return (
+    <div className="rounded-xl border border-[#D4AF37]/30 bg-gradient-to-br from-[#0E243F] to-[#0A1A2F] p-4 sm:p-5 space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">How the engines work together</p>
+          <p className="mt-1 text-xs text-[#F8F5F0]/65">Click any stage to see what is happening in the background.</p>
+        </div>
+        <InfoTip text="The flow is a teaching model, not a claim that every product runs every step in exactly the same order." />
+      </div>
+      <div className="flex flex-col gap-2 md:flex-row md:items-stretch">
+        {ENGINE_FLOW_STEPS.map((step, index) => (
+          <div key={step.key} className="flex min-w-0 flex-1 items-center gap-2">
+            <button type="button" onClick={() => setActiveStep(step.key)} aria-pressed={activeStep === step.key} className={`min-w-0 flex-1 rounded-lg border p-3 text-left transition ${activeStep === step.key ? "border-[#D4AF37] bg-[#D4AF37] text-[#0A1A2F] shadow-lg" : "border-white/15 bg-white/[0.04] text-[#F8F5F0]/80 hover:border-[#D4AF37]/60 hover:bg-white/[0.08]"}`}>
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${activeStep === step.key ? "text-[#0A1A2F]/65" : "text-[#D4AF37]"}`}>0{index + 1}</span>
+              <p className="mt-1 text-xs font-bold">{step.label}</p>
+              <p className={`mt-1 text-[10px] leading-relaxed ${activeStep === step.key ? "text-[#0A1A2F]/75" : "text-[#F8F5F0]/55"}`}>{step.short}</p>
+            </button>
+            {index < ENGINE_FLOW_STEPS.length - 1 && <ArrowRight size={15} className="hidden shrink-0 text-[#D4AF37]/70 md:block" />}
+          </div>
+        ))}
+      </div>
+      <div className="rounded-lg border border-white/10 bg-black/15 p-3 text-xs leading-relaxed text-[#F8F5F0]/80">
+        <span className="font-bold text-[#D4AF37]">{selectedStep.label}: </span>{selectedStep.detail}
+      </div>
+    </div>
+  );
+}
+
+function UnderlyingEnginesSection({
+  engines,
+  understood,
+  pending,
+  onToggle,
+}: {
+  engines: ContentRecord[];
+  understood: boolean;
+  pending: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className={`rounded-xl border p-4 space-y-4 transition ${understood ? "border-emerald-400/30 bg-emerald-400/[0.04]" : "border-white/5 bg-white/[0.02]"}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-bold text-[#D4AF37]">Underlying Engines</p>
+          <InfoTip text="These engines run behind the screens. They interpret signals, protect boundaries, connect insight to practice, and help LevelNext stay useful without exposing private data." />
+        </div>
+        <SectionStatusButton understood={understood} pending={pending} onToggle={onToggle} />
+      </div>
+      <EngineArchitectureFlow />
+      <div className="grid gap-3 sm:grid-cols-2">
+        {engines.map((engine, index) => {
+          const label = String(engine.label ?? "Underlying engine");
+          const question = `Explain how the ${label} works in the background, what data or signals it uses, and why it matters to a LevelNext learner.`;
+          return (
+            <div key={`${label}-${index}`} className="rounded-lg border border-white/10 bg-[#0A1A2F]/70 p-3.5 space-y-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-sm font-bold text-white">{label}</p>
+                  {typeof engine.layer === "string" && <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[#D4AF37]">{engine.layer}</p>}
+                </div>
+                <Zap size={15} className="shrink-0 text-[#D4AF37]" />
+              </div>
+              <p className="text-[11px] leading-relaxed text-[#F8F5F0]/80"><span className="font-semibold text-[#D4AF37]">What it does: </span>{String(engine.whatItDoes ?? "")}</p>
+              <p className="text-[11px] leading-relaxed text-[#F8F5F0]/65"><span className="font-semibold text-white/80">Behind the scenes: </span>{String(engine.inTheBackground ?? "")}</p>
+              <p className="text-[11px] leading-relaxed text-emerald-200/75"><span className="font-semibold text-emerald-300">Why it matters: </span>{String(engine.learnerBenefit ?? "")}</p>
+              <Link href={`/academy/mentor?mode=explain&engine=${encodeURIComponent(label)}&question=${encodeURIComponent(question)}`} className="inline-flex items-center gap-1.5 rounded-md border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-2.5 py-1.5 text-[10px] font-bold text-[#D4AF37] transition hover:bg-[#D4AF37] hover:text-[#0A1A2F]"><HelpCircle size={12} /> Ask Product Mentor</Link>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function TierCard({ tier, expanded, onToggle }: { tier: ContentRecord; expanded: boolean; onToggle: () => void }) {
   const tierLabel = String(tier.label ?? tier.title ?? "Product tier");
   const route = typeof tier.route === "string" ? tier.route : undefined;
@@ -346,8 +451,9 @@ export default function AcademyProductMap() {
   const selectedContent = (selectedObject?.content as ContentRecord | undefined) ?? {};
   const tiers = Array.isArray(selectedContent.tiers) ? selectedContent.tiers.filter(isRecord) : [];
   const diagnostics = Array.isArray(selectedContent.diagnostics) ? selectedContent.diagnostics.filter(isRecord) : [];
+  const underlyingEngines = Array.isArray(selectedContent.underlyingEngines) ? selectedContent.underlyingEngines.filter(isRecord) : [];
   const tooltips = isRecord(selectedContent.tooltips) ? selectedContent.tooltips : {};
-  const metadataKeys = new Set(["howToUnderstand", "definitions", "tooltips", "tiers", "diagnostics", "route"]);
+  const metadataKeys = new Set(["howToUnderstand", "definitions", "tooltips", "tiers", "diagnostics", "underlyingEngines", "route"]);
   const progressState = { ...(savedProgress ?? {}), ...localProgress };
   const sectionKey = (key: string) => selectedObject ? `${selectedObject.slug}::${key}` : key;
   const isUnderstood = (key: string) => progressState[sectionKey(key)] === true;
@@ -380,7 +486,7 @@ export default function AcademyProductMap() {
   const filters: { key: MapFilter; label: string }[] = [
     { key: "all", label: "All Nodes" },
     { key: "product", label: "Products" },
-    { key: "engine", label: "Engines" },
+    { key: "engine", label: "Engines Only" },
     { key: "golden_journey", label: "Golden Journeys" },
   ];
 
@@ -426,6 +532,8 @@ export default function AcademyProductMap() {
               {tiers.length > 0 && <div className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><h3 className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">Leadership Transition Tiers</h3><InfoTip text={String(tooltips.tiers ?? "Click any tier to reveal who it serves, what can derail progress, and which behavioural moves to practise next.")} /></div><SectionStatusButton understood={isUnderstood("tiers")} pending={progressMutation.isPending} onToggle={() => toggleSection("tiers", "Leadership Transition Tiers")} /></div><div className="space-y-3">{tiers.map((tier) => { const code = String(tier.code ?? tier.label ?? "tier"); return <TierCard key={code} tier={tier} expanded={expandedTierCode === code} onToggle={() => setExpandedTierCode(expandedTierCode === code ? null : code)} />; })}</div></div>}
 
               {diagnostics.length > 0 && <DiagnosticsSection diagnostics={diagnostics} understood={isUnderstood("diagnostics")} pending={progressMutation.isPending} onToggle={() => toggleSection("diagnostics", "Diagnostics on the Platform")} />}
+
+              {underlyingEngines.length > 0 && <UnderlyingEnginesSection engines={underlyingEngines} understood={isUnderstood("underlyingEngines")} pending={progressMutation.isPending} onToggle={() => toggleSection("underlyingEngines", "Underlying Engines")} />}
 
               <div className="space-y-4 pt-2">{Object.entries(selectedContent).filter(([key]) => !metadataKeys.has(key)).map(([key, val]) => <SectionCard key={key} title={humanizeKey(key)} tooltip={typeof tooltips[key] === "string" ? String(tooltips[key]) : undefined} value={val} understood={isUnderstood(key)} pending={progressMutation.isPending} onToggle={() => toggleSection(key, humanizeKey(key))} />)}</div>
 
