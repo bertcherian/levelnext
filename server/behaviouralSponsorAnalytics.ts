@@ -65,7 +65,7 @@ function heatmapCellLabel(value: number) {
   return "Prepared to practise";
 }
 
-async function assertSponsorAccess(user: { id: number; role: string }) {
+export async function assertSponsorAccess(user: { id: number; role: string }) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 

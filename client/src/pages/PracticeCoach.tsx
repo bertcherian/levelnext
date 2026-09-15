@@ -2816,8 +2816,8 @@ export default function PracticeCoach() {
   const [screen, setScreen] = useState<Screen>(() => {
     const params = new URLSearchParams(window.location.search);
     const screenParam = params.get('screen');
-    // If coming from Leader Playbook with a pre-filled issue, jump straight to scenario-setup
-    if (!screenParam && params.get('playbook_issue')) return 'scenario-setup';
+    // If coming from Leader Playbook or Effectiveness Intelligence with a pre-filled issue, jump straight to scenario-setup
+    if (!screenParam && (params.get('playbook_issue') || params.get('ei_behavior'))) return 'scenario-setup';
     return (screenParam as Screen) || "home";
   });
 
@@ -2831,10 +2831,16 @@ export default function PracticeCoach() {
       setScreen('home');
     }
   }, [location, search]);
-  // Read playbook pre-fill params (set by Leader Playbook "Practice this conversation" button)
+  // Read playbook or Effectiveness Intelligence pre-fill params
   const [issue, setIssue] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const playbookIssue = params.get('playbook_issue');
+    const behavior = params.get('ei_behavior');
+    const move = params.get('ei_move');
+    const goal = params.get('ei_goal');
+    if (behavior) {
+      return `Practise the leadership behavior “${behavior}”. Suggested move: ${move ?? 'name the observable facts, ask one clarifying question, and agree the next action'}. Success looks like: ${goal ?? 'the stakeholder understands the outcome and the next action is explicit'}.`;
+    }
     return playbookIssue ? decodeURIComponent(playbookIssue) : '';
   });
   const [sessionId, setSessionId] = useState<number | null>(null);

@@ -14,6 +14,7 @@ import {
   Home,
   Users,
   Building2,
+  CalendarDays,
   BookOpen,
   ShieldCheck,
   ChevronLeft,
@@ -33,6 +34,7 @@ export const MEP_NAV_ITEMS = [
   { href: "/manager/narrative", label: "Narrative", icon: BookOpen },
   { href: "/manager/team", label: "Team", icon: Users },
   { href: "/manager/progress", label: "My Progress", icon: Activity },
+  { href: "/manager/work-diary", label: "Work Diary", icon: CalendarDays },
   { href: "/onboard?returnTo=/manager", label: "Organisation Setup", icon: Building2 },
 ];
 

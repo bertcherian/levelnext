@@ -314,3 +314,76 @@ export function calculateCapacityGap(
     largestSurplus: maxSurplus,
   };
 }
+
+
+// ── 7. Interactive Work Diary ─────────────────────────────────────────────────
+
+export const workDiaryEntryInputSchema = z.object({
+  dateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD for the diary date"),
+  activityTitle: z.string().min(3).max(255),
+  category: z.enum(LEADERSHIP_WORK_CATEGORIES),
+  hours: z.number().min(0.25).max(24),
+  workAtLevel: z.enum(WORK_AT_LEVEL_STATUS).default("at_level"),
+  reallocation: z.enum(WORK_REALLOCATION_TAXONOMY).default("simplify"),
+  outcome: z.string().max(1000).optional(),
+  notes: z.string().max(1500).optional(),
+});
+
+export type WorkDiaryEntryInput = z.infer<typeof workDiaryEntryInputSchema>;
+
+export const diaryRangeInputSchema = z.object({
+  startDateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+export function projectDiaryToWeeklyActivities(
+  entries: Array<Pick<WorkDiaryEntryInput, "category" | "hours" | "workAtLevel" | "reallocation">>,
+  activeDays: number,
+): WorkActivityInput[] {
+  if (activeDays <= 0) return [];
+
+  const grouped = new Map<LeadershipWorkCategory, {
+    hours: number;
+    belowLevelHours: number;
+    atLevelHours: number;
+    strategicHours: number;
+    reallocation: WorkReallocationTaxonomy;
+  }>();
+
+  for (const entry of entries) {
+    const existing = grouped.get(entry.category) ?? {
+      hours: 0,
+      belowLevelHours: 0,
+      atLevelHours: 0,
+      strategicHours: 0,
+      reallocation: entry.reallocation,
+    };
+    existing.hours += entry.hours;
+    if (entry.workAtLevel === "below_level") existing.belowLevelHours += entry.hours;
+    if (entry.workAtLevel === "at_level") existing.atLevelHours += entry.hours;
+    if (entry.workAtLevel === "above_level_strategic") existing.strategicHours += entry.hours;
+    existing.reallocation = entry.reallocation;
+    grouped.set(entry.category, existing);
+  }
+
+  return Array.from(grouped.entries()).map(([category, group]) => {
+    const weeklyHours = Math.round((group.hours / activeDays) * 5 * 10) / 10;
+    const workAtLevel: WorkAtLevelStatus = group.belowLevelHours >= group.strategicHours && group.belowLevelHours >= group.atLevelHours
+      ? "below_level"
+      : group.strategicHours > group.atLevelHours
+        ? "above_level_strategic"
+        : "at_level";
+
+    return {
+      title: `${LEADERSHIP_WORK_CATEGORY_LABELS[category]} (diary average)`,
+      category,
+      weeklyHours,
+      frequency: `${activeDays}-day diary average`,
+      workAtLevel,
+      reallocation: group.reallocation,
+      judgmentRequirement: workAtLevel === "below_level" ? "low" : "medium",
+      delegationPotential: workAtLevel === "below_level" ? "partial" : "none",
+      aiAugmentationPotential: workAtLevel === "below_level" ? "drafting" : "analysis",
+    } satisfies WorkActivityInput;
+  });
+}

@@ -68,6 +68,7 @@ const AdminProductEnrollments = lazyWithRouteRecovery(() => import("@/pages/Admi
 const ManagerEffectivenessLanding = lazy(() => import("@/pages/ManagerEffectivenessLanding"));
 const ManagerHome = lazy(() => import("@/pages/mep/ManagerHome"));
 const WorkGenomeScan = lazy(() => import("@/pages/WorkGenomeScan"));
+const WorkDiary = lazy(() => import("@/pages/WorkDiary"));
 const ManagerDiagnostics = lazyWithRouteRecovery(() => import("@/pages/mep/ManagerDiagnostics"), "manager-diagnostics");
 const ManagerGuide = lazy(() => import("@/pages/mep/ManagerGuide"));
 const ManagerPlaybook = lazy(() => import("@/pages/mep/ManagerPlaybook"));
@@ -114,6 +115,7 @@ const Intelligence = lazy(() => import("./pages/Intelligence"));
 const NarrativeIntelligence = lazy(() => import("./pages/NarrativeIntelligence"));
 const BehaviouralIntelligenceStudio = lazy(() => import("@/pages/BehaviouralIntelligenceStudio"));
 const BehaviouralSponsorHeatmap = lazy(() => import("@/pages/BehaviouralSponsorHeatmap"));
+const SponsorCapacityDashboard = lazy(() => import("@/pages/SponsorCapacityDashboard"));
 const AcademyHome = lazy(() => import("@/pages/AcademyHome"));
 const AcademyDiagnostic = lazy(() => import("@/pages/AcademyDiagnostic"));
 const AcademyProductMap = lazy(() => import("@/pages/AcademyProductMap"));
@@ -258,6 +260,7 @@ function Router() {
       <Route path="/narrative-intelligence" component={NarrativeIntelligence} />
       <Route path="/behavioural-intelligence" component={() => <BehaviouralIntelligenceStudio />} />
       <Route path="/organisation/behavioural-intelligence" component={BehaviouralSponsorHeatmap} />
+      <Route path="/organisation/effectiveness" component={SponsorCapacityDashboard} />
       {/* LevelNext Academy */}
       <Route path="/academy" component={AcademyHome} />
       <Route path="/academy/diagnostic" component={AcademyDiagnostic} />
@@ -310,6 +313,7 @@ function Router() {
       {/* Manager Effectiveness Platform — 6-item nav */}
       <Route path="/manager" component={withMepLayout(<ManagerHome />)} />
       <Route path="/manager/work-genome" component={withMepLayout(<WorkGenomeScan />)} />
+      <Route path="/manager/work-diary" component={withMepLayout(<WorkDiary />)} />
       <Route path="/manager/diagnostics" component={withMepLayout(<ManagerDiagnostics />)} />
       <Route path="/manager/coach" component={withMepLayout(<ManagerCoach />)} />
       <Route path="/manager/practice" component={withMepLayout(<ManagerPractice />)} />

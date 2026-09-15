@@ -4455,3 +4455,42 @@ export const eiEvidenceClaims = mysqlTable(
 );
 export type EiEvidenceClaim = typeof eiEvidenceClaims.$inferSelect;
 export type InsertEiEvidenceClaim = typeof eiEvidenceClaims.$inferInsert;
+
+
+// ─── EI: Interactive Work Diary Entries ───────────────────────────────────────
+// Participant-reported daily work observations. This is not employee surveillance:
+// entries are explicitly entered by the participant and are private by default.
+export const eiWorkDiaryEntries = mysqlTable(
+  "ei_work_diary_entries",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    dateKey: varchar("dateKey", { length: 10 }).notNull(),
+    activityTitle: varchar("activityTitle", { length: 255 }).notNull(),
+    category: mysqlEnum("category", [
+      "strategic_thinking",
+      "people_development",
+      "stakeholder_leadership",
+      "decision_making",
+      "operational_execution",
+      "meetings_coordination",
+      "administrative_reporting",
+      "firefighting_reactive",
+    ]).notNull(),
+    hours: float("hours").notNull(),
+    workAtLevel: mysqlEnum("workAtLevel", ["below_level", "at_level", "above_level_strategic"]).default("at_level").notNull(),
+    reallocation: mysqlEnum("reallocation", ["eliminate", "simplify", "automate", "autonomize", "augment", "elevate"]).default("simplify").notNull(),
+    outcome: text("outcome"),
+    notes: text("notes"),
+    privacyClass: mysqlEnum("privacyClass", ["participant_private", "development"]).default("participant_private").notNull(),
+    loggedAt: timestamp("loggedAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("ei_diary_user_date_idx").on(table.userId, table.dateKey),
+    index("ei_diary_tenant_date_idx").on(table.tenantId, table.dateKey),
+  ]
+);
+export type EiWorkDiaryEntry = typeof eiWorkDiaryEntries.$inferSelect;
+export type InsertEiWorkDiaryEntry = typeof eiWorkDiaryEntries.$inferInsert;

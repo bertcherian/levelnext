@@ -414,6 +414,17 @@ export default function Organisation() {
               </div>
             </div>
 
+            <div className="rounded-2xl p-5 mb-6" style={{ background: "linear-gradient(135deg, #0A1A2F 0%, #132D4A 100%)", boxShadow: "var(--shadow-card)" }}>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#D4AF37" }}>Leadership Effectiveness Intelligence</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">See capacity recovery across your cohort</h2>
+                  <p className="mt-1 max-w-2xl text-sm" style={{ color: "oklch(75% 0.02 248.6)" }}>Review aggregate recovered hours, work-below-level movement, and current-versus-target capacity allocation. Individual diary entries remain private.</p>
+                </div>
+                <button onClick={() => navigate("/organisation/effectiveness")} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98]" style={{ background: "#D4AF37", color: "#0A1A2F" }}>Open capacity dashboard <ArrowRight size={15} /></button>
+              </div>
+            </div>
+
             {/* ── Team Edge Heatmap ── */}
             <div className="rounded-2xl p-5 mb-6" style={{ background: "white", border: "1px solid var(--color-ln-border)", boxShadow: "var(--shadow-card)" }}>
               <h2 className="font-semibold mb-5" style={{ color: "var(--color-ln-navy)" }}>Team Edge Heatmap</h2>

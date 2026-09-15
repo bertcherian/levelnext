@@ -39,6 +39,28 @@ import {
   X,
 } from "lucide-react";
 
+type EffectivenessDashboardData = {
+  hasCompletedScan: boolean;
+  capacitySnapshot: {
+    gapScore: number;
+    recoverableHours: number;
+    confidence: string | null;
+    currentAllocation: { strategic_thinking: number };
+    targetAllocation: { strategic_thinking: number };
+  } | null;
+  opportunityScan: {
+    recommendedBehaviors: Array<{
+      title: string;
+      whyItMatters: string;
+      expectedCapacityGain: string;
+      ontologicalDistinction?: string | null;
+      suggestedMove: string;
+      desiredBehavior: string;
+    }>;
+  } | null;
+  nbla: { id: number; status: string; headline: string; reason: string; preparationPrompt?: string | null } | null;
+};
+
 const MEP_MODULES = [
   {
     id: "diagnostics",
@@ -125,13 +147,16 @@ export default function ManagerHome() {
   const feedbackFilters = React.useMemo(() => ({ reliability: feedbackReliability, dateRange: feedbackDateRange, sort: feedbackSort }), [feedbackReliability, feedbackDateRange, feedbackSort]);
   const feedbackEntries = trpc.aiSuggestionFeedback.listMine.useQuery(feedbackFilters);
   const feedbackAnalytics = trpc.aiSuggestionFeedback.getMyFeedbackAnalytics.useQuery({ days: 14 });
-  const { data: effectivenessData, refetch: refetchEffectiveness } = trpc.effectiveness.getDashboard.useQuery();
-  const respondNblaMutation = trpc.effectiveness.respondToNbla.useMutation({
+  const effectivenessApi = (trpc as typeof trpc & { effectiveness?: any }).effectiveness;
+  const effectivenessQuery = effectivenessApi?.getDashboard?.useQuery?.() ?? { data: undefined, refetch: async () => undefined };
+  const effectivenessData = effectivenessQuery.data as EffectivenessDashboardData | undefined;
+  const refetchEffectiveness = effectivenessQuery.refetch;
+  const respondNblaMutation = effectivenessApi?.respondToNbla?.useMutation?.({
     onSuccess: () => {
       toast.success("Action updated");
       refetchEffectiveness();
     },
-  });
+  }) ?? { mutate: () => undefined, isPending: false };
 
   // Keep an already-open dashboard aligned to the manager's local calendar day.
   useEffect(() => {
@@ -407,9 +432,20 @@ export default function ManagerHome() {
                       </div>
                       <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
                         <span className="text-[10px] font-bold text-emerald-700">{beh.expectedCapacityGain}</span>
-                        <Link href="/manager/practice" className="text-xs font-bold text-slate-700 hover:text-slate-900 inline-flex items-center">
-                          Practise <ChevronRight size={13} />
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/manager/simulate?ei_behavior=${encodeURIComponent(beh.title)}&ei_move=${encodeURIComponent(beh.suggestedMove)}&ei_goal=${encodeURIComponent(beh.desiredBehavior)}`}
+                            className="text-[10px] font-bold text-[#0A1A2F] hover:text-[#A47618] inline-flex items-center gap-1 rounded-md border border-[#D4AF37]/60 px-2 py-1"
+                          >
+                            Arena <ChevronRight size={11} />
+                          </Link>
+                          <Link
+                            href={`/practice?screen=scenario-setup&ei_behavior=${encodeURIComponent(beh.title)}&ei_move=${encodeURIComponent(beh.suggestedMove)}&ei_goal=${encodeURIComponent(beh.desiredBehavior)}`}
+                            className="text-[10px] font-bold text-white hover:bg-[#1D3557] inline-flex items-center gap-1 rounded-md bg-[#0A1A2F] px-2 py-1"
+                          >
+                            Practice Partner <ChevronRight size={11} />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   ))}

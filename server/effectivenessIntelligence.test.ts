@@ -3,6 +3,7 @@ import {
   calculateCapacityAllocation,
   calculateCapacityGap,
   ALTITUDE_CAPACITY_TARGETS,
+  projectDiaryToWeeklyActivities,
   type WorkActivityInput,
 } from "../shared/modules/effectivenessIntelligence";
 import { appRouter } from "./routers";
@@ -129,6 +130,19 @@ describe("Effectiveness Intelligence — Deterministic Domain Calculations", () 
     expect(gap.gapScore).toBeGreaterThan(0);
     expect(gap.gapScore).toBeLessThanOrEqual(100);
     expect(gap.largestSurplus.category).toBe("operational_execution");
+  });
+
+  it("projects participant-reported diary entries into a five-day weekly activity view", () => {
+    const projected = projectDiaryToWeeklyActivities([
+      { category: "meetings_coordination", hours: 2, workAtLevel: "below_level", reallocation: "simplify" },
+      { category: "meetings_coordination", hours: 1, workAtLevel: "at_level", reallocation: "simplify" },
+      { category: "strategic_thinking", hours: 2, workAtLevel: "above_level_strategic", reallocation: "elevate" },
+    ], 2);
+
+    expect(projected).toHaveLength(2);
+    expect(projected.find((activity) => activity.category === "meetings_coordination")?.weeklyHours).toBe(7.5);
+    expect(projected.find((activity) => activity.category === "meetings_coordination")?.workAtLevel).toBe("below_level");
+    expect(projected.find((activity) => activity.category === "strategic_thinking")?.weeklyHours).toBe(5);
   });
 });
 

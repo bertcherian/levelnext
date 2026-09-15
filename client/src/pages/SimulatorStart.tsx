@@ -321,6 +321,9 @@ export default function SimulatorStart() {
   const path = window.location.pathname;
   const simulatorParams = new URLSearchParams(window.location.search);
   const samplePreset = simulatorParams.get("sample") === "voice-simulator";
+  const effectivenessBehavior = simulatorParams.get("ei_behavior");
+  const effectivenessMove = simulatorParams.get("ei_move");
+  const effectivenessGoal = simulatorParams.get("ei_goal");
   const platform: Platform = path.includes("/manager") ? "manager"
     : path.includes("/career") ? "career"
     : path.includes("/young") ? "young"
@@ -337,6 +340,8 @@ export default function SimulatorStart() {
   });
   const [prompt, setPrompt] = useState(() => behaviouralHandoff
     ? `Rehearse the Behavioural Move "${behaviouralHandoff.moveTitle}" in a realistic ${platform} conversation. The move is: ${behaviouralHandoff.moveDescription}. Use these phrases naturally: ${behaviouralHandoff.suggestedLanguage.join(" | ")}. Success looks like: ${behaviouralHandoff.successSignal}`
+    : effectivenessBehavior
+      ? `Rehearse the leadership behavior "${effectivenessBehavior}" in a realistic ${platform} conversation. Use this suggested move: ${effectivenessMove ?? "name the observable facts, ask one clarifying question, and agree the next action"}. Success looks like: ${effectivenessGoal ?? "the stakeholder understands the outcome and the next action is explicit"}. Make the stakeholder challenge me once so I can practise staying clear and composed.`
     : samplePreset
       ? "Explain a difficult workplace situation to a manager, then practise using one clear behavioural move: name the observable facts, ask one clarifying question, and agree the next action. The stakeholder should challenge me once so I can rehearse staying clear and composed."
       : "");

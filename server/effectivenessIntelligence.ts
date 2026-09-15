@@ -13,7 +13,7 @@
  *   - 7-Level Leadership Evidence Ladder recording & progress
  */
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { getDb } from "./db";
 import {
   eiWorkScans,
@@ -23,6 +23,7 @@ import {
   eiBehaviorContracts,
   eiNextBestActions,
   eiEvidenceClaims,
+  eiWorkDiaryEntries,
   mepDiagnosticResults,
   reports,
   users,
@@ -34,6 +35,7 @@ import {
   type EiBehaviorContract,
   type EiNextBestAction,
   type EiEvidenceClaim,
+  type EiWorkDiaryEntry,
 } from "../drizzle/schema";
 import {
   calculateCapacityAllocation,
@@ -44,6 +46,8 @@ import {
   type RecordEvidenceInput,
   type CareerAltitude,
   type LeadershipWorkCategory,
+  projectDiaryToWeeklyActivities,
+  type WorkDiaryEntryInput,
 } from "../shared/modules/effectivenessIntelligence";
 import { invokeStructured } from "./structuredLlm";
 import { z } from "zod";
@@ -495,18 +499,19 @@ export async function getEffectivenessDashboardService(userId: number) {
       .limit(1);
     capacitySnapshot = snap ?? null;
 
-    const [opp] = await db
-      .select()
-      .from(eiOpportunityScans)
-      .where(eq(eiOpportunityScans.scanId, latestScan.id))
-      .limit(1);
-    opportunityScan = opp ?? null;
-
     activities = await db
       .select()
       .from(eiWorkActivities)
       .where(eq(eiWorkActivities.scanId, latestScan.id));
   }
+
+  const [latestOpportunity] = await db
+    .select()
+    .from(eiOpportunityScans)
+    .where(eq(eiOpportunityScans.userId, userId))
+    .orderBy(desc(eiOpportunityScans.createdAt))
+    .limit(1);
+  opportunityScan = latestOpportunity ?? null;
 
   // Active behavior contracts (up to 3)
   const contracts = await db
@@ -542,4 +547,158 @@ export async function getEffectivenessDashboardService(userId: number) {
     nbla: nbla ?? null,
     evidence,
   };
+}
+
+
+// ── 6. Interactive Work Diary & Refined Capacity ──────────────────────────────
+
+async function resolveTenantId(userId: number, tenantId?: number | null) {
+  if (tenantId !== undefined) return tenantId;
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [membership] = await db
+    .select({ tenantId: tenantUsers.tenantId })
+    .from(tenantUsers)
+    .where(eq(tenantUsers.userId, userId))
+    .limit(1);
+  return membership?.tenantId ?? null;
+}
+
+export async function addWorkDiaryEntryService(params: {
+  userId: number;
+  tenantId?: number | null;
+  input: WorkDiaryEntryInput;
+}): Promise<EiWorkDiaryEntry> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const resolvedTenantId = await resolveTenantId(params.userId, params.tenantId);
+
+  const [result] = await db.insert(eiWorkDiaryEntries).values({
+    tenantId: resolvedTenantId,
+    userId: params.userId,
+    dateKey: params.input.dateKey,
+    activityTitle: params.input.activityTitle,
+    category: params.input.category,
+    hours: params.input.hours,
+    workAtLevel: params.input.workAtLevel,
+    reallocation: params.input.reallocation,
+    outcome: params.input.outcome ?? null,
+    notes: params.input.notes ?? null,
+    privacyClass: "participant_private",
+  });
+
+  const [entry] = await db
+    .select()
+    .from(eiWorkDiaryEntries)
+    .where(eq(eiWorkDiaryEntries.id, result.insertId))
+    .limit(1);
+  return entry;
+}
+
+export async function listWorkDiaryEntriesService(params: {
+  userId: number;
+  startDateKey: string;
+  endDateKey: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db
+    .select()
+    .from(eiWorkDiaryEntries)
+    .where(and(
+      eq(eiWorkDiaryEntries.userId, params.userId),
+      gte(eiWorkDiaryEntries.dateKey, params.startDateKey),
+      lte(eiWorkDiaryEntries.dateKey, params.endDateKey),
+    ))
+    .orderBy(desc(eiWorkDiaryEntries.dateKey), desc(eiWorkDiaryEntries.loggedAt));
+}
+
+export async function refineCapacityFromDiaryService(params: {
+  userId: number;
+  tenantId?: number | null;
+  startDateKey: string;
+  endDateKey: string;
+  altitude?: CareerAltitude;
+}): Promise<{
+  scanId: number;
+  entriesUsed: number;
+  activeDays: number;
+  capacitySnapshot: EiCapacitySnapshot;
+}> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const entries = await listWorkDiaryEntriesService(params);
+  const activeDays = new Set(entries.map((entry) => entry.dateKey)).size;
+  if (entries.length < 3 || activeDays < 2) {
+    throw new Error("Log at least 3 activities across 2 or more days before refining capacity.");
+  }
+
+  const [latestScan] = await db
+    .select()
+    .from(eiWorkScans)
+    .where(and(eq(eiWorkScans.userId, params.userId), eq(eiWorkScans.status, "completed")))
+    .orderBy(desc(eiWorkScans.completedAt))
+    .limit(1);
+
+  const altitude = params.altitude ?? latestScan?.altitude ?? "manager";
+  const activities = projectDiaryToWeeklyActivities(entries, activeDays);
+  const totalWorkHours = Math.max(20, Math.min(90, Math.round(activities.reduce((sum, activity) => sum + activity.weeklyHours, 0))));
+  const resolvedTenantId = await resolveTenantId(params.userId, params.tenantId);
+
+  const [scanResult] = await db.insert(eiWorkScans).values({
+    tenantId: resolvedTenantId,
+    userId: params.userId,
+    altitude,
+    totalWorkHours,
+    status: "completed",
+    contextNotes: `Refined from participant Work Diary (${params.startDateKey} to ${params.endDateKey}).`,
+    completedAt: new Date(),
+  });
+  const scanId = scanResult.insertId;
+
+  await db.insert(eiWorkActivities).values(activities.map((activity) => ({
+    scanId,
+    tenantId: resolvedTenantId,
+    userId: params.userId,
+    title: activity.title,
+    category: activity.category,
+    weeklyHours: activity.weeklyHours,
+    frequency: activity.frequency,
+    workAtLevel: activity.workAtLevel,
+    reallocation: activity.reallocation,
+    decisionLevel: activity.decisionLevel ?? null,
+    judgmentRequirement: activity.judgmentRequirement,
+    delegationPotential: activity.delegationPotential,
+    aiAugmentationPotential: activity.aiAugmentationPotential,
+    notes: "Derived from participant-reported Work Diary entries.",
+  })));
+
+  const targetAllocation = ALTITUDE_CAPACITY_TARGETS[altitude];
+  const { currentAllocation, recoverableHours, workBelowLevelHours, workBelowLevelPercent } = calculateCapacityAllocation(activities, totalWorkHours);
+  const { gapScore, largestDeficit, largestSurplus } = calculateCapacityGap(currentAllocation, targetAllocation);
+
+  const [capacityResult] = await db.insert(eiCapacitySnapshots).values({
+    scanId,
+    tenantId: resolvedTenantId,
+    userId: params.userId,
+    currentAllocation,
+    targetAllocation,
+    recoverableHours,
+    workBelowLevelHours,
+    workBelowLevelPercent,
+    gapScore,
+    hiddenManagerTaxHours: workBelowLevelHours,
+    hiddenManagerTaxAnnualCost: Math.round(workBelowLevelHours * 75 * 48),
+    largestDeficitCategory: largestDeficit.category,
+    largestSurplusCategory: largestSurplus.category,
+    confidence: activeDays >= 5 ? "high_measured" : "moderate_reported",
+  });
+
+  const [capacitySnapshot] = await db
+    .select()
+    .from(eiCapacitySnapshots)
+    .where(eq(eiCapacitySnapshots.id, capacityResult.insertId))
+    .limit(1);
+
+  return { scanId, entriesUsed: entries.length, activeDays, capacitySnapshot };
 }

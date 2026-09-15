@@ -20,9 +20,14 @@ import {
   createBehaviorContractService,
   recordEvidenceClaimService,
   getEffectivenessDashboardService,
+  addWorkDiaryEntryService,
+  listWorkDiaryEntriesService,
+  refineCapacityFromDiaryService,
 } from "../effectivenessIntelligence";
+import { getEffectivenessSponsorCapacity } from "../effectivenessSponsorAnalytics";
 import {
   createWorkScanInputSchema,
+  workDiaryEntryInputSchema,
   behaviorContractInputSchema,
   recordEvidenceInputSchema,
 } from "../../shared/modules/effectivenessIntelligence";
@@ -36,6 +41,38 @@ export const effectivenessIntelligenceRouter = router({
   getDashboard: protectedProcedure.query(async ({ ctx }) => {
     return getEffectivenessDashboardService(ctx.user.id);
   }),
+
+  getDiaryEntries: protectedProcedure
+    .input(z.object({
+      startDateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      endDateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    }))
+    .query(({ ctx, input }) => listWorkDiaryEntriesService({ userId: ctx.user.id, ...input })),
+
+  addDiaryEntry: protectedProcedure
+    .input(workDiaryEntryInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const entry = await addWorkDiaryEntryService({ userId: ctx.user.id, input });
+      return { success: true, entry };
+    }),
+
+  refineCapacityFromDiary: protectedProcedure
+    .input(z.object({
+      startDateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      endDateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      altitude: z.enum(["manager", "senior_leader", "executive"]).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await refineCapacityFromDiaryService({ userId: ctx.user.id, ...input });
+      } catch (err: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: err?.message || "Unable to refine capacity from diary" });
+      }
+    }),
+
+  getSponsorCapacity: protectedProcedure.query(({ ctx }) =>
+    getEffectivenessSponsorCapacity({ id: ctx.user.id, role: ctx.user.role })
+  ),
 
   // ── 2. Submit Work Genome Scan ────────────────────────────────────────────────
   submitWorkScan: protectedProcedure
