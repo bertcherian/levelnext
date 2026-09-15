@@ -1,4 +1,4 @@
-import { ArrowLeft, BarChart3, LockKeyhole, RefreshCw, ShieldCheck, UsersRound } from "lucide-react";
+import { ArrowLeft, BarChart3, Download, FileText, LockKeyhole, RefreshCw, ShieldCheck, UsersRound } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,13 @@ export default function SponsorCapacityDashboard() {
             <h1 className="mt-2 text-3xl font-semibold md:text-4xl">Sponsor Capacity Dashboard</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-[#56616D]">See how leadership capacity is moving across a qualifying cohort. This is an aggregate development signal—not an individual performance ranking.</p>
           </div>
-          <Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching} className="border-[#0A1A2F] text-[#0A1A2F]"><RefreshCw size={14} className={query.isFetching ? "mr-2 animate-spin" : "mr-2"} /> Refresh</Button>
+          <div className="flex flex-wrap gap-2">
+            {data?.eligible && <>
+              <Button variant="outline" onClick={() => downloadSponsorCapacityCsv(data)} className="border-[#0A1A2F] text-[#0A1A2F]"><Download size={14} className="mr-2" /> CSV</Button>
+              <Button variant="outline" onClick={() => printSponsorCapacityPdf(data)} className="border-[#0A1A2F] text-[#0A1A2F]"><FileText size={14} className="mr-2" /> PDF</Button>
+            </>}
+            <Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching} className="border-[#0A1A2F] text-[#0A1A2F]"><RefreshCw size={14} className={query.isFetching ? "mr-2 animate-spin" : "mr-2"} /> Refresh</Button>
+          </div>
         </div>
 
         <section className="mt-8 grid gap-4 md:grid-cols-3">
@@ -71,4 +77,62 @@ function Metric({ label, value, detail }: { label: string; value: string; detail
 
 function AccessState({ title, message, onRetry }: { title: string; message: string; onRetry?: () => void }) {
   return <div className="min-h-screen grid place-items-center px-5" style={{ background: IVORY }}><div className="max-w-md rounded-3xl border bg-white p-8 text-center" style={{ borderColor: "#E1D9CE" }}><LockKeyhole className="mx-auto h-8 w-8" style={{ color: GOLD }} /><h1 className="mt-4 text-2xl font-semibold" style={{ color: NAVY }}>{title}</h1><p className="mt-3 text-sm leading-6 text-[#56616D]">{message}</p>{onRetry && <Button className="mt-6 bg-[#0A1A2F] text-white" onClick={onRetry}>Try again</Button>}</div></div>;
+}
+
+
+type SponsorCapacityExportData = {
+  eligible: true;
+  participantCount: number;
+  reportingPeriod: string;
+  metrics: {
+    averageRecoverableHours: number;
+    averageWorkBelowLevelHours: number;
+    averageWorkBelowLevelPercent: number;
+    averageCapacityGap: number;
+    participantsWithBelowLevelReduction: number;
+    highConfidenceSnapshotPercent: number;
+  };
+  categories: Array<{ label: string; currentPercent: number; targetPercent: number; gapPercent: number }>;
+  privacyBoundary: string;
+};
+
+function downloadSponsorCapacityCsv(data: SponsorCapacityExportData) {
+  const rows: Array<Array<string | number>> = [
+    ["LevelNext Sponsor Capacity Dashboard", "Aggregate metrics only"],
+    ["Reporting period", data.reportingPeriod],
+    ["Participant band", `${data.participantCount}+`],
+    [],
+    ["Metric", "Value"],
+    ["Average recoverable hours / week", data.metrics.averageRecoverableHours],
+    ["Average work below level / week", data.metrics.averageWorkBelowLevelHours],
+    ["Average work below level (%)", data.metrics.averageWorkBelowLevelPercent],
+    ["Average capacity gap score", data.metrics.averageCapacityGap],
+    ["Participants reducing below-level work (%)", data.metrics.participantsWithBelowLevelReduction],
+    ["High-confidence snapshot (%)", data.metrics.highConfidenceSnapshotPercent],
+    [],
+    ["Category", "Current allocation (%)", "Target allocation (%)", "Gap (points)"],
+    ...data.categories.map((category) => [category.label, category.currentPercent, category.targetPercent, category.gapPercent]),
+    [],
+    ["Privacy boundary", data.privacyBoundary],
+  ];
+  const csv = rows.map((row) => row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `levelnext-sponsor-capacity-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function printSponsorCapacityPdf(data: SponsorCapacityExportData) {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) return;
+  const safe = (value: string | number) => String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] ?? character);
+  printWindow.document.write(`<!doctype html><html><head><title>LevelNext Sponsor Capacity Dashboard</title><style>
+    *{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#0A1A2F;margin:36px;line-height:1.45}h1{font-size:25px;margin:0 0 5px}h2{font-size:16px;margin:26px 0 10px;border-bottom:1px solid #D4AF37;padding-bottom:6px}.meta{color:#56616D;font-size:12px;margin-bottom:22px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{border:1px solid #E1D9CE;border-radius:10px;padding:12px}.label{font-size:10px;text-transform:uppercase;color:#6B6258;letter-spacing:.06em}.value{font-size:20px;font-weight:700;margin-top:4px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:9px;border-bottom:1px solid #EEE8DF}th{color:#6B6258;font-size:10px;text-transform:uppercase}footer{margin-top:30px;padding-top:12px;border-top:1px solid #E1D9CE;color:#6B6258;font-size:10px}@media print{body{margin:18mm}}
+  </style></head><body><h1>LevelNext Sponsor Capacity Dashboard</h1><p class="meta">Aggregate cohort report · ${safe(data.reportingPeriod)} · Participant band: ${safe(`${data.participantCount}+`)}</p><div class="metrics"><div class="metric"><div class="label">Avg recoverable hours / week</div><div class="value">${safe(data.metrics.averageRecoverableHours)}h</div></div><div class="metric"><div class="label">Avg below-level work</div><div class="value">${safe(data.metrics.averageWorkBelowLevelPercent)}%</div></div><div class="metric"><div class="label">Avg capacity gap</div><div class="value">${safe(data.metrics.averageCapacityGap)}/100</div></div></div><h2>Aggregate capacity allocation</h2><table><thead><tr><th>Category</th><th>Current</th><th>Target</th><th>Gap</th></tr></thead><tbody>${data.categories.map((category) => `<tr><td>${safe(category.label)}</td><td>${safe(category.currentPercent)}%</td><td>${safe(category.targetPercent)}%</td><td>${safe(category.gapPercent)} pts</td></tr>`).join("")}</tbody></table><h2>Additional signals</h2><table><tbody><tr><td>Participants reducing below-level work</td><td>${safe(data.metrics.participantsWithBelowLevelReduction)}%</td></tr><tr><td>High-confidence snapshots</td><td>${safe(data.metrics.highConfidenceSnapshotPercent)}%</td></tr></tbody></table><footer>${safe(data.privacyBoundary)}<br/>Generated by LevelNext · ${safe(new Date().toLocaleDateString("en-IN"))}</footer></body></html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  window.setTimeout(() => printWindow.print(), 300);
 }

@@ -310,6 +310,8 @@ export default function ManagerHome() {
           </div>
         </div>
 
+        {effectivenessApi && <DiaryQuickCapture effectivenessApi={effectivenessApi} />}
+
         {/* Effectiveness Intelligence: Work Genome & Opportunity Scan Section */}
         <section aria-label="Effectiveness Intelligence" className="rounded-2xl border p-6 bg-white shadow-sm" style={{ borderColor: "#E2E8F0" }}>
           <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
@@ -851,5 +853,65 @@ export default function ManagerHome() {
 
       </div>
     </div>
+  );
+}
+
+function DiaryQuickCapture({ effectivenessApi }: { effectivenessApi: any }) {
+  const today = React.useMemo(() => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+  const [title, setTitle] = React.useState("");
+  const [hours, setHours] = React.useState(1);
+  const [category, setCategory] = React.useState("operational_execution");
+  const [workAtLevel, setWorkAtLevel] = React.useState("at_level");
+  const diaryQuery = effectivenessApi?.getDiaryEntries?.useQuery?.({ startDateKey: today, endDateKey: today }) ?? { data: [], refetch: async () => undefined };
+  const addEntry = effectivenessApi?.addDiaryEntry?.useMutation?.({
+    onSuccess: () => {
+      setTitle("");
+      setHours(1);
+      void diaryQuery.refetch();
+      toast.success("Activity captured in your Work Diary");
+    },
+    onError: (error: { message?: string }) => toast.error(error.message ?? "Could not save this activity"),
+  }) ?? { mutate: () => undefined, isPending: false };
+
+  const handleCapture = () => {
+    if (!title.trim()) {
+      toast.error("Add a short activity description first");
+      return;
+    }
+    addEntry.mutate({
+      dateKey: today,
+      activityTitle: title.trim(),
+      category,
+      hours,
+      workAtLevel,
+      reallocation: workAtLevel === "below_level" ? "simplify" : "elevate",
+    });
+  };
+
+  return (
+    <section aria-label="60-second diary quick capture" className="rounded-2xl border p-5 bg-white shadow-sm" style={{ borderColor: "#E2E8F0" }}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A47618]">60-second reflection</p>
+          <h2 className="mt-1 text-base font-bold text-slate-900">What did you spend time on today?</h2>
+          <p className="mt-1 max-w-xl text-xs leading-5 text-slate-500">Capture one representative activity. This stays participant-private and gradually sharpens your capacity picture.</p>
+        </div>
+        <Link href="/manager/work-diary" className="text-xs font-semibold text-[#0A1A2F] hover:text-[#A47618]">Open full diary <ArrowRight size={12} className="ml-1 inline" /></Link>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-[1.6fr_.7fr_1fr_1fr_auto] md:items-end">
+        <label className="text-xs font-semibold text-slate-600">Activity<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Coached a team member through a decision" className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm font-normal outline-none focus:border-[#D4AF37]" /></label>
+        <label className="text-xs font-semibold text-slate-600">Hours<input type="number" min={0.25} max={24} step={0.25} value={hours} onChange={(event) => setHours(Number(event.target.value))} className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm font-normal outline-none focus:border-[#D4AF37]" /></label>
+        <label className="text-xs font-semibold text-slate-600">Category<select value={category} onChange={(event) => setCategory(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs font-normal outline-none focus:border-[#D4AF37]"><option value="operational_execution">Operational execution</option><option value="people_development">People development</option><option value="strategic_thinking">Strategic thinking</option><option value="stakeholder_leadership">Stakeholder leadership</option><option value="decision_making">Decision making</option><option value="meetings_coordination">Meetings & coordination</option><option value="administrative_reporting">Reporting & administration</option><option value="firefighting_reactive">Reactive firefighting</option></select></label>
+        <label className="text-xs font-semibold text-slate-600">At what level?<select value={workAtLevel} onChange={(event) => setWorkAtLevel(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs font-normal outline-none focus:border-[#D4AF37]"><option value="below_level">Below my level</option><option value="at_level">At my level</option><option value="above_level_strategic">Strategic / above level</option></select></label>
+        <Button onClick={handleCapture} disabled={addEntry.isPending} className="h-10 text-white" style={{ background: "#0A1A2F" }}><Plus size={14} className="mr-1.5" />{addEntry.isPending ? "Saving" : "Capture"}</Button>
+      </div>
+      <p className="mt-3 text-[11px] text-slate-500">{diaryQuery.data?.length ?? 0} {diaryQuery.data?.length === 1 ? "activity" : "activities"} captured today.</p>
+    </section>
   );
 }

@@ -2435,6 +2435,20 @@ function FeedbackScreen({
   const addCommitment = trpc.leadershipCoach.addCommitment.useMutation({
     onSuccess: () => toast.success('Commitment added to your tracker'),
   });
+  const effectivenessApi = (trpc as typeof trpc & { effectiveness?: any }).effectiveness;
+  const [contractCreated, setContractCreated] = useState(false);
+  const [contractDate, setContractDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    return date.toISOString().slice(0, 10);
+  });
+  const createContract = effectivenessApi?.createContract?.useMutation?.({
+    onSuccess: () => {
+      setContractCreated(true);
+      toast.success('Behavior Change Contract created');
+    },
+    onError: () => toast.error('Could not create the Behavior Change Contract. Try again.'),
+  }) ?? { mutate: () => undefined, isPending: false };
 
   const scoreColor = score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-red-500';
   const scoreBg = score >= 80 ? 'bg-emerald-50 border-emerald-200' : score >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
@@ -2524,15 +2538,36 @@ function FeedbackScreen({
               Suggested Real-World Action
             </p>
             <p className="text-sm text-[var(--color-ln-navy)]/80 mb-3">{feedback.suggestedRealWorldAction}</p>
-            <Button
-              size="sm"
-              onClick={() => addCommitment.mutate({ text: feedback.suggestedRealWorldAction!, sourceType: 'roleplay', sourceId: sessionId })}
-              disabled={addCommitment.isPending}
-              className="bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] text-xs"
-            >
-              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-              Add to Commitments
-            </Button>
+              <Button
+                size="sm"
+                onClick={() => addCommitment.mutate({ text: feedback.suggestedRealWorldAction!, sourceType: 'roleplay', sourceId: sessionId })}
+                disabled={addCommitment.isPending}
+                className="bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] text-xs"
+              >
+                <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                Add to Commitments
+              </Button>
+              {effectivenessApi && (
+                <div className="mt-4 border-t border-[var(--color-ln-navy)]/10 pt-4">
+                  {contractCreated ? (
+                    <p className="flex items-center gap-2 text-xs font-semibold text-emerald-700"><CheckCircle className="h-3.5 w-3.5" /> Behavior Change Contract created for {contractDate}.</p>
+                  ) : (
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <label className="text-xs font-semibold text-[var(--color-ln-navy)]/70">Apply by<input type="date" value={contractDate} onChange={(event) => setContractDate(event.target.value)} className="mt-1 block h-9 rounded-md border border-gray-200 bg-white px-2 text-xs font-normal" /></label>
+                      <Button size="sm" onClick={() => createContract.mutate({
+                        behaviorTitle: feedback.oneBehaviourToImprove || 'Make the conversation outcome explicit',
+                        targetCategory: 'stakeholder_leadership',
+                        currentPattern: feedback.whatDidNotWork || 'The practice session surfaced a conversation pattern to make more deliberate.',
+                        desiredBehavior: feedback.suggestedRealWorldAction,
+                        whyItMatters: feedback.whatOtherPersonHeard || 'A clear behavior helps the stakeholder understand the outcome and next action.',
+                        realWorldMoment: 'Use this behavior in my next real leadership conversation.',
+                        targetEvidence: feedback.whereConversationShifted || 'The stakeholder can repeat back the agreed outcome and next action.',
+                        targetCompletionDate: contractDate,
+                      })} disabled={createContract.isPending} className="bg-[var(--color-ln-navy)] text-xs text-white hover:bg-[var(--color-ln-navy)]/90"><Target className="mr-1.5 h-3.5 w-3.5" />{createContract.isPending ? 'Creating…' : 'Create Behavior Contract'}</Button>
+                    </div>
+                  )}
+                </div>
+              )}
           </div>
         )}
       </div>

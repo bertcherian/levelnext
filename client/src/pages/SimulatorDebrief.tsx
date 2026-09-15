@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import {
-  Loader2, ChevronRight, Star, TrendingUp, AlertCircle,
+  Loader2, ChevronRight, Star, TrendingUp, AlertCircle, CalendarClock,
   Lightbulb, MessageSquare, RotateCcw, Download, Sparkles,
   BookOpen, Mic, Users, Brain, CheckCircle2, Target,
 } from "lucide-react";
@@ -172,6 +172,29 @@ export default function SimulatorDebrief() {
     { sessionId },
     { enabled: !!sessionId }
   );
+
+  const effectivenessApi = (trpc as typeof trpc & { effectiveness?: any }).effectiveness;
+  const [handoffMoment, setHandoffMoment] = useState("");
+  const [handoffEvidence, setHandoffEvidence] = useState("");
+  const [handoffDate, setHandoffDate] = useState("");
+  const [handoffCreated, setHandoffCreated] = useState(false);
+  const [handoffInitialised, setHandoffInitialised] = useState(false);
+  const createContractMutation = effectivenessApi?.createContract?.useMutation?.({
+    onSuccess: () => {
+      setHandoffCreated(true);
+      setHandoffInitialised(true);
+    },
+  }) ?? { mutate: () => undefined, isPending: false, isError: false };
+
+  useEffect(() => {
+    if (!session || handoffInitialised) return;
+    setHandoffMoment(`Use this behavior in my next real ${session.stakeholder ?? "stakeholder"} conversation.`);
+    setHandoffEvidence("The conversation ends with the agreed outcome, owner, and next action explicitly confirmed.");
+    const target = new Date();
+    target.setDate(target.getDate() + 7);
+    setHandoffDate(target.toISOString().slice(0, 10));
+    setHandoffInitialised(true);
+  }, [session, handoffInitialised]);
 
   const recordBehaviouralPractice = trpc.behaviouralIntelligence.recordPracticeResult.useMutation();
 
@@ -572,6 +595,41 @@ export default function SimulatorDebrief() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {effectivenessApi && (
+            <div className="rounded-2xl border p-6" style={{ borderColor: `${accent}45`, background: "rgba(255,255,255,0.04)" }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ background: `${accent}20` }}><CalendarClock className="h-4 w-4" style={{ color: accent }} /></div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: accent }}>Practice → real work</p>
+                  <h2 className="mt-1 text-base font-semibold text-white">Turn this rehearsal into a real-world commitment</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-white/60">Create a Behavior Change Contract from this session. Edit the moment and evidence signal before saving it to your Manager Effectiveness commitments.</p>
+                </div>
+              </div>
+              {handoffCreated ? (
+                <div className="mt-5 flex items-center gap-2 rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-4 text-sm text-emerald-200"><CheckCircle2 size={16} /> Commitment added. Track the real-world application from Manager Home.</div>
+              ) : (
+                <div className="mt-5 space-y-3">
+                  <label className="block text-xs font-semibold text-white/70">Next real-world moment<textarea value={handoffMoment} onChange={(event) => setHandoffMoment(event.target.value)} className="mt-1.5 min-h-20 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-normal text-white outline-none focus:border-[#D4AF37]" /></label>
+                  <label className="block text-xs font-semibold text-white/70">Evidence that will tell you it worked<textarea value={handoffEvidence} onChange={(event) => setHandoffEvidence(event.target.value)} className="mt-1.5 min-h-20 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-normal text-white outline-none focus:border-[#D4AF37]" /></label>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <label className="block text-xs font-semibold text-white/70">Target date<input type="date" value={handoffDate} onChange={(event) => setHandoffDate(event.target.value)} className="mt-1.5 h-10 rounded-lg border border-white/15 bg-white/5 px-3 text-sm font-normal text-white outline-none focus:border-[#D4AF37]" /></label>
+                    <Button onClick={() => createContractMutation.mutate({
+                      behaviorTitle: `Rehearse: ${session.conversationType ?? "leadership conversation"}`,
+                      targetCategory: "stakeholder_leadership",
+                      currentPattern: `Practice session score: ${overallScore}/100. The rehearsal surfaced an opportunity to make the conversation more explicit and actionable.`,
+                      desiredBehavior: String(session.objective ?? "Use the practiced behavior in a real stakeholder conversation and make the next action explicit."),
+                      whyItMatters: String(session.keyTakeaway ?? "Turning rehearsal into real application is how a practiced behavior becomes repeatable leadership capacity."),
+                      realWorldMoment: handoffMoment,
+                      targetEvidence: handoffEvidence,
+                      targetCompletionDate: handoffDate,
+                    })} disabled={createContractMutation.isPending || !handoffMoment.trim() || !handoffEvidence.trim() || !handoffDate} className="text-[#0A1A2F]" style={{ background: accent }}>{createContractMutation.isPending ? <><Loader2 className="mr-2 h-3 w-3 animate-spin" />Saving…</> : <><CalendarClock className="mr-2 h-3 w-3" />Create commitment</>}</Button>
+                  </div>
+                  {createContractMutation.isError && <p className="text-xs text-rose-300">We could not save the commitment. Please check the fields and try again.</p>}
+                </div>
+              )}
             </div>
           )}
 
