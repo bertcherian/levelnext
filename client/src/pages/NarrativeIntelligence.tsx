@@ -64,12 +64,36 @@ import {
   type NarrativePattern,
 } from "@shared/modules/narrativeIntelligence";
 
+const REFRAME_AUDIO_EXAMPLES = [
+  {
+    title: "From having every answer to creating the best thinking",
+    assumption: "I must have every answer before the conversation begins.",
+    reframe: "My role is to create the conditions for the best thinking in the room.",
+    src: "/manus-storage/narrative-reframe-expertise_1b3fccd0.wav",
+  },
+  {
+    title: "From avoiding disagreement to using curiosity",
+    assumption: "Disagreement means trust is breaking down.",
+    reframe: "Thoughtful disagreement can be evidence that people care enough to improve the work.",
+    src: "/manus-storage/narrative-reframe-disagreement_7e344973.wav",
+  },
+  {
+    title: "From control to ownership through delegation",
+    assumption: "If I delegate important work, quality and control will drop.",
+    reframe: "Clear outcomes and decision rights build ownership without making me the bottleneck.",
+    src: "/manus-storage/narrative-reframe-delegation_855c1726.wav",
+  },
+] as const;
+
 export default function NarrativeIntelligence() {
   const utils = trpc.useUtils();
   const { user, loading: authLoading, error: authError } = useAuth();
 
   // Queries
   const { data: dashboard, isLoading: isDashboardLoading } = trpc.narrativeIntelligence.getDashboard.useQuery(undefined, {
+    enabled: Boolean(user),
+  });
+  const { data: effectivenessDashboard } = trpc.effectiveness.getDashboard.useQuery(undefined, {
     enabled: Boolean(user),
   });
   const { data: curatedTransitions = [] } = trpc.narrativeIntelligence.getCuratedRoleTransitions.useQuery();
@@ -174,6 +198,26 @@ export default function NarrativeIntelligence() {
   const [isPatternDialogOpen, setIsPatternDialogOpen] = useState(false);
   const [isPatternReflectionOpen, setIsPatternReflectionOpen] = useState(false);
   const [patternReflectionNote, setPatternReflectionNote] = useState("");
+  const [narrativeClassifications, setNarrativeClassifications] = useState<Record<number, "fact" | "story">>({});
+  const [classificationsLoaded, setClassificationsLoaded] = useState(false);
+  const classificationStorageKey = user ? `levelnext:narrative-classifications:${user.id}` : null;
+
+  React.useEffect(() => {
+    if (!classificationStorageKey) return;
+    try {
+      const stored = window.localStorage.getItem(classificationStorageKey);
+      if (stored) setNarrativeClassifications(JSON.parse(stored) as Record<number, "fact" | "story">);
+    } catch {
+      // Local session storage is an enhancement; it should never block the cockpit.
+    } finally {
+      setClassificationsLoaded(true);
+    }
+  }, [classificationStorageKey]);
+
+  React.useEffect(() => {
+    if (!classificationStorageKey || !classificationsLoaded) return;
+    window.localStorage.setItem(classificationStorageKey, JSON.stringify(narrativeClassifications));
+  }, [classificationStorageKey, classificationsLoaded, narrativeClassifications]);
 
   // Week 2 Question Form State
   const [factText, setFactText] = useState("");
@@ -236,6 +280,7 @@ export default function NarrativeIntelligence() {
   const activeNarratives = dashboard?.activeNarratives ?? [];
   const stats = dashboard?.stats;
   const nextExperiment = dashboard?.nextExperiment;
+  const activeContracts = (effectivenessDashboard?.contracts ?? []).filter((contract) => !["verified_shift", "deferred"].includes(contract.status));
 
   // Initialize Week 3 transition form if profile exists
   React.useEffect(() => {
@@ -578,6 +623,35 @@ export default function NarrativeIntelligence() {
                     </CardHeader>
 
                     <CardContent className="space-y-3.5 pt-0 text-xs">
+                      {/* Quick Fact / Story Classification */}
+                      <div className="rounded-lg border border-[#D4AF37]/20 bg-[#D4AF37]/[0.06] p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#D4AF37]">Quick classify</span>
+                          {narrativeClassifications[narrative.id] && <span className="text-[10px] text-slate-400">Saved for this session</span>}
+                        </div>
+                        <p className="mt-1 text-[11px] leading-relaxed text-slate-300">Is this statement something you could observe and verify, or an interpretation about what it means?</p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setNarrativeClassifications((current) => ({ ...current, [narrative.id]: "fact" }))}
+                            className={`h-7 px-2.5 text-[11px] ${narrativeClassifications[narrative.id] === "fact" ? "border-emerald-400 bg-emerald-400/15 text-emerald-300" : "border-slate-700 text-slate-300 hover:bg-slate-800"}`}
+                          >
+                            Observable fact
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setNarrativeClassifications((current) => ({ ...current, [narrative.id]: "story" }))}
+                            className={`h-7 px-2.5 text-[11px] ${narrativeClassifications[narrative.id] === "story" ? "border-[#D4AF37] bg-[#D4AF37]/15 text-[#D4AF37]" : "border-slate-700 text-slate-300 hover:bg-slate-800"}`}
+                          >
+                            Interpretive story
+                          </Button>
+                        </div>
+                      </div>
+
                       {/* Historical strength vs Narrative Tax */}
                       <div className="grid grid-cols-2 gap-2 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
                         <div>
@@ -676,6 +750,43 @@ export default function NarrativeIntelligence() {
                   </Card>
                 );
               })}
+            </div>
+
+            {/* Active Behavior Change Contract → Limiting Narrative Map */}
+            {activeContracts.length > 0 && (
+              <div className="rounded-xl border border-[#D4AF37]/25 bg-slate-900/50 p-5 space-y-4">
+                <div>
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-white"><Target className="h-4 w-4 text-[#D4AF37]" /> Active contracts and the narratives they are designed to reframe</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-300">These are not personality labels. Each contract turns a limiting interpretation into a specific behavior you can test in the work.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {activeContracts.map((contract) => (
+                    <div key={contract.id} className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                      <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold text-white">{contract.behaviorTitle}</p><p className="mt-1 text-[10px] uppercase tracking-wider text-emerald-400">Active behavior contract</p></div><Badge variant="outline" className="shrink-0 border-slate-700 text-[10px] text-slate-300">{contract.status.replaceAll("_", " ")}</Badge></div>
+                      <p className="mt-3 text-[11px] leading-relaxed text-rose-200"><span className="font-semibold text-rose-300">Limiting narrative:</span> “{contract.limitingNarrative || contract.currentPattern}”</p>
+                      <p className="mt-2 text-[11px] leading-relaxed text-slate-300"><span className="font-semibold text-[#D4AF37]">Reframe to test:</span> {contract.desiredBehavior}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Reframing audio examples */}
+            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-5 space-y-4">
+              <div>
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-white"><Volume2 className="h-4 w-4 text-[#D4AF37]" /> Hear a different possibility</h3>
+                <p className="mt-1 text-xs leading-relaxed text-slate-300">Short illustrative composite examples of leaders separating an old assumption from a more useful way to act. Press play, then notice which reframe feels relevant to your work.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+                {REFRAME_AUDIO_EXAMPLES.map((example) => (
+                  <div key={example.src} className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                    <p className="text-xs font-semibold leading-snug text-white">{example.title}</p>
+                    <p className="mt-2 text-[11px] leading-relaxed text-rose-200"><span className="font-semibold text-rose-300">Old story:</span> {example.assumption}</p>
+                    <p className="mt-2 text-[11px] leading-relaxed text-emerald-200"><span className="font-semibold text-emerald-300">Reframe:</span> {example.reframe}</p>
+                    <audio className="mt-3 h-8 w-full" controls preload="none" src={example.src} aria-label={`Audio example: ${example.title}`} />
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Pattern Library Non-Diagnostic Reference Shelf */}
