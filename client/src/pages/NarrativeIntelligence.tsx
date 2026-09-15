@@ -25,6 +25,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 import {
   Compass,
   Sparkles,
@@ -88,6 +89,7 @@ const REFRAME_AUDIO_EXAMPLES = [
 export default function NarrativeIntelligence() {
   const utils = trpc.useUtils();
   const { user, loading: authLoading, error: authError } = useAuth();
+  const [, navigate] = useLocation();
 
   // Queries
   const { data: dashboard, isLoading: isDashboardLoading } = trpc.narrativeIntelligence.getDashboard.useQuery(undefined, {
@@ -281,6 +283,15 @@ export default function NarrativeIntelligence() {
   const stats = dashboard?.stats;
   const nextExperiment = dashboard?.nextExperiment;
   const activeContracts = (effectivenessDashboard?.contracts ?? []).filter((contract) => !["verified_shift", "deferred"].includes(contract.status));
+
+  const rehearseNarrativeInArena = (narrative: (typeof activeNarratives)[number]) => {
+    const params = new URLSearchParams({
+      ei_behavior: narrative.statement,
+      ei_move: narrative.emergingAssumption || "Separate the observable facts from the story, ask one curious question, and test a more useful interpretation.",
+      ei_goal: `Practise responding from a more useful stance instead of automatically acting from: ${narrative.statement}`,
+    });
+    navigate(`/manager/simulate?${params.toString()}`);
+  };
 
   // Initialize Week 3 transition form if profile exists
   React.useEffect(() => {
@@ -733,6 +744,14 @@ export default function NarrativeIntelligence() {
                             Partly Resonates
                           </Button>
 
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => rehearseNarrativeInArena(narrative)}
+                            className="border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10 text-[11px] h-7 px-2.5"
+                          >
+                            <Zap className="mr-1 h-3 w-3" /> Rehearse in Arena
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
