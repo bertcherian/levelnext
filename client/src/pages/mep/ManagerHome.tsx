@@ -11,6 +11,7 @@ import { isPlatformAdministrator } from "@/lib/adminControls";
 import { AiSuggestionFeedback } from "@/components/AiSuggestionFeedback";
 import { normalizeAiData } from "@shared/citationSanitization";
 import { getBrowserTimeZone, getMepDailyBriefDateKey } from "@shared/modules/mepDailyBriefDate";
+import { calculateDiaryMomentum } from "@shared/modules/effectivenessIntelligence";
 import {
   LayoutGrid,
   MessageSquare,
@@ -37,6 +38,7 @@ import {
   Building2,
   LayoutDashboard,
   X,
+  Flame,
 } from "lucide-react";
 
 type EffectivenessDashboardData = {
@@ -59,6 +61,16 @@ type EffectivenessDashboardData = {
     }>;
   } | null;
   nbla: { id: number; status: string; headline: string; reason: string; preparationPrompt?: string | null } | null;
+  contracts: Array<{
+    id: number;
+    behaviorTitle: string;
+    desiredBehavior: string;
+    realWorldMoment: string;
+    targetEvidence: string;
+    status: string;
+    targetCompletionDate?: string | Date | null;
+  }>;
+  evidence: Array<{ contractId: number; createdAt: string | Date; evidenceLevel: string }>;
 };
 
 const MEP_MODULES = [
@@ -128,7 +140,9 @@ export default function ManagerHome() {
   const [briefDateKey, setBriefDateKey] = React.useState(() => getMepDailyBriefDateKey(new Date(), timeZone));
 
   const { data: myResults } = trpc.mep.getMyResults.useQuery();
-  const { data: myTenant } = trpc.tenant.myTenant.useQuery();
+  const tenantApi = (trpc as typeof trpc & { tenant?: any }).tenant;
+  const tenantQuery = tenantApi?.myTenant?.useQuery?.() ?? { data: undefined };
+  const myTenant = tenantQuery.data;
   const { data: playbookSessions } = trpc.mep.listPlaybookSessions.useQuery();
   const { data: commitments } = trpc.mep.listCommitments.useQuery();
   const { data: practiceSessions } = trpc.mep.listPracticeSessions.useQuery();
@@ -311,6 +325,7 @@ export default function ManagerHome() {
         </div>
 
         {effectivenessApi && <DiaryQuickCapture effectivenessApi={effectivenessApi} />}
+        {effectivenessApi && effectivenessData?.contracts?.length ? <ContractCheckIn effectivenessApi={effectivenessApi} dashboard={effectivenessData} onSaved={refetchEffectiveness} /> : null}
 
         {/* Effectiveness Intelligence: Work Genome & Opportunity Scan Section */}
         <section aria-label="Effectiveness Intelligence" className="rounded-2xl border p-6 bg-white shadow-sm" style={{ borderColor: "#E2E8F0" }}>
@@ -856,6 +871,57 @@ export default function ManagerHome() {
   );
 }
 
+function ContractCheckIn({ effectivenessApi, dashboard, onSaved }: { effectivenessApi: any; dashboard: EffectivenessDashboardData; onSaved: () => void }) {
+  const activeContracts = dashboard.contracts.filter((contract) => !["verified_shift", "deferred"].includes(contract.status));
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const needsCheckIn = activeContracts.some((contract) => !dashboard.evidence.some((claim) => claim.contractId === contract.id && new Date(claim.createdAt).getTime() >= sevenDaysAgo));
+  const [selectedContractId, setSelectedContractId] = React.useState(activeContracts[0]?.id ?? 0);
+  const [situation, setSituation] = React.useState("");
+  const [actionTaken, setActionTaken] = React.useState("");
+  const [observedOutcome, setObservedOutcome] = React.useState("");
+  const [hoursRecovered, setHoursRecovered] = React.useState(0);
+  const [stakeholderConfirmed, setStakeholderConfirmed] = React.useState(false);
+  const recordEvidence = effectivenessApi?.recordEvidence?.useMutation?.({
+    onSuccess: () => {
+      setSituation("");
+      setActionTaken("");
+      setObservedOutcome("");
+      setHoursRecovered(0);
+      setStakeholderConfirmed(false);
+      onSaved();
+      toast.success("Weekly evidence check-in recorded");
+    },
+    onError: (error: { message?: string }) => toast.error(error.message ?? "Could not save this check-in"),
+  }) ?? { mutate: () => undefined, isPending: false };
+  const selectedContract = activeContracts.find((contract) => contract.id === selectedContractId) ?? activeContracts[0];
+
+  if (!needsCheckIn || !selectedContract) return null;
+
+  return (
+    <section aria-label="Weekly Contract Check-In" className="rounded-2xl border p-5 shadow-sm" style={{ background: "#FFFDF7", borderColor: "#D4AF37" }}>
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: "#D4AF3720", color: "#A47618" }}><Target size={17} /></div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A47618]">Weekly Contract Check-In</p><span className="inline-flex items-center gap-1 rounded-full bg-[#D4AF3718] px-2 py-0.5 text-[10px] font-semibold text-[#8A6515]"><Flame size={11} /> Real-world evidence</span></div>
+          <h2 className="mt-1 text-base font-bold text-slate-900">What happened when you tried the behavior?</h2>
+          <p className="mt-1 text-xs leading-5 text-slate-600">A two-minute reflection moves this contract from intention toward observable application. Keep the evidence specific and developmental.</p>
+        </div>
+      </div>
+      {activeContracts.length > 1 && <label className="mt-4 block text-xs font-semibold text-slate-700">Contract<select value={selectedContract.id} onChange={(event) => setSelectedContractId(Number(event.target.value))} className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-normal outline-none focus:border-[#D4AF37]">{activeContracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.behaviorTitle}</option>)}</select></label>}
+      <div className="mt-4 rounded-xl border border-[#D4AF3730] bg-white/70 p-3 text-xs text-slate-600"><span className="font-semibold text-slate-900">Contracted behavior:</span> {selectedContract.desiredBehavior}<br /><span className="font-semibold text-slate-900">Look for:</span> {selectedContract.targetEvidence}</div>
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <label className="text-xs font-semibold text-slate-700">Situation<textarea value={situation} onChange={(event) => setSituation(event.target.value)} placeholder="Where did you use it?" className="mt-1.5 min-h-20 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-[#D4AF37]" /></label>
+        <label className="text-xs font-semibold text-slate-700">Action taken<textarea value={actionTaken} onChange={(event) => setActionTaken(event.target.value)} placeholder="What did you actually say or do?" className="mt-1.5 min-h-20 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-[#D4AF37]" /></label>
+        <label className="text-xs font-semibold text-slate-700">Observed outcome<textarea value={observedOutcome} onChange={(event) => setObservedOutcome(event.target.value)} placeholder="What changed or became possible?" className="mt-1.5 min-h-20 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-[#D4AF37]" /></label>
+      </div>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600"><label className="flex items-center gap-2 font-semibold">Hours recovered<input type="number" min={0} max={40} step={0.25} value={hoursRecovered} onChange={(event) => setHoursRecovered(Number(event.target.value))} className="h-9 w-20 rounded-lg border border-slate-200 px-2 font-normal outline-none focus:border-[#D4AF37]" /></label><label className="flex items-center gap-2"><input type="checkbox" checked={stakeholderConfirmed} onChange={(event) => setStakeholderConfirmed(event.target.checked)} className="accent-[#0A1A2F]" /> Stakeholder confirmed the shift</label></div>
+        <Button onClick={() => recordEvidence.mutate({ contractId: selectedContract.id, evidenceLevel: "L4_application", claimType: "fact", situation: situation.trim(), actionTaken: actionTaken.trim(), observedOutcome: observedOutcome.trim(), capacityHoursRecovered: hoursRecovered, stakeholderConfirmed })} disabled={recordEvidence.isPending || situation.trim().length < 10 || actionTaken.trim().length < 10 || observedOutcome.trim().length < 5} className="text-white" style={{ background: "#0A1A2F" }}>{recordEvidence.isPending ? "Saving…" : "Record weekly evidence"}</Button>
+      </div>
+    </section>
+  );
+}
+
 function DiaryQuickCapture({ effectivenessApi }: { effectivenessApi: any }) {
   const today = React.useMemo(() => {
     const date = new Date();
@@ -864,11 +930,19 @@ function DiaryQuickCapture({ effectivenessApi }: { effectivenessApi: any }) {
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }, []);
+  const weekStart = React.useMemo(() => {
+    const date = new Date(`${today}T00:00:00`);
+    date.setDate(date.getDate() - 6);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }, [today]);
   const [title, setTitle] = React.useState("");
   const [hours, setHours] = React.useState(1);
   const [category, setCategory] = React.useState("operational_execution");
   const [workAtLevel, setWorkAtLevel] = React.useState("at_level");
-  const diaryQuery = effectivenessApi?.getDiaryEntries?.useQuery?.({ startDateKey: today, endDateKey: today }) ?? { data: [], refetch: async () => undefined };
+  const diaryRange = React.useMemo(() => ({ startDateKey: weekStart, endDateKey: today }), [weekStart, today]);
+  const diaryQuery = effectivenessApi?.getDiaryEntries?.useQuery?.(diaryRange) ?? { data: [], refetch: async () => undefined };
+  const diaryEntries = diaryQuery.data ?? [];
+  const momentum = React.useMemo(() => calculateDiaryMomentum(diaryEntries.map((entry: { dateKey: string }) => entry.dateKey), today), [diaryEntries, today]);
   const addEntry = effectivenessApi?.addDiaryEntry?.useMutation?.({
     onSuccess: () => {
       setTitle("");
@@ -911,7 +985,11 @@ function DiaryQuickCapture({ effectivenessApi }: { effectivenessApi: any }) {
         <label className="text-xs font-semibold text-slate-600">At what level?<select value={workAtLevel} onChange={(event) => setWorkAtLevel(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs font-normal outline-none focus:border-[#D4AF37]"><option value="below_level">Below my level</option><option value="at_level">At my level</option><option value="above_level_strategic">Strategic / above level</option></select></label>
         <Button onClick={handleCapture} disabled={addEntry.isPending} className="h-10 text-white" style={{ background: "#0A1A2F" }}><Plus size={14} className="mr-1.5" />{addEntry.isPending ? "Saving" : "Capture"}</Button>
       </div>
-      <p className="mt-3 text-[11px] text-slate-500">{diaryQuery.data?.length ?? 0} {diaryQuery.data?.length === 1 ? "activity" : "activities"} captured today.</p>
+      <div className="mt-4 rounded-xl border border-[#0A1A2F12] bg-[#F8F5F0] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><div className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: momentum.hasLoggedToday ? "#D4AF37" : "#0A1A2F", color: momentum.hasLoggedToday ? "#0A1A2F" : "white" }}><Flame size={14} /></div><div><p className="text-xs font-bold text-[#0A1A2F]">{momentum.currentStreak}-day diary streak</p><p className="text-[10px] text-slate-500">{momentum.hasLoggedToday ? "Today’s reflection is captured." : "One small capture keeps the rhythm moving."}</p></div></div><span className="text-xs font-semibold text-[#A47618]">{momentum.momentumLabel}</span></div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full transition-all" style={{ width: `${momentum.momentumPercent}%`, background: "#D4AF37" }} /></div>
+        <p className="mt-2 text-[10px] text-slate-500">{momentum.activeDays}/7 days logged · {diaryEntries.filter((entry: { dateKey: string }) => entry.dateKey === today).length} {diaryEntries.filter((entry: { dateKey: string }) => entry.dateKey === today).length === 1 ? "activity" : "activities"} today</p>
+      </div>
     </section>
   );
 }

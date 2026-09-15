@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { getDb } from "./db";
 import { eiCapacitySnapshots, eiWorkScans } from "../drizzle/schema";
 import { assertSponsorAccess, BEHAVIOURAL_SPONSOR_THRESHOLD } from "./behaviouralSponsorAnalytics";
+import { INDUSTRY_CAPACITY_BASELINES } from "../shared/modules/effectivenessIntelligence";
 
 const NAVY = "#0A1A2F";
 
@@ -24,6 +25,7 @@ export async function getEffectivenessSponsorCapacity(user: { id: number; role: 
       reportingPeriod: "All available completed scans",
       metrics: null,
       categories: [],
+      industryBaselines: [],
       privacyBoundary: "Capacity intelligence is withheld until at least five participants contribute. Individual diary entries, work activities, names, and private reflections are never included.",
     } as const;
   }
@@ -47,6 +49,7 @@ export async function getEffectivenessSponsorCapacity(user: { id: number; role: 
       reportingPeriod: "All available completed scans",
       metrics: null,
       categories: [],
+      industryBaselines: [],
       privacyBoundary: `Aggregate capacity intelligence unlocks at ${BEHAVIOURAL_SPONSOR_THRESHOLD}+ participants. Current progress is withheld to prevent small-cohort inference.`,
     } as const;
   }
@@ -100,6 +103,12 @@ export async function getEffectivenessSponsorCapacity(user: { id: number; role: 
       highConfidenceSnapshotPercent: Math.round((highConfidenceCount / latest.length) * 100),
     },
     categories,
+    industryBaselines: Object.entries(INDUSTRY_CAPACITY_BASELINES).map(([key, baseline]) => ({
+      key,
+      label: baseline.label,
+      note: baseline.note,
+      allocation: baseline.allocation,
+    })),
     privacyBoundary: "Anonymized cohort patterns only. Values use the latest snapshot per participant, require 5+ participants, and exclude individual diary entries, names, raw activities, private reflections, and diagnostic narratives.",
     accent: { navy: NAVY, gold: "#D4AF37", ivory: "#F8F5F0" },
   } as const;

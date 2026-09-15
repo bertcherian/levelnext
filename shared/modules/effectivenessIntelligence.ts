@@ -116,6 +116,55 @@ export const ALTITUDE_CAPACITY_TARGETS: Record<CareerAltitude, CapacityAllocatio
   },
 };
 
+export const INDUSTRY_BASELINE_KEYS = ["technology_gcc", "financial_services", "professional_services"] as const;
+export type IndustryBaselineKey = typeof INDUSTRY_BASELINE_KEYS[number];
+
+/** Directional LevelNext reference curves; not normative or performance targets. */
+export const INDUSTRY_CAPACITY_BASELINES: Record<IndustryBaselineKey, { label: string; note: string; allocation: CapacityAllocation }> = {
+  technology_gcc: {
+    label: "Technology & GCC reference",
+    note: "Directional LevelNext reference curve for technology and GCC leadership roles.",
+    allocation: {
+      strategic_thinking: 28,
+      people_development: 20,
+      stakeholder_leadership: 20,
+      decision_making: 15,
+      operational_execution: 8,
+      meetings_coordination: 4,
+      administrative_reporting: 3,
+      firefighting_reactive: 2,
+    },
+  },
+  financial_services: {
+    label: "Financial services reference",
+    note: "Directional LevelNext reference curve for financial services leadership roles.",
+    allocation: {
+      strategic_thinking: 22,
+      people_development: 18,
+      stakeholder_leadership: 22,
+      decision_making: 16,
+      operational_execution: 9,
+      meetings_coordination: 6,
+      administrative_reporting: 4,
+      firefighting_reactive: 3,
+    },
+  },
+  professional_services: {
+    label: "Professional services reference",
+    note: "Directional LevelNext reference curve for professional services leadership roles.",
+    allocation: {
+      strategic_thinking: 30,
+      people_development: 22,
+      stakeholder_leadership: 22,
+      decision_making: 12,
+      operational_execution: 6,
+      meetings_coordination: 4,
+      administrative_reporting: 3,
+      firefighting_reactive: 1,
+    },
+  },
+};
+
 // ── 3. Evidence Ladder ────────────────────────────────────────────────────────
 
 export const LEADERSHIP_EVIDENCE_LEVELS = [
@@ -335,6 +384,26 @@ export const diaryRangeInputSchema = z.object({
   startDateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endDateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
+
+export function calculateDiaryMomentum(dateKeys: string[], todayDateKey: string, windowDays = 7) {
+  const uniqueDates = new Set(dateKeys);
+  const activeDays = Math.min(windowDays, Array.from(uniqueDates).filter((dateKey) => dateKey <= todayDateKey).length);
+  let currentStreak = 0;
+  const cursor = new Date(`${todayDateKey}T00:00:00Z`);
+  while (uniqueDates.has(cursor.toISOString().slice(0, 10))) {
+    currentStreak += 1;
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  const momentumPercent = Math.round((activeDays / windowDays) * 100);
+  const momentumLabel = currentStreak >= 5 ? "Strong rhythm" : currentStreak >= 2 ? "Building momentum" : activeDays > 0 ? "Getting started" : "Ready when you are";
+  return {
+    activeDays,
+    currentStreak,
+    momentumPercent,
+    momentumLabel,
+    hasLoggedToday: uniqueDates.has(todayDateKey),
+  } as const;
+}
 
 export function projectDiaryToWeeklyActivities(
   entries: Array<Pick<WorkDiaryEntryInput, "category" | "hours" | "workAtLevel" | "reallocation">>,

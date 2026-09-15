@@ -3,6 +3,8 @@ import {
   calculateCapacityAllocation,
   calculateCapacityGap,
   ALTITUDE_CAPACITY_TARGETS,
+  INDUSTRY_CAPACITY_BASELINES,
+  calculateDiaryMomentum,
   projectDiaryToWeeklyActivities,
   type WorkActivityInput,
 } from "../shared/modules/effectivenessIntelligence";
@@ -143,6 +145,29 @@ describe("Effectiveness Intelligence — Deterministic Domain Calculations", () 
     expect(projected.find((activity) => activity.category === "meetings_coordination")?.weeklyHours).toBe(7.5);
     expect(projected.find((activity) => activity.category === "meetings_coordination")?.workAtLevel).toBe("below_level");
     expect(projected.find((activity) => activity.category === "strategic_thinking")?.weeklyHours).toBe(5);
+  });
+
+  it("calculates diary momentum from unique active days and a consecutive streak", () => {
+    const momentum = calculateDiaryMomentum([
+      "2026-09-09",
+      "2026-09-10",
+      "2026-09-10",
+      "2026-09-11",
+      "2026-09-15",
+    ], "2026-09-15");
+
+    expect(momentum.activeDays).toBe(4);
+    expect(momentum.currentStreak).toBe(1);
+    expect(momentum.hasLoggedToday).toBe(true);
+    expect(momentum.momentumPercent).toBe(57);
+    expect(momentum.momentumLabel).toBe("Getting started");
+  });
+
+  it("keeps industry baselines directional and normalized to 100 percent", () => {
+    for (const baseline of Object.values(INDUSTRY_CAPACITY_BASELINES)) {
+      const total = Object.values(baseline.allocation).reduce((sum, value) => sum + value, 0);
+      expect(total).toBe(100);
+    }
   });
 });
 
