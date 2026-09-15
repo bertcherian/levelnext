@@ -450,6 +450,24 @@ export default function NarrativeIntelligence() {
         </div>
       </div>
 
+      {/* ── Narrative explainer ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
+        <Card className="border-[#D4AF37]/25 bg-[#111F32] text-white">
+          <CardContent className="flex items-start gap-3 p-4 sm:p-5">
+            <HelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#D4AF37]" />
+            <div>
+              <h2 className="text-sm font-semibold text-white">What is a narrative—and why does it matter?</h2>
+              <p className="mt-1.5 max-w-4xl text-xs leading-5 text-slate-300">
+                A narrative is the meaning-making story you tell yourself about a situation, another person, or your own capability. It can feel like a fact, but it is often an interpretation shaped by past experience.
+              </p>
+              <p className="mt-1.5 max-w-4xl text-xs leading-5 text-slate-300">
+                Knowing your narrative matters because it influences what you notice, what you believe is possible, and how you act. When you can separate the story from the observable facts, you create more choice—and can test a more useful way of leading in the real world.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* ── 4-Week Experience Main Work Area ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
