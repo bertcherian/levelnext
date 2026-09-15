@@ -125,6 +125,13 @@ export default function ManagerHome() {
   const feedbackFilters = React.useMemo(() => ({ reliability: feedbackReliability, dateRange: feedbackDateRange, sort: feedbackSort }), [feedbackReliability, feedbackDateRange, feedbackSort]);
   const feedbackEntries = trpc.aiSuggestionFeedback.listMine.useQuery(feedbackFilters);
   const feedbackAnalytics = trpc.aiSuggestionFeedback.getMyFeedbackAnalytics.useQuery({ days: 14 });
+  const { data: effectivenessData, refetch: refetchEffectiveness } = trpc.effectiveness.getDashboard.useQuery();
+  const respondNblaMutation = trpc.effectiveness.respondToNbla.useMutation({
+    onSuccess: () => {
+      toast.success("Action updated");
+      refetchEffectiveness();
+    },
+  });
 
   // Keep an already-open dashboard aligned to the manager's local calendar day.
   useEffect(() => {
@@ -277,6 +284,154 @@ export default function ManagerHome() {
             ))}
           </div>
         </div>
+
+        {/* Effectiveness Intelligence: Work Genome & Opportunity Scan Section */}
+        <section aria-label="Effectiveness Intelligence" className="rounded-2xl border p-6 bg-white shadow-sm" style={{ borderColor: "#E2E8F0" }}>
+          <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white" style={{ background: "var(--color-ln-navy, #0A1A2F)" }}>
+                <Sparkles size={16} style={{ color: "#D4AF37" }} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Leadership Effectiveness Intelligence™</h2>
+                <p className="text-xs text-slate-500">Measurable capacity recovery, work-at-level alignment, and real-world leadership evidence</p>
+              </div>
+            </div>
+            <Link
+              href="/manager/work-genome"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
+              style={{
+                background: effectivenessData?.hasCompletedScan ? "white" : "var(--color-ln-navy, #0A1A2F)",
+                color: effectivenessData?.hasCompletedScan ? "var(--color-ln-navy)" : "white",
+                borderColor: "var(--color-ln-navy)",
+              }}
+            >
+              {effectivenessData?.hasCompletedScan ? "Retake Work Genome Scan" : "Take Work Genome Scan"}
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          {effectivenessData?.hasCompletedScan && effectivenessData.capacitySnapshot && effectivenessData.opportunityScan ? (
+            <div className="space-y-6 pt-2">
+              {/* Capacity Overview Bar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Leadership Capacity Gap</span>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-slate-900">{effectivenessData.capacitySnapshot.gapScore}</span>
+                    <span className="text-xs text-slate-500">/ 100</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">Difference between current time distribution and altitude benchmark</p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-amber-200/60 bg-amber-50/30">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900 block">Recoverable Weekly Hours</span>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-amber-900">~{effectivenessData.capacitySnapshot.recoverableHours}h</span>
+                    <span className="text-xs text-amber-700">/ week</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 mt-1">Hours currently spent below role altitude or in avoidable coordination</p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-emerald-200/60 bg-emerald-50/30">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-900 block">Strategic Growth Capacity</span>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-emerald-900">
+                      {effectivenessData.capacitySnapshot.currentAllocation.strategic_thinking}% → {effectivenessData.capacitySnapshot.targetAllocation.strategic_thinking}%
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 mt-1">Target benchmark for strategic thinking & capability building</p>
+                </div>
+              </div>
+
+              {/* Next Best Leadership Action (NBLA) Card */}
+              {effectivenessData.nbla && effectivenessData.nbla.status === "proposed" && (
+                <div className="rounded-xl border border-[#D4AF37]/50 p-5" style={{ background: "oklch(from #D4AF37 l c h / 0.08)" }}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-amber-100 text-amber-900 mb-2">
+                        <Zap size={11} /> Next Best Leadership Action
+                      </span>
+                      <h3 className="text-sm font-bold text-slate-900">{effectivenessData.nbla.headline}</h3>
+                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">{effectivenessData.nbla.reason}</p>
+                      {effectivenessData.nbla.preparationPrompt && (
+                        <div className="mt-3 p-3 rounded-lg bg-white/80 border border-amber-200/60 text-xs text-slate-700 whitespace-pre-line font-mono">
+                          {effectivenessData.nbla.preparationPrompt}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                      <Button
+                        size="sm"
+                        className="text-xs font-semibold"
+                        style={{ background: "var(--color-ln-navy, #0A1A2F)" }}
+                        onClick={() => respondNblaMutation.mutate({ actionId: effectivenessData.nbla!.id, status: "completed" })}
+                      >
+                        <CheckCircle2 size={13} className="mr-1" /> Mark Applied
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => respondNblaMutation.mutate({ actionId: effectivenessData.nbla!.id, status: "dismissed" })}
+                      >
+                        Dismiss
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Three High-Leverage Behaviors */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                    3 High-Leverage Behaviors for Capacity Recovery
+                  </h3>
+                  <span className="text-[11px] text-slate-400">Synthesized from Work Genome & Diagnostic</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {effectivenessData.opportunityScan.recommendedBehaviors.map((beh, idx) => (
+                    <div key={idx} className="p-4 rounded-xl border border-slate-200 bg-white flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <span className="text-xs font-bold text-slate-900">{beh.title}</span>
+                          <span className="text-[10px] font-semibold text-slate-400">#{idx + 1}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 line-clamp-2 mt-1">{beh.whyItMatters}</p>
+                        {beh.ontologicalDistinction && (
+                          <div className="mt-2 text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded inline-block">
+                            {beh.ontologicalDistinction}
+                          </div>
+                        )}
+                      </div>
+                      <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-emerald-700">{beh.expectedCapacityGain}</span>
+                        <Link href="/manager/practice" className="text-xs font-bold text-slate-700 hover:text-slate-900 inline-flex items-center">
+                          Practise <ChevronRight size={13} />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center space-y-3">
+              <p className="text-sm font-semibold text-slate-700">You haven't completed your Leadership Work Genome Scan yet.</p>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                Spend 4 minutes mapping your typical week. We'll identify work below your role altitude, calculate your recoverable hours, and provide 3 high-leverage behaviors to focus on.
+              </p>
+              <Link
+                href="/manager/work-genome"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm"
+                style={{ background: "var(--color-ln-navy, #0A1A2F)" }}
+              >
+                Start Work Genome Scan <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
+        </section>
 
         <section
           className="rounded-2xl border px-5 py-4"

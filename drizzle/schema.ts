@@ -4220,3 +4220,238 @@ export const academyMentorMessages = mysqlTable(
   (table) => [index("academy_messages_thread_idx").on(table.threadId, table.createdAt)],
 );
 export type AcademyMentorMessage = typeof academyMentorMessages.$inferSelect;
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EFFECTIVENESS INTELLIGENCE PLATFORM™ — Core Schema (Build 1)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── EI: Work Scans (Leadership Work Genome Assessment Sessions) ──────────────
+export const eiWorkScans = mysqlTable(
+  "ei_work_scans",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    altitude: mysqlEnum("altitude", ["manager", "senior_leader", "executive"]).default("manager").notNull(),
+    totalWorkHours: float("totalWorkHours").default(45).notNull(),
+    status: mysqlEnum("status", ["in_progress", "completed", "archived"]).default("in_progress").notNull(),
+    contextNotes: text("contextNotes"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("ei_work_scans_user_idx").on(table.userId, table.createdAt),
+    index("ei_work_scans_tenant_idx").on(table.tenantId, table.status),
+  ]
+);
+export type EiWorkScan = typeof eiWorkScans.$inferSelect;
+export type InsertEiWorkScan = typeof eiWorkScans.$inferInsert;
+
+// ─── EI: Work Activities (Extracted granular leadership tasks) ────────────────
+export const eiWorkActivities = mysqlTable(
+  "ei_work_activities",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    scanId: int("scanId").notNull().references(() => eiWorkScans.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    title: varchar("title", { length: 255 }).notNull(),
+    category: mysqlEnum("category", [
+      "strategic_thinking",
+      "people_development",
+      "stakeholder_leadership",
+      "decision_making",
+      "operational_execution",
+      "meetings_coordination",
+      "administrative_reporting",
+      "firefighting_reactive",
+    ]).notNull(),
+    weeklyHours: float("weeklyHours").notNull(),
+    frequency: varchar("frequency", { length: 100 }).default("weekly").notNull(),
+    workAtLevel: mysqlEnum("workAtLevel", ["below_level", "at_level", "above_level_strategic"]).default("at_level").notNull(),
+    reallocation: mysqlEnum("reallocation", ["eliminate", "simplify", "automate", "autonomize", "augment", "elevate"]).default("simplify").notNull(),
+    decisionLevel: varchar("decisionLevel", { length: 100 }),
+    judgmentRequirement: mysqlEnum("judgmentRequirement", ["low", "medium", "high"]).default("medium").notNull(),
+    delegationPotential: mysqlEnum("delegationPotential", ["none", "partial", "full"]).default("none").notNull(),
+    aiAugmentationPotential: mysqlEnum("aiAugmentationPotential", ["none", "drafting", "analysis", "full"]).default("none").notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("ei_activities_scan_idx").on(table.scanId, table.category),
+    index("ei_activities_user_idx").on(table.userId, table.workAtLevel),
+  ]
+);
+export type EiWorkActivity = typeof eiWorkActivities.$inferSelect;
+export type InsertEiWorkActivity = typeof eiWorkActivities.$inferInsert;
+
+// ─── EI: Capacity Snapshots (Current vs Target allocation & gap metrics) ──────
+export const eiCapacitySnapshots = mysqlTable(
+  "ei_capacity_snapshots",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    scanId: int("scanId").notNull().references(() => eiWorkScans.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    currentAllocation: json("currentAllocation").$type<import("../shared/modules/effectivenessIntelligence").CapacityAllocation>().notNull(),
+    targetAllocation: json("targetAllocation").$type<import("../shared/modules/effectivenessIntelligence").CapacityAllocation>().notNull(),
+    recoverableHours: float("recoverableHours").notNull(),
+    workBelowLevelHours: float("workBelowLevelHours").notNull(),
+    workBelowLevelPercent: int("workBelowLevelPercent").notNull(),
+    gapScore: int("gapScore").notNull(),
+    hiddenManagerTaxHours: float("hiddenManagerTaxHours").default(0).notNull(),
+    hiddenManagerTaxAnnualCost: float("hiddenManagerTaxAnnualCost").default(0).notNull(),
+    largestDeficitCategory: varchar("largestDeficitCategory", { length: 80 }),
+    largestSurplusCategory: varchar("largestSurplusCategory", { length: 80 }),
+    confidence: mysqlEnum("confidence", ["high_measured", "moderate_reported", "exploratory_hypothesis"]).default("moderate_reported").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("ei_capacity_user_idx").on(table.userId, table.createdAt),
+    index("ei_capacity_scan_idx").on(table.scanId),
+  ]
+);
+export type EiCapacitySnapshot = typeof eiCapacitySnapshots.$inferSelect;
+export type InsertEiCapacitySnapshot = typeof eiCapacitySnapshots.$inferInsert;
+
+// ─── EI: Opportunity Scans (Person + Work + Context synthesis) ────────────────
+export const eiOpportunityScans = mysqlTable(
+  "ei_opportunity_scans",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    scanId: int("scanId").notNull().references(() => eiWorkScans.id),
+    capacitySnapshotId: int("capacitySnapshotId").references(() => eiCapacitySnapshots.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    headline: text("headline").notNull(),
+    coreBottleneck: text("coreBottleneck").notNull(),
+    recommendedBehaviors: json("recommendedBehaviors").$type<Array<{
+      title: string;
+      category: string;
+      currentPattern: string;
+      desiredBehavior: string;
+      whyItMatters: string;
+      expectedCapacityGain: string;
+      ontologicalDistinction?: string;
+      suggestedMove: string;
+    }>>().notNull(),
+    strategicLeverageSummary: text("strategicLeverageSummary"),
+    traceId: varchar("traceId", { length: 80 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("ei_opportunity_user_idx").on(table.userId, table.createdAt),
+    index("ei_opportunity_scan_idx").on(table.scanId),
+  ]
+);
+export type EiOpportunityScan = typeof eiOpportunityScans.$inferSelect;
+export type InsertEiOpportunityScan = typeof eiOpportunityScans.$inferInsert;
+
+// ─── EI: Behavior Change Contracts ───────────────────────────────────────────
+export const eiBehaviorContracts = mysqlTable(
+  "ei_behavior_contracts",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    opportunityScanId: int("opportunityScanId").references(() => eiOpportunityScans.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    behaviorTitle: varchar("behaviorTitle", { length: 255 }).notNull(),
+    targetCategory: varchar("targetCategory", { length: 80 }).notNull(),
+    currentPattern: text("currentPattern").notNull(),
+    desiredBehavior: text("desiredBehavior").notNull(),
+    whyItMatters: text("whyItMatters").notNull(),
+    realWorldMoment: text("realWorldMoment").notNull(),
+    targetEvidence: text("targetEvidence").notNull(),
+    ontologicalDistinction: varchar("ontologicalDistinction", { length: 120 }),
+    limitingNarrative: text("limitingNarrative"),
+    status: mysqlEnum("status", ["selected", "practising", "active_in_work", "verified_shift", "deferred"]).default("selected").notNull(),
+    targetCompletionDate: timestamp("targetCompletionDate"),
+    achievedAt: timestamp("achievedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("ei_contracts_user_idx").on(table.userId, table.status),
+    index("ei_contracts_tenant_idx").on(table.tenantId, table.status),
+  ]
+);
+export type EiBehaviorContract = typeof eiBehaviorContracts.$inferSelect;
+export type InsertEiBehaviorContract = typeof eiBehaviorContracts.$inferInsert;
+
+// ─── EI: Next Best Leadership Actions (NBLA Engine output) ───────────────────
+export const eiNextBestActions = mysqlTable(
+  "ei_next_best_actions",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    contractId: int("contractId").references(() => eiBehaviorContracts.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    actionType: mysqlEnum("actionType", [
+      "do_nothing",
+      "micro_reflection",
+      "ontological_distinction",
+      "simulation_practice",
+      "real_world_commitment",
+      "delegation_transfer",
+      "meeting_redesign",
+      "stakeholder_alignment",
+      "coaching_conversation",
+      "human_coach_escalation",
+    ]).notNull(),
+    headline: varchar("headline", { length: 255 }).notNull(),
+    reason: text("reason").notNull(),
+    preparationPrompt: text("preparationPrompt"),
+    expectedBenefit: text("expectedBenefit"),
+    suggestedDurationMinutes: int("suggestedDurationMinutes").default(10).notNull(),
+    effortLevel: mysqlEnum("effortLevel", ["low", "moderate", "high"]).default("low").notNull(),
+    urgencyLevel: mysqlEnum("urgencyLevel", ["today", "this_week", "upcoming"]).default("this_week").notNull(),
+    status: mysqlEnum("status", ["proposed", "accepted", "completed", "dismissed"]).default("proposed").notNull(),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("ei_nbla_user_status_idx").on(table.userId, table.status),
+    index("ei_nbla_contract_idx").on(table.contractId),
+  ]
+);
+export type EiNextBestAction = typeof eiNextBestActions.$inferSelect;
+export type InsertEiNextBestAction = typeof eiNextBestActions.$inferInsert;
+
+// ─── EI: Evidence Claims (7-Level Ladder Ledger) ──────────────────────────────
+export const eiEvidenceClaims = mysqlTable(
+  "ei_evidence_claims",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    contractId: int("contractId").notNull().references(() => eiBehaviorContracts.id),
+    actionId: int("actionId").references(() => eiNextBestActions.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    userId: int("userId").notNull().references(() => users.id),
+    evidenceLevel: mysqlEnum("evidenceLevel", [
+      "L1_insight",
+      "L2_practice",
+      "L3_commitment",
+      "L4_application",
+      "L5_repetition",
+      "L6_external_observation",
+      "L7_business_effect",
+    ]).notNull(),
+    claimType: mysqlEnum("claimType", ["fact", "inference", "hypothesis"]).default("fact").notNull(),
+    situation: text("situation").notNull(),
+    actionTaken: text("actionTaken").notNull(),
+    observedOutcome: text("observedOutcome").notNull(),
+    capacityHoursRecovered: float("capacityHoursRecovered").default(0).notNull(),
+    stakeholderConfirmed: boolean("stakeholderConfirmed").default(false).notNull(),
+    reflectionNotes: text("reflectionNotes"),
+    privacyClass: mysqlEnum("privacyClass", ["participant_private", "development", "sponsor_reportable"]).default("development").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("ei_evidence_contract_idx").on(table.contractId, table.evidenceLevel),
+    index("ei_evidence_user_idx").on(table.userId, table.createdAt),
+  ]
+);
+export type EiEvidenceClaim = typeof eiEvidenceClaims.$inferSelect;
+export type InsertEiEvidenceClaim = typeof eiEvidenceClaims.$inferInsert;

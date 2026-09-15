@@ -1,0 +1,24 @@
+# Context Snapshot: LevelNext Effectiveness Intelligence Upgrade
+- Canonical Project Path: /home/ubuntu/levelnext
+- Attached Project ID: M9hB5G5ZXam7MQuhDdD52U
+- Migration applied: 0091_broad_the_fury.sql creating 7 new tables:
+  * ei_work_scans
+  * ei_work_activities
+  * ei_capacity_snapshots
+  * ei_opportunity_scans
+  * ei_behavior_contracts
+  * ei_next_best_actions
+  * ei_evidence_claims
+- Shared Module: /home/ubuntu/levelnext/shared/modules/effectivenessIntelligence.ts
+- Server Service: /home/ubuntu/levelnext/server/effectivenessIntelligence.ts
+- Router: /home/ubuntu/levelnext/server/routers/effectivenessIntelligence.ts mounted on appRouter.effectiveness
+- Tests: /home/ubuntu/levelnext/server/effectivenessIntelligence.test.ts (all 3 passing)
+- New Page: /home/ubuntu/levelnext/client/src/pages/WorkGenomeScan.tsx
+- Next Steps:
+  1. Register `/manager/work-genome` and withMepLayout in `client/src/App.tsx`.
+  2. Upgrade `ManagerHome.tsx` to display:
+     - Effectiveness Opportunity Scan (when completed) or prompt to take Work Genome Scan
+     - Capacity Snapshot (Current vs Target visual)
+     - 3 High-Leverage Behavior Change Contracts
+     - Next Best Leadership Action (NBLA) card with direct CTA
+  3. Validate full build and save WebDev checkpoint.

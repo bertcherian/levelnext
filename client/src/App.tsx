@@ -67,6 +67,7 @@ const CareerMyJourney = lazy(() => import("@/pages/career/CareerMyJourney"));
 const AdminProductEnrollments = lazyWithRouteRecovery(() => import("@/pages/AdminProductEnrollments"), "admin-enrollments");
 const ManagerEffectivenessLanding = lazy(() => import("@/pages/ManagerEffectivenessLanding"));
 const ManagerHome = lazy(() => import("@/pages/mep/ManagerHome"));
+const WorkGenomeScan = lazy(() => import("@/pages/WorkGenomeScan"));
 const ManagerDiagnostics = lazyWithRouteRecovery(() => import("@/pages/mep/ManagerDiagnostics"), "manager-diagnostics");
 const ManagerGuide = lazy(() => import("@/pages/mep/ManagerGuide"));
 const ManagerPlaybook = lazy(() => import("@/pages/mep/ManagerPlaybook"));
@@ -308,6 +309,7 @@ function Router() {
       <Route path="/org-intelligence" component={OrgIntelligence} />
       {/* Manager Effectiveness Platform — 6-item nav */}
       <Route path="/manager" component={withMepLayout(<ManagerHome />)} />
+      <Route path="/manager/work-genome" component={withMepLayout(<WorkGenomeScan />)} />
       <Route path="/manager/diagnostics" component={withMepLayout(<ManagerDiagnostics />)} />
       <Route path="/manager/coach" component={withMepLayout(<ManagerCoach />)} />
       <Route path="/manager/practice" component={withMepLayout(<ManagerPractice />)} />
