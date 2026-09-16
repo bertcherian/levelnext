@@ -3,7 +3,6 @@ import {
   Activity,
   BookOpen,
   Building2,
-  Compass,
   Home,
   LayoutGrid,
   Lightbulb,
@@ -37,7 +36,6 @@ const LEADERSHIP_ITEMS: LeaderNavigationItem[] = [
 
 const EXPLORE_ITEMS: LeaderNavigationItem[] = [
   { label: "Behavioural Intel", icon: Sparkles, href: "/behavioural-intelligence" },
-  { label: "Academy", icon: Compass, href: "/academy" },
   { label: "Insights & Reports", icon: Lightbulb, href: "/insights" },
   { label: "Playbook", icon: BookOpen, href: "/playbook" },
   { label: "Next Chapter", icon: Sparkles, href: "/next-chapter" },

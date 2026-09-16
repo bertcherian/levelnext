@@ -3,7 +3,6 @@ import {
   BarChart3,
   BookOpen,
   Briefcase,
-  Compass,
   ClipboardList,
   Globe,
   Home,
@@ -48,7 +47,6 @@ export const CI_NAV_TOOLTIPS: Record<string, { description: string; subItems: st
 
 export const CI_NAV_ITEMS: PlatformNavItem[] = [
   { label: "Career Home", icon: Briefcase, href: "/career" },
-  { label: "Academy", icon: Compass, href: "/academy" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/diagnostics" },
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" },
   { label: "Practice", icon: Zap, href: "/practice" },
@@ -60,7 +58,6 @@ export const CI_NAV_ITEMS: PlatformNavItem[] = [
 
 export const MEP_NAV_ITEMS: PlatformNavItem[] = [
   { label: "Manager Home", icon: Home, href: "/manager" },
-  { label: "Academy", icon: Compass, href: "/academy" },
   { label: "Diagnostics", icon: LayoutGrid, href: "/manager/diagnostics" },
   { label: "Manager Guide", icon: MessageSquare, href: "/manager/guide" },
   { label: "Playbook", icon: BookOpen, href: "/manager/playbook" },

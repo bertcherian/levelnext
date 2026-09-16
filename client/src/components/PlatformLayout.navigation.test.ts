@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const layoutSource = readFileSync(resolve(process.cwd(), "client/src/components/PlatformLayout.tsx"), "utf8");
 const navigationSource = readFileSync(resolve(process.cwd(), "client/src/components/platformNavigation.ts"), "utf8");
+const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 
 describe("PlatformLayout navigation composition", () => {
   it("uses one typed navigation source for Career and Manager sidebar projections", () => {
@@ -29,5 +30,10 @@ describe("PlatformLayout navigation composition", () => {
     expect(layoutSource).toContain('onNavigate={() => setSidebarOpen(false)}');
     expect(layoutSource).toContain("const isActive = isNavActive(item.href);");
     expect(layoutSource).toContain("<StandardNavItem item={item} isActive={isActive}");
+  });
+
+  it("keeps Academy on its standalone LevelNext URL without exposing it in client product navigation", () => {
+    expect(appSource).toContain('<Route path="/academy" component={AcademyHome} />');
+    expect(navigationSource).not.toContain('label: "Academy"');
   });
 });
