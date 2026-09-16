@@ -7,6 +7,7 @@
  */
 import { useState } from "react";
 import { BarChart3, Activity } from "lucide-react";
+import PlatformLayout from "@/components/PlatformLayout";
 import CareerProgress from "@/pages/CareerProgress";
 import GrowthProfile from "@/pages/GrowthProfile";
 
@@ -21,7 +22,8 @@ export default function CareerMyJourney() {
   const [activeTab, setActiveTab] = useState<JourneyTab>("progress");
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: "var(--background)" }}>
+    <PlatformLayout>
+      <div className="flex flex-col min-h-screen" style={{ background: "var(--background)" }}>
       {/* Tab bar */}
       <div
         className="flex-shrink-0 border-b overflow-x-auto"
@@ -51,6 +53,7 @@ export default function CareerMyJourney() {
         {activeTab === "progress" && <CareerProgress />}
         {activeTab === "growth" && <GrowthProfile />}
       </div>
-    </div>
+      </div>
+    </PlatformLayout>
   );
 }

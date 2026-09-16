@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
+import QueryErrorState from "@/components/QueryErrorState";
 import { useLocation } from "wouter";
 import { CheckCircle2, Circle, ArrowRight, TrendingUp, Award, Target, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -207,7 +208,7 @@ function CiScoreBanner({ completedReports }: { completedReports: Array<{ edgeSco
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function CareerProgress() {
   const [, navigate] = useLocation();
-  const { data: allReports = [], isLoading } = trpc.report.myReports.useQuery();
+  const { data: allReports = [], isLoading, isError, refetch } = trpc.report.myReports.useQuery();
 
   const CI_CODES = CI_MODULES.map((m) => m.code);
   const ciReports = allReports.filter((r) => CI_CODES.includes(r.moduleType));
@@ -246,8 +247,9 @@ export default function CareerProgress() {
             <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white/80 animate-spin" />
           </div>
         )}
+        {isError && <QueryErrorState compact onRetry={() => { void refetch(); }} />}
 
-        {!isLoading && (
+        {!isLoading && !isError && (
           <>
             {/* CI score banner */}
             <CiScoreBanner completedReports={completedReports} />

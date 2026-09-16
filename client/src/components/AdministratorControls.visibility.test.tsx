@@ -32,7 +32,7 @@ const shells = [
   { name: "Manager Effectiveness", render: () => <MEPLayout><div>Manager page</div></MEPLayout>, path: "/manager" },
   { name: "Professional Effectiveness", render: () => <PELayout><div>PE page</div></PELayout>, path: "/pe" },
   { name: "Early Career", render: () => <EarlyCareerLayout><div>Early page</div></EarlyCareerLayout>, path: "/early-career" },
-  { name: "Career Access", render: () => <CareerAccessLayout><div>Career page</div></CareerAccessLayout>, path: "/career-access" },
+  { name: "Executive Opportunity System", render: () => <CareerAccessLayout><div>Career page</div></CareerAccessLayout>, path: "/career/access" },
   { name: "Launch", render: () => <LaunchDarkLayout><div>Launch page</div></LaunchDarkLayout>, path: "/launch/home" },
 ];
 

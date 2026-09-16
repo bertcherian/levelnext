@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
+import QueryErrorState from "@/components/QueryErrorState";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -144,8 +145,8 @@ export default function AccessPaths() {
   const [generatingId, setGeneratingId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"paths" | "people" | "outreach">("paths");
 
-  const { data: opps = [], isLoading: oppsLoading } = trpc.careerAccess.getOpportunityUniverse.useQuery({});
-  const { data: allPaths = [], refetch: refetchPaths } = trpc.careerAccess.getAccessPaths.useQuery();
+  const { data: opps = [], isLoading: oppsLoading, isError: oppsError, refetch: refetchOpps } = trpc.careerAccess.getOpportunityUniverse.useQuery({});
+  const { data: allPaths = [], isError: pathsError, refetch: refetchPaths } = trpc.careerAccess.getAccessPaths.useQuery();
 
   const generateMutation = trpc.careerAccess.generateAccessPath.useMutation({
     onSuccess: () => {
@@ -214,6 +215,10 @@ export default function AccessPaths() {
   return (
     <PlatformLayout title="Access Path Intelligence">
       <div className="min-h-screen bg-[#F5F0E8]">
+        {(oppsError || pathsError) ? (
+          <QueryErrorState onRetry={() => { void refetchOpps(); void refetchPaths(); }} />
+        ) : (
+        <>
         <div className="flex h-[calc(100vh-64px)]">
           {/* Left: Opportunity List */}
           <div className="w-72 shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
@@ -534,6 +539,8 @@ export default function AccessPaths() {
             )}
           </div>
         </div>
+        </>
+        )}
       </div>
       {/* Activation Log Modal */}
       {activationModal && (

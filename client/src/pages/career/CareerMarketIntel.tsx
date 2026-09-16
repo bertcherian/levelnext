@@ -10,6 +10,7 @@
  */
 import { useState } from "react";
 import { Globe, Radio, Users, Route, Sparkles } from "lucide-react";
+import PlatformLayout from "@/components/PlatformLayout";
 import CareerAccess from "@/pages/CareerAccess";
 import RadarSignals from "@/pages/RadarSignals";
 import RelationshipGraph from "@/pages/RelationshipGraph";
@@ -30,7 +31,8 @@ export default function CareerMarketIntel() {
   const [activeTab, setActiveTab] = useState<IntelTab>("opportunities");
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: "var(--background)" }}>
+    <PlatformLayout>
+      <div className="flex flex-col min-h-screen" style={{ background: "var(--background)" }}>
       {/* Tab bar */}
       <div
         className="flex-shrink-0 border-b overflow-x-auto"
@@ -63,6 +65,7 @@ export default function CareerMarketIntel() {
         {activeTab === "access" && <AccessPaths />}
         {activeTab === "outreach" && <OutreachEngine />}
       </div>
-    </div>
+      </div>
+    </PlatformLayout>
   );
 }

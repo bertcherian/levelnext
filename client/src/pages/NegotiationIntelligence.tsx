@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
+import QueryErrorState from "@/components/QueryErrorState";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -337,8 +338,8 @@ export default function NegotiationIntelligence() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-  const { data: latestSession, isLoading } = trpc.negotiation.getLatestSession.useQuery();
-  const { data: sessionList } = trpc.negotiation.listSessions.useQuery();
+  const { data: latestSession, isLoading, isError: latestError, refetch: refetchLatest } = trpc.negotiation.getLatestSession.useQuery();
+  const { data: sessionList, isError: listError, refetch: refetchList } = trpc.negotiation.listSessions.useQuery();
 
   const deleteMutation = trpc.negotiation.deleteSession.useMutation({
     onSuccess: () => {
@@ -358,6 +359,10 @@ export default function NegotiationIntelligence() {
     setSelectedId(null);
     utils.negotiation.getLatestSession.invalidate();
     utils.negotiation.listSessions.invalidate();
+  }
+
+  if (latestError || listError) {
+    return <PlatformLayout><QueryErrorState onRetry={() => { void refetchLatest(); void refetchList(); }} /></PlatformLayout>;
   }
 
   return (

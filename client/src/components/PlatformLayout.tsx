@@ -1,4 +1,4 @@
-import { Fragment, useState, useRef, useMemo } from "react";
+import { Fragment, createContext, useContext, useState, useRef, useMemo } from "react";
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -162,6 +162,8 @@ interface PlatformLayoutProps {
   title?: string;
 }
 
+const PlatformLayoutEmbeddedContext = createContext(false);
+
 // ── Small notification dot/badge ─────────────────────────────────────────────
 function NavBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -307,7 +309,7 @@ export function RoleNavigationByRole({ role, isNavActive, compact, onNavigate }:
   return null;
 }
 
-export default function PlatformLayout({ children }: PlatformLayoutProps) {
+function PlatformLayoutFrame({ children }: PlatformLayoutProps) {
   const [location] = useLocation();
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -747,5 +749,15 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
         })}
       </nav>
     </div>
+  );
+}
+
+export default function PlatformLayout({ children, title }: PlatformLayoutProps) {
+  const embedded = useContext(PlatformLayoutEmbeddedContext);
+  if (embedded) return <>{children}</>;
+  return (
+    <PlatformLayoutEmbeddedContext.Provider value>
+      <PlatformLayoutFrame title={title}>{children}</PlatformLayoutFrame>
+    </PlatformLayoutEmbeddedContext.Provider>
   );
 }

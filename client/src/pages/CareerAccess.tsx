@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
 import PlatformLayout from "@/components/PlatformLayout";
+import QueryErrorState from "@/components/QueryErrorState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -280,9 +281,9 @@ export default function CareerAccess() {
   });
 
   // tRPC queries
-  const { data: profile, refetch: refetchProfile } = trpc.careerAccess.getProfile.useQuery();
-  const { data: strategy, refetch: refetchStrategy } = trpc.careerAccess.getCareerStrategy.useQuery();
-  const { data: universe, refetch: refetchUniverse } = trpc.careerAccess.getOpportunityUniverse.useQuery({ status: undefined });
+  const { data: profile, refetch: refetchProfile, isError: profileError } = trpc.careerAccess.getProfile.useQuery();
+  const { data: strategy, refetch: refetchStrategy, isError: strategyError } = trpc.careerAccess.getCareerStrategy.useQuery();
+  const { data: universe, refetch: refetchUniverse, isError: universeError } = trpc.careerAccess.getOpportunityUniverse.useQuery({ status: undefined });
 
   const saveProfileMutation = trpc.careerAccess.saveProfile.useMutation();
   const generateStrategyMutation = trpc.careerAccess.generateCareerStrategy.useMutation();
@@ -291,10 +292,10 @@ export default function CareerAccess() {
   const clearUniverseMutation = trpc.careerAccess.clearOpportunityUniverse.useMutation();
 
   // Career Access Score
-  const { data: scoreData, refetch: refetchScore } = trpc.careerAccess.getCareerAccessScore.useQuery();
+  const { data: scoreData, refetch: refetchScore, isError: scoreError } = trpc.careerAccess.getCareerAccessScore.useQuery();
 
   // Chief of Staff Daily Briefing
-  const { data: briefingData, refetch: refetchBriefing } = trpc.careerAccess.getTodayChiefOfStaffBriefing.useQuery();
+  const { data: briefingData, refetch: refetchBriefing, isError: briefingError } = trpc.careerAccess.getTodayChiefOfStaffBriefing.useQuery();
   const generateBriefingMutation = trpc.careerAccess.generateChiefOfStaffBriefing.useMutation({
     onSuccess: () => { refetchBriefing(); toast.success("Chief of Staff briefing ready!"); },
     onError: (e) => toast.error(e.message),
@@ -317,7 +318,7 @@ export default function CareerAccess() {
   });
 
   // Relationship mutations
-  const { data: relationships, refetch: refetchRelationships } = trpc.careerAccess.getRelationships.useQuery();
+  const { data: relationships, refetch: refetchRelationships, isError: relationshipsError } = trpc.careerAccess.getRelationships.useQuery();
   const addRelMutation = trpc.careerAccess.addRelationship.useMutation();
   const updateRelMutation = trpc.careerAccess.updateRelationship.useMutation();
   const deleteRelMutation = trpc.careerAccess.deleteRelationship.useMutation();
@@ -436,6 +437,21 @@ export default function CareerAccess() {
   const filteredOrgs = universeFilter === "all"
     ? activeOrgs
     : activeOrgs.filter((o) => o.companyType === universeFilter);
+
+  if (profileError || strategyError || universeError || scoreError || briefingError || relationshipsError) {
+    return (
+      <PlatformLayout>
+        <QueryErrorState onRetry={() => {
+          void refetchProfile();
+          void refetchStrategy();
+          void refetchUniverse();
+          void refetchScore();
+          void refetchBriefing();
+          void refetchRelationships();
+        }} />
+      </PlatformLayout>
+    );
+  }
 
   // ── Home view ──────────────────────────────────────────────────────────────
 

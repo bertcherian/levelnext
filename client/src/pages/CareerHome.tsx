@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import CareerLanding from "@/pages/CareerLanding";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
+import QueryErrorState from "@/components/QueryErrorState";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -119,19 +120,19 @@ export default function CareerHome() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
 
-  const { data: unlockData, isLoading: unlockLoading } = trpc.unlock.getStatus.useQuery(undefined, {
+  const { data: unlockData, isLoading: unlockLoading, isError: unlockError, refetch: refetchUnlock } = trpc.unlock.getStatus.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
-  const { data: activeCommitment } = trpc.guide.getActiveCommitment.useQuery(undefined, {
+  const { data: activeCommitment, isError: commitmentError, refetch: refetchCommitment } = trpc.guide.getActiveCommitment.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
-  const { data: careerScoreData } = trpc.careerAccess.getCareerAccessScore.useQuery(undefined, {
+  const { data: careerScoreData, isError: scoreError, refetch: refetchScore } = trpc.careerAccess.getCareerAccessScore.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
-  const { data: ciReports } = trpc.report.myReports.useQuery(undefined, {
+  const { data: ciReports, isError: reportsError, refetch: refetchReports } = trpc.report.myReports.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
@@ -144,6 +145,19 @@ export default function CareerHome() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-ln-ivory)" }}>
         <Loader2 className="animate-spin" style={{ color: "var(--color-ln-navy)" }} />
       </div>
+    );
+  }
+
+  if (unlockError || commitmentError || scoreError || reportsError) {
+    return (
+      <PlatformLayout>
+        <QueryErrorState onRetry={() => {
+          void refetchUnlock();
+          void refetchCommitment();
+          void refetchScore();
+          void refetchReports();
+        }} />
+      </PlatformLayout>
     );
   }
 

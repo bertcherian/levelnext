@@ -8,6 +8,7 @@
  */
 import { useState } from "react";
 import { FileText, ClipboardList, Scale } from "lucide-react";
+import PlatformLayout from "@/components/PlatformLayout";
 import ResumeMakeover from "@/pages/ci/ResumeMakeover";
 import InterviewPrep from "@/pages/InterviewPrep";
 import NegotiationIntelligence from "@/pages/NegotiationIntelligence";
@@ -24,7 +25,8 @@ export default function CareerPrepare() {
   const [activeTab, setActiveTab] = useState<PrepTab>("resume");
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: "var(--background)" }}>
+    <PlatformLayout>
+      <div className="flex flex-col min-h-screen" style={{ background: "var(--background)" }}>
       {/* Tab bar */}
       <div
         className="flex-shrink-0 border-b overflow-x-auto"
@@ -55,6 +57,7 @@ export default function CareerPrepare() {
         {activeTab === "interview" && <InterviewPrep />}
         {activeTab === "negotiation" && <NegotiationIntelligence />}
       </div>
-    </div>
+      </div>
+    </PlatformLayout>
   );
 }

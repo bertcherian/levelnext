@@ -1,7 +1,9 @@
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import LaunchLayout from "@/components/LaunchLayout";
+import { LaunchQueryErrorState } from "@/components/QueryErrorState";
 import {
   Compass,
   Sparkles,
@@ -66,7 +68,7 @@ const MISSIONS = [
     subtitle: "Land on the right radars",
     icon: Search,
     xpReward: 200,
-    route: "/launch/mission/4",
+    route: "/launch/applications",
     color: "#8B5CF6",
     bgColor: "rgba(139,92,246,0.15)",
     borderColor: "rgba(139,92,246,0.4)",
@@ -80,7 +82,7 @@ const MISSIONS = [
     subtitle: "Perform under pressure",
     icon: Mic2,
     xpReward: 250,
-    route: "/launch/mission/5",
+    route: "/launch/interview",
     color: "#EF4444",
     bgColor: "rgba(239,68,68,0.15)",
     borderColor: "rgba(239,68,68,0.4)",
@@ -94,7 +96,7 @@ const MISSIONS = [
     subtitle: "Start strong",
     icon: Rocket,
     xpReward: 150,
-    route: "/launch/mission/6",
+    route: "/launch/dashboard",
     color: "#06B6D4",
     bgColor: "rgba(6,182,212,0.15)",
     borderColor: "rgba(6,182,212,0.4)",
@@ -108,7 +110,7 @@ const MISSIONS = [
     subtitle: "Own your trajectory",
     icon: TrendingUp,
     xpReward: 200,
-    route: "/launch/mission/7",
+    route: "/launch/journey",
     color: "#D4AF37",
     bgColor: "rgba(212,175,55,0.15)",
     borderColor: "rgba(212,175,55,0.4)",
@@ -130,8 +132,11 @@ function getLevel(xp: number): string {
 
 export default function LaunchJourneyMap() {
   const [, navigate] = useLocation();
-  const { data: progress } = trpc.launchProgress.getProgress.useQuery();
-  const { data: compassData } = trpc.launchCareerCompass.getDirectionCard.useQuery();
+  const { user } = useAuth();
+  const progressQuery = trpc.launchProgress.getProgress.useQuery(undefined, { enabled: Boolean(user) });
+  const compassQuery = trpc.launchCareerCompass.getDirectionCard.useQuery(undefined, { enabled: Boolean(user) });
+  const progress = progressQuery.data;
+  const compassData = compassQuery.data;
 
   const totalXp = progress?.progress?.totalXp ?? 0;
 
@@ -144,6 +149,17 @@ export default function LaunchJourneyMap() {
   };
 
   const [selectedMission, setSelectedMission] = React.useState<typeof MISSIONS[0] | null>(null);
+
+  if (progressQuery.isError || compassQuery.isError) {
+    return (
+      <LaunchLayout>
+        <LaunchQueryErrorState onRetry={() => {
+          void progressQuery.refetch();
+          void compassQuery.refetch();
+        }} />
+      </LaunchLayout>
+    );
+  }
 
   return (
     <LaunchLayout>

@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import PlatformLayout from "@/components/PlatformLayout";
+import QueryErrorState from "@/components/QueryErrorState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -55,7 +57,7 @@ export default function ResumeMakeover() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [justUploadedId, setJustUploadedId] = useState<number | null>(null);
 
-  const { data: resumes, refetch, isLoading: resumesLoading } = trpc.resumeMakeover.getMyResumes.useQuery();
+  const { data: resumes, refetch, isLoading: resumesLoading, isError: resumesError } = trpc.resumeMakeover.getMyResumes.useQuery();
   const activeResume = resumes?.find((r) => r.isActive);
 
   const uploadMutation = trpc.resumeMakeover.uploadResume.useMutation();
@@ -99,7 +101,8 @@ export default function ResumeMakeover() {
   const showSkeleton = resumesLoading && !resumes;
 
   return (
-    <div className="min-h-screen bg-[#0A1A2F] text-white p-6 max-w-5xl mx-auto">
+    <PlatformLayout>
+      {resumesError ? <QueryErrorState onRetry={() => { void refetch(); }} /> : <div className="min-h-screen bg-[#0A1A2F] text-white p-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -299,6 +302,7 @@ export default function ResumeMakeover() {
           <p className="text-sm mt-1">Upload your resume above to get your ATS score and career quality analysis.</p>
         </div>
       )}
-    </div>
+      </div>}
+    </PlatformLayout>
   );
 }

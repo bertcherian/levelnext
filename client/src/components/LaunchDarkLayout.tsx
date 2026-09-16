@@ -58,7 +58,7 @@ const MOBILE_NAV_ITEMS = NAV_ITEMS.filter(({ href }) => [
 
 export default function LaunchDarkLayout({ children, showBottomNav = true }: { children: React.ReactNode; showBottomNav?: boolean }) {
   const [location, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const isAdministrator = isPlatformAdministrator(user?.role);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [xpPulse, setXpPulse] = useState(false);
@@ -70,9 +70,11 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
 
   const progressQuery = trpc.launchProgress.getProgress.useQuery(undefined, {
     staleTime: 60_000,
+    enabled: Boolean(user),
   });
   const prefsQuery = trpc.launchUserPreferences.getPreferences.useQuery(undefined, {
     staleTime: 120_000,
+    enabled: Boolean(user),
   });
 
   const progress = progressQuery.data;
@@ -118,6 +120,27 @@ export default function LaunchDarkLayout({ children, showBottomNav = true }: { c
   useEffect(() => {
     setMobileOpen(false);
   }, [location]);
+
+  if (loading) {
+    return (
+      <div className="launch-dark flex min-h-screen items-center justify-center" style={{ background: "var(--ld-bg-gradient)" }}>
+        <p className="text-sm" style={{ color: "var(--ld-text-muted)" }}>Loading Launch Intelligence…</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="launch-dark flex min-h-screen items-center justify-center px-6 text-center" style={{ background: "var(--ld-bg-gradient)" }}>
+        <div className="max-w-sm">
+          <LaunchBrandMark />
+          <h1 className="mt-8 text-2xl font-bold text-white">Sign in to continue your launch</h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--ld-text-muted)" }}>Your missions, progress, and career data are private to your account.</p>
+          <a href="/login?returnTo=%2Flaunch%2Fjourney" className="mt-6 inline-flex rounded-lg px-5 py-3 text-sm font-semibold" style={{ background: "var(--ld-cyan)", color: "#07111f" }}>Sign in to Launch Intelligence</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={wrapperClass} style={{

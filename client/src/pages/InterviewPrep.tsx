@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import PlatformLayout from "@/components/PlatformLayout";
+import QueryErrorState from "@/components/QueryErrorState";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -568,8 +569,8 @@ export default function InterviewPrep() {
     if (prefillCompany) setShowForm(true);
   }, [prefillCompany]);
 
-  const { data: latestPrep, isLoading } = trpc.interviewPrep.getLatestPrep.useQuery();
-  const { data: prepList } = trpc.interviewPrep.listPreps.useQuery();
+  const { data: latestPrep, isLoading, isError: latestError, refetch: refetchLatest } = trpc.interviewPrep.getLatestPrep.useQuery();
+  const { data: prepList, isError: listError, refetch: refetchList } = trpc.interviewPrep.listPreps.useQuery();
 
   const deleteMutation = trpc.interviewPrep.deletePrep.useMutation({
     onSuccess: () => {
@@ -589,6 +590,10 @@ export default function InterviewPrep() {
     setSelectedId(null);
     utils.interviewPrep.getLatestPrep.invalidate();
     utils.interviewPrep.listPreps.invalidate();
+  }
+
+  if (latestError || listError) {
+    return <PlatformLayout><QueryErrorState onRetry={() => { void refetchLatest(); void refetchList(); }} /></PlatformLayout>;
   }
 
   return (

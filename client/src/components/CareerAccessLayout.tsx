@@ -20,47 +20,47 @@ import {
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 
-const CA_NAV_ITEMS = [
+const EXECUTIVE_OPPORTUNITY_NAV_ITEMS = [
   {
     label: "Command Centre",
     icon: Zap,
-    href: "/career-access",
+    href: "/career/access",
     description: "AI Chief of Staff briefing",
   },
   {
     label: "Career Strategy",
     icon: Target,
-    href: "/career-access/strategy",
+    href: "/career/access",
     description: "Strategy & positioning",
   },
   {
     label: "Opportunity CRM",
     icon: Briefcase,
-    href: "/career-access/opportunities",
+    href: "/career/access",
     description: "Target company pipeline",
   },
   {
     label: "Relationship Graph",
     icon: Users,
-    href: "/career-access/relationships",
+    href: "/career/relationships",
     description: "Network intelligence",
   },
   {
     label: "Access Paths",
     icon: Map,
-    href: "/career-access/access-paths",
+    href: "/career/access-paths",
     description: "Warm intro strategies",
   },
   {
     label: "Access Score",
     icon: BarChart3,
-    href: "/career-access/score",
+    href: "/career/access",
     description: "12-dimension readiness",
   },
   {
     label: "Career Profile",
     icon: User,
-    href: "/career-access/profile",
+    href: "/career/access",
     description: "Your career data",
   },
 ];
@@ -86,7 +86,7 @@ export function CareerAccessLayout({ children }: CareerAccessLayoutProps) {
   });
 
   const isActive = (href: string) => {
-    if (href === "/career-access") return location === "/career-access";
+    if (href === "/career/access") return location === "/career/access";
     return location.startsWith(href);
   };
 
@@ -105,11 +105,11 @@ export function CareerAccessLayout({ children }: CareerAccessLayoutProps) {
 
       {/* Nav items */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {CA_NAV_ITEMS.map((item) => {
+        {EXECUTIVE_OPPORTUNITY_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           return (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.label} href={item.href}>
               <div
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group ${

@@ -6,6 +6,7 @@ import LaunchLayout from "@/components/LaunchLayout";
 import AchievementUnlockedModal from "@/components/AchievementUnlockedModal";
 import LaunchXpBurst from "@/components/LaunchXpBurst";
 import LaunchMissionReflectionPrompt from "@/components/LaunchMissionReflectionPrompt";
+import { LaunchQueryErrorState } from "@/components/QueryErrorState";
 import {
   Banknote, CheckCircle2, ChevronRight, Circle, ClipboardList, FileText,
   Flame, Map, Mic2, RefreshCw, Rocket, Sparkles, Star, Target, ThumbsDown,
@@ -241,9 +242,9 @@ export default function LaunchHome() {
   const [unlockedAchievementCode, setUnlockedAchievementCode] = useState<string | null>(null);
   const [reflectionMission, setReflectionMission] = useState<Mission | null>(null);
 
-  const progressQuery = trpc.launchProgress.getProgress.useQuery(undefined, { staleTime: 30_000 });
-  const missionsQuery = trpc.launchDailyMissions.getToday.useQuery(undefined, { staleTime: 30_000 });
-  const achievementDefsQuery = trpc.launchProgress.getAchievementDefs.useQuery(undefined, { staleTime: 300_000 });
+  const progressQuery = trpc.launchProgress.getProgress.useQuery(undefined, { staleTime: 30_000, enabled: Boolean(user) });
+  const missionsQuery = trpc.launchDailyMissions.getToday.useQuery(undefined, { staleTime: 30_000, enabled: Boolean(user) });
+  const achievementDefsQuery = trpc.launchProgress.getAchievementDefs.useQuery(undefined, { staleTime: 300_000, enabled: Boolean(user) });
   const utils = trpc.useUtils();
 
   const completeMission = trpc.launchDailyMissions.completeMission.useMutation({
@@ -302,6 +303,18 @@ export default function LaunchHome() {
   if (progressQuery.isSuccess && progress && !progress.targetRole) {
     navigate("/launch/onboarding");
     return null;
+  }
+
+  if (progressQuery.isError || missionsQuery.isError || achievementDefsQuery.isError) {
+    return (
+      <LaunchLayout>
+        <LaunchQueryErrorState onRetry={() => {
+          void progressQuery.refetch();
+          void missionsQuery.refetch();
+          void achievementDefsQuery.refetch();
+        }} />
+      </LaunchLayout>
+    );
   }
 
   const QUICK_ACTIONS = [
