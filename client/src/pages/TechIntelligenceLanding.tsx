@@ -45,6 +45,27 @@ const RESOURCE_LIBRARY = [
   { type: "Published coaching-culture evidence", title: "Engagement and coaching", detail: "ICF reports that 72% of respondents to the 2023 ICF/HCI study acknowledged a relationship between coaching and increased employee engagement. This is survey-based external evidence, not a LevelNext outcome claim.", status: "External source", href: "https://coachingfederation.org/blog/coaching-statistics-the-roi-of-coaching-in-2024/", action: "Read the ICF article", download: false },
 ] as const;
 
+const CALCULATOR_PRESETS = [
+  {
+    id: "platform-engineering",
+    label: "Platform Engineering",
+    detail: "Dependency-heavy teams with recurring escalation and handoff friction.",
+    inputs: { teamSize: 120, annualFullyLoadedCost: 3200000, weeklyFrictionHours: 2.5, workingWeeks: 48, addressableImprovementPercent: 15 },
+  },
+  {
+    id: "core-product-engineering",
+    label: "Core Product Engineering",
+    detail: "Product teams balancing delivery speed, trade-offs, and cross-functional alignment.",
+    inputs: { teamSize: 80, annualFullyLoadedCost: 2800000, weeklyFrictionHours: 1.75, workingWeeks: 48, addressableImprovementPercent: 12 },
+  },
+  {
+    id: "engineering-leadership-cohort",
+    label: "Engineering Leadership Cohort",
+    detail: "Emerging leaders building influence, coaching range, and decision quality.",
+    inputs: { teamSize: 24, annualFullyLoadedCost: 4200000, weeklyFrictionHours: 3, workingWeeks: 46, addressableImprovementPercent: 20 },
+  },
+] as const;
+
 export default function TechIntelligenceLanding() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scenarioId, setScenarioId] = useState<(typeof GAP_SCENARIOS)[number]["id"]>("delivery");
@@ -99,10 +120,18 @@ export default function TechIntelligenceLanding() {
 
 function GapCostCalculator() {
   const [inputs, setInputs] = useState({ teamSize: 75, annualFullyLoadedCost: 2400000, weeklyFrictionHours: 2, workingWeeks: 48, addressableImprovementPercent: 15 });
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("custom");
   const result = calculateTechGapCost(inputs);
   const currency = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
-  const edit = (field: keyof typeof inputs, value: string) => setInputs((current) => ({ ...current, [field]: Number.isFinite(Number(value)) ? Number(value) : 0 }));
-  return <section className="ti-calculator" id="cost-calculator"><div className="ti-wrap ti-calculator__grid"><div className="ti-calculator__intro"><p className="ti-kicker ti-calculator__kicker"><span /> Cost Calculator for Not Coaching</p><h2>What is the<br /><em>exposure of the current state?</em></h2><p>Use your own planning assumptions to make the cost of repeated escalation, rework, or decision delay easier to discuss. This is an illustrative exposure calculation, not a savings forecast or ROI promise.</p><div className="ti-calculator__assumption"><Calculator size={18} /><span>Assumes a 40-hour week and makes every input visible for discussion.</span></div></div><div className="ti-calculator__panel"><div className="ti-calculator__inputs"><CalculatorInput label="Technical population" suffix="people" value={inputs.teamSize} min={1} max={10000} onChange={(value) => edit("teamSize", value)} /><CalculatorInput label="Annual fully-loaded cost" prefix="₹" value={inputs.annualFullyLoadedCost} min={0} max={100000000} step={100000} onChange={(value) => edit("annualFullyLoadedCost", value)} /><CalculatorInput label="Weekly friction per person" suffix="hours" value={inputs.weeklyFrictionHours} min={0} max={40} step={0.5} onChange={(value) => edit("weeklyFrictionHours", value)} /><CalculatorInput label="Working weeks" suffix="weeks" value={inputs.workingWeeks} min={1} max={52} onChange={(value) => edit("workingWeeks", value)} /><CalculatorInput label="Addressable improvement" suffix="%" value={inputs.addressableImprovementPercent} min={0} max={100} step={1} onChange={(value) => edit("addressableImprovementPercent", value)} /></div><div className="ti-calculator__result"><p>Illustrative annual friction exposure</p><strong>{currency.format(result.annualFrictionExposure)}</strong><span>Approx. {result.capacityDays.toLocaleString("en-IN")} person-days per year in the selected friction scenario.</span><hr /><p>Addressable exposure at your assumption</p><b>{currency.format(result.addressableExposure)}</b><small>This is a discussion input. It is not a prediction of savings, performance, or return on investment.</small></div></div></div></section>;
+  const edit = (field: keyof typeof inputs, value: string) => {
+    setSelectedPresetId("custom");
+    setInputs((current) => ({ ...current, [field]: Number.isFinite(Number(value)) ? Number(value) : 0 }));
+  };
+  const applyPreset = (preset: (typeof CALCULATOR_PRESETS)[number]) => {
+    setSelectedPresetId(preset.id);
+    setInputs({ ...preset.inputs });
+  };
+  return <section className="ti-calculator" id="cost-calculator"><div className="ti-wrap ti-calculator__grid"><div className="ti-calculator__intro"><p className="ti-kicker ti-calculator__kicker"><span /> Cost Calculator for Not Coaching</p><h2>What is the<br /><em>exposure of the current state?</em></h2><p>Use your own planning assumptions to make the cost of repeated escalation, rework, or decision delay easier to discuss. This is an illustrative exposure calculation, not a savings forecast or ROI promise.</p><div className="ti-calculator__assumption"><Calculator size={18} /><span>Assumes a 40-hour week and makes every input visible for discussion.</span></div></div><div className="ti-calculator__panel"><div className="mb-5 rounded-2xl border border-[#DFD8CC] bg-[#FFFDF7] p-4"><div className="flex flex-col gap-1"><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#102A43]">Start with an illustrative profile</p><p className="text-xs leading-5 text-black/70">Choose a technical persona, then edit any assumption below. These are planning starting points—not forecasts.</p></div><div className="mt-3 grid gap-2 sm:grid-cols-3">{CALCULATOR_PRESETS.map((preset) => <button key={preset.id} type="button" aria-pressed={selectedPresetId === preset.id} title={preset.detail} onClick={() => applyPreset(preset)} className={`rounded-xl border px-3 py-2 text-left text-xs font-bold transition-colors ${selectedPresetId === preset.id ? "border-[#102A43] bg-[#102A43] text-white" : "border-[#D8D0C1] bg-white text-[#102A43] hover:border-[#D9B343]"}`}>{preset.label}</button>)}</div><p className="mt-2 text-[11px] text-black/60">{selectedPresetId === "custom" ? "Custom inputs selected" : "Preset selected — all values remain editable"}</p></div><div className="ti-calculator__inputs"><CalculatorInput label="Technical population" suffix="people" value={inputs.teamSize} min={1} max={10000} onChange={(value) => edit("teamSize", value)} /><CalculatorInput label="Annual fully-loaded cost" prefix="₹" value={inputs.annualFullyLoadedCost} min={0} max={100000000} step={100000} onChange={(value) => edit("annualFullyLoadedCost", value)} /><CalculatorInput label="Weekly friction per person" suffix="hours" value={inputs.weeklyFrictionHours} min={0} max={40} step={0.5} onChange={(value) => edit("weeklyFrictionHours", value)} /><CalculatorInput label="Working weeks" suffix="weeks" value={inputs.workingWeeks} min={1} max={52} onChange={(value) => edit("workingWeeks", value)} /><CalculatorInput label="Addressable improvement" suffix="%" value={inputs.addressableImprovementPercent} min={0} max={100} step={1} onChange={(value) => edit("addressableImprovementPercent", value)} /></div><div className="ti-calculator__result"><p>Illustrative annual friction exposure</p><strong>{currency.format(result.annualFrictionExposure)}</strong><span>Approx. {result.capacityDays.toLocaleString("en-IN")} person-days per year in the selected friction scenario.</span><hr /><p>Addressable exposure at your assumption</p><b>{currency.format(result.addressableExposure)}</b><small>This is a discussion input. It is not a prediction of savings, performance, or return on investment.</small></div></div></div></section>;
 }
 
 function CalculatorInput({ label, value, onChange, prefix, suffix, min, max, step = 1 }: { label: string; value: number; onChange: (value: string) => void; prefix?: string; suffix?: string; min: number; max: number; step?: number }) {

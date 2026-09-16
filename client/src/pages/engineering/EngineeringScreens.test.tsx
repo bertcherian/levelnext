@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ENGINEERING_DIAGNOSTIC_QUESTIONS } from "../../../../shared/modules/engineeringIntelligence";
@@ -28,6 +28,12 @@ const profileData = {
   mirrors: [{ id: 7, primaryDimension: "courage", relevance: null, situation: "A difficult architecture review", analysis: { mirror: { whatWeAreNoticing: "A material concern was deferred." } } }],
 };
 
+const diagnosticState: any = {
+  data: { questions: ENGINEERING_DIAGNOSTIC_QUESTIONS, session: null },
+  isLoading: false,
+  error: null,
+};
+
 vi.mock("@/_core/hooks/useAuth", () => ({ useAuth: () => authState }));
 vi.mock("@/components/PlatformLayout", () => ({ default: ({ children }: { children: React.ReactNode }) => <div data-testid="platform-layout">{children}</div> }));
 vi.mock("wouter", () => ({
@@ -38,7 +44,7 @@ vi.mock("@/lib/trpc", () => ({
   trpc: {
     useUtils: () => ({ engineering: { getDiagnosticState: { invalidate }, getOperatingProfile: { invalidate } } }),
     engineering: {
-      getDiagnosticState: { useQuery: () => ({ data: { questions: ENGINEERING_DIAGNOSTIC_QUESTIONS, session: null }, isLoading: false, error: null }) },
+      getDiagnosticState: { useQuery: () => diagnosticState },
       startDiagnostic: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       saveDiagnosticResponse: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       completeDiagnostic: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
@@ -59,7 +65,10 @@ import EngineeringDiagnostic from "./EngineeringDiagnostic";
 import EngineeringOperatingProfile from "./EngineeringOperatingProfile";
 import EngineeringPartnerWorkspace from "./EngineeringPartnerWorkspace";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  diagnosticState.data = { questions: ENGINEERING_DIAGNOSTIC_QUESTIONS, session: null };
+});
 
 describe("Tech Intelligence protected screens", () => {
   it("renders the participant diagnostic start state with timing and privacy cues", () => {
@@ -70,6 +79,23 @@ describe("Tech Intelligence protected screens", () => {
     expect(screen.getByRole("button", { name: "Begin diagnostic" })).toBeTruthy();
     expect(screen.getByText("Your privacy boundary")).toBeTruthy();
     expect(screen.getByText(/raw responses are private/i)).toBeTruthy();
+  });
+
+  it("restores saved diagnostic progress with a dismissible post-login cue", () => {
+    diagnosticState.data = {
+      questions: ENGINEERING_DIAGNOSTIC_QUESTIONS,
+      session: { id: 41, currentQuestionIndex: 2, answers: { self_reflection: 4, collaboration: 3 } },
+    };
+
+    render(<EngineeringDiagnostic />);
+
+    expect(screen.getByRole("status")).toBeTruthy();
+    expect(screen.getByText("Welcome back — your diagnostic is saved.")).toBeTruthy();
+    expect(screen.getByText(/restored 2 saved responses/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss saved diagnostic notice" }));
+
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("renders the Operating Profile with engine signals, Mission controls, and a private-reflection boundary", () => {

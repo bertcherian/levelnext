@@ -29,6 +29,7 @@ export default function EngineeringDiagnostic() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
+  const [restorationNoticeVisible, setRestorationNoticeVisible] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate("/login?returnTo=%2Fengineering%2Fdiagnostic");
@@ -40,6 +41,7 @@ export default function EngineeringDiagnostic() {
       setSessionId(session.id);
       setIndex(session.currentQuestionIndex);
       setAnswers(session.answers);
+      setRestorationNoticeVisible(Object.keys(session.answers).length > 0 || session.currentQuestionIndex > 0);
     }
   }, [sessionId, stateQuery.data?.session]);
 
@@ -89,6 +91,17 @@ export default function EngineeringDiagnostic() {
     <PlatformLayout title="Tech Intelligence">
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         <EngineeringPageHeader eyebrow="Tech Intelligence" title="Tech Impact Diagnostic" description="A focused reflection on how you work across self, teams, systems, and business context. This is developmental intelligence, not a performance rating." />
+
+        {restorationNoticeVisible && stateQuery.data?.session && (
+          <div role="status" className="mb-5 flex items-start gap-3 rounded-2xl border border-[#D9E4F2] bg-[#F5F8FC] p-4 text-sm text-[#10243E] shadow-sm">
+            <RotateCcw className="mt-0.5 shrink-0 text-[#A37C00]" size={17} />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">Welcome back — your diagnostic is saved.</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">We restored {Object.keys(stateQuery.data.session.answers).length} saved response{Object.keys(stateQuery.data.session.answers).length === 1 ? "" : "s"} and brought you back to Question {Math.min(index + 1, questions.length)}.</p>
+            </div>
+            <button type="button" onClick={() => setRestorationNoticeVisible(false)} className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-white hover:text-[#10243E]" aria-label="Dismiss saved diagnostic notice">Dismiss</button>
+          </div>
+        )}
 
         {!sessionId ? (
           <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_50px_rgba(16,36,62,0.08)]">
