@@ -31,7 +31,7 @@ export default function EngineeringDiagnostic() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) navigate("/");
+    if (!loading && !isAuthenticated) navigate("/login?returnTo=%2Fengineering%2Fdiagnostic");
   }, [isAuthenticated, loading, navigate]);
 
   useEffect(() => {

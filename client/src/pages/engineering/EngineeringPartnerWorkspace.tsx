@@ -20,7 +20,7 @@ export default function EngineeringPartnerWorkspace() {
   const log = trpc.engineering.logPartnerCheckIn.useMutation({ onSuccess: () => utils.engineering.getPartnerWorkspace.invalidate() });
   const [drafts, setDrafts] = useState<Record<number, string>>({});
 
-  useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [isAuthenticated, loading, navigate]);
+  useEffect(() => { if (!loading && !isAuthenticated) navigate("/login?returnTo=%2Fengineering%2Fpartner"); }, [isAuthenticated, loading, navigate]);
   if (loading || workspace.isLoading) return <PlatformLayout title="Partner Workspace"><div className="mx-auto max-w-6xl px-4 py-8 sm:px-6"><div className="h-12 w-80 animate-pulse rounded-xl bg-slate-200" /><div className="mt-8 h-64 animate-pulse rounded-3xl bg-slate-100" /></div></PlatformLayout>;
   if (workspace.error) return <PlatformLayout title="Partner Workspace"><div className="mx-auto max-w-5xl px-4 py-8 sm:px-6"><EngineeringPageHeader eyebrow="Tech Intelligence" title="Partner Workspace" description="A narrow, consent-aware queue for human coaching follow-through." /><div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"><CircleAlert className="mb-2" size={20} /> {workspace.error.message}</div></div></PlatformLayout>;
 

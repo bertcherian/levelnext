@@ -10,6 +10,7 @@ describe("LevelNext Tech Intelligence landing page", () => {
     expect(page).toContain("A LevelNext platform experience");
     expect(page).toContain('src="/logo.png"');
     expect(page).toContain('href="/demo"');
+    expect(page).toContain('id="top"');
   });
 
   it("uses a Gap Selling current-state, consequence, and future-state narrative", () => {
@@ -33,7 +34,7 @@ describe("LevelNext Tech Intelligence landing page", () => {
     expect(page).toContain("0.43–0.74");
     expect(page).toContain("World Economic Forum");
     expect(page).toContain("Cannon-Bowers");
-    expect(page).toContain("Gap Selling cost calculator");
+    expect(page).toContain("Cost Calculator for Not Coaching");
     expect(page).toContain("Illustrative annual friction exposure");
     expect(page).toContain("Live scheduling");
     expect(page).toContain("tidycal.com/metaresults/pilot");

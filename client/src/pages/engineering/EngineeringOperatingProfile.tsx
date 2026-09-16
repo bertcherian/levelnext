@@ -31,7 +31,7 @@ export default function EngineeringOperatingProfile() {
   const [situation, setSituation] = useState("");
   const [observedBehaviour, setObservedBehaviour] = useState("");
 
-  useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [isAuthenticated, loading, navigate]);
+  useEffect(() => { if (!loading && !isAuthenticated) navigate("/login?returnTo=%2Fengineering%2Fprofile"); }, [isAuthenticated, loading, navigate]);
   useEffect(() => {
     const profile = profileQuery.data?.profile;
     if (profile) { setRoleTitle(profile.roleTitle ?? ""); setDiscipline(profile.discipline ?? ""); setEngineeringLevel(profile.engineeringLevel ?? ""); setAspiration(profile.aspiration ?? ""); }

@@ -51,7 +51,7 @@ export default function TechIntelligenceLanding() {
   const scenario = GAP_SCENARIOS.find((entry) => entry.id === scenarioId) ?? GAP_SCENARIOS[0];
 
   return (
-    <main className="ti-page">
+    <main id="top" className="ti-page">
       <header className="ti-nav">
         <a href="/" className="ti-nav__brand" aria-label="LevelNext home"><img src={LEVELNEXT_LOGO_URL} alt="LevelNext" /></a>
         <nav className="ti-nav__links" aria-label="Tech Intelligence sections"><a href="#the-gap">The gap</a><a href="#cost-calculator">Calculator</a><a href="#platform">Platform</a><a href="#book-demo">Book a demo</a></nav>

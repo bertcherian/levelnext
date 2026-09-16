@@ -22,7 +22,7 @@ export default function EngineeringAdminProvisioning() {
   const assign = trpc.engineeringAdmin.assignPartner.useMutation({ onSuccess: () => utils.engineeringAdmin.provisioningOverview.invalidate() });
   const updateStatus = trpc.engineeringAdmin.updateAssignmentStatus.useMutation({ onSuccess: () => utils.engineeringAdmin.provisioningOverview.invalidate() });
 
-  useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [isAuthenticated, loading, navigate]);
+  useEffect(() => { if (!loading && !isAuthenticated) navigate("/login?returnTo=%2Fengineering%2Fadmin%2Fprovisioning"); }, [isAuthenticated, loading, navigate]);
   useEffect(() => { setPartnerUserId(""); setParticipantUserId(""); }, [tenantId]);
 
   const selectedTenant = overview.data?.organisations.find((organisation) => String(organisation.id) === tenantId);

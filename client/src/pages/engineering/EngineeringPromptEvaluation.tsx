@@ -30,7 +30,7 @@ export default function EngineeringPromptEvaluation() {
   const [score, setScore] = useState("90");
   const [failureReasons, setFailureReasons] = useState("");
 
-  useEffect(() => { if (!loading && !isAuthenticated) navigate("/"); }, [isAuthenticated, loading, navigate]);
+  useEffect(() => { if (!loading && !isAuthenticated) navigate("/login?returnTo=%2Fengineering%2Fadmin%2Fprompt-evaluation"); }, [isAuthenticated, loading, navigate]);
   const versions = dashboard.data?.versions ?? [];
   const totals = useMemo(() => versions.reduce((acc, version) => ({ total: acc.total + version.summary.total, passed: acc.passed + version.summary.passed, failed: acc.failed + version.summary.failed, blocked: acc.blocked + version.summary.blocked }), { total: 0, passed: 0, failed: 0, blocked: 0 }), [versions]);
 
