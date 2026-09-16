@@ -21,3 +21,8 @@
 /* The calculator is a key buying-conversation tool, so its label is rendered as
    a high-contrast, readable callout rather than a subtle section kicker. */
 .ti-calculator .ti-calculator__kicker{display:inline-flex;width:fit-content;min-height:38px;padding:0 14px;background:#102a43;box-shadow:0 7px 15px rgba(19,38,56,.2);color:#fff;font-size:13px;font-weight:800;letter-spacing:.045em;line-height:1;text-transform:none}.ti-calculator .ti-calculator__kicker span{width:24px;background:#e6c865}.ti-calculator .ti-calculator__kicker+ h2{margin-top:20px}@media(max-width:820px){.ti-calculator .ti-calculator__kicker{min-height:36px;padding:0 12px;font-size:12px;letter-spacing:.025em}}
+
+/* Platform capability cards: improve supporting-copy readability and use the Chrome Yellow brand line for box boundaries. */
+.ti-platform__grid{border-top-color:#e6c865;border-left-color:#e6c865}
+.ti-platform__grid article{border-right-color:#e6c865;border-bottom-color:#e6c865}
+.ti-platform__grid p{color:#000;font-size:14px;line-height:1.65}
