@@ -8,9 +8,10 @@
  *
  * Each tab renders the original page component directly — no logic is duplicated.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Globe, Radio, Users, Route, Sparkles } from "lucide-react";
 import PlatformLayout from "@/components/PlatformLayout";
+import { useLocation } from "wouter";
 import CareerAccess from "@/pages/CareerAccess";
 import RadarSignals from "@/pages/RadarSignals";
 import RelationshipGraph from "@/pages/RelationshipGraph";
@@ -27,8 +28,29 @@ const TABS: { key: IntelTab; label: string; icon: React.ElementType; description
   { key: "outreach", label: "Outreach", icon: Sparkles, description: "LinkedIn brand strategy, content ideas, outreach drafts" },
 ];
 
+function tabFromSearch(search: string): IntelTab {
+  const candidate = new URLSearchParams(search).get("tab");
+  return TABS.some((tab) => tab.key === candidate) ? candidate as IntelTab : "opportunities";
+}
+
 export default function CareerMarketIntel() {
-  const [activeTab, setActiveTab] = useState<IntelTab>("opportunities");
+  const [location, navigate] = useLocation();
+  const [activeTab, setActiveTab] = useState<IntelTab>(() =>
+    tabFromSearch(typeof window === "undefined" ? "" : window.location.search),
+  );
+
+  useEffect(() => {
+    setActiveTab(tabFromSearch(typeof window === "undefined" ? "" : window.location.search));
+  }, [location]);
+
+  const handleTabChange = (tab: IntelTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+    if (tab === "opportunities") params.delete("tab");
+    else params.set("tab", tab);
+    const query = params.toString();
+    navigate(`/career/market-intel${query ? `?${query}` : ""}`, { replace: true });
+  };
 
   return (
     <PlatformLayout>
@@ -42,7 +64,10 @@ export default function CareerMarketIntel() {
           {TABS.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => setActiveTab(key)}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === key}
+              onClick={() => handleTabChange(key)}
               className="flex items-center gap-2 px-4 py-3.5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap"
               style={
                 activeTab === key

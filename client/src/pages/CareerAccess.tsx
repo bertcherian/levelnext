@@ -306,8 +306,16 @@ export default function CareerAccess() {
   });
 
   // Briefing history, activation log, score improvement
-  const { data: briefingHistory } = trpc.careerAccess.getBriefingHistory.useQuery();
-  const { data: scoreImprovement } = trpc.careerAccess.getScoreImprovement.useQuery();
+  const {
+    data: briefingHistory,
+    refetch: refetchBriefingHistory,
+    isError: briefingHistoryError,
+  } = trpc.careerAccess.getBriefingHistory.useQuery();
+  const {
+    data: scoreImprovement,
+    refetch: refetchScoreImprovement,
+    isError: scoreImprovementError,
+  } = trpc.careerAccess.getScoreImprovement.useQuery();
   const [briefingHistoryOpen, setBriefingHistoryOpen] = useState(false);
   const [selectedHistoryBrief, setSelectedHistoryBrief] = useState<Record<string, unknown> | null>(null);
   const [activationModal, setActivationModal] = useState<{ pathId: number; companyName: string } | null>(null);
@@ -438,7 +446,7 @@ export default function CareerAccess() {
     ? activeOrgs
     : activeOrgs.filter((o) => o.companyType === universeFilter);
 
-  if (profileError || strategyError || universeError || scoreError || briefingError || relationshipsError) {
+  if (profileError || strategyError || universeError || scoreError || briefingError || briefingHistoryError || scoreImprovementError || relationshipsError) {
     return (
       <PlatformLayout>
         <QueryErrorState onRetry={() => {
@@ -447,6 +455,8 @@ export default function CareerAccess() {
           void refetchUniverse();
           void refetchScore();
           void refetchBriefing();
+          void refetchBriefingHistory();
+          void refetchScoreImprovement();
           void refetchRelationships();
         }} />
       </PlatformLayout>

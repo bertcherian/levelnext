@@ -397,12 +397,24 @@ function OutreachDraftsTab({ prefillCompany = "" }: { prefillCompany?: string })
   });
 
   const deleteMutation = trpc.outreachEngine.deleteOutreachDraft.useMutation({
-    onSuccess: () => {
-      utils.outreachEngine.listOutreachDrafts.invalidate();
-      setSelectedDraft(null);
-      toast.success("Deleted");
+    onMutate: async ({ id }) => {
+      await utils.outreachEngine.listOutreachDrafts.cancel();
+      const previousDrafts = utils.outreachEngine.listOutreachDrafts.getData();
+      utils.outreachEngine.listOutreachDrafts.setData(undefined, (current) => current?.filter((draft) => draft.id !== id));
+      setSelectedDraft((current) => current === id ? null : current);
+      return { previousDrafts, deletedId: id };
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e, _input, context) => {
+      if (context?.previousDrafts) {
+        utils.outreachEngine.listOutreachDrafts.setData(undefined, context.previousDrafts);
+      }
+      if (context?.deletedId) setSelectedDraft(context.deletedId);
+      toast.error(e.message);
+    },
+    onSuccess: () => toast.success("Deleted"),
+    onSettled: () => {
+      void utils.outreachEngine.listOutreachDrafts.invalidate();
+    },
   });
 
   const prepMutation = trpc.outreachEngine.generateConversationPrep.useMutation({
@@ -592,9 +604,11 @@ function OutreachDraftsTab({ prefillCompany = "" }: { prefillCompany?: string })
                 </select>
                 <button
                   className="p-1.5 rounded hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
+                  disabled={deleteMutation.isPending}
+                  aria-label={`Delete outreach draft for ${activeDraft.contactName}`}
                   onClick={() => { if (confirm("Delete this draft?")) deleteMutation.mutate({ id: activeDraft.id }); }}
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={14} className={deleteMutation.isPending ? "animate-pulse" : undefined} />
                 </button>
               </div>
             </div>
