@@ -4,6 +4,7 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import QueryErrorState from "@/components/QueryErrorState";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import {
@@ -253,7 +254,7 @@ export default function RadarSignals() {
   const utils = trpc.useUtils();
   const [showDismissed, setShowDismissed] = useState(false);
 
-  const { data: signals, isLoading } = trpc.radarSignals.listSignals.useQuery({
+  const { data: signals, isLoading, isError, refetch } = trpc.radarSignals.listSignals.useQuery({
     includesDismissed: showDismissed,
   });
 
@@ -275,6 +276,20 @@ export default function RadarSignals() {
   const highUrgency = signals?.filter((s) => s.urgency === "high") ?? [];
   const mediumUrgency = signals?.filter((s) => s.urgency === "medium") ?? [];
   const lowUrgency = signals?.filter((s) => s.urgency === "low") ?? [];
+
+  if (isError) {
+    return (
+      <PlatformLayout>
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <QueryErrorState
+            title="Opportunity Radar couldn't be loaded"
+            message="Your signal feed did not respond. Your saved signals are unchanged; try again."
+            onRetry={() => { void refetch(); }}
+          />
+        </div>
+      </PlatformLayout>
+    );
+  }
 
   return (
     <PlatformLayout>

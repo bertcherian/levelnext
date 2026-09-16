@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import QueryErrorState from "@/components/QueryErrorState";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -114,7 +116,7 @@ export default function RelationshipGraph() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [scoringId, setScoringId] = useState<number | null>(null);
 
-  const { data: contacts = [], refetch } = trpc.careerAccess.getRelationships.useQuery();
+  const { data: contacts = [], isLoading, isError, refetch } = trpc.careerAccess.getRelationships.useQuery();
   const addMutation = trpc.careerAccess.addRelationship.useMutation({
     onSuccess: () => { toast.success("Contact added and scored by AI"); setShowForm(false); setForm(emptyForm); refetch(); },
     onError: (e) => toast.error(e.message),
@@ -131,6 +133,33 @@ export default function RelationshipGraph() {
     onSuccess: () => { toast.success("Relationship re-scored"); setScoringId(null); refetch(); },
     onError: (e) => { toast.error(e.message); setScoringId(null); },
   });
+
+  if (isLoading) {
+    return (
+      <PlatformLayout title="Relationship Graph">
+        <div className="min-h-screen bg-[#F5F0E8] p-6">
+          <div className="space-y-3 max-w-5xl mx-auto">
+            <Skeleton className="h-8 w-64 rounded-lg" />
+            <Skeleton className="h-20 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
+          </div>
+        </div>
+      </PlatformLayout>
+    );
+  }
+  if (isError) {
+    return (
+      <PlatformLayout title="Relationship Graph">
+        <div className="min-h-screen bg-[#F5F0E8] p-6">
+          <QueryErrorState
+            title="Your relationships couldn't be loaded"
+            message="The Relationship Graph did not respond. Your saved contacts are unchanged; try again."
+            onRetry={() => { void refetch(); }}
+          />
+        </div>
+      </PlatformLayout>
+    );
+  }
 
   const filtered = (contacts as Contact[]).filter((c) => {
     const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) ||

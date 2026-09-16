@@ -4,6 +4,7 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import QueryErrorState from "@/components/QueryErrorState";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -84,7 +85,7 @@ function TextAsset({ label, value }: { label: string; value: string | null | und
 // ─── Brand Strategy Tab ───────────────────────────────────────────────────────
 function BrandStrategyTab() {
   const utils = trpc.useUtils();
-  const { data: strategy, isLoading } = trpc.outreachEngine.getBrandStrategy.useQuery();
+  const { data: strategy, isLoading, isError, refetch } = trpc.outreachEngine.getBrandStrategy.useQuery();
   const generateMutation = trpc.outreachEngine.generateBrandStrategy.useMutation({
     onSuccess: () => {
       utils.outreachEngine.getBrandStrategy.invalidate();
@@ -101,6 +102,17 @@ function BrandStrategyTab() {
       <div className="space-y-4">
         {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <QueryErrorState
+        compact
+        title="Brand strategy couldn't be loaded"
+        message="Your saved strategy is unchanged. Try again to reload this section."
+        onRetry={() => { void refetch(); }}
+      />
     );
   }
 
@@ -342,8 +354,8 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Outreach Drafts Tab ──────────────────────────────────────────────────────
 function OutreachDraftsTab({ prefillCompany = "" }: { prefillCompany?: string }) {
   const utils = trpc.useUtils();
-  const { data: drafts, isLoading } = trpc.outreachEngine.listOutreachDrafts.useQuery();
-  const { data: contacts } = trpc.outreachEngine.listContactsForOutreach.useQuery();
+  const { data: drafts, isLoading, isError: draftsError, refetch: refetchDrafts } = trpc.outreachEngine.listOutreachDrafts.useQuery();
+  const { data: contacts, isLoading: contactsLoading, isError: contactsError, refetch: refetchContacts } = trpc.outreachEngine.listContactsForOutreach.useQuery();
 
   const [showForm, setShowForm] = useState(false);
   const [selectedDraft, setSelectedDraft] = useState<number | null>(null);
@@ -421,6 +433,19 @@ function OutreachDraftsTab({ prefillCompany = "" }: { prefillCompany?: string })
   if (isLoading) {
     return <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>;
   }
+  if (draftsError || contactsError) {
+    return (
+      <QueryErrorState
+        compact
+        title={contactsError && !draftsError ? "Relationship contacts couldn't be loaded" : "Outreach drafts couldn't be loaded"}
+        message="This section did not respond. Your saved drafts and contacts are unchanged; try again."
+        onRetry={() => {
+          void refetchDrafts();
+          void refetchContacts();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -443,7 +468,9 @@ function OutreachDraftsTab({ prefillCompany = "" }: { prefillCompany?: string })
             <p className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>New Outreach Draft</p>
 
             {/* Quick-fill from contacts */}
-            {contacts && contacts.length > 0 && (
+            {contactsLoading ? (
+              <Skeleton className="h-10 rounded-lg" />
+            ) : contacts && contacts.length > 0 && (
               <div>
                 <Label className="text-xs">Quick-fill from Relationship Graph</Label>
                 <select
