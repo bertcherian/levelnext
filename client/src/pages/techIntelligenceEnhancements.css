@@ -26,3 +26,14 @@
 .ti-platform__grid{border-top-color:#e6c865;border-left-color:#e6c865}
 .ti-platform__grid article{border-right-color:#e6c865;border-bottom-color:#e6c865}
 .ti-platform__grid p{color:#000;font-size:14px;line-height:1.65}
+
+/* Keep the current-state / consequence / future-state comparison card in the same Chrome Yellow system. */
+.ti-gap__card{border-color:#e6c865;box-shadow:0 8px 20px rgba(16,42,67,.08)}
+.ti-gap__card>div{border-right-color:#e6c865;border-bottom-color:#e6c865}
+
+/* Capability cards use a restrained hover lift: a warm ivory tint, soft shadow, and a small icon scale. */
+.ti-platform__grid article{transition:background-color 180ms cubic-bezier(.23,1,.32,1),box-shadow 180ms cubic-bezier(.23,1,.32,1)}
+.ti-platform__grid article>div svg{transform-origin:center;transition:transform 180ms cubic-bezier(.23,1,.32,1)}
+.ti-platform__grid article:hover{background:#fff8df;box-shadow:0 10px 22px rgba(16,42,67,.1)}
+.ti-platform__grid article:hover>div svg{transform:scale(1.12)}
+@media (prefers-reduced-motion: reduce){.ti-platform__grid article,.ti-platform__grid article>div svg{transition:none}.ti-platform__grid article:hover>div svg{transform:none}}
