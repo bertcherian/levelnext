@@ -13,7 +13,8 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("20–50 people");
     expect(page).toContain("Measure before &amp; after");
     expect(page).toContain("Scale only if it works");
-    expect(page).toContain("Behaviour change cockpit");
+    expect(page).not.toContain("Behaviour change cockpit");
+    expect(page).not.toContain("ln-product-visual");
   });
 
   it("follows the buyer journey from gap to impact to pilot", () => {
