@@ -65,7 +65,6 @@ function saveFavorites(favs: FavoriteInsight[]) {
 const UNLOCK_MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication Intelligence",
   LII: "Leadership Influence Intelligence",
-  GCC: "GCC Readiness",
 };
 
 export default function Guide() {
@@ -177,16 +176,12 @@ export default function Guide() {
   const graph = graphData as any;
   const hasEci = graph?.modules?.ECI;
   const hasLii = graph?.modules?.LII;
-  const hasGcc = graph?.modules?.GCC;
   const eciArchetype = hasEci ? graph.modules.ECI.archetype : null;
   const eciArchetypeLabel = hasEci ? graph.modules.ECI.archetypeLabel : null;
   const eciEdge = hasEci ? Math.round(graph.modules.ECI.edgeScore ?? 0) : null;
   const liiArchetype = hasLii ? graph.modules.LII.archetype : null;
   const liiArchetypeLabel = hasLii ? graph.modules.LII.archetypeLabel : null;
   const liiEdge = hasLii ? Math.round(graph.modules.LII.edgeScore ?? 0) : null;
-  const gccArchetypeLabel = hasGcc ? graph.modules.GCC.archetypeLabel : null;
-  const gccArchetype = hasGcc ? graph.modules.GCC.archetype : null;
-  const gccEdge = hasGcc ? Math.round(graph.modules.GCC.edgeScore ?? 0) : null;
   const compositeEdge = graph?.compositeEdge ? Math.round(graph.compositeEdge) : null;
   const sessionCount = messages.length > 0 ? Math.ceil(messages.length / 4) : 0;
   const dailyPrompts = getDailyPrompts();
@@ -305,8 +300,25 @@ export default function Guide() {
             </div>
           </div>
 
+          <div className="rounded-2xl border p-5 sm:p-6" style={{ background: "var(--color-ln-ivory)", borderColor: "var(--color-ln-yellow)" }}>
+            <div className="flex items-start gap-3">
+              <BookOpen className="mt-0.5 flex-shrink-0" size={18} style={{ color: "var(--color-ln-gold)" }} />
+              <div>
+                <p className="text-sm font-bold" style={{ color: "var(--color-ln-navy)" }}>How to use Guide</p>
+                <p className="mt-1 text-sm leading-6" style={{ color: "var(--color-ln-text)" }}>
+                  Bring Guide a real leadership moment, not a generic topic. Share what happened, what you noticed, and what outcome you want. Guide will help you reflect, prepare a next move, and turn the insight into a practical action you can try at work.
+                </p>
+                <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3" style={{ color: "var(--color-ln-muted)" }}>
+                  <span><strong style={{ color: "var(--color-ln-navy)" }}>1. Describe</strong> the moment and your role.</span>
+                  <span><strong style={{ color: "var(--color-ln-navy)" }}>2. Explore</strong> the pattern or choice.</span>
+                  <span><strong style={{ color: "var(--color-ln-navy)" }}>3. Act</strong> on one grounded next step.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* New-user nudge — shown when no diagnostics completed */}
-          {!convLoading && !graphLoading && !hasEci && !hasLii && !hasGcc && (
+          {!convLoading && !graphLoading && !hasEci && !hasLii && (
             <div className="rounded-2xl p-5 flex items-start gap-4"
               style={{ background: "oklch(97% 0.01 248.6)", border: "1.5px solid var(--color-ln-yellow)" }}>
               <span className="text-2xl flex-shrink-0">🎯</span>
@@ -323,7 +335,7 @@ export default function Guide() {
           )}
 
           {/* Edge Context Card — shows all completed modules */}
-          {(hasEci || hasLii || hasGcc) && (
+          {(hasEci || hasLii) && (
             <div className="rounded-2xl p-5 border"
               style={{ background: "var(--color-ln-navy)", borderColor: "var(--color-ln-navy)" }}>
               <div className="flex items-center justify-between mb-3">
@@ -387,31 +399,6 @@ export default function Guide() {
                 </div>
               )}
 
-              {/* GCC module row */}
-              {hasGcc && (
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: "oklch(25% 0.072 248.6)" }}>
-                    <span className="text-base">🏢</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-white">
-                      {gccArchetypeLabel ?? gccArchetype?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                    </p>
-                    <p className="text-xs" style={{ color: "oklch(70% 0.02 248.6)" }}>
-                      GCC Readiness · Edge {gccEdge}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handlePromptClick(`I completed the GCC Readiness diagnostic and my organisation is a ${gccArchetypeLabel ?? gccArchetype}. What are the most critical leadership actions I should take to advance our GCC's strategic readiness?`)}
-                    className="text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all hover:opacity-80"
-                    style={{ background: "oklch(30% 0.072 248.6)", color: "oklch(80% 0.02 248.6)" }}
-                  >
-                    Ask Guide <ChevronRight size={12} style={{ color: "var(--color-ln-yellow)" }} />
-                  </button>
-                </div>
-              )}
-
               {/* Session history indicator */}
               {sessionCount > 0 && (
                 <div className="mt-3 pt-3 border-t flex items-center justify-between"
@@ -444,7 +431,7 @@ export default function Guide() {
                 </div>
                 <span className="text-xs px-2 py-0.5 rounded-full font-medium"
                   style={{ background: "oklch(from var(--color-ln-yellow) l c h / 0.12)", color: "var(--color-ln-navy)" }}>
-                  {latestReport.moduleType === 'ECI' ? 'Exec Comm' : latestReport.moduleType === 'LII' ? 'Leadership Influence' : 'GCC Readiness'}
+                  {latestReport.moduleType === 'ECI' ? 'Exec Comm' : latestReport.moduleType === 'LII' ? 'Leadership Influence' : 'Leadership insight'}
                 </span>
               </div>
 

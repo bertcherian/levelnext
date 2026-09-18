@@ -128,18 +128,18 @@ function StageSidebar({
 
   return (
     <div
-      className="flex flex-col gap-1 py-4"
-      style={{ background: "var(--color-ln-navy)" }}
+      className="flex flex-col gap-1 py-4 px-2"
+      style={{ background: "var(--color-ln-ivory)" }}
     >
-      <div className="px-4 pb-3 border-b border-white/10">
+      <div className="px-3 pb-3 border-b" style={{ borderColor: "#E5DED2" }}>
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4" style={{ color: "var(--color-ln-yellow)" }} />
-          <span className="text-xs font-semibold tracking-wider uppercase text-white/60">
+          <Sparkles className="h-4 w-4" style={{ color: "var(--color-ln-gold)" }} />
+          <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: "var(--color-ln-navy)" }}>
             Journey Progress
           </span>
         </div>
         <div className="mt-2 flex items-center gap-2">
-          <div className="flex-1 h-1.5 rounded-full bg-white/10">
+          <div className="flex-1 h-1.5 rounded-full" style={{ background: "#E5DED2" }}>
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -148,7 +148,7 @@ function StageSidebar({
               }}
             />
           </div>
-          <span className="text-xs text-white/40">{completedModules.length}/16</span>
+          <span className="text-xs" style={{ color: "rgba(10,26,47,0.55)" }}>{completedModules.length}/16</span>
         </div>
       </div>
 
@@ -165,15 +165,15 @@ function StageSidebar({
               onClick={() => setExpandedStage(isExpanded ? null : stage.id)}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
-                stageActive ? "bg-white/10" : "hover:bg-white/5"
+                stageActive ? "bg-[#0A1A2F]/[0.06]" : "hover:bg-[#0A1A2F]/[0.04]"
               )}
             >
               <div
                 className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold"
                 style={{
                   background: stageCompleted ? stage.color : stageActive ? stage.color + "33" : "transparent",
-                  border: `1.5px solid ${stageCompleted || stageActive ? stage.color : "rgba(255,255,255,0.2)"}`,
-                  color: stageCompleted || stageActive ? stage.color : "rgba(255,255,255,0.4)",
+                  border: `1.5px solid ${stageCompleted || stageActive ? stage.color : "rgba(10,26,47,0.2)"}`,
+                  color: stageCompleted || stageActive ? stage.color : "rgba(10,26,47,0.4)",
                 }}
               >
                 {stageCompleted ? "✓" : stage.id}
@@ -181,18 +181,18 @@ function StageSidebar({
               <span
                 className={cn(
                   "text-xs font-semibold flex-1",
-                  stageActive ? "text-white" : stageCompleted ? "text-white/70" : "text-white/40"
+                  stageActive ? "text-[#0A1A2F]" : stageCompleted ? "text-[#0A1A2F]/70" : "text-[#0A1A2F]/40"
                 )}
               >
                 {stage.name}
               </span>
-              <span className="text-white/30 text-[10px]">
+              <span className="text-[#0A1A2F]/45 text-[10px]">
                 {stage.modules.filter((m) => completedModules.includes(m)).length}/{stage.modules.length}
               </span>
               {isExpanded ? (
-                <ChevronDown className="h-3 w-3 text-white/30" />
+                <ChevronDown className="h-3 w-3 text-[#0A1A2F]/45" />
               ) : (
-                <ChevronRight className="h-3 w-3 text-white/30" />
+                <ChevronRight className="h-3 w-3 text-[#0A1A2F]/45" />
               )}
             </button>
 
@@ -211,7 +211,7 @@ function StageSidebar({
                       disabled={!isAccessible}
                       className={cn(
                         "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors mb-0.5",
-                        isCurrent ? "bg-white/15" : isAccessible ? "hover:bg-white/8 cursor-pointer" : "cursor-not-allowed opacity-40"
+                        isCurrent ? "bg-[#0A1A2F]/[0.08]" : isAccessible ? "hover:bg-[#0A1A2F]/[0.04] cursor-pointer" : "cursor-not-allowed opacity-40"
                       )}
                     >
                       {isCompleted ? (
@@ -222,21 +222,21 @@ function StageSidebar({
                           style={{ background: stage.color }}
                         />
                       ) : isAccessible ? (
-                        <Circle className="h-3.5 w-3.5 flex-shrink-0 text-white/30" />
+                        <Circle className="h-3.5 w-3.5 flex-shrink-0 text-[#0A1A2F]/30" />
                       ) : (
-                        <Lock className="h-3 w-3 flex-shrink-0 text-white/20" />
+                        <Lock className="h-3 w-3 flex-shrink-0 text-[#0A1A2F]/20" />
                       )}
                       <div className="flex-1 min-w-0">
                         <div
                           className={cn(
                             "text-[11px] font-medium truncate",
-                            isCurrent ? "text-white" : isCompleted ? "text-white/60" : "text-white/40"
+                            isCurrent ? "text-[#0A1A2F]" : isCompleted ? "text-[#0A1A2F]/60" : "text-[#0A1A2F]/40"
                           )}
                         >
                           {modNum}. {MODULE_NAMES[modNum]}
                         </div>
                         {(isCompleted || isCurrent) && (
-                          <div className="text-[9px] text-white/30 truncate mt-0.5">
+                          <div className="text-[9px] text-[#0A1A2F]/40 truncate mt-0.5">
                             {DELIVERABLE_NAMES[modNum]}
                           </div>
                         )}
@@ -558,13 +558,43 @@ export default function NextChapter() {
 
   return (
     <PlatformLayout>
-      <div className="flex h-full min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
+      <div className="min-h-screen" style={{ background: "var(--color-ln-ivory)" }}>
+        <header className="border-b bg-white" style={{ borderColor: "#E5DED2" }}>
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+              <div className="max-w-2xl">
+                <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "var(--color-ln-gold)" }}>
+                  <Sparkles size={14} /> Leadership development pathway
+                </p>
+                <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: "var(--color-ln-navy)" }}>Design the leader you are becoming.</h1>
+                <p className="mt-2 max-w-xl text-sm leading-6" style={{ color: "var(--color-ln-muted)" }}>
+                  Move through six practical stages. Each conversation becomes a useful leadership artefact, an experiment, or a decision you can carry into the work.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate("/next-chapter/portfolio")}
+                className="inline-flex items-center gap-2 self-start rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[#F8F5F0] md:self-auto"
+                style={{ borderColor: "var(--color-ln-gold)", color: "var(--color-ln-navy)" }}
+              >
+                <BookOpen size={16} /> View my portfolio <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="mt-6 flex items-center gap-3">
+              <div className="h-2 flex-1 overflow-hidden rounded-full" style={{ background: "#E5DED2" }}>
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(completedModules.length / 16) * 100}%`, background: "var(--color-ln-gold)" }} />
+              </div>
+              <span className="text-xs font-semibold" style={{ color: "var(--color-ln-navy)" }}>{completedModules.length} of 16 complete</span>
+            </div>
+          </div>
+        </header>
+
+        <div className="mx-auto flex min-h-[calc(100vh-180px)] max-w-7xl px-0 sm:px-6 lg:px-8">
         {/* ── Left: Stage/Module Progress Sidebar ── */}
         <div
-          className="hidden lg:flex flex-col w-56 flex-shrink-0 overflow-y-auto border-r"
+          className="hidden lg:flex flex-col w-64 flex-shrink-0 overflow-y-auto border-x"
           style={{
-            background: "var(--color-ln-navy)",
-            borderColor: "rgba(255,255,255,0.08)",
+            background: "var(--color-ln-ivory)",
+            borderColor: "#E5DED2",
           }}
         >
           <StageSidebar
@@ -574,10 +604,11 @@ export default function NextChapter() {
           />
 
           {/* Portfolio link */}
-          <div className="mt-auto p-4 border-t border-white/10">
+          <div className="mt-auto p-4 border-t" style={{ borderColor: "#E5DED2" }}>
             <button
               onClick={() => navigate("/next-chapter/portfolio")}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white/80"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#0A1A2F]/[0.04] transition-colors"
+              style={{ color: "var(--color-ln-navy)" }}
             >
               <BookOpen className="h-4 w-4" />
               <span className="text-xs font-medium">My Portfolio</span>
@@ -595,10 +626,10 @@ export default function NextChapter() {
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
           <div
-            className="flex items-center gap-3 px-6 py-4 border-b flex-shrink-0"
+            className="flex items-center gap-3 px-5 py-4 border-b flex-shrink-0"
             style={{
-              background: "var(--color-ln-navy)",
-              borderColor: "rgba(255,255,255,0.08)",
+              background: "white",
+              borderColor: "#E5DED2",
             }}
           >
             <div
@@ -609,7 +640,7 @@ export default function NextChapter() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-white">Next Chapter</span>
+              <span className="text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>Next Chapter</span>
                 <span
                   className="text-[10px] font-medium px-2 py-0.5 rounded-full"
                   style={{ background: (stage?.color ?? "#D4AF37") + "22", color: stage?.color ?? "#D4AF37" }}
@@ -617,7 +648,7 @@ export default function NextChapter() {
                   {stage?.name ?? "Discover"} · Stage {stage?.id ?? 1}
                 </span>
               </div>
-              <div className="text-xs text-white/40 truncate">
+              <div className="text-xs truncate" style={{ color: "var(--color-ln-muted)" }}>
                 Module {currentModule}: {MODULE_NAMES[currentModule]}
               </div>
             </div>
@@ -657,7 +688,7 @@ export default function NextChapter() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4" style={{ background: "var(--color-ln-ivory)" }}>
             {messages.map((msg, i) => (
               <div
                 key={i}
@@ -900,6 +931,7 @@ export default function NextChapter() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </PlatformLayout>

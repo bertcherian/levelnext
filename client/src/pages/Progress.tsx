@@ -7,15 +7,16 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, RadarChart, Radar, PolarGri
 import { Button } from "@/components/ui/button";
 import { ArrowRight, TrendingUp, Loader2 } from "lucide-react";
 
+const LEADER_MODULES = ["ECI", "TII", "LII", "LDI", "STI"] as const;
+
 const MODULE_LABELS: Record<string, string> = {
   ECI: "Executive Communication",
   TII: "Time Intelligence",
   LII: "Leadership Influence",
-  GCC: "GCC Readiness",
   LDI: "Derailment Intelligence",
   STI: "Strategic Thinking",
 };
-const MODULE_COLORS: Record<string, string> = { ECI: "#12345A", TII: "#1a3d5c", LII: "#F2B705", GCC: "#1a5276", LDI: "#5c1a1a", STI: "#1e3a5f" };
+const MODULE_COLORS: Record<string, string> = { ECI: "#12345A", TII: "#1a3d5c", LII: "#F2B705", LDI: "#5c1a1a", STI: "#1e3a5f" };
 
 export default function Progress() {
   const { isAuthenticated, loading } = useAuth();
@@ -27,7 +28,7 @@ export default function Progress() {
 
   const completedModules = graph?.completedModules ?? [];
   const moduleEdges = graph?.moduleEdges ?? {};
-  const barData = (["ECI", "TII", "LII", "GCC", "LDI", "STI"] as const).map((mod) => ({
+  const barData = LEADER_MODULES.map((mod) => ({
     name: mod, label: MODULE_LABELS[mod], edge: moduleEdges[mod] ?? 0, completed: completedModules.includes(mod),
   }));
   const latestReport = reports?.[0];
@@ -69,7 +70,7 @@ export default function Progress() {
                   <p className="text-lg font-bold text-white mb-1">Your Leadership Edge</p>
                   <p className="text-sm" style={{ color: "oklch(70% 0.02 248.6)" }}>
                     Composite across {completedModules.length} completed module{completedModules.length > 1 ? "s" : ""}.
-                    {completedModules.length < 3 && " Complete all 3 modules for your full Edge profile."}
+                    {completedModules.length < LEADER_MODULES.length && ` Complete all ${LEADER_MODULES.length} modules for your full Edge profile.`}
                   </p>
                 </div>
               </div>
@@ -107,11 +108,11 @@ export default function Progress() {
               <div className="rounded-2xl p-4 sm:p-6" style={{ background: "white", border: "1px solid var(--color-ln-border)" }}>
                 <h2 className="text-base font-semibold mb-4" style={{ color: "var(--color-ln-navy)" }}>Your Leadership Archetypes</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {Object.entries(graph.archetypes).map(([mod, archetype]) => (
+                  {Object.entries(graph.archetypes).filter(([mod]) => LEADER_MODULES.includes(mod as (typeof LEADER_MODULES)[number])).map(([mod, archetype]) => (
                     <div key={mod} className="rounded-xl p-4" style={{ background: "var(--color-ln-navy)" }}>
                       <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "var(--color-ln-yellow)" }}>{mod}</p>
                       <p className="text-sm font-semibold text-white">
-                        {(graph?.modules?.[mod as "ECI" | "TII" | "LII" | "GCC" | "LDI" | "STI"])?.archetypeLabel ?? (archetype as string).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                        {(graph?.modules?.[mod as "ECI" | "TII" | "LII" | "LDI" | "STI"])?.archetypeLabel ?? (archetype as string).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                       </p>
                       <p className="text-xs mt-1" style={{ color: "oklch(70% 0.02 248.6)" }}>{MODULE_LABELS[mod]}</p>
                     </div>

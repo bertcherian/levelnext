@@ -66,7 +66,7 @@ describe("LevelNext public landing page", () => {
     expect(page).toContain('href="/early-career"');
     expect(page).toContain('href="/pe"');
     expect(page).toContain('href="/manager-effectiveness"');
-    expect(page).toContain('href="/home"');
+    expect(page).toContain('href="/leader"');
     expect(page).toContain('href="/executive"');
     expect(page).not.toContain("Accelerate role readiness with common work standards and clear development signals.");
     expect(page).not.toContain("Build coaching, delegation and accountability into the manager’s operating rhythm.");
@@ -79,8 +79,8 @@ describe("LevelNext public landing page", () => {
   it("targets the registered Leader Intelligence home route rather than a diagnostic route", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(appRoutes).toContain('<Route path="/home" component={Home} />');
-    expect(page).toContain('href="/home"');
+    expect(appRoutes).toContain('<Route path="/leader" component={Home} />');
+    expect(page).toContain('href="/leader"');
     expect(page).not.toContain('href="/diagnostics/lii"');
   });
 

@@ -44,7 +44,6 @@ function validateInviteCode(v: string): string | null {
 const PLATFORM_PILLARS = [
   { label: "Executive Communication", desc: "Build your presence and strategic voice" },
   { label: "Leadership Influence",    desc: "Expand your impact across stakeholders" },
-  { label: "GCC Readiness",           desc: "Lead your global capability centre forward" },
 ];
 
 // ── Tour steps ─────────────────────────────────────────────────────────────────
@@ -368,7 +367,7 @@ export default function Onboarding() {
   };
   useEffect(() => {
     if (mode === "success") {
-      const destination = returnToParam ?? "/home";
+      const destination = returnToParam ?? "/leader";
       const t = setTimeout(() => navigate(destination), 2200);
       return () => clearTimeout(t);
     }

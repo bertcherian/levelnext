@@ -473,7 +473,7 @@ function PlatformLayoutFrame({ children }: PlatformLayoutProps) {
       >
         {/* Drawer header */}
         <div className="flex items-center justify-between px-5 py-5 border-b" style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
-          <Link href="/home" onClick={() => setSidebarOpen(false)} className="flex flex-col leading-tight cursor-pointer select-none">
+          <Link href="/leader" onClick={() => setSidebarOpen(false)} className="flex flex-col leading-tight cursor-pointer select-none">
             <img src="/logo.png" alt="LevelNext" className="h-10 object-contain" />
             <span className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </Link>
@@ -568,7 +568,7 @@ function PlatformLayoutFrame({ children }: PlatformLayoutProps) {
       >
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-5 border-b" style={{ borderColor: "oklch(30% 0.072 248.6)" }}>
-          <Link href="/home" className="flex flex-col leading-tight cursor-pointer select-none">
+          <Link href="/leader" className="flex flex-col leading-tight cursor-pointer select-none">
             <img src="/logo.png" alt="LevelNext" className="h-10 object-contain" />
             <span className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-ln-yellow)" }}>Leadership Intelligence Platform</span>
           </Link>

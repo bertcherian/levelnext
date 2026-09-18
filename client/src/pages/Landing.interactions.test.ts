@@ -64,7 +64,7 @@ describe("LevelNext landing page interactions", () => {
     window.history.replaceState({}, "", "/?audience=leader");
     render(createElement(Landing));
     expect(screen.getByRole("tab", { name: "Leader" }).getAttribute("aria-selected")).toBe("true");
-    expect(screen.getByText("Explore Leader Intelligence").closest("a")?.getAttribute("href")).toBe("/home");
+    expect(screen.getByText("Explore Leader Intelligence").closest("a")?.getAttribute("href")).toBe("/leader");
     window.history.replaceState({}, "", "/");
   });
 });

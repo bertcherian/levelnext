@@ -63,17 +63,6 @@ const LI_MODULES = [
     questions: "30 questions · ~10 minutes",
     color: "#1e3a5f",
   },
-  {
-    id: "GCC",
-    route: "org-intelligence",
-    label: "GCC Readiness",
-    shortLabel: "GCC",
-    tagline: "Is your GCC operating as a strategic partner or a delivery arm?",
-    description: "Evaluate your organisation's readiness across Strategic Influence, Operating Excellence, Leadership & Talent, Innovation & AI, and Enterprise Alignment. Part of the Organisation Intelligence platform.",
-    questions: "Coming soon",
-    color: "#0f2d4a",
-    comingSoon: true,
-  },
 ];
 
 // ── Career Transition Intelligence modules (no gate — coach-guided selection) ─────────────
@@ -235,41 +224,11 @@ function LiModuleCard({
   const [showGates, setShowGates] = useState(false);
   const [narrativeDismissed, setNarrativeDismissed] = useState(false);
 
-  const isComingSoon = (mod as any).comingSoon === true;
   const done = completedModules.includes(mod.id);
   const state: UnlockState = status?.state ?? (mod.id === "ECI" ? "unlocked" : "not_started");
   const isLocked = state === "locked" || state === "not_started";
   const isUnlocked = state === "unlocked" || state === "completed";
   const narrativeReady = !!(status?.narrativeReady && !narrativeDismissed && !status.narrativeShown);
-
-  // Coming-soon modules (e.g. GCC → Organisation Intelligence)
-  if (isComingSoon) {
-    return (
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ background: "var(--color-ln-ivory)", border: "1px dashed var(--color-ln-border)", opacity: 0.75 }}
-      >
-        <div className="flex">
-          <div className="w-1.5 flex-shrink-0" style={{ background: "var(--color-ln-border)" }} />
-          <div className="flex-1 p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded" style={{ background: "var(--color-ln-border)", color: "var(--color-ln-muted)" }}>{mod.shortLabel}</span>
-              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded" style={{ background: "#0f2d4a18", color: "#0f2d4a" }}>Coming Soon</span>
-            </div>
-            <h2 className="text-lg font-bold mb-1" style={{ color: "var(--color-ln-muted)" }}>{mod.label}</h2>
-            <p className="text-sm font-medium mb-2" style={{ color: "var(--color-ln-muted)" }}>{mod.tagline}</p>
-            <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--color-ln-muted)" }}>{mod.description}</p>
-            <Link href="/org-intelligence">
-              <Button variant="outline" className="font-medium text-sm" style={{ borderColor: "var(--color-ln-border)", color: "var(--color-ln-navy)" }}>
-                View Organisation Intelligence Platform
-                <ArrowRight size={14} className="ml-1.5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -574,16 +533,6 @@ export default function Diagnostics() {
           {LI_MODULES.map((mod) => (
             <LiModuleCard key={mod.id} mod={mod} status={statusMap.get(mod.id)} completedModules={completedModules} reportSlug={liReportSlugMap.get(mod.id)} />
           ))}
-        </div>
-        <div className="mt-6 overflow-hidden rounded-2xl border" style={{ borderColor: "#E7D69A", background: "linear-gradient(135deg, #10243E 0%, #18395F 100%)" }}>
-          <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-2 text-[#F0C73B]"><Brain size={16} /><span className="text-xs font-bold uppercase tracking-[0.14em]">New programme pathway</span></div>
-              <h2 className="mt-2 text-xl font-bold text-white">Engineering Intelligence</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-300">Explore how you create impact across self-leadership, collaboration, problem framing, systems thinking, business context, and human–AI judgment. Your operating profile is developmental—not a performance rating.</p>
-            </div>
-            <Link href="/engineering/diagnostic"><Button className="shrink-0 bg-[#F0C73B] font-semibold text-[#10243E] hover:bg-[#FFE27C]">Open Engineering Diagnostic <ArrowRight size={14} className="ml-1.5" /></Button></Link>
-          </div>
         </div>
         {/* Prior Assessments Import Card */}
         <div className="mt-6 rounded-2xl p-5" style={{ background: "var(--color-ln-ivory-dark)", border: "1px solid var(--color-ln-border)" }}>

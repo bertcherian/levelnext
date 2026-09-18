@@ -26,7 +26,7 @@ export type LeaderNavigationGroup = {
 };
 
 const LEADERSHIP_ITEMS: LeaderNavigationItem[] = [
-  { label: "Home", icon: Home, href: "/home" },
+  { label: "Home", icon: Home, href: "/leader" },
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" },
   { label: "Practice", icon: Zap, href: "/practice" },
   { label: "My Edge", icon: TrendingUp, href: "/my-edge" },
@@ -66,7 +66,7 @@ export function getLeaderNavigationGroups(isTenantAdmin: boolean): LeaderNavigat
 }
 
 export const LEADER_BOTTOM_TABS: Array<LeaderNavigationItem | { label: "More"; icon: ElementType; href: null }> = [
-  { label: "Home", icon: Home, href: "/home" },
+  { label: "Home", icon: Home, href: "/leader" },
   { label: "Guide", icon: MessageSquare, href: "/guide", badgeKey: "guide" },
   { label: "Practice", icon: Zap, href: "/practice" },
   { label: "Growth", icon: Activity, href: "/growth-profile" },

@@ -6,14 +6,13 @@ import PlatformLayout from "@/components/PlatformLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, CheckCircle, Lock, TrendingUp, Sparkles, Zap, Target, BarChart2 } from "lucide-react";
 
-const MODULES = ["ECI", "TII", "LII", "GCC", "LDI", "STI"] as const;
+const MODULES = ["ECI", "TII", "LII", "LDI", "STI"] as const;
 type ModuleType = (typeof MODULES)[number];
 
 const MODULE_LABELS: Record<ModuleType, string> = {
   ECI: "Executive Communication",
   TII: "Time Intelligence",
   LII: "Leadership Influence",
-  GCC: "GCC Readiness",
   LDI: "Derailment Intelligence",
   STI: "Strategic Thinking",
 };
@@ -22,7 +21,6 @@ const MODULE_DESCRIPTIONS: Record<ModuleType, string> = {
   ECI: "How you communicate, influence, and command presence in executive contexts.",
   TII: "How you invest, protect, and reclaim your most strategic resource — time.",
   LII: "Your ability to build trust, align stakeholders, and lead through influence.",
-  GCC: "Your organisation's readiness to operate as a strategic global capability centre.",
   LDI: "Identify your top derailment risks and leadership stabilizers across 10 behavioural dimensions.",
   STI: "Measure your strategic thinking capability across 10 dimensions — from clarity to scenario planning.",
 };
@@ -31,7 +29,6 @@ const MODULE_ICON: Record<ModuleType, string> = {
   ECI: "💬",
   TII: "⏱",
   LII: "🤝",
-  GCC: "🌐",
   LDI: "⚠️",
   STI: "🧭",
 };

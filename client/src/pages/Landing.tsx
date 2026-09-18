@@ -16,7 +16,7 @@ const audienceOptions = [
   { label: "Early career", description: "Build a strong foundation for the first critical years of work.", href: "/early-career", cta: "Explore Early Career Intelligence", external: false },
   { label: "Professional", description: "Strengthen ownership, judgment, execution and influence in your role.", href: "/pe", cta: "Explore Professional Intelligence", external: false },
   { label: "Manager", description: "Build the operating rhythm to lead people, performance and change.", href: "/manager-effectiveness", cta: "Explore Manager Effectiveness", external: false },
-  { label: "Leader", description: "Lead through complexity with greater alignment, courage and enterprise impact.", href: "/home", cta: "Explore Leader Intelligence", external: false },
+  { label: "Leader", description: "Lead through complexity with greater alignment, courage and enterprise impact.", href: "/leader", cta: "Explore Leader Intelligence", external: false },
   { label: "Executive", description: "Lead strategic choices with a private intelligence cockpit for mandate, decisions, and enterprise impact.", href: "/executive", cta: "Explore Executive Intelligence", external: false },
   { label: "Organisation", description: "Create one connected capability path for critical populations and priorities.", href: organisationConversationUrl, cta: "Explore for organisations", external: true },
 ] as const;
@@ -58,7 +58,7 @@ export default function Landing() {
           <a href={sectionLink("intelligence-core")}>Intelligence Core</a>
           <a href={sectionLink("organisations")}>For Organisations</a>
         </nav>
-        <div className="ln-nav__actions"><a className="ln-demo-link" href="/demo"><Play size={13} fill="currentColor" /> View demo</a><a className="ln-login" href="/login?returnTo=%2Fhome">Login</a></div>
+        <div className="ln-nav__actions"><a className="ln-demo-link" href="/demo"><Play size={13} fill="currentColor" /> View demo</a><a className="ln-login" href="/login?returnTo=%2Fleader">Login</a></div>
         <button type="button" className="ln-menu-toggle" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}>{mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}</button>
       </header>
 
@@ -67,7 +67,7 @@ export default function Landing() {
         <a href={sectionLink("intelligence-core")} onClick={() => setMobileMenuOpen(false)}>Intelligence Core</a>
         <a href={sectionLink("organisations")} onClick={() => setMobileMenuOpen(false)}>For Organisations</a>
         <a href="/demo" onClick={() => setMobileMenuOpen(false)}>View demo</a>
-        <a href="/login?returnTo=%2Fhome" onClick={() => setMobileMenuOpen(false)}>Login</a>
+        <a href="/login?returnTo=%2Fleader" onClick={() => setMobileMenuOpen(false)}>Login</a>
       </nav>}
 
       <section className="ln-hero ln-hero--simple">
@@ -175,7 +175,7 @@ export default function Landing() {
         <div className="ln-section-frame ln-final-cta__frame"><p className="ln-eyebrow ln-eyebrow--gold"><span /> Your next level</p><h2>Your people already have a next level.<br /><em>Help them get ready for it.</em></h2><div className="ln-final-cta__actions"><a className="ln-button" href={organisationConversationUrl} target="_blank" rel="noreferrer">Start a conversation <ArrowRight size={17} /></a></div></div>
       </section>
 
-      <footer className="ln-footer"><div className="ln-section-frame ln-footer__frame"><div className="ln-footer__brand"><img src="/logo.png" alt="LevelNext" /><p>Professional Intelligence for what’s next.</p></div><div className="ln-footer__links"><div><p>Platform</p><a href="/early-career">Early Career Intelligence</a><a href="/pe">Professional Intelligence</a><a href="/manager-effectiveness">Manager Effectiveness</a><a href="/home">Leader Intelligence</a><a href="/executive">Executive Intelligence</a></div><div><p>Organisations</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Enterprise</a><a href={sectionLink("how-it-works")}>How it works</a><a href={sectionLink("intelligence-core")}>Intelligence Core</a></div></div><p className="ln-footer__meta">LevelNext — A Meta Results Platform <a href="#top">Back to top <ChevronDown size={13} /></a></p></div></footer>
+      <footer className="ln-footer"><div className="ln-section-frame ln-footer__frame"><div className="ln-footer__brand"><img src="/logo.png" alt="LevelNext" /><p>Professional Intelligence for what’s next.</p></div><div className="ln-footer__links"><div><p>Platform</p><a href="/early-career">Early Career Intelligence</a><a href="/pe">Professional Intelligence</a><a href="/manager-effectiveness">Manager Effectiveness</a><a href="/leader">Leader Intelligence</a><a href="/executive">Executive Intelligence</a></div><div><p>Organisations</p><a href={organisationConversationUrl} target="_blank" rel="noreferrer">Enterprise</a><a href={sectionLink("how-it-works")}>How it works</a><a href={sectionLink("intelligence-core")}>Intelligence Core</a></div></div><p className="ln-footer__meta">LevelNext — A Meta Results Platform <a href="#top">Back to top <ChevronDown size={13} /></a></p></div></footer>
     </main>
   );
 }

@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
@@ -201,7 +201,7 @@ function PostLoginProductActivator() {
     onSuccess: (data) => {
       utils.products.getActiveProduct.invalidate();
       utils.products.getEnrolledProducts.invalidate();
-      const dest = data.productId === "career_intelligence" ? "/career" : data.productId === "manager_effectiveness" ? "/manager" : data.productId === "launch_intelligence" ? "/launch/home" : data.productId === "professional_effectiveness" ? "/pe" : data.productId === "early_career_intelligence" ? "/early-career" : "/home";
+      const dest = data.productId === "career_intelligence" ? "/career" : data.productId === "manager_effectiveness" ? "/manager" : data.productId === "launch_intelligence" ? "/launch/home" : data.productId === "professional_effectiveness" ? "/pe" : data.productId === "early_career_intelligence" ? "/early-career" : "/leader";
       window.location.replace(dest);
     },
   });
@@ -212,13 +212,23 @@ function PostLoginProductActivator() {
     if (!pending) return;
     // Only act if we're on the home/landing page (post-OAuth redirect)
     const path = window.location.pathname;
-    if (path !== "/" && path !== "/home") return;
+    if (path !== "/" && path !== "/home" && path !== "/leader") return;
     localStorage.removeItem(LS_KEY);
     enrollMutation.mutate({ productId: pending });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return null;
+}
+
+function LegacyLeaderHomeRedirect() {
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    navigate("/leader", { replace: true });
+  }, [navigate]);
+
+  return <Home />;
 }
 
 function Router() {
@@ -250,7 +260,8 @@ function Router() {
       <Route path="/admin/critical-thinking" component={CriticalThinkingPlatformAdmin} />
 
       {/* Platform (authenticated) */}
-      <Route path="/home" component={Home} />
+      <Route path="/leader" component={Home} />
+      <Route path="/home" component={LegacyLeaderHomeRedirect} />
       <Route path="/my-edge" component={MyEdge} />
       <Route path="/guide" component={Guide} />
       <Route path="/practice" component={PracticeCoach} />

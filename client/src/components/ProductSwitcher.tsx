@@ -33,7 +33,7 @@ export const PRODUCT_CONFIG: Record<string, {
     icon: Brain,
     color: "var(--color-ln-yellow)",
     description: "Lead with clarity and impact",
-    homeRoute: "/home",
+    homeRoute: "/leader",
   },
   career_intelligence: {
     label: "Career Transition Intelligence",

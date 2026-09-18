@@ -21,7 +21,7 @@ describe("LevelNext Tech Intelligence landing page", () => {
     expect(page).toContain("Future state");
   });
 
-  it("shows the full relevant platform pathway and source-linked coaching evidence", () => {
+  it("shows the focused platform pathway and keeps the diagnostic in Tech Intelligence", () => {
     const page = renderToStaticMarkup(createElement(TechIntelligenceLanding));
     expect(page).toContain("Tech Impact Diagnostic");
     expect(page).toContain("Private AI Coaching");
@@ -29,30 +29,15 @@ describe("LevelNext Tech Intelligence landing page", () => {
     expect(page).toContain("Technical Playbooks");
     expect(page).toContain("Real-Work Missions");
     expect(page).toContain("Success Partner Support");
-    expect(page).toContain("39%");
-    expect(page).toContain("63%");
-    expect(page).toContain("0.43–0.74");
-    expect(page).toContain("World Economic Forum");
-    expect(page).toContain("Cannon-Bowers");
     expect(page).toContain("Cost Calculator for Not Coaching");
     expect(page).toContain("Illustrative annual friction exposure");
-    expect(page).toContain("Live scheduling");
     expect(page).toContain("tidycal.com/metaresults/pilot");
-    expect(page).toContain("Open secure booking calendar");
-    expect(page).toContain("secure Meta Results booking calendar");
-    expect(page).not.toContain("tidycal-embed");
-    expect(page).not.toContain("embed.js");
+    expect(page).toContain('href="/engineering/diagnostic"');
+    expect(page).toContain("Open diagnostic");
+    expect(page).not.toContain("Evidence belongs in");
+    expect(page).not.toContain("Make the next");
+    expect(page).not.toContain("Bring a real");
+    expect(page).not.toContain("Microsoft coaching ecosystem");
     expect(page).not.toContain("<iframe");
-    expect(page).toContain("Buyer resources");
-    expect(page).toContain("External Coaching Evidence Brief");
-    expect(page).toContain("Microsoft coaching ecosystem");
-    expect(page).toContain("670.4% ROI");
-    expect(page).toContain("not a LevelNext benchmark or forecast");
-    expect(page).toContain("We do not publish a Gartner ROI statistic");
-    expect(page).toContain("levelnext-tech-intelligence-external-coaching-evidence-brief_0237fd4c.pdf");
-    expect(page).toContain('href="/manus-storage/levelnext-tech-intelligence-external-coaching-evidence-brief_0237fd4c.pdf"');
-    expect(page).toContain('download="LevelNext-Tech-Intelligence-External-Coaching-Evidence-Brief.pdf"');
-    expect(page).toContain('href="https://coachingfederation.org/blog/the-roi-of-coaching-why-its-worth-the-investment/"');
-    expect(page).toContain('href="https://coachingfederation.org/blog/coaching-statistics-the-roi-of-coaching-in-2024/"');
   });
 });

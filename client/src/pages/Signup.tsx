@@ -20,8 +20,8 @@ const LOGO_URL = "/logo.png";
 const BENEFITS = [
   {
     icon: Brain,
-    title: "6 Precision Diagnostics",
-    desc: "Know exactly where your leadership stands — ECI, LII, TII, GCC, LDI, STI.",
+      title: "4 Precision Diagnostics",
+      desc: "Know exactly where your leadership stands — ECI, LII, LDI, and STI.",
   },
   {
     icon: Target,
@@ -82,7 +82,7 @@ export default function Signup() {
   const resolvedReturnTo = returnToParam ??
     (platformParam === "mep" ? "/manager" :
      platformParam === "career" ? "/career" :
-     platformParam === "leadership" ? "/home" : undefined);
+     platformParam === "leadership" ? "/leader" : undefined);
   const isManagerEffectivenessSignup = platformParam === "mep";
   const whatsappNumber = buildWhatsappNumber(whatsappCountryCode, whatsappLocalNumber);
 

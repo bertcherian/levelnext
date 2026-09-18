@@ -3,8 +3,9 @@ import { getLeaderNavigationGroups, LEADER_BOTTOM_TABS } from "./leaderNavigatio
 
 describe("Leader Intelligence navigation", () => {
   it("keeps the primary leadership path focused and outcome-oriented", () => {
-    const labels = getLeaderNavigationGroups(false)
-      .flatMap((group) => group.items)
+    const items = getLeaderNavigationGroups(false)
+      .flatMap((group) => group.items);
+    const labels = items
       .map((item) => item.label);
 
     expect(labels).toEqual([
@@ -14,11 +15,14 @@ describe("Leader Intelligence navigation", () => {
       "My Edge",
       "Growth",
       "Diagnostics",
+      "Behavioural Intel",
       "Insights & Reports",
       "Playbook",
       "Next Chapter",
+      "Behavioural Heatmap",
       "Settings",
     ]);
+    expect(items.find((item) => item.label === "Home")?.href).toBe("/leader");
     expect(labels).not.toContain("Intelligence");
     expect(labels).not.toContain("Progress");
     expect(labels).not.toContain("Patterns");

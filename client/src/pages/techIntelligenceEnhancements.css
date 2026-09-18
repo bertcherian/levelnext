@@ -37,3 +37,4 @@
 .ti-platform__grid article:hover{background:#fff8df;box-shadow:0 10px 22px rgba(16,42,67,.1)}
 .ti-platform__grid article:hover>div svg{transform:scale(1.12)}
 @media (prefers-reduced-motion: reduce){.ti-platform__grid article,.ti-platform__grid article>div svg{transition:none}.ti-platform__grid article:hover>div svg{transform:none}}
+.ti-platform__cta{display:inline-flex;align-items:center;gap:7px;margin-top:18px;color:var(--ti-navy);font-size:11px;font-weight:800;text-decoration:none;border-bottom:1px solid var(--ti-gold);padding-bottom:3px;transition:gap .16s ease,color .16s ease}.ti-platform__cta:hover{gap:10px;color:#8d6e10}
