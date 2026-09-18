@@ -19,15 +19,17 @@ describe("LevelNext conversion landing page", () => {
     expect(page).not.toContain("ln-product-visual");
   });
 
-  it("follows the buyer journey from gap to impact to pilot", () => {
+  it("follows the buyer journey from impact to pilot", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain("Knowing isn’t the problem.");
+    expect(page).not.toContain("The current state");
+    expect(page).not.toContain("Knowing isn’t the problem.");
     expect(page).toContain("Small behaviour gaps create");
     expect(page).toContain("Manager bottlenecks");
     expect(page).toContain("Don’t take our word for it.");
     expect(page).toContain("Test it for 60 days.");
     expect(page).toContain("Every person in a LevelNext programme is assigned a Success Partner");
+    expect(page).toContain("A human supports you.");
     expect(page).toContain("Support");
     expect(page).toContain("Encourage");
     expect(page).toContain("Provide accountability");

@@ -6,7 +6,6 @@ import {
   CalendarClock,
   Check,
   ChevronDown,
-  Eye,
   FlaskConical,
   Layers3,
   Menu,
@@ -22,14 +21,6 @@ import "./landing.css";
 
 const pilotUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=60_day_pilot";
 const talkUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=talk_to_levelnext";
-
-const gapRows = [
-  ["They know they should delegate.", "But they still do it themselves."],
-  ["They know they should coach.", "But they keep giving answers."],
-  ["They know they should give feedback.", "But difficult conversations get postponed."],
-  ["They know they should think strategically.", "But operations consume their day."],
-  ["They know they should speak up.", "But important conversations remain unspoken."],
-] as const;
 
 const impactRows = [
   ["Poor delegation", "Manager bottlenecks"],
@@ -84,11 +75,9 @@ export default function Landing() {
 
     <section className="ln-hero" aria-labelledby="hero-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-hero__content ln-section-frame"><div className="ln-hero__copy-block"><SectionEyebrow icon={Sparkles} light>Human + AI behaviour change</SectionEyebrow><h1 id="hero-title"><span>Trained your Managers?</span><em>But nothing changed, right?</em></h1><p className="ln-hero__subhead">LevelNext turns leadership development into measurable behaviour change — through AI coaching, Human touch, Practice and Real-Work Actions.</p><div className="ln-hero__actions"><PilotButton /><a className="ln-button ln-button--ghost" href="#pilot">See the pilot <ArrowRight size={16} /></a></div><p className="ln-proofline"><span>20–50 people</span><i /><span>Measure before &amp; after</span><i /><span>Scale only if it works</span></p><PilotVisual /></div></div></section>
 
-    <section className="ln-gap" aria-labelledby="gap-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={Eye}>The current state</SectionEyebrow><SectionHeading id="gap-title" first="Knowing isn’t the problem." second="Doing is." /><p>Most leadership development creates awareness. The harder question is whether that awareness survives the next meeting, decision or difficult conversation.</p></div><div className="ln-gap-list">{gapRows.map(([knowing, doing], index) => <article key={knowing}><span>0{index + 1}</span><p>{knowing}</p><strong>{doing}</strong></article>)}</div><p className="ln-gap-close">That’s the gap <b>LevelNext closes.</b></p></div></section>
-
     <section className="ln-impact" aria-labelledby="impact-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={TrendingUp} light>The business impact</SectionEyebrow><SectionHeading id="impact-title" first="Small behaviour gaps create" second="big business costs." /><p>Leadership capability isn’t an HR issue when it starts affecting execution.</p></div><div className="ln-impact-list">{impactRows.map(([gap, consequence], index) => <div key={gap}><span>0{index + 1}</span><strong>{gap}</strong><ArrowRight size={18} /><b>{consequence}</b></div>)}</div></div></section>
 
-    <section className="ln-human-support" aria-labelledby="human-support-title"><div className="ln-section-frame ln-human-support__frame"><div className="ln-human-support__intro"><SectionEyebrow icon={UsersRound} light>AI + human support</SectionEyebrow><SectionHeading id="human-support-title" first="AI helps you practise." second="A human helps it stick." /><p>Every person in a LevelNext programme is assigned a Success Partner—a real person who stays close to their journey, not just their dashboard.</p></div><div className="ln-human-support__commitments"><article><span><UsersRound size={18} aria-hidden="true" /></span><div><h3>Support</h3><p>Help participants turn insight into a practical next step at work.</p></div></article><article><span><Sparkles size={18} aria-hidden="true" /></span><div><h3>Encourage</h3><p>Keep momentum going when everyday priorities get in the way.</p></div></article><article><span><ShieldCheck size={18} aria-hidden="true" /></span><div><h3>Provide accountability</h3><p>Offer the human follow-through that helps each person succeed.</p></div></article></div></div></section>
+    <section className="ln-human-support" aria-labelledby="human-support-title"><div className="ln-section-frame ln-human-support__frame"><div className="ln-human-support__intro"><SectionEyebrow icon={UsersRound} light>AI + human support</SectionEyebrow><SectionHeading id="human-support-title" first="AI helps you practise." second="A human supports you." /><p>Every person in a LevelNext programme is assigned a Success Partner—a real person who stays close to their journey, not just their dashboard.</p></div><div className="ln-human-support__commitments"><article><span><UsersRound size={18} aria-hidden="true" /></span><div><h3>Support</h3><p>Help participants turn insight into a practical next step at work.</p></div></article><article><span><Sparkles size={18} aria-hidden="true" /></span><div><h3>Encourage</h3><p>Keep momentum going when everyday priorities get in the way.</p></div></article><article><span><ShieldCheck size={18} aria-hidden="true" /></span><div><h3>Provide accountability</h3><p>Offer the human follow-through that helps each person succeed.</p></div></article></div></div></section>
 
     <section className="ln-platform" id="who-its-for" aria-labelledby="platform-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={Layers3} light>One platform for every stage</SectionEyebrow><SectionHeading id="platform-title" first="One platform." second="Every career stage." /><p>Different roles. Different challenges. One way to turn development into behaviour change.</p></div><div className="ln-career-path">{careerStages.map((stage, index) => <a href={stage.href} key={stage.key}><span>0{index + 1}</span><strong>{stage.shortName}</strong><small>{stage.audience}</small><ArrowRight size={15} /></a>)}</div></div></section>
 
@@ -103,4 +92,4 @@ export default function Landing() {
 }
 
 export { PilotButton, PilotVisual, SectionEyebrow, SectionHeading };
-export { gapRows, impactRows, pilotSteps, pilotIncludes, pilotUrl, talkUrl };
+export { impactRows, pilotSteps, pilotIncludes, pilotUrl, talkUrl };
