@@ -7,9 +7,9 @@ describe("LevelNext conversion landing page", () => {
   it("communicates the behaviour-change proposition in the hero", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain("Your managers have been trained.");
-    expect(page).toContain("But has their behaviour changed?");
-    expect(page).toContain("LevelNext turns leadership development into measurable behaviour change");
+    expect(page).toContain("Trained your Managers?");
+    expect(page).toContain("But nothing changed, right?");
+    expect(page).toContain("LevelNext turns leadership development into measurable behaviour change — through AI coaching, Human touch, Practice and Real-Work Actions.");
     expect(page).toContain("20–50 people");
     expect(page).toContain("Measure before &amp; after");
     expect(page).toContain("Scale only if it works");
@@ -37,7 +37,8 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("Early Career");
     expect(page).toContain("Managers");
     expect(page).toContain("Executives");
-    expect(page).toContain("Built on real leadership development.");
+    expect(page).toContain("Built on real");
+    expect(page).toContain("leadership development.");
     expect(page).toContain("client-approved outcome stories");
     expect(page).not.toContain("Professional intelligence for what comes next.");
     expect(page).not.toContain("The Leadership Intelligence Platform");
