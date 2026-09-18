@@ -24,10 +24,13 @@ describe("LevelNext conversion landing page", () => {
 
     expect(page).not.toContain("The current state");
     expect(page).not.toContain("Knowing isn’t the problem.");
-    expect(page).toContain("Small behaviour gaps create");
+    expect(page).toContain("Small action gaps.");
+    expect(page).toContain("Big business costs.");
     expect(page).toContain("Manager bottlenecks");
     expect(page).toContain("Don’t take our word for it.");
     expect(page).toContain("Test it for 60 days.");
+    expect(page).not.toContain("The proof standard");
+    expect(page).not.toContain("Built on real");
     expect(page).toContain("Every person in a LevelNext programme is assigned a Success Partner");
     expect(page).toContain("A human supports you.");
     expect(page).toContain("Support");
@@ -35,7 +38,7 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("Provide accountability");
   });
 
-  it("includes the concise career-stage pathway and defensible proof standard", () => {
+  it("includes the concise career-stage pathway and evidence-led pilot content", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
     expect(page).toContain("One platform.");
@@ -43,9 +46,8 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("Early Career");
     expect(page).toContain("Managers");
     expect(page).toContain("Executives");
-    expect(page).toContain("Built on real");
-    expect(page).toContain("leadership development.");
-    expect(page).toContain("client-approved outcome stories");
+    expect(page).toContain("Designed for evidence");
+    expect(page).toContain("A focused test of behaviour change.");
     expect(page).not.toContain("Professional intelligence for what comes next.");
     expect(page).not.toContain("The Leadership Intelligence Platform");
   });
