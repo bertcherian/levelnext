@@ -27,6 +27,10 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("MEASURE");
     expect(page).toContain("Don’t take our word for it.");
     expect(page).toContain("Test it for 60 days.");
+    expect(page).toContain("Every person in a LevelNext programme is assigned a Success Partner");
+    expect(page).toContain("Support");
+    expect(page).toContain("Encourage");
+    expect(page).toContain("Provide accountability");
   });
 
   it("includes the concise career-stage pathway and defensible proof standard", () => {
