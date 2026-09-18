@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   Activity,
   ArrowRight,
+  BarChart3,
   CalendarClock,
   Check,
   ChevronDown,
@@ -11,6 +12,7 @@ import {
   Menu,
   ShieldCheck,
   Sparkles,
+  Target,
   TrendingUp,
   UsersRound,
   X,
@@ -58,6 +60,20 @@ function SectionHeading({ id, first, second }: { id?: string; first: string; sec
   return <h2 id={id} className="ln-section-heading"><span>{first}</span><em>{second}</em></h2>;
 }
 
+function PilotVisual() {
+  const stages = [
+    ["01", "Baseline", "Measure"],
+    ["02", "Practice", "Apply"],
+    ["03", "Evidence", "Review"],
+  ] as const;
+
+  return <div className="ln-pilot-visual" aria-label="60-day pilot journey: baseline, practice, and evidence">
+    <div className="ln-pilot-visual__header"><span><Target size={15} aria-hidden="true" /> 60-day pilot journey</span><b>Manager cohort</b></div>
+    <div className="ln-pilot-visual__track">{stages.map(([number, title, detail], index) => <div className="ln-pilot-visual__stage" key={number}><span className="ln-pilot-visual__number">{number}</span><div><strong>{title}</strong><small>{detail}</small></div>{index < stages.length - 1 && <i aria-hidden="true" />}</div>)}</div>
+    <div className="ln-pilot-visual__footer"><span><BarChart3 size={14} aria-hidden="true" /> Pre / post visibility</span><span><CalendarClock size={14} aria-hidden="true" /> 8 weeks of action</span></div>
+  </div>;
+}
+
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const closeMenu = () => setMobileMenuOpen(false);
@@ -66,7 +82,7 @@ export default function Landing() {
     <header className="ln-nav"><a className="ln-brand" href="/" aria-label="LevelNext home"><img src="/logo.png" alt="LevelNext" /></a><nav className="ln-nav__links" aria-label="Primary navigation"><a href="#who-its-for">Who it’s for</a><a href="#pilot">Pilot</a><a href="#proof">About</a></nav><div className="ln-nav__actions"><a className="ln-login" href="/login?returnTo=%2Fleader">Login</a><PilotButton className="ln-button--nav" /></div><button type="button" className="ln-menu-toggle" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}>{mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}</button></header>
     {mobileMenuOpen && <nav className="ln-mobile-nav" id="mobile-navigation" aria-label="Mobile navigation"><a href="#who-its-for" onClick={closeMenu}>Who it’s for</a><a href="#pilot" onClick={closeMenu}>Pilot</a><a href="#proof" onClick={closeMenu}>About</a><a href="/login?returnTo=%2Fleader" onClick={closeMenu}>Login</a><PilotButton className="ln-button--mobile" /></nav>}
 
-    <section className="ln-hero" aria-labelledby="hero-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-hero__content ln-section-frame"><div className="ln-hero__copy-block"><SectionEyebrow icon={Sparkles} light>Human + AI behaviour change</SectionEyebrow><h1 id="hero-title"><span>Trained your Managers?</span><em>But nothing changed, right?</em></h1><p className="ln-hero__subhead">LevelNext turns leadership development into measurable behaviour change — through AI coaching, Human touch, Practice and Real-Work Actions.</p><div className="ln-hero__actions"><PilotButton /><a className="ln-button ln-button--ghost" href="#pilot">See the pilot <ArrowRight size={16} /></a></div><p className="ln-proofline"><span>20–50 people</span><i /><span>Measure before &amp; after</span><i /><span>Scale only if it works</span></p></div></div></section>
+    <section className="ln-hero" aria-labelledby="hero-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-hero__content ln-section-frame"><div className="ln-hero__copy-block"><SectionEyebrow icon={Sparkles} light>Human + AI behaviour change</SectionEyebrow><h1 id="hero-title"><span>Trained your Managers?</span><em>But nothing changed, right?</em></h1><p className="ln-hero__subhead">LevelNext turns leadership development into measurable behaviour change — through AI coaching, Human touch, Practice and Real-Work Actions.</p><div className="ln-hero__actions"><PilotButton /><a className="ln-button ln-button--ghost" href="#pilot">See the pilot <ArrowRight size={16} /></a></div><p className="ln-proofline"><span>20–50 people</span><i /><span>Measure before &amp; after</span><i /><span>Scale only if it works</span></p><PilotVisual /></div></div></section>
 
     <section className="ln-gap" aria-labelledby="gap-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={Eye}>The current state</SectionEyebrow><SectionHeading id="gap-title" first="Knowing isn’t the problem." second="Doing is." /><p>Most leadership development creates awareness. The harder question is whether that awareness survives the next meeting, decision or difficult conversation.</p></div><div className="ln-gap-list">{gapRows.map(([knowing, doing], index) => <article key={knowing}><span>0{index + 1}</span><p>{knowing}</p><strong>{doing}</strong></article>)}</div><p className="ln-gap-close">That’s the gap <b>LevelNext closes.</b></p></div></section>
 
@@ -86,5 +102,5 @@ export default function Landing() {
   </main>;
 }
 
-export { PilotButton, SectionEyebrow, SectionHeading };
+export { PilotButton, PilotVisual, SectionEyebrow, SectionHeading };
 export { gapRows, impactRows, pilotSteps, pilotIncludes, pilotUrl, talkUrl };
