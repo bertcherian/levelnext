@@ -22,9 +22,6 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("Knowing isn’t the problem.");
     expect(page).toContain("Small behaviour gaps create");
     expect(page).toContain("Manager bottlenecks");
-    expect(page).toContain("Don’t just teach it.");
-    expect(page).toContain("DIAGNOSE");
-    expect(page).toContain("MEASURE");
     expect(page).toContain("Don’t take our word for it.");
     expect(page).toContain("Test it for 60 days.");
     expect(page).toContain("Every person in a LevelNext programme is assigned a Success Partner");
@@ -59,5 +56,7 @@ describe("LevelNext conversion landing page", () => {
     expect(page.match(/utm_campaign=60_day_pilot/g)?.length).toBeGreaterThanOrEqual(4);
     expect(page).not.toContain("Explore the platform");
     expect(page).not.toContain("One B2B platform.");
+    expect(page).not.toContain("The behaviour-change engine");
+    expect(page).not.toContain("Don’t just teach it.");
   });
 });

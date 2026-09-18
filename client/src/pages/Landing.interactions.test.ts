@@ -22,13 +22,13 @@ describe("LevelNext landing page interactions", () => {
     expect(screen.queryByRole("navigation", { name: "Mobile navigation" })).toBeNull();
   });
 
-  it("exposes a primary pilot CTA and a how-it-works anchor in the hero", () => {
+  it("exposes a primary pilot CTA and a pilot anchor in the hero", () => {
     render(createElement(Landing));
 
     const pilotLinks = screen.getAllByRole("link", { name: /Start a 60-day pilot/i });
     expect(pilotLinks.length).toBeGreaterThan(0);
     expect(pilotLinks[0].getAttribute("href")).toContain("utm_campaign=60_day_pilot");
-    expect(screen.getByRole("link", { name: /See how it works/i }).getAttribute("href")).toBe("#how-it-works");
+    expect(screen.getByRole("link", { name: /See the pilot/i }).getAttribute("href")).toBe("#pilot");
   });
 
   it("keeps the pilot flow focused on evidence and measurable change", () => {
