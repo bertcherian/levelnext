@@ -70,11 +70,11 @@ describe("LevelNext conversion landing page", () => {
   it("uses the canonical product pathways and repeated pilot conversion URL", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain('href="/early-career"');
-    expect(page).toContain('href="/pe"');
-    expect(page).toContain('href="/manager-effectiveness"');
-    expect(page).toContain('href="/leader"');
-    expect(page).toContain('href="/executive"');
+    expect(page).toContain('href="/early-career-intelligence"');
+    expect(page).toContain('href="/professional-intelligence"');
+    expect(page).toContain('href="/manager-intelligence"');
+    expect(page).toContain('href="/leader-intelligence"');
+    expect(page).toContain('href="/executive-intelligence"');
     expect(page.match(/utm_campaign=60_day_pilot/g)?.length).toBeGreaterThanOrEqual(4);
     expect(page).not.toContain("Explore the platform");
     expect(page).not.toContain("One B2B platform.");

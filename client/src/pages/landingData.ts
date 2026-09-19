@@ -28,7 +28,7 @@ export const careerStages: CareerStage[] = [
     buyerOutcome: "Shorten the path from joining to reliable contribution.",
     pipelineMicrocopy: "Accelerate role readiness with common work standards and clear development signals.",
     ctaLabel: "Start your Early Career journey",
-    href: "/early-career",
+    href: "/early-career-intelligence",
     focus: ["Role readiness", "Cohort confidence", "Visible progress"],
   },
   {
@@ -44,7 +44,7 @@ export const careerStages: CareerStage[] = [
     buyerOutcome: "Reduce avoidable delivery friction in the work your business depends on.",
     pipelineMicrocopy: "Strengthen ownership, execution and cross-functional follow-through.",
     ctaLabel: "Start your PEI diagnostic",
-    href: "/pe/assessment",
+    href: "/professional-intelligence",
     focus: ["Execution reliability", "Risk visibility", "Follow-through"],
   },
   {
@@ -60,7 +60,7 @@ export const careerStages: CareerStage[] = [
     buyerOutcome: "Lift team accountability without adding another management programme.",
     pipelineMicrocopy: "Build coaching, delegation and accountability into the manager’s operating rhythm.",
     ctaLabel: "Start your Manager diagnostic",
-    href: "/manager/diagnostics",
+    href: "/manager-intelligence",
     focus: ["Coaching cadence", "Delegation clarity", "Team accountability"],
   },
   {
@@ -76,7 +76,7 @@ export const careerStages: CareerStage[] = [
     buyerOutcome: "Increase your organisation’s capacity to execute the decisions that matter most.",
     pipelineMicrocopy: "Strengthen strategic alignment, enterprise influence and execution across boundaries.",
     ctaLabel: "Start your Leadership diagnostic",
-    href: "/leader",
+    href: "/leader-intelligence",
     focus: ["Strategic alignment", "Decision quality", "Enterprise execution"],
   },
   {
@@ -92,7 +92,7 @@ export const careerStages: CareerStage[] = [
     buyerOutcome: "Improve the quality, cadence, and visibility of executive decision-making.",
     pipelineMicrocopy: "Strengthen mandate clarity, decision quality, and enterprise influence.",
     ctaLabel: "Explore Executive Intelligence",
-    href: "/executive",
+    href: "/executive-intelligence",
     focus: ["Mandate clarity", "Decision quality", "Enterprise impact"],
   },
 ];

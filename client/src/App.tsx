@@ -133,6 +133,7 @@ const EarlyCareerCoach = lazy(() => import("./pages/earlyCareer/EarlyCareerCoach
 const EarlyCareerPractice = lazy(() => import("./pages/earlyCareer/EarlyCareerPractice"));
 const EarlyCareerHR = lazy(() => import("./pages/earlyCareer/EarlyCareerHR"));
 const ExecutiveIntelligence = lazy(() => import("./pages/ExecutiveIntelligence"));
+const CareerStageLanding = lazy(() => import("./pages/CareerStageLanding"));
 const SalesIntelligence = lazy(() => import("./pages/SalesIntelligence"));
 const CriticalThinkingHome = lazy(() => import("./pages/CriticalThinkingHome"));
 const CriticalThinkingAssessment = lazy(() => import("./pages/CriticalThinkingAssessment"));
@@ -238,6 +239,11 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/demo" component={EngineeringDemo} />
       <Route path="/tech-intelligence" component={TechIntelligenceLanding} />
+      <Route path="/early-career-intelligence" component={() => <CareerStageLanding stageKey="early-career" />} />
+      <Route path="/professional-intelligence" component={() => <CareerStageLanding stageKey="professional" />} />
+      <Route path="/manager-intelligence" component={() => <CareerStageLanding stageKey="manager" />} />
+      <Route path="/leader-intelligence" component={() => <CareerStageLanding stageKey="leader" />} />
+      <Route path="/executive-intelligence" component={() => <CareerStageLanding stageKey="executive" />} />
       <Route path="/onboard" component={Onboarding} />
       <Route path="/report/:slug" component={Report} />
       <Route path="/cpi-report/:slug" component={CpiReport} />

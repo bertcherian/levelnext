@@ -30,11 +30,11 @@ describe("LevelNext landing page content model", () => {
       "Executives & Senior Enterprise Leaders",
     ]);
     expect(careerStages.map((stage) => stage.href)).toEqual([
-      "/early-career",
-      "/pe/assessment",
-      "/manager/diagnostics",
-      "/home",
-      "/executive",
+      "/early-career-intelligence",
+      "/professional-intelligence",
+      "/manager-intelligence",
+      "/leader-intelligence",
+      "/executive-intelligence",
     ]);
     expect(careerStages.map((stage) => stage.pipelineMicrocopy)).toEqual([
       expect.stringMatching(/role readiness/i),
