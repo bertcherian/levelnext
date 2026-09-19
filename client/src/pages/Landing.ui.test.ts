@@ -27,6 +27,12 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("Small action gaps.");
     expect(page).toContain("Big business costs.");
     expect(page).toContain("Manager bottlenecks");
+    expect((page.match(/ln-impact-list__visual/g) ?? []).length).toBe(5);
+    expect(page).toContain("Delegation and team capacity");
+    expect(page).toContain("Coaching and team independence");
+    expect(page).toContain("Feedback and performance");
+    expect(page).toContain("Influence and decision speed");
+    expect(page).toContain("Strategic capacity and operating rhythm");
     expect(page).toContain("Don’t take our word for it.");
     expect(page).toContain("Test it for 60 days.");
     expect(page).not.toContain("The proof standard");

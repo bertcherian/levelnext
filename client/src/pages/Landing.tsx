@@ -8,6 +8,7 @@ import {
   ChevronDown,
   FlaskConical,
   Layers3,
+  MessageCircle,
   Menu,
   ShieldCheck,
   Sparkles,
@@ -23,11 +24,11 @@ const pilotUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm
 const talkUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=talk_to_levelnext";
 
 const impactRows = [
-  ["Poor delegation", "Manager bottlenecks"],
-  ["Weak coaching", "Dependent teams"],
-  ["Avoided feedback", "Persistent performance problems"],
-  ["Weak influence", "Slower decisions"],
-  ["Operational thinking", "Less strategic capacity"],
+  { gap: "Poor delegation", consequence: "Manager bottlenecks", icon: UsersRound, label: "Delegation and team capacity" },
+  { gap: "Weak coaching", consequence: "Dependent teams", icon: MessageCircle, label: "Coaching and team independence" },
+  { gap: "Avoided feedback", consequence: "Persistent performance problems", icon: ShieldCheck, label: "Feedback and performance" },
+  { gap: "Weak influence", consequence: "Slower decisions", icon: TrendingUp, label: "Influence and decision speed" },
+  { gap: "Operational thinking", consequence: "Less strategic capacity", icon: Activity, label: "Strategic capacity and operating rhythm" },
 ] as const;
 
 const pilotSteps = [
@@ -75,7 +76,7 @@ export default function Landing() {
 
     <section className="ln-hero" aria-labelledby="hero-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-hero__content ln-section-frame"><div className="ln-hero__copy-block"><SectionEyebrow icon={Sparkles} light>Human + AI behaviour change</SectionEyebrow><h1 id="hero-title"><span>Trained your Managers?</span><em>But nothing changed, right?</em></h1><p className="ln-hero__subhead">LevelNext turns leadership development into measurable behaviour change — through AI coaching, Human touch, Practice and Real-Work Actions.</p><div className="ln-hero__actions"><PilotButton /><a className="ln-button ln-button--ghost" href="#pilot">See the pilot <ArrowRight size={16} /></a></div><p className="ln-proofline"><span>20–50 people</span><i /><span>Measure before &amp; after</span><i /><span>Scale only if it works</span></p><PilotVisual /></div></div></section>
 
-    <section className="ln-impact" aria-labelledby="impact-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={TrendingUp} light>The business impact</SectionEyebrow><SectionHeading id="impact-title" first="Small action gaps." second="Big business costs." /><p>Leadership capability isn’t an HR issue when it starts affecting execution.</p></div><div className="ln-impact-list">{impactRows.map(([gap, consequence], index) => <div key={gap}><span>0{index + 1}</span><strong>{gap}</strong><ArrowRight size={18} /><b>{consequence}</b></div>)}</div></div></section>
+    <section className="ln-impact" aria-labelledby="impact-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={TrendingUp} light>The business impact</SectionEyebrow><SectionHeading id="impact-title" first="Small action gaps." second="Big business costs." /><p>Leadership capability isn’t an HR issue when it starts affecting execution.</p></div><div className="ln-impact-list">{impactRows.map(({ gap, consequence, icon: Icon, label }, index) => <div key={gap}><span className="ln-impact-list__number">0{index + 1}</span><span className="ln-impact-list__visual" aria-label={label}><Icon size={20} strokeWidth={1.8} aria-hidden="true" /></span><strong>{gap}</strong><ArrowRight size={18} /><b>{consequence}</b></div>)}</div></div></section>
 
     <section className="ln-human-support" aria-labelledby="human-support-title"><div className="ln-section-frame ln-human-support__frame"><div className="ln-human-support__intro"><SectionEyebrow icon={UsersRound} light>AI + human support</SectionEyebrow><SectionHeading id="human-support-title" first="AI helps you practise." second="A human supports you." /><p>Every person in a LevelNext programme is assigned a Success Partner—a real person who stays close to their journey, not just their dashboard.</p></div><div className="ln-human-support__commitments"><article><span><UsersRound size={18} aria-hidden="true" /></span><div><h3>Support</h3><p>Help participants turn insight into a practical next step at work.</p></div></article><article><span><Sparkles size={18} aria-hidden="true" /></span><div><h3>Encourage</h3><p>Keep momentum going when everyday priorities get in the way.</p></div></article><article><span><ShieldCheck size={18} aria-hidden="true" /></span><div><h3>Provide accountability</h3><p>Offer the human follow-through that helps each person succeed.</p></div></article></div></div></section>
 
