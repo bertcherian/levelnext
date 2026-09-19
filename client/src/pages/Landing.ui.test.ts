@@ -1,4 +1,5 @@
 import { createElement } from "react";
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import Landing from "./Landing";
@@ -79,5 +80,13 @@ describe("LevelNext conversion landing page", () => {
     expect(page).not.toContain("One B2B platform.");
     expect(page).not.toContain("The behaviour-change engine");
     expect(page).not.toContain("Don’t just teach it.");
+  });
+
+  it("adds an accessible Chrome Yellow glow to career-stage cards", () => {
+    const styles = readFileSync("client/src/pages/landing.css", "utf8");
+
+    expect(styles).toContain(".ln-career-path a:hover,.ln-career-path a:focus-visible");
+    expect(styles).toContain("outline:1px solid rgba(212,175,55,.82)");
+    expect(styles).toContain("box-shadow:0 0 18px rgba(212,175,55,.16)");
   });
 });
