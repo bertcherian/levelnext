@@ -89,4 +89,14 @@ describe("LevelNext conversion landing page", () => {
     expect(styles).toContain("outline:1px solid rgba(212,175,55,.82)");
     expect(styles).toContain("box-shadow:0 0 18px rgba(212,175,55,.16)");
   });
+
+  it("gives the hero headline and supporting lines more breathing room", () => {
+    const styles = readFileSync("client/src/pages/landing.css", "utf8");
+
+    expect(styles).toContain("letter-spacing:-.035em");
+    expect(styles).toContain("font-weight:400;letter-spacing:-.02em");
+    expect(styles).toContain(".ln-hero__subhead{max-width:820px;margin-top:62px;");
+    expect(styles).toContain(".ln-proofline{margin-top:38px;");
+    expect(styles).toContain(".ln-hero__subhead{margin-top:42px;font-size:15px}");
+  });
 });
