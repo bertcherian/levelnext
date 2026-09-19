@@ -15,6 +15,9 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("Scale only if it works");
     expect(page).toContain("60-day pilot journey");
     expect(page).toContain("Pre / post visibility");
+    expect(page).toContain("Growth in action");
+    expect(page).toContain("Illustrative behaviour-change signal rising from baseline to day 60");
+    expect(page).toContain("Day 60");
     expect(page).not.toContain("Behaviour change cockpit");
     expect(page).not.toContain("ln-product-visual");
   });
@@ -33,7 +36,8 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("Feedback and performance");
     expect(page).toContain("Influence and decision speed");
     expect(page).toContain("Strategic capacity and operating rhythm");
-    expect(page).toContain("Don’t take our word for it.");
+    expect(page).toContain("Don’t take our word.");
+    expect(page).not.toContain("Don’t take our word for it.");
     expect(page).toContain("Test it for 60 days.");
     expect(page).not.toContain("The proof standard");
     expect(page).not.toContain("Built on real");
