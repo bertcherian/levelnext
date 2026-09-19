@@ -31,6 +31,7 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("Big business costs.");
     expect(page).toContain("Manager bottlenecks");
     expect((page.match(/ln-impact-list__visual/g) ?? []).length).toBe(5);
+    expect(page).not.toContain("ln-impact-list__number");
     expect(page).toContain("Delegation and team capacity");
     expect(page).toContain("Coaching and team independence");
     expect(page).toContain("Feedback and performance");
@@ -42,7 +43,8 @@ describe("LevelNext conversion landing page", () => {
     expect(page).not.toContain("The proof standard");
     expect(page).not.toContain("Built on real");
     expect(page).toContain("Every person in a LevelNext programme is assigned a Success Partner");
-    expect(page).toContain("A human supports you.");
+    expect(page).toContain("A human supports.");
+    expect(page).not.toContain("A human supports you.");
     expect(page).toContain("Support");
     expect(page).toContain("Encourage");
     expect(page).toContain("Provide accountability");
@@ -56,6 +58,8 @@ describe("LevelNext conversion landing page", () => {
     expect(page).toContain("Early Career");
     expect(page).toContain("Managers");
     expect(page).toContain("Executives");
+    expect((page.match(/ln-career-path__number/g) ?? []).length).toBe(5);
+    expect((page.match(/ln-career-path__icon/g) ?? []).length).toBe(5);
     expect(page).toContain("Designed for evidence");
     expect(page).toContain("A focused test of behaviour change.");
     expect(page).not.toContain("Professional intelligence for what comes next.");
