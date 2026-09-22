@@ -116,6 +116,7 @@ const Intelligence = lazy(() => import("./pages/Intelligence"));
 const NarrativeIntelligence = lazy(() => import("./pages/NarrativeIntelligence"));
 const BehaviouralIntelligenceStudio = lazy(() => import("@/pages/BehaviouralIntelligenceStudio"));
 const BehaviouralSponsorHeatmap = lazy(() => import("@/pages/BehaviouralSponsorHeatmap"));
+const PersonaBuilder = lazy(() => import("@/pages/PersonaBuilder"));
 const SponsorCapacityDashboard = lazy(() => import("@/pages/SponsorCapacityDashboard"));
 const AcademyHome = lazy(() => import("@/pages/AcademyHome"));
 const AcademyDiagnostic = lazy(() => import("@/pages/AcademyDiagnostic"));
@@ -277,6 +278,7 @@ function Router() {
       <Route path="/narrative" component={NarrativeIntelligence} />
       <Route path="/narrative-intelligence" component={NarrativeIntelligence} />
       <Route path="/behavioural-intelligence" component={() => <BehaviouralIntelligenceStudio />} />
+      <Route path="/persona" component={PersonaBuilder} />
       <Route path="/organisation/behavioural-intelligence" component={BehaviouralSponsorHeatmap} />
       <Route path="/organisation/effectiveness" component={SponsorCapacityDashboard} />
       {/* LevelNext Academy */}
@@ -338,6 +340,7 @@ function Router() {
       <Route path="/manager/practice" component={withMepLayout(<ManagerPractice />)} />
       <Route path="/manager/narrative" component={withMepLayout(<NarrativeIntelligence />)} />
       <Route path="/manager/behavioural-intelligence" component={withMepLayout(<BehaviouralIntelligenceStudio sourceApp="mep" />)} />
+      <Route path="/manager/persona" component={withMepLayout(<PersonaBuilder />)} />
       <Route path="/manager/team" component={withMepLayout(<TeamIntelligence />)} />
       <Route path="/manager/progress" component={withMepLayout(<ManagerProgress />)} />
       {/* Legacy redirects — old routes still work */}

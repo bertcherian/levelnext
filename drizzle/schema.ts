@@ -4732,3 +4732,158 @@ export const warRoomAuditEvents = mysqlTable(
 );
 export type WarRoomAuditEvent = typeof warRoomAuditEvents.$inferSelect;
 export type InsertWarRoomAuditEvent = typeof warRoomAuditEvents.$inferInsert;
+
+// ─── Persona Builder: private behavior-change journey ───────────────────────
+export const personaBuilderJourneys = mysqlTable(
+  "persona_builder_journeys",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id),
+    tenantId: int("tenantId").references(() => tenants.id),
+    momentId: int("momentId").notNull().references(() => biMoments.id),
+    sourceApp: varchar("sourceApp", { length: 80 }).default("persona_builder").notNull(),
+    status: mysqlEnum("status", ["active", "paused", "completed", "abandoned"]).default("active").notNull(),
+    currentStage: mysqlEnum("currentStage", ["discovery", "pattern", "commitment", "persona", "rep", "evidence", "completed"]).default("discovery").notNull(),
+    integrationStatus: mysqlEnum("integrationStatus", ["scaffold_needed", "scaffold_can_be_activated", "less_activation_needed", "increasingly_natural", "integrated"]).default("scaffold_needed").notNull(),
+    activePersonaId: int("activePersonaId"),
+    startedAt: timestamp("startedAt").defaultNow().notNull(),
+    targetEndAt: timestamp("targetEndAt"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("persona_builder_journeys_user_status_idx").on(table.userId, table.status),
+    index("persona_builder_journeys_tenant_idx").on(table.tenantId, table.createdAt),
+  ],
+);
+export type PersonaBuilderJourney = typeof personaBuilderJourneys.$inferSelect;
+export type InsertPersonaBuilderJourney = typeof personaBuilderJourneys.$inferInsert;
+
+export const personaBuilderEpisodes = mysqlTable(
+  "persona_builder_episodes",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    episodeText: text("episodeText").notNull(),
+    provenance: json("provenance").$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("persona_builder_episodes_journey_idx").on(table.journeyId, table.createdAt),
+    index("persona_builder_episodes_user_idx").on(table.userId, table.createdAt),
+  ],
+);
+export type PersonaBuilderEpisode = typeof personaBuilderEpisodes.$inferSelect;
+export type InsertPersonaBuilderEpisode = typeof personaBuilderEpisodes.$inferInsert;
+
+export const personaBuilderPatternSnapshots = mysqlTable(
+  "persona_builder_pattern_snapshots",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    version: int("version").notNull(),
+    pattern: json("pattern").$type<Record<string, unknown>>().notNull(),
+    modelStatus: mysqlEnum("modelStatus", ["success", "fallback"]).notNull(),
+    fallbackReason: varchar("fallbackReason", { length: 120 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("persona_builder_patterns_journey_idx").on(table.journeyId, table.version),
+    index("persona_builder_patterns_user_idx").on(table.userId, table.createdAt),
+  ],
+);
+export type PersonaBuilderPatternSnapshot = typeof personaBuilderPatternSnapshots.$inferSelect;
+export type InsertPersonaBuilderPatternSnapshot = typeof personaBuilderPatternSnapshots.$inferInsert;
+
+export const personaBuilderCommitments = mysqlTable(
+  "persona_builder_commitments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    statement: text("statement").notNull(),
+    observableBehavior: text("observableBehavior").notNull(),
+    provenance: json("provenance").$type<Record<string, unknown>>().notNull(),
+    status: mysqlEnum("status", ["active", "retired"]).default("active").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("persona_builder_commitments_journey_idx").on(table.journeyId, table.status),
+    index("persona_builder_commitments_user_idx").on(table.userId, table.createdAt),
+  ],
+);
+export type PersonaBuilderCommitment = typeof personaBuilderCommitments.$inferSelect;
+export type InsertPersonaBuilderCommitment = typeof personaBuilderCommitments.$inferInsert;
+
+export const personaBuilderPersonas = mysqlTable(
+  "persona_builder_personas",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    candidateIndex: int("candidateIndex").notNull(),
+    persona: json("persona").$type<Record<string, unknown>>().notNull(),
+    status: mysqlEnum("status", ["proposed", "selected", "retired"]).default("proposed").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("persona_builder_personas_journey_idx").on(table.journeyId, table.status),
+    index("persona_builder_personas_user_idx").on(table.userId, table.createdAt),
+  ],
+);
+export type PersonaBuilderPersona = typeof personaBuilderPersonas.$inferSelect;
+export type InsertPersonaBuilderPersona = typeof personaBuilderPersonas.$inferInsert;
+
+export const personaBuilderReps = mysqlTable(
+  "persona_builder_reps",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    momentId: int("momentId").notNull().references(() => biMoments.id),
+    userId: int("userId").notNull().references(() => users.id),
+    personaId: int("personaId").references(() => personaBuilderPersonas.id),
+    commitmentId: int("commitmentId").notNull().references(() => personaBuilderCommitments.id),
+    instruction: text("instruction").notNull(),
+    trigger: text("trigger").notNull(),
+    successSignal: text("successSignal").notNull(),
+    fallbackIfUnsafe: text("fallbackIfUnsafe").notNull(),
+    difficulty: int("difficulty").default(1).notNull(),
+    status: mysqlEnum("status", ["active", "completed", "retired"]).default("active").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("persona_builder_reps_journey_status_idx").on(table.journeyId, table.status),
+    index("persona_builder_reps_user_idx").on(table.userId, table.createdAt),
+  ],
+);
+export type PersonaBuilderRep = typeof personaBuilderReps.$inferSelect;
+export type InsertPersonaBuilderRep = typeof personaBuilderReps.$inferInsert;
+
+export const personaBuilderCheckins = mysqlTable(
+  "persona_builder_checkins",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    repId: int("repId").notNull().references(() => personaBuilderReps.id),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    opportunityStatus: mysqlEnum("opportunityStatus", ["arose", "did_not_arise", "unclear"]).notNull(),
+    executionStatus: mysqlEnum("executionStatus", ["yes", "partly", "no", "not_applicable"]).notNull(),
+    reflection: text("reflection"),
+    outcome: text("outcome"),
+    evidenceId: int("evidenceId").references(() => biEvidence.id),
+    nextAction: mysqlEnum("nextAction", ["keep_rep", "repeat_with_adjustment", "increase_difficulty", "simplify_and_practice"]).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("persona_builder_checkins_rep_idx").on(table.repId, table.createdAt),
+    index("persona_builder_checkins_user_idx").on(table.userId, table.createdAt),
+  ],
+);
+export type PersonaBuilderCheckin = typeof personaBuilderCheckins.$inferSelect;
+export type InsertPersonaBuilderCheckin = typeof personaBuilderCheckins.$inferInsert;

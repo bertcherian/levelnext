@@ -78,6 +78,7 @@ import { academyRouter } from "./routers/academy";
 import { accountRouter } from "./routers/account";
 import { effectivenessIntelligenceRouter } from "./routers/effectivenessIntelligence";
 import { warRoomRouter } from "./routers/warRoom";
+import { personaBuilderRouter } from "./routers/personaBuilder";
 
 export const appRouter = router({
   system: systemRouter,
@@ -165,6 +166,7 @@ export const appRouter = router({
   academy: academyRouter,
   effectiveness: effectivenessIntelligenceRouter,
   warRoom: warRoomRouter,
+  personaBuilder: personaBuilderRouter,
 });
 
 export type AppRouter = typeof appRouter;

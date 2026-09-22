@@ -15,4 +15,11 @@ describe("Manager Effectiveness navigation", () => {
       href: "/manager/narrative",
     }));
   });
+
+  it("provides a direct entry point for Persona Builder", () => {
+    expect(MEP_NAV_ITEMS).toContainEqual(expect.objectContaining({
+      label: "Persona Builder",
+      href: "/manager/persona",
+    }));
+  });
 });
