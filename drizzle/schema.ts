@@ -4502,7 +4502,8 @@ export const warRoomCampaigns = mysqlTable(
   "war_room_campaigns",
   {
     id: int("id").autoincrement().primaryKey(),
-    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    productKey: varchar("productKey", { length: 80 }).notNull().default("manager_effectiveness"),
+    tenantId: int("tenantId").references(() => tenants.id),
     name: varchar("name", { length: 255 }).notNull(),
     objective: text("objective").notNull(),
     victoryCondition: text("victoryCondition").notNull(),
@@ -4519,6 +4520,7 @@ export const warRoomCampaigns = mysqlTable(
   },
   (table) => [
     index("war_room_campaigns_tenant_status_idx").on(table.tenantId, table.status),
+    index("war_room_campaigns_product_status_idx").on(table.productKey, table.status),
     index("war_room_campaigns_owner_idx").on(table.ownerUserId, table.status),
   ],
 );
@@ -4529,7 +4531,8 @@ export const warRoomEvidenceItems = mysqlTable(
   "war_room_evidence_items",
   {
     id: int("id").autoincrement().primaryKey(),
-    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    productKey: varchar("productKey", { length: 80 }).notNull().default("manager_effectiveness"),
+    tenantId: int("tenantId").references(() => tenants.id),
     campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
     createdByUserId: int("createdByUserId").notNull().references(() => users.id),
     sourceType: mysqlEnum("sourceType", ["manual_note", "customer_note", "delivery_note", "platform_note", "imported_excerpt"]).notNull(),
@@ -4549,6 +4552,7 @@ export const warRoomEvidenceItems = mysqlTable(
   },
   (table) => [
     index("war_room_evidence_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.createdAt),
+    index("war_room_evidence_product_campaign_idx").on(table.productKey, table.campaignId, table.createdAt),
     index("war_room_evidence_campaign_status_idx").on(table.campaignId, table.status, table.observedAt),
     foreignKey({ columns: [table.supersedesEvidenceId], foreignColumns: [table.id], name: "war_room_evidence_supersedes_fk" }),
   ],
@@ -4560,7 +4564,8 @@ export const warRoomEvidenceAssessments = mysqlTable(
   "war_room_evidence_assessments",
   {
     id: int("id").autoincrement().primaryKey(),
-    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    productKey: varchar("productKey", { length: 80 }).notNull().default("manager_effectiveness"),
+    tenantId: int("tenantId").references(() => tenants.id),
     campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
     evidenceItemId: int("evidenceItemId").notNull().references(() => warRoomEvidenceItems.id),
     relation: mysqlEnum("relation", ["supports", "contradicts", "does_not_answer"]).notNull(),
@@ -4576,6 +4581,7 @@ export const warRoomEvidenceAssessments = mysqlTable(
   },
   (table) => [
     index("war_room_assessments_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.reviewStatus),
+    index("war_room_assessments_product_campaign_idx").on(table.productKey, table.campaignId, table.reviewStatus),
     index("war_room_assessments_evidence_idx").on(table.evidenceItemId, table.reviewStatus),
   ],
 );
@@ -4586,7 +4592,8 @@ export const warRoomConstraints = mysqlTable(
   "war_room_constraints",
   {
     id: int("id").autoincrement().primaryKey(),
-    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    productKey: varchar("productKey", { length: 80 }).notNull().default("manager_effectiveness"),
+    tenantId: int("tenantId").references(() => tenants.id),
     campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
     statement: text("statement"),
     state: mysqlEnum("state", ["selected", "tied", "unclear", "closed"]).notNull(),
@@ -4602,6 +4609,7 @@ export const warRoomConstraints = mysqlTable(
   },
   (table) => [
     index("war_room_constraints_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.status),
+    index("war_room_constraints_product_campaign_idx").on(table.productKey, table.campaignId, table.status),
     index("war_room_constraints_review_idx").on(table.reviewDate, table.status),
   ],
 );
@@ -4612,7 +4620,8 @@ export const warRoomDecisions = mysqlTable(
   "war_room_decisions",
   {
     id: int("id").autoincrement().primaryKey(),
-    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    productKey: varchar("productKey", { length: 80 }).notNull().default("manager_effectiveness"),
+    tenantId: int("tenantId").references(() => tenants.id),
     campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
     constraintId: int("constraintId").references(() => warRoomConstraints.id),
     question: text("question").notNull(),
@@ -4634,6 +4643,7 @@ export const warRoomDecisions = mysqlTable(
   },
   (table) => [
     index("war_room_decisions_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.outcome),
+    index("war_room_decisions_product_campaign_idx").on(table.productKey, table.campaignId, table.outcome),
     index("war_room_decisions_due_idx").on(table.dueDate, table.outcome),
   ],
 );
@@ -4644,7 +4654,8 @@ export const warRoomOrders = mysqlTable(
   "war_room_orders",
   {
     id: int("id").autoincrement().primaryKey(),
-    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    productKey: varchar("productKey", { length: 80 }).notNull().default("manager_effectiveness"),
+    tenantId: int("tenantId").references(() => tenants.id),
     campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
     decisionId: int("decisionId").references(() => warRoomDecisions.id),
     statement: text("statement").notNull(),
@@ -4663,6 +4674,7 @@ export const warRoomOrders = mysqlTable(
   },
   (table) => [
     index("war_room_orders_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.status),
+    index("war_room_orders_product_campaign_idx").on(table.productKey, table.campaignId, table.status),
     index("war_room_orders_review_idx").on(table.reviewDate, table.status),
   ],
 );
@@ -4673,7 +4685,8 @@ export const warRoomReviews = mysqlTable(
   "war_room_reviews",
   {
     id: int("id").autoincrement().primaryKey(),
-    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    productKey: varchar("productKey", { length: 80 }).notNull().default("manager_effectiveness"),
+    tenantId: int("tenantId").references(() => tenants.id),
     campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
     reviewDate: timestamp("reviewDate").notNull(),
     expectedBelief: text("expectedBelief").notNull(),
@@ -4689,6 +4702,7 @@ export const warRoomReviews = mysqlTable(
   },
   (table) => [
     index("war_room_reviews_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.reviewDate),
+    index("war_room_reviews_product_campaign_idx").on(table.productKey, table.campaignId, table.reviewDate),
   ],
 );
 export type WarRoomReview = typeof warRoomReviews.$inferSelect;
@@ -4698,7 +4712,8 @@ export const warRoomAuditEvents = mysqlTable(
   "war_room_audit_events",
   {
     id: int("id").autoincrement().primaryKey(),
-    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    productKey: varchar("productKey", { length: 80 }).notNull().default("manager_effectiveness"),
+    tenantId: int("tenantId").references(() => tenants.id),
     actorUserId: int("actorUserId").notNull().references(() => users.id),
     entityType: varchar("entityType", { length: 80 }).notNull(),
     entityId: int("entityId").notNull(),
@@ -4711,6 +4726,7 @@ export const warRoomAuditEvents = mysqlTable(
   },
   (table) => [
     index("war_room_audit_tenant_created_idx").on(table.tenantId, table.createdAt),
+    index("war_room_audit_product_created_idx").on(table.productKey, table.createdAt),
     index("war_room_audit_entity_idx").on(table.entityType, table.entityId, table.createdAt),
   ],
 );

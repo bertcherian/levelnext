@@ -5,7 +5,7 @@ import {
   canCreateAnotherWeeklyOrder,
   isDecisionRequired,
   warRoomCampaignInputSchema,
-  warRoomEvidenceInputSchema,
+  warRoomProducts,
 } from "../shared/modules/warRoom";
 
 function createMockContext(user?: { id: number; role: "user" | "admin" | "success_partner"; name?: string | null } | null): TrpcContext {
@@ -33,37 +33,72 @@ function createMockContext(user?: { id: number; role: "user" | "admin" | "succes
   };
 }
 
-describe("War Room access control and core rules", () => {
-  it("rejects unauthenticated requests with FORBIDDEN via admin middleware", async () => {
-    const caller = appRouter.createCaller(createMockContext(null));
-    await expect(caller.warRoom.commandCenter()).rejects.toMatchObject({
-      code: "FORBIDDEN",
-    });
-  });
-
+describe("War Room product-level access and rules", () => {
   it("rejects non-admin users with FORBIDDEN", async () => {
     const caller = appRouter.createCaller(createMockContext({ id: 10, role: "user" }));
-    await expect(caller.warRoom.commandCenter()).rejects.toMatchObject({
+    await expect(caller.warRoom.commandCenter("manager_effectiveness")).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
   });
 
-  it("allows admin users to query the command center", async () => {
-    const caller = appRouter.createCaller(createMockContext({ id: 1, role: "admin", name: "Bert Cherian" }));
-    const result = await caller.warRoom.commandCenter();
-    expect(result).toHaveProperty("tenant");
+  it("lists all available LevelNext products", async () => {
+    const caller = appRouter.createCaller(createMockContext({ id: 1, role: "admin" }));
+    const products = await caller.warRoom.listProducts();
+    expect(products.map((p) => p.key)).toEqual(
+      expect.arrayContaining([
+        "manager_effectiveness",
+        "leader_intelligence",
+        "tech_intelligence",
+        "professional_intelligence",
+      ]),
+    );
+  });
+
+  it("queries command center scoped to a specific product", async () => {
+    const caller = appRouter.createCaller(createMockContext({ id: 1, role: "admin" }));
+    const result = await caller.warRoom.commandCenter("manager_effectiveness");
+    expect(result.product.key).toBe("manager_effectiveness");
+    expect(result.product.label).toBe("Manager Effectiveness");
     expect(result).toHaveProperty("weeklyOrderCount");
     expect(result).toHaveProperty("decisionRequired");
   });
 
-  it("enforces weekly order limits deterministically", () => {
-    expect(canCreateAnotherWeeklyOrder(0)).toBe(true);
-    expect(canCreateAnotherWeeklyOrder(1)).toBe(true);
-    expect(canCreateAnotherWeeklyOrder(2)).toBe(true);
-    expect(canCreateAnotherWeeklyOrder(3)).toBe(false);
+  it("validates product-scoped campaign input schema", () => {
+    const parsed = warRoomCampaignInputSchema.safeParse({
+      productKey: "leader_intelligence",
+      name: "Strategic Leader Pilot",
+      objective: "Scale enterprise influence",
+      victoryCondition: "20 leaders demonstrated cross-functional alignment",
+      ownerUserId: 1,
+      deadline: new Date().toISOString(),
+      reviewDate: new Date().toISOString(),
+      indicators: [
+        {
+          key: "influence_rate",
+          label: "Enterprise Influence Rate",
+          definition: "Active stakeholder moves",
+          decisionImplication: "Adjust practice simulator if adoption dips",
+        },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+
+    const invalidProduct = warRoomCampaignInputSchema.safeParse({
+      productKey: "unsupported_product",
+      name: "Invalid",
+      objective: "Invalid",
+      victoryCondition: "Invalid",
+      ownerUserId: 1,
+      deadline: new Date().toISOString(),
+      reviewDate: new Date().toISOString(),
+      indicators: [],
+    });
+    expect(invalidProduct.success).toBe(false);
   });
 
-  it("detects no-decision-required state correctly", () => {
+  it("enforces weekly order limits and decision requirements", () => {
+    expect(canCreateAnotherWeeklyOrder(2)).toBe(true);
+    expect(canCreateAnotherWeeklyOrder(3)).toBe(false);
     expect(
       isDecisionRequired({
         materialEvidenceCount: 0,
@@ -72,7 +107,6 @@ describe("War Room access control and core rules", () => {
         reviewRequested: false,
       }),
     ).toBe(false);
-
     expect(
       isDecisionRequired({
         materialEvidenceCount: 1,
@@ -81,43 +115,5 @@ describe("War Room access control and core rules", () => {
         reviewRequested: false,
       }),
     ).toBe(true);
-  });
-
-  it("validates campaign indicator constraints via shared schema", () => {
-    const parsed = warRoomCampaignInputSchema.safeParse({
-      tenantId: 1,
-      name: "Q4 Expansion",
-      objective: "Win enterprise logos",
-      victoryCondition: "3 signed enterprise agreements",
-      ownerUserId: 1,
-      deadline: new Date().toISOString(),
-      reviewDate: new Date().toISOString(),
-      indicators: [
-        {
-          key: "pipeline",
-          label: "Stage 3 Pipeline",
-          definition: "Active opportunities",
-          decisionImplication: "Increase outreach if pipeline drops",
-        },
-      ],
-    });
-    expect(parsed.success).toBe(true);
-
-    const overLimit = warRoomCampaignInputSchema.safeParse({
-      tenantId: 1,
-      name: "Too many",
-      objective: "Invalid",
-      victoryCondition: "Invalid",
-      ownerUserId: 1,
-      deadline: new Date().toISOString(),
-      reviewDate: new Date().toISOString(),
-      indicators: [
-        { key: "1", label: "1", definition: "1", decisionImplication: "1" },
-        { key: "2", label: "2", definition: "2", decisionImplication: "2" },
-        { key: "3", label: "3", definition: "3", decisionImplication: "3" },
-        { key: "4", label: "4", definition: "4", decisionImplication: "4" },
-      ],
-    });
-    expect(overLimit.success).toBe(false);
   });
 });

@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+export const warRoomProducts = [
+  { key: "manager_effectiveness", label: "Manager Effectiveness", route: "/manager" },
+  { key: "leader_intelligence", label: "Leader Intelligence", route: "/leader-intelligence" },
+  { key: "tech_intelligence", label: "Tech Intelligence", route: "/tech-intelligence" },
+  { key: "professional_intelligence", label: "Professional Intelligence", route: "/professional-intelligence" },
+  { key: "executive_communication", label: "Executive Communication", route: "/executive-intelligence" },
+  { key: "gcc_readiness", label: "GCC Readiness", route: "/diagnostics/gcc" },
+  { key: "early_career_intelligence", label: "Early Career Intelligence", route: "/early-career-intelligence" },
+] as const;
+
+export const warRoomProductKeys = warRoomProducts.map((product) => product.key) as [string, ...string[]];
+export type WarRoomProductKey = (typeof warRoomProducts)[number]["key"];
+export type WarRoomProduct = (typeof warRoomProducts)[number];
+
+export function getWarRoomProduct(productKey: string): WarRoomProduct | undefined {
+  return warRoomProducts.find((product) => product.key === productKey);
+}
+
 export const warRoomCampaignStatuses = ["draft", "active", "paused", "completed", "killed", "archived"] as const;
 export const warRoomEvidenceSourceTypes = ["manual_note", "customer_note", "delivery_note", "platform_note", "imported_excerpt"] as const;
 export const warRoomEvidenceFreshnessStatuses = ["current", "stale", "unknown", "delayed"] as const;
@@ -28,6 +46,8 @@ export type WarRoomOrderStatus = (typeof warRoomOrderStatuses)[number];
 export type WarRoomReviewHypothesisStatus = (typeof warRoomReviewHypothesisStatuses)[number];
 export type WarRoomReviewDecision = (typeof warRoomReviewDecisions)[number];
 
+export const warRoomProductKeySchema = z.enum(warRoomProductKeys);
+
 export const warRoomIndicatorSchema = z.object({
   key: z.string().min(1).max(80),
   label: z.string().min(1).max(160),
@@ -39,11 +59,10 @@ export const warRoomIndicatorSchema = z.object({
 });
 
 export type WarRoomIndicator = z.infer<typeof warRoomIndicatorSchema>;
-
 export const warRoomIndicatorsSchema = z.array(warRoomIndicatorSchema).max(3);
 
 export const warRoomCampaignInputSchema = z.object({
-  tenantId: z.number().int().positive(),
+  productKey: warRoomProductKeySchema,
   name: z.string().trim().min(1).max(255),
   objective: z.string().trim().min(1).max(2000),
   victoryCondition: z.string().trim().min(1).max(2000),
@@ -56,7 +75,7 @@ export const warRoomCampaignInputSchema = z.object({
 });
 
 export const warRoomEvidenceInputSchema = z.object({
-  tenantId: z.number().int().positive(),
+  productKey: warRoomProductKeySchema,
   campaignId: z.number().int().positive(),
   sourceType: z.enum(warRoomEvidenceSourceTypes),
   sourceLabel: z.string().trim().min(1).max(255),
@@ -68,7 +87,7 @@ export const warRoomEvidenceInputSchema = z.object({
 });
 
 export const warRoomAssessmentInputSchema = z.object({
-  tenantId: z.number().int().positive(),
+  productKey: warRoomProductKeySchema,
   campaignId: z.number().int().positive(),
   evidenceItemId: z.number().int().positive(),
   relation: z.enum(warRoomEvidenceRelations),
@@ -78,7 +97,7 @@ export const warRoomAssessmentInputSchema = z.object({
 });
 
 export const warRoomConstraintInputSchema = z.object({
-  tenantId: z.number().int().positive(),
+  productKey: warRoomProductKeySchema,
   campaignId: z.number().int().positive(),
   state: z.enum(warRoomConstraintStates),
   statement: z.string().trim().max(2000).optional(),
@@ -90,7 +109,7 @@ export const warRoomConstraintInputSchema = z.object({
 });
 
 export const warRoomDecisionInputSchema = z.object({
-  tenantId: z.number().int().positive(),
+  productKey: warRoomProductKeySchema,
   campaignId: z.number().int().positive(),
   constraintId: z.number().int().positive().optional(),
   question: z.string().trim().min(1).max(2000),
@@ -102,7 +121,7 @@ export const warRoomDecisionInputSchema = z.object({
 });
 
 export const warRoomOrderInputSchema = z.object({
-  tenantId: z.number().int().positive(),
+  productKey: warRoomProductKeySchema,
   campaignId: z.number().int().positive(),
   decisionId: z.number().int().positive().optional(),
   statement: z.string().trim().min(1).max(2000),
@@ -115,7 +134,7 @@ export const warRoomOrderInputSchema = z.object({
 });
 
 export const warRoomReviewInputSchema = z.object({
-  tenantId: z.number().int().positive(),
+  productKey: warRoomProductKeySchema,
   campaignId: z.number().int().positive(),
   expectedBelief: z.string().trim().min(1).max(3000),
   actionsTaken: z.string().trim().min(1).max(3000),
@@ -128,7 +147,7 @@ export const warRoomReviewInputSchema = z.object({
 });
 
 export interface WarRoomCommandCenter {
-  tenant: { id: number; name: string };
+  product: WarRoomProduct;
   campaign: unknown | null;
   materialEvidence: unknown[];
   recentEvidence: unknown[];

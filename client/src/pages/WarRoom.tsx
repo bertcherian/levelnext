@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import PlatformLayout from "@/components/PlatformLayout";
-import { useAdminTenantSelection } from "@/lib/adminTenantSelection";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,12 +30,13 @@ import type {
   WarRoomEvidenceRelation,
   WarRoomEvidenceSourceType,
   WarRoomIndicator,
+  WarRoomProductKey,
 } from "@shared/modules/warRoom";
 
 export default function WarRoom() {
   const { user, isAuthenticated, loading } = useAuth();
-  const { tenantId, setTenantId } = useAdminTenantSelection();
   const utils = trpc.useUtils();
+  const [productKey, setProductKey] = useState<WarRoomProductKey>("manager_effectiveness");
 
   const [activeTab, setActiveTab] = useState<"command" | "evidence" | "campaign" | "review">("command");
   const [evidenceSourceType, setEvidenceSourceType] = useState<WarRoomEvidenceSourceType>("manual_note");
@@ -78,7 +78,7 @@ export default function WarRoom() {
   const [reviewDecisionOutcome, setReviewDecisionOutcome] = useState<"continue" | "modify" | "pause" | "kill" | "none">("continue");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  const { data: orgs = [] } = trpc.warRoom.listOrganisations.useQuery(undefined, {
+  const { data: products = [] } = trpc.warRoom.listProducts.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === "admin",
   });
 
@@ -87,7 +87,7 @@ export default function WarRoom() {
   });
 
   const { data: commandCenter, isLoading, refetch } = trpc.warRoom.commandCenter.useQuery(
-    { tenantId },
+    productKey,
     { enabled: isAuthenticated && user?.role === "admin" }
   );
 
@@ -181,11 +181,11 @@ export default function WarRoom() {
 
   const handleCaptureAndAssess = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!campaign?.id || !commandCenter?.tenant?.id) return;
+    if (!campaign?.id) return;
     setIsSubmittingEvidence(true);
     try {
       const created = await createEvidenceMutation.mutateAsync({
-        tenantId: commandCenter.tenant.id,
+        productKey,
         campaignId: campaign.id,
         sourceType: evidenceSourceType,
         sourceLabel: evidenceSourceLabel || "Strategic Observation",
@@ -196,7 +196,7 @@ export default function WarRoom() {
       });
 
       await assessEvidenceMutation.mutateAsync({
-        tenantId: commandCenter.tenant.id,
+        productKey,
         campaignId: campaign.id,
         evidenceItemId: created.evidenceId,
         relation: evidenceRelation,
@@ -212,11 +212,6 @@ export default function WarRoom() {
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
-    const effectiveTenantId = tenantId ?? orgs[0]?.id;
-    if (!effectiveTenantId) {
-      alert("Please select or configure an organisation first.");
-      return;
-    }
     const defaultOwnerId = owners[0]?.id ?? user?.id;
     if (!defaultOwnerId) return;
 
@@ -233,7 +228,7 @@ export default function WarRoom() {
       }
 
       await createCampaignMutation.mutateAsync({
-        tenantId: effectiveTenantId,
+        productKey,
         name: campaignName,
         objective: campaignObjective,
         victoryCondition: campaignVictory,
@@ -253,11 +248,11 @@ export default function WarRoom() {
 
   const handleApproveOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!campaign?.id || !commandCenter?.tenant?.id) return;
+    if (!campaign?.id) return;
     setIsSubmittingOrder(true);
     try {
       await approveOrderMutation.mutateAsync({
-        tenantId: commandCenter.tenant.id,
+        productKey,
         campaignId: campaign.id,
         decisionId: latestDecision?.id ?? undefined,
         statement: orderStatement,
@@ -274,11 +269,11 @@ export default function WarRoom() {
 
   const handleCloseReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!campaign?.id || !commandCenter?.tenant?.id) return;
+    if (!campaign?.id) return;
     setIsSubmittingReview(true);
     try {
       await closeReviewMutation.mutateAsync({
-        tenantId: commandCenter.tenant.id,
+        productKey,
         campaignId: campaign.id,
         expectedBelief: reviewBelief,
         actionsTaken: reviewActions,
@@ -320,15 +315,15 @@ export default function WarRoom() {
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-1.5 shadow-sm">
-              <Building2 className="h-4 w-4 text-slate-500" />
+              <Target className="h-4 w-4 text-slate-500" />
               <select
                 className="bg-transparent text-sm font-medium text-slate-700 outline-none cursor-pointer"
-                value={tenantId ?? ""}
-                onChange={(e) => setTenantId(e.target.value ? Number(e.target.value) : null)}
+                value={productKey}
+                onChange={(e) => setProductKey(e.target.value as WarRoomProductKey)}
               >
-                {orgs.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
+                {products.map((product) => (
+                  <option key={product.key} value={product.key}>
+                    {product.label}
                   </option>
                 ))}
               </select>
@@ -396,9 +391,9 @@ export default function WarRoom() {
             {!campaign ? (
               <Card className="border-dashed border-2 bg-slate-50/50 p-8 text-center">
                 <Target className="mx-auto h-10 w-10 text-slate-400" />
-                <h3 className="mt-3 text-lg font-bold text-[#0A1A2F]">No Active Campaign for this Organisation</h3>
+                <h3 className="mt-3 text-lg font-bold text-[#0A1A2F]">No Active Campaign for {commandCenter?.product.label ?? "this product"}</h3>
                 <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
-                  The War Room OS requires exactly one active strategic campaign to orient decisions, constraints, and weekly orders.
+                  The War Room OS requires exactly one active strategic campaign per LevelNext product to orient decisions, constraints, and weekly orders.
                 </p>
                 <Button onClick={() => setActiveTab("campaign")} className="mt-4 bg-[#0A1A2F] text-white">
                   Create First Strategic Campaign
@@ -588,10 +583,9 @@ export default function WarRoom() {
                                 size="sm"
                                 disabled={!decisionQuestion}
                                 onClick={async () => {
-                                  const activeTenantId = commandCenter?.tenant?.id;
-                                  if (!decisionQuestion || !campaign?.id || !activeTenantId) return;
+                                  if (!decisionQuestion || !campaign?.id) return;
                                   await recordDecisionMutation.mutateAsync({
-                                    tenantId: activeTenantId,
+                                    productKey,
                                     campaignId: campaign.id,
                                     question: decisionQuestion,
                                     options: ["Approve expansion", "Defer until Q1", "Hold current scope"],
@@ -886,7 +880,7 @@ export default function WarRoom() {
                 {campaign ? "Edit Campaign Anchors" : "Establish Strategic Campaign"}
               </CardTitle>
               <CardDescription className="text-xs">
-                One active campaign per organisation to anchor executive attention.
+                One active campaign per LevelNext product to anchor executive attention.
               </CardDescription>
             </CardHeader>
             <CardContent>

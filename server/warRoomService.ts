@@ -1,9 +1,7 @@
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import {
-  tenants,
-  tenantUsers,
   users,
   warRoomAuditEvents,
   warRoomCampaigns,
@@ -14,7 +12,6 @@ import {
   warRoomOrders,
   warRoomReviews,
   type InsertWarRoomAuditEvent,
-  type WarRoomCampaign,
   type WarRoomConstraint,
   type WarRoomDecision,
   type WarRoomEvidenceAssessment,
@@ -25,16 +22,18 @@ import {
 import { getDb } from "./db";
 import {
   canCreateAnotherWeeklyOrder,
+  getWarRoomProduct,
   getWeeklyOrderWindowStart,
   isDecisionRequired,
-  warRoomCampaignInputSchema,
-  warRoomEvidenceInputSchema,
   warRoomAssessmentInputSchema,
+  warRoomCampaignInputSchema,
   warRoomConstraintInputSchema,
   warRoomDecisionInputSchema,
+  warRoomEvidenceInputSchema,
   warRoomOrderInputSchema,
   warRoomReviewInputSchema,
   type WarRoomCommandCenter,
+  type WarRoomProductKey,
 } from "../shared/modules/warRoom";
 
 export async function requireAdminUser(user: { id: number; role?: string | null }) {
@@ -43,31 +42,24 @@ export async function requireAdminUser(user: { id: number; role?: string | null 
   }
 }
 
-export async function resolveAdminTenant(tenantIdInput?: number | null) {
+export async function resolveAdminProduct(productKey: string) {
   const db = await getDb();
   if (!db) {
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
   }
 
-  if (tenantIdInput) {
-    const [tenant] = await db.select().from(tenants).where(eq(tenants.id, tenantIdInput)).limit(1);
-    if (!tenant) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Selected organisation not found" });
-    }
-    return { db, tenant };
+  const product = getWarRoomProduct(productKey);
+  if (!product) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Unsupported LevelNext product scope." });
   }
 
-  const [firstTenant] = await db.select().from(tenants).orderBy(tenants.name).limit(1);
-  if (!firstTenant) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "No organisations configured on the platform" });
-  }
-  return { db, tenant: firstTenant };
+  return { db, product };
 }
 
 export async function logWarRoomAudit(
   db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
   payload: {
-    tenantId: number;
+    productKey: WarRoomProductKey;
     actorUserId: number;
     entityType: string;
     entityId: number;
@@ -79,7 +71,8 @@ export async function logWarRoomAudit(
   },
 ) {
   const values: InsertWarRoomAuditEvent = {
-    tenantId: payload.tenantId,
+    productKey: payload.productKey,
+    tenantId: null,
     actorUserId: payload.actorUserId,
     entityType: payload.entityType,
     entityId: payload.entityId,
@@ -92,13 +85,14 @@ export async function logWarRoomAudit(
   await db.insert(warRoomAuditEvents).values(values);
 }
 
-export async function getWarRoomCommandCenter(tenantIdInput?: number | null): Promise<WarRoomCommandCenter> {
-  const { db, tenant } = await resolveAdminTenant(tenantIdInput);
+export async function getWarRoomCommandCenter(productKeyInput: string): Promise<WarRoomCommandCenter> {
+  const { db, product } = await resolveAdminProduct(productKeyInput);
+  const productKey = product.key;
 
   const [activeCampaign] = await db
     .select()
     .from(warRoomCampaigns)
-    .where(and(eq(warRoomCampaigns.tenantId, tenant.id), eq(warRoomCampaigns.status, "active")))
+    .where(and(eq(warRoomCampaigns.productKey, productKey), eq(warRoomCampaigns.status, "active")))
     .orderBy(desc(warRoomCampaigns.createdAt))
     .limit(1);
 
@@ -115,15 +109,12 @@ export async function getWarRoomCommandCenter(tenantIdInput?: number | null): Pr
 
   if (campaignId) {
     const rawAssessments = await db
-      .select({
-        assessment: warRoomEvidenceAssessments,
-        evidence: warRoomEvidenceItems,
-      })
+      .select({ assessment: warRoomEvidenceAssessments, evidence: warRoomEvidenceItems })
       .from(warRoomEvidenceAssessments)
       .innerJoin(warRoomEvidenceItems, eq(warRoomEvidenceAssessments.evidenceItemId, warRoomEvidenceItems.id))
       .where(
         and(
-          eq(warRoomEvidenceAssessments.tenantId, tenant.id),
+          eq(warRoomEvidenceAssessments.productKey, productKey),
           eq(warRoomEvidenceAssessments.campaignId, campaignId),
           eq(warRoomEvidenceAssessments.reviewStatus, "accepted"),
           eq(warRoomEvidenceAssessments.materiality, "material"),
@@ -133,22 +124,19 @@ export async function getWarRoomCommandCenter(tenantIdInput?: number | null): Pr
       .orderBy(desc(warRoomEvidenceAssessments.createdAt))
       .limit(3);
 
-    materialEvidence = rawAssessments.map((row) => ({
-      ...row.assessment,
-      evidenceItem: row.evidence,
-    }));
+    materialEvidence = rawAssessments.map((row) => ({ ...row.assessment, evidenceItem: row.evidence }));
 
     recentEvidence = await db
       .select()
       .from(warRoomEvidenceItems)
-      .where(and(eq(warRoomEvidenceItems.tenantId, tenant.id), eq(warRoomEvidenceItems.campaignId, campaignId)))
+      .where(and(eq(warRoomEvidenceItems.productKey, productKey), eq(warRoomEvidenceItems.campaignId, campaignId)))
       .orderBy(desc(warRoomEvidenceItems.observedAt), desc(warRoomEvidenceItems.createdAt))
       .limit(8);
 
     const [activeConstraint] = await db
       .select()
       .from(warRoomConstraints)
-      .where(and(eq(warRoomConstraints.tenantId, tenant.id), eq(warRoomConstraints.campaignId, campaignId), eq(warRoomConstraints.status, "active")))
+      .where(and(eq(warRoomConstraints.productKey, productKey), eq(warRoomConstraints.campaignId, campaignId), eq(warRoomConstraints.status, "active")))
       .orderBy(desc(warRoomConstraints.createdAt))
       .limit(1);
     constraint = activeConstraint ?? null;
@@ -156,7 +144,7 @@ export async function getWarRoomCommandCenter(tenantIdInput?: number | null): Pr
     const [decisionRow] = await db
       .select()
       .from(warRoomDecisions)
-      .where(and(eq(warRoomDecisions.tenantId, tenant.id), eq(warRoomDecisions.campaignId, campaignId)))
+      .where(and(eq(warRoomDecisions.productKey, productKey), eq(warRoomDecisions.campaignId, campaignId)))
       .orderBy(desc(warRoomDecisions.createdAt))
       .limit(1);
     latestDecision = decisionRow ?? null;
@@ -164,18 +152,17 @@ export async function getWarRoomCommandCenter(tenantIdInput?: number | null): Pr
     orders = await db
       .select()
       .from(warRoomOrders)
-      .where(and(eq(warRoomOrders.tenantId, tenant.id), eq(warRoomOrders.campaignId, campaignId)))
+      .where(and(eq(warRoomOrders.productKey, productKey), eq(warRoomOrders.campaignId, campaignId)))
       .orderBy(desc(warRoomOrders.createdAt))
       .limit(6);
 
     const windowStart = getWeeklyOrderWindowStart();
-    const approvedRecentOrders = orders.filter((o) => o.status === "approved" && new Date(o.createdAt) >= windowStart);
-    weeklyOrderCount = approvedRecentOrders.length;
+    weeklyOrderCount = orders.filter((order) => order.status === "approved" && new Date(order.createdAt) >= windowStart).length;
 
     const [reviewRow] = await db
       .select()
       .from(warRoomReviews)
-      .where(and(eq(warRoomReviews.tenantId, tenant.id), eq(warRoomReviews.campaignId, campaignId)))
+      .where(and(eq(warRoomReviews.productKey, productKey), eq(warRoomReviews.campaignId, campaignId)))
       .orderBy(desc(warRoomReviews.reviewDate), desc(warRoomReviews.createdAt))
       .limit(1);
     latestReview = reviewRow ?? null;
@@ -183,18 +170,11 @@ export async function getWarRoomCommandCenter(tenantIdInput?: number | null): Pr
 
   const now = new Date();
   const hasDueDecision = Boolean(latestDecision && latestDecision.outcome === "proposed" && (!latestDecision.dueDate || new Date(latestDecision.dueDate) <= now));
-  const hasDueOrder = orders.some((o) => o.status === "approved" && o.deadline && new Date(o.deadline) <= now);
+  const hasDueOrder = orders.some((order) => order.status === "approved" && order.deadline && new Date(order.deadline) <= now);
   const reviewRequested = Boolean(campaign && campaign.reviewDate && new Date(campaign.reviewDate) <= now);
 
-  const decisionRequired = isDecisionRequired({
-    materialEvidenceCount: materialEvidence.length,
-    hasDueDecision,
-    hasDueOrder,
-    reviewRequested,
-  });
-
   return {
-    tenant: { id: tenant.id, name: tenant.name },
+    product,
     campaign,
     materialEvidence,
     recentEvidence,
@@ -203,30 +183,36 @@ export async function getWarRoomCommandCenter(tenantIdInput?: number | null): Pr
     orders,
     latestReview,
     weeklyOrderCount,
-    decisionRequired,
+    decisionRequired: isDecisionRequired({
+      materialEvidenceCount: materialEvidence.length,
+      hasDueDecision,
+      hasDueOrder,
+      reviewRequested,
+    }),
   };
 }
 
 export async function createWarRoomCampaignService(actorUserId: number, input: z.infer<typeof warRoomCampaignInputSchema>) {
-  const { db, tenant } = await resolveAdminTenant(input.tenantId);
+  const { db, product } = await resolveAdminProduct(input.productKey);
 
   const [existingActive] = await db
     .select({ id: warRoomCampaigns.id })
     .from(warRoomCampaigns)
-    .where(and(eq(warRoomCampaigns.tenantId, tenant.id), eq(warRoomCampaigns.status, "active")))
+    .where(and(eq(warRoomCampaigns.productKey, product.key), eq(warRoomCampaigns.status, "active")))
     .limit(1);
 
   if (existingActive) {
     throw new TRPCError({
       code: "CONFLICT",
-      message: "An active War Room campaign already exists for this organisation. Close or pause it before activating another.",
+      message: `An active War Room campaign already exists for ${product.label}. Close or pause it before activating another.`,
     });
   }
 
   const [inserted] = await db
     .insert(warRoomCampaigns)
     .values({
-      tenantId: tenant.id,
+      productKey: product.key,
+      tenantId: null,
       name: input.name,
       objective: input.objective,
       victoryCondition: input.victoryCondition,
@@ -242,265 +228,165 @@ export async function createWarRoomCampaignService(actorUserId: number, input: z
     .$returningId();
 
   await logWarRoomAudit(db, {
-    tenantId: tenant.id,
+    productKey: product.key,
     actorUserId,
     entityType: "campaign",
     entityId: inserted.id,
     action: "campaign_created_and_activated",
-    newState: { name: input.name, status: "active" },
+    newState: { productKey: product.key, productLabel: product.label, name: input.name, status: "active" },
   });
 
-  return { campaignId: inserted.id, tenantId: tenant.id };
+  return { campaignId: inserted.id, productKey: product.key };
 }
 
 export async function createWarRoomEvidenceService(actorUserId: number, input: z.infer<typeof warRoomEvidenceInputSchema>) {
-  const { db, tenant } = await resolveAdminTenant(input.tenantId);
+  const { db, product } = await resolveAdminProduct(input.productKey);
 
   const [campaign] = await db
     .select({ id: warRoomCampaigns.id, status: warRoomCampaigns.status })
     .from(warRoomCampaigns)
-    .where(and(eq(warRoomCampaigns.id, input.campaignId), eq(warRoomCampaigns.tenantId, tenant.id)))
+    .where(and(eq(warRoomCampaigns.id, input.campaignId), eq(warRoomCampaigns.productKey, product.key)))
     .limit(1);
 
   if (!campaign || campaign.status !== "active") {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "Evidence can only be captured for an active campaign in this organisation." });
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Evidence can only be captured for an active product campaign." });
   }
 
-  const [inserted] = await db
-    .insert(warRoomEvidenceItems)
-    .values({
-      tenantId: tenant.id,
-      campaignId: campaign.id,
-      createdByUserId: actorUserId,
-      sourceType: input.sourceType,
-      sourceLabel: input.sourceLabel,
-      sourceRef: input.sourceRef ?? null,
-      observedAt: input.observedAt,
-      context: input.context ?? null,
-      observation: input.observation,
-      approvedExcerpt: input.approvedExcerpt ?? null,
-      status: "active",
-    })
-    .$returningId();
+  const [inserted] = await db.insert(warRoomEvidenceItems).values({
+    productKey: product.key,
+    tenantId: null,
+    campaignId: campaign.id,
+    createdByUserId: actorUserId,
+    sourceType: input.sourceType,
+    sourceLabel: input.sourceLabel,
+    sourceRef: input.sourceRef ?? null,
+    observedAt: input.observedAt,
+    context: input.context ?? null,
+    observation: input.observation,
+    approvedExcerpt: input.approvedExcerpt ?? null,
+    status: "active",
+  }).$returningId();
 
-  await logWarRoomAudit(db, {
-    tenantId: tenant.id,
-    actorUserId,
-    entityType: "evidence_item",
-    entityId: inserted.id,
-    action: "evidence_captured",
-    newState: { sourceLabel: input.sourceLabel, sourceType: input.sourceType },
-  });
-
+  await logWarRoomAudit(db, { productKey: product.key, actorUserId, entityType: "evidence_item", entityId: inserted.id, action: "evidence_captured", newState: { sourceLabel: input.sourceLabel, sourceType: input.sourceType } });
   return { evidenceId: inserted.id };
 }
 
 export async function assessWarRoomEvidenceService(actorUserId: number, input: z.infer<typeof warRoomAssessmentInputSchema>) {
-  const { db, tenant } = await resolveAdminTenant(input.tenantId);
+  const { db, product } = await resolveAdminProduct(input.productKey);
+  const [evidence] = await db.select().from(warRoomEvidenceItems).where(and(eq(warRoomEvidenceItems.id, input.evidenceItemId), eq(warRoomEvidenceItems.productKey, product.key), eq(warRoomEvidenceItems.campaignId, input.campaignId))).limit(1);
+  if (!evidence || evidence.status !== "active") throw new TRPCError({ code: "NOT_FOUND", message: "Active evidence item not found in this product campaign" });
 
-  const [evidence] = await db
-    .select()
-    .from(warRoomEvidenceItems)
-    .where(and(eq(warRoomEvidenceItems.id, input.evidenceItemId), eq(warRoomEvidenceItems.tenantId, tenant.id), eq(warRoomEvidenceItems.campaignId, input.campaignId)))
-    .limit(1);
+  const [inserted] = await db.insert(warRoomEvidenceAssessments).values({
+    productKey: product.key,
+    tenantId: null,
+    campaignId: input.campaignId,
+    evidenceItemId: evidence.id,
+    relation: input.relation,
+    interpretation: input.interpretation,
+    decisionImplication: input.decisionImplication ?? null,
+    materiality: input.materiality,
+    origin: "human",
+    reviewStatus: "accepted",
+    createdByUserId: actorUserId,
+    reviewedByUserId: actorUserId,
+    reviewedAt: new Date(),
+  }).$returningId();
 
-  if (!evidence || evidence.status !== "active") {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Active evidence item not found in this campaign" });
-  }
-
-  const [inserted] = await db
-    .insert(warRoomEvidenceAssessments)
-    .values({
-      tenantId: tenant.id,
-      campaignId: input.campaignId,
-      evidenceItemId: evidence.id,
-      relation: input.relation,
-      interpretation: input.interpretation,
-      decisionImplication: input.decisionImplication ?? null,
-      materiality: input.materiality,
-      origin: "human",
-      reviewStatus: "accepted",
-      createdByUserId: actorUserId,
-      reviewedByUserId: actorUserId,
-      reviewedAt: new Date(),
-    })
-    .$returningId();
-
-  await logWarRoomAudit(db, {
-    tenantId: tenant.id,
-    actorUserId,
-    entityType: "evidence_assessment",
-    entityId: inserted.id,
-    action: "evidence_assessed_and_accepted",
-    newState: { relation: input.relation, materiality: input.materiality },
-  });
-
+  await logWarRoomAudit(db, { productKey: product.key, actorUserId, entityType: "evidence_assessment", entityId: inserted.id, action: "evidence_assessed_and_accepted", newState: { relation: input.relation, materiality: input.materiality } });
   return { assessmentId: inserted.id };
 }
 
 export async function upsertWarRoomConstraintService(actorUserId: number, input: z.infer<typeof warRoomConstraintInputSchema>) {
-  const { db, tenant } = await resolveAdminTenant(input.tenantId);
+  const { db, product } = await resolveAdminProduct(input.productKey);
+  const [existingActive] = await db.select().from(warRoomConstraints).where(and(eq(warRoomConstraints.productKey, product.key), eq(warRoomConstraints.campaignId, input.campaignId), eq(warRoomConstraints.status, "active"))).limit(1);
+  if (existingActive) await db.update(warRoomConstraints).set({ status: "superseded" }).where(eq(warRoomConstraints.id, existingActive.id));
 
-  const [existingActive] = await db
-    .select()
-    .from(warRoomConstraints)
-    .where(and(eq(warRoomConstraints.tenantId, tenant.id), eq(warRoomConstraints.campaignId, input.campaignId), eq(warRoomConstraints.status, "active")))
-    .limit(1);
+  const [inserted] = await db.insert(warRoomConstraints).values({
+    productKey: product.key,
+    tenantId: null,
+    campaignId: input.campaignId,
+    state: input.state,
+    statement: input.statement ?? null,
+    whyItMatters: input.whyItMatters ?? null,
+    disproofCondition: input.disproofCondition ?? null,
+    evidenceIds: input.evidenceIds,
+    ownerUserId: input.ownerUserId ?? null,
+    reviewDate: input.reviewDate,
+    createdByUserId: actorUserId,
+    status: "active",
+  }).$returningId();
 
-  if (existingActive) {
-    await db
-      .update(warRoomConstraints)
-      .set({ status: "superseded" })
-      .where(eq(warRoomConstraints.id, existingActive.id));
-  }
-
-  const [inserted] = await db
-    .insert(warRoomConstraints)
-    .values({
-      tenantId: tenant.id,
-      campaignId: input.campaignId,
-      state: input.state,
-      statement: input.statement ?? null,
-      whyItMatters: input.whyItMatters ?? null,
-      disproofCondition: input.disproofCondition ?? null,
-      evidenceIds: input.evidenceIds,
-      ownerUserId: input.ownerUserId ?? null,
-      reviewDate: input.reviewDate,
-      createdByUserId: actorUserId,
-      status: "active",
-    })
-    .$returningId();
-
-  await logWarRoomAudit(db, {
-    tenantId: tenant.id,
-    actorUserId,
-    entityType: "constraint",
-    entityId: inserted.id,
-    action: existingActive ? "constraint_superseded_and_updated" : "constraint_selected",
-    newState: { state: input.state, statement: input.statement },
-  });
-
+  await logWarRoomAudit(db, { productKey: product.key, actorUserId, entityType: "constraint", entityId: inserted.id, action: existingActive ? "constraint_superseded_and_updated" : "constraint_selected", newState: { state: input.state, statement: input.statement } });
   return { constraintId: inserted.id };
 }
 
 export async function recordWarRoomDecisionService(actorUserId: number, input: z.infer<typeof warRoomDecisionInputSchema>) {
-  const { db, tenant } = await resolveAdminTenant(input.tenantId);
-
-  const [inserted] = await db
-    .insert(warRoomDecisions)
-    .values({
-      tenantId: tenant.id,
-      campaignId: input.campaignId,
-      constraintId: input.constraintId ?? null,
-      question: input.question,
-      options: input.options,
-      recommendation: input.recommendation ?? null,
-      evidenceIds: input.evidenceIds,
-      chosenOption: input.recommendation ?? input.options[0],
-      outcome: "accepted",
-      ownerUserId: input.ownerUserId,
-      dueDate: input.dueDate ?? null,
-      approvedByUserId: actorUserId,
-      approvedAt: new Date(),
-      createdByUserId: actorUserId,
-    })
-    .$returningId();
-
-  await logWarRoomAudit(db, {
-    tenantId: tenant.id,
-    actorUserId,
-    entityType: "decision",
-    entityId: inserted.id,
-    action: "decision_accepted",
-    newState: { question: input.question, chosenOption: input.recommendation ?? input.options[0] },
-  });
-
+  const { db, product } = await resolveAdminProduct(input.productKey);
+  const [inserted] = await db.insert(warRoomDecisions).values({
+    productKey: product.key,
+    tenantId: null,
+    campaignId: input.campaignId,
+    constraintId: input.constraintId ?? null,
+    question: input.question,
+    options: input.options,
+    recommendation: input.recommendation ?? null,
+    evidenceIds: input.evidenceIds,
+    chosenOption: input.recommendation ?? input.options[0],
+    outcome: "accepted",
+    ownerUserId: input.ownerUserId,
+    dueDate: input.dueDate ?? null,
+    approvedByUserId: actorUserId,
+    approvedAt: new Date(),
+    createdByUserId: actorUserId,
+  }).$returningId();
+  await logWarRoomAudit(db, { productKey: product.key, actorUserId, entityType: "decision", entityId: inserted.id, action: "decision_accepted", newState: { question: input.question, chosenOption: input.recommendation ?? input.options[0] } });
   return { decisionId: inserted.id };
 }
 
 export async function approveWarRoomOrderService(actorUserId: number, input: z.infer<typeof warRoomOrderInputSchema>) {
-  const { db, tenant } = await resolveAdminTenant(input.tenantId);
-
+  const { db, product } = await resolveAdminProduct(input.productKey);
   const windowStart = getWeeklyOrderWindowStart();
-  const recentOrders = await db
-    .select({ id: warRoomOrders.id })
-    .from(warRoomOrders)
-    .where(
-      and(
-        eq(warRoomOrders.tenantId, tenant.id),
-        eq(warRoomOrders.campaignId, input.campaignId),
-        eq(warRoomOrders.status, "approved"),
-      ),
-    );
+  const recentOrders = await db.select({ id: warRoomOrders.id }).from(warRoomOrders).where(and(eq(warRoomOrders.productKey, product.key), eq(warRoomOrders.campaignId, input.campaignId), eq(warRoomOrders.status, "approved"), gte(warRoomOrders.createdAt, windowStart)));
+  if (!canCreateAnotherWeeklyOrder(recentOrders.length)) throw new TRPCError({ code: "CONFLICT", message: "Weekly approved order limit reached (maximum 3 orders per product review window)." });
 
-  if (!canCreateAnotherWeeklyOrder(recentOrders.length)) {
-    throw new TRPCError({
-      code: "CONFLICT",
-      message: "Weekly approved order limit reached (maximum 3 orders per review window). Complete or kill an order before approving another.",
-    });
-  }
-
-  const [inserted] = await db
-    .insert(warRoomOrders)
-    .values({
-      tenantId: tenant.id,
-      campaignId: input.campaignId,
-      decisionId: input.decisionId ?? null,
-      statement: input.statement,
-      ownerUserId: input.ownerUserId,
-      deadline: input.deadline ?? null,
-      reviewDate: input.reviewDate ?? null,
-      expectedEvidence: input.expectedEvidence,
-      escalationCondition: input.escalationCondition ?? null,
-      killCondition: input.killCondition ?? null,
-      status: "approved",
-      approvedByUserId: actorUserId,
-      approvedAt: new Date(),
-      createdByUserId: actorUserId,
-    })
-    .$returningId();
-
-  await logWarRoomAudit(db, {
-    tenantId: tenant.id,
-    actorUserId,
-    entityType: "order",
-    entityId: inserted.id,
-    action: "order_approved",
-    newState: { statement: input.statement, ownerUserId: input.ownerUserId },
-  });
-
+  const [inserted] = await db.insert(warRoomOrders).values({
+    productKey: product.key,
+    tenantId: null,
+    campaignId: input.campaignId,
+    decisionId: input.decisionId ?? null,
+    statement: input.statement,
+    ownerUserId: input.ownerUserId,
+    deadline: input.deadline ?? null,
+    reviewDate: input.reviewDate ?? null,
+    expectedEvidence: input.expectedEvidence,
+    escalationCondition: input.escalationCondition ?? null,
+    killCondition: input.killCondition ?? null,
+    status: "approved",
+    approvedByUserId: actorUserId,
+    approvedAt: new Date(),
+    createdByUserId: actorUserId,
+  }).$returningId();
+  await logWarRoomAudit(db, { productKey: product.key, actorUserId, entityType: "order", entityId: inserted.id, action: "order_approved", newState: { statement: input.statement, ownerUserId: input.ownerUserId } });
   return { orderId: inserted.id };
 }
 
 export async function closeWarRoomReviewService(actorUserId: number, input: z.infer<typeof warRoomReviewInputSchema>) {
-  const { db, tenant } = await resolveAdminTenant(input.tenantId);
-
-  const [inserted] = await db
-    .insert(warRoomReviews)
-    .values({
-      tenantId: tenant.id,
-      campaignId: input.campaignId,
-      reviewDate: new Date(),
-      expectedBelief: input.expectedBelief,
-      actionsTaken: input.actionsTaken,
-      actualEvidence: input.actualEvidence,
-      hypothesisStatus: input.hypothesisStatus,
-      constraintState: input.constraintState,
-      decisionOutcome: input.decisionOutcome,
-      nextTest: input.nextTest ?? null,
-      parkStopChoice: input.parkStopChoice ?? null,
-      createdByUserId: actorUserId,
-    })
-    .$returningId();
-
-  await logWarRoomAudit(db, {
-    tenantId: tenant.id,
-    actorUserId,
-    entityType: "review",
-    entityId: inserted.id,
-    action: "review_closed",
-    newState: { hypothesisStatus: input.hypothesisStatus, decisionOutcome: input.decisionOutcome },
-  });
-
+  const { db, product } = await resolveAdminProduct(input.productKey);
+  const [inserted] = await db.insert(warRoomReviews).values({
+    productKey: product.key,
+    tenantId: null,
+    campaignId: input.campaignId,
+    reviewDate: new Date(),
+    expectedBelief: input.expectedBelief,
+    actionsTaken: input.actionsTaken,
+    actualEvidence: input.actualEvidence,
+    hypothesisStatus: input.hypothesisStatus,
+    constraintState: input.constraintState,
+    decisionOutcome: input.decisionOutcome,
+    nextTest: input.nextTest ?? null,
+    parkStopChoice: input.parkStopChoice ?? null,
+    createdByUserId: actorUserId,
+  }).$returningId();
+  await logWarRoomAudit(db, { productKey: product.key, actorUserId, entityType: "review", entityId: inserted.id, action: "review_closed", newState: { hypothesisStatus: input.hypothesisStatus, decisionOutcome: input.decisionOutcome } });
   return { reviewId: inserted.id };
 }
