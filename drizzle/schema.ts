@@ -13,6 +13,7 @@ import {
   foreignKey,
 } from "drizzle-orm/mysql-core";
 import type { SelfLeadershipAnalysis, SelfLeadershipCareerStage, SelfLeadershipConfidence, SelfLeadershipDimension } from "../shared/modules/selfLeadershipIntelligence";
+import type { WarRoomIndicator } from "../shared/modules/warRoom";
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 export const users = mysqlTable("users", {
@@ -4494,3 +4495,224 @@ export const eiWorkDiaryEntries = mysqlTable(
 );
 export type EiWorkDiaryEntry = typeof eiWorkDiaryEntries.$inferSelect;
 export type InsertEiWorkDiaryEntry = typeof eiWorkDiaryEntries.$inferInsert;
+
+
+// ─── War Room V1 ───────────────────────────────────────────────────────────────
+export const warRoomCampaigns = mysqlTable(
+  "war_room_campaigns",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    name: varchar("name", { length: 255 }).notNull(),
+    objective: text("objective").notNull(),
+    victoryCondition: text("victoryCondition").notNull(),
+    hypothesis: text("hypothesis"),
+    ownerUserId: int("ownerUserId").notNull().references(() => users.id),
+    deadline: timestamp("deadline").notNull(),
+    reviewDate: timestamp("reviewDate").notNull(),
+    indicators: json("indicators").$type<WarRoomIndicator[]>().notNull(),
+    parkedWork: text("parkedWork"),
+    status: mysqlEnum("status", ["draft", "active", "paused", "completed", "killed", "archived"]).default("draft").notNull(),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("war_room_campaigns_tenant_status_idx").on(table.tenantId, table.status),
+    index("war_room_campaigns_owner_idx").on(table.ownerUserId, table.status),
+  ],
+);
+export type WarRoomCampaign = typeof warRoomCampaigns.$inferSelect;
+export type InsertWarRoomCampaign = typeof warRoomCampaigns.$inferInsert;
+
+export const warRoomEvidenceItems = mysqlTable(
+  "war_room_evidence_items",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    sourceType: mysqlEnum("sourceType", ["manual_note", "customer_note", "delivery_note", "platform_note", "imported_excerpt"]).notNull(),
+    sourceLabel: varchar("sourceLabel", { length: 255 }).notNull(),
+    sourceRef: varchar("sourceRef", { length: 500 }),
+    observedAt: timestamp("observedAt").notNull(),
+    capturedAt: timestamp("capturedAt").defaultNow().notNull(),
+    context: text("context"),
+    observation: text("observation").notNull(),
+    approvedExcerpt: text("approvedExcerpt"),
+    contentHash: varchar("contentHash", { length: 128 }),
+    freshnessStatus: mysqlEnum("freshnessStatus", ["current", "stale", "unknown", "delayed"]).default("current").notNull(),
+    accessScope: mysqlEnum("accessScope", ["tenant"]).default("tenant").notNull(),
+    supersedesEvidenceId: int("supersedesEvidenceId"),
+    status: mysqlEnum("status", ["active", "superseded", "retracted"]).default("active").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("war_room_evidence_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.createdAt),
+    index("war_room_evidence_campaign_status_idx").on(table.campaignId, table.status, table.observedAt),
+    foreignKey({ columns: [table.supersedesEvidenceId], foreignColumns: [table.id], name: "war_room_evidence_supersedes_fk" }),
+  ],
+);
+export type WarRoomEvidenceItem = typeof warRoomEvidenceItems.$inferSelect;
+export type InsertWarRoomEvidenceItem = typeof warRoomEvidenceItems.$inferInsert;
+
+export const warRoomEvidenceAssessments = mysqlTable(
+  "war_room_evidence_assessments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
+    evidenceItemId: int("evidenceItemId").notNull().references(() => warRoomEvidenceItems.id),
+    relation: mysqlEnum("relation", ["supports", "contradicts", "does_not_answer"]).notNull(),
+    interpretation: text("interpretation").notNull(),
+    decisionImplication: text("decisionImplication"),
+    materiality: mysqlEnum("materiality", ["material", "context", "unknown"]).default("unknown").notNull(),
+    origin: mysqlEnum("origin", ["human", "ai_draft"]).default("human").notNull(),
+    reviewStatus: mysqlEnum("reviewStatus", ["unreviewed", "accepted", "rejected", "superseded"]).default("unreviewed").notNull(),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    reviewedByUserId: int("reviewedByUserId").references(() => users.id),
+    reviewedAt: timestamp("reviewedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("war_room_assessments_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.reviewStatus),
+    index("war_room_assessments_evidence_idx").on(table.evidenceItemId, table.reviewStatus),
+  ],
+);
+export type WarRoomEvidenceAssessment = typeof warRoomEvidenceAssessments.$inferSelect;
+export type InsertWarRoomEvidenceAssessment = typeof warRoomEvidenceAssessments.$inferInsert;
+
+export const warRoomConstraints = mysqlTable(
+  "war_room_constraints",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
+    statement: text("statement"),
+    state: mysqlEnum("state", ["selected", "tied", "unclear", "closed"]).notNull(),
+    whyItMatters: text("whyItMatters"),
+    disproofCondition: text("disproofCondition"),
+    evidenceIds: json("evidenceIds").$type<number[]>().notNull(),
+    ownerUserId: int("ownerUserId").references(() => users.id),
+    reviewDate: timestamp("reviewDate").notNull(),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    status: mysqlEnum("status", ["active", "superseded", "closed"]).default("active").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("war_room_constraints_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.status),
+    index("war_room_constraints_review_idx").on(table.reviewDate, table.status),
+  ],
+);
+export type WarRoomConstraint = typeof warRoomConstraints.$inferSelect;
+export type InsertWarRoomConstraint = typeof warRoomConstraints.$inferInsert;
+
+export const warRoomDecisions = mysqlTable(
+  "war_room_decisions",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
+    constraintId: int("constraintId").references(() => warRoomConstraints.id),
+    question: text("question").notNull(),
+    options: json("options").$type<string[]>().notNull(),
+    recommendation: text("recommendation"),
+    evidenceIds: json("evidenceIds").$type<number[]>().notNull(),
+    chosenOption: text("chosenOption"),
+    outcome: mysqlEnum("outcome", ["proposed", "accepted", "deferred", "rejected", "superseded"]).default("proposed").notNull(),
+    rationale: text("rationale"),
+    costOfWaiting: text("costOfWaiting"),
+    reversibility: mysqlEnum("reversibility", ["easy", "moderate", "hard", "unknown"]),
+    ownerUserId: int("ownerUserId").notNull().references(() => users.id),
+    dueDate: timestamp("dueDate"),
+    approvedByUserId: int("approvedByUserId").references(() => users.id),
+    approvedAt: timestamp("approvedAt"),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("war_room_decisions_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.outcome),
+    index("war_room_decisions_due_idx").on(table.dueDate, table.outcome),
+  ],
+);
+export type WarRoomDecision = typeof warRoomDecisions.$inferSelect;
+export type InsertWarRoomDecision = typeof warRoomDecisions.$inferInsert;
+
+export const warRoomOrders = mysqlTable(
+  "war_room_orders",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
+    decisionId: int("decisionId").references(() => warRoomDecisions.id),
+    statement: text("statement").notNull(),
+    ownerUserId: int("ownerUserId").notNull().references(() => users.id),
+    deadline: timestamp("deadline"),
+    reviewDate: timestamp("reviewDate"),
+    expectedEvidence: text("expectedEvidence").notNull(),
+    escalationCondition: text("escalationCondition"),
+    killCondition: text("killCondition"),
+    status: mysqlEnum("status", ["draft", "approved", "in_progress", "completed", "paused", "killed"]).default("draft").notNull(),
+    approvedByUserId: int("approvedByUserId").references(() => users.id),
+    approvedAt: timestamp("approvedAt"),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("war_room_orders_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.status),
+    index("war_room_orders_review_idx").on(table.reviewDate, table.status),
+  ],
+);
+export type WarRoomOrder = typeof warRoomOrders.$inferSelect;
+export type InsertWarRoomOrder = typeof warRoomOrders.$inferInsert;
+
+export const warRoomReviews = mysqlTable(
+  "war_room_reviews",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    campaignId: int("campaignId").notNull().references(() => warRoomCampaigns.id),
+    reviewDate: timestamp("reviewDate").notNull(),
+    expectedBelief: text("expectedBelief").notNull(),
+    actionsTaken: text("actionsTaken").notNull(),
+    actualEvidence: text("actualEvidence").notNull(),
+    hypothesisStatus: mysqlEnum("hypothesisStatus", ["strengthened", "weakened", "unanswered", "invalidated"]).notNull(),
+    constraintState: mysqlEnum("constraintState", ["selected", "tied", "unclear", "closed"]).notNull(),
+    decisionOutcome: mysqlEnum("decisionOutcome", ["continue", "modify", "pause", "kill", "none"]).notNull(),
+    nextTest: text("nextTest"),
+    parkStopChoice: text("parkStopChoice"),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("war_room_reviews_tenant_campaign_idx").on(table.tenantId, table.campaignId, table.reviewDate),
+  ],
+);
+export type WarRoomReview = typeof warRoomReviews.$inferSelect;
+export type InsertWarRoomReview = typeof warRoomReviews.$inferInsert;
+
+export const warRoomAuditEvents = mysqlTable(
+  "war_room_audit_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    tenantId: int("tenantId").notNull().references(() => tenants.id),
+    actorUserId: int("actorUserId").notNull().references(() => users.id),
+    entityType: varchar("entityType", { length: 80 }).notNull(),
+    entityId: int("entityId").notNull(),
+    action: varchar("action", { length: 100 }).notNull(),
+    priorState: json("priorState").$type<Record<string, unknown> | null>(),
+    newState: json("newState").$type<Record<string, unknown> | null>(),
+    reason: text("reason"),
+    source: mysqlEnum("source", ["human", "ai_draft", "system_rule"]).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("war_room_audit_tenant_created_idx").on(table.tenantId, table.createdAt),
+    index("war_room_audit_entity_idx").on(table.entityType, table.entityId, table.createdAt),
+  ],
+);
+export type WarRoomAuditEvent = typeof warRoomAuditEvents.$inferSelect;
+export type InsertWarRoomAuditEvent = typeof warRoomAuditEvents.$inferInsert;

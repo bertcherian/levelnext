@@ -77,6 +77,7 @@ import { behaviouralIntelligenceRouter } from "./routers/behaviouralIntelligence
 import { academyRouter } from "./routers/academy";
 import { accountRouter } from "./routers/account";
 import { effectivenessIntelligenceRouter } from "./routers/effectivenessIntelligence";
+import { warRoomRouter } from "./routers/warRoom";
 
 export const appRouter = router({
   system: systemRouter,
@@ -163,6 +164,7 @@ export const appRouter = router({
   behaviouralIntelligence: behaviouralIntelligenceRouter,
   academy: academyRouter,
   effectiveness: effectivenessIntelligenceRouter,
+  warRoom: warRoomRouter,
 });
 
 export type AppRouter = typeof appRouter;

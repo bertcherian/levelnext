@@ -89,6 +89,7 @@ const AdminCoachManagement = lazyWithRouteRecovery(() => import("@/pages/AdminCo
 const AdminSuccessPartners = lazyWithRouteRecovery(() => import("@/pages/AdminSuccessPartners"), "admin-success-partners");
 const MEPLeaderDocuments = lazy(() => import("@/pages/mep/MEPLeaderDocuments"));
 const AdminOrgContext = lazyWithRouteRecovery(() => import("@/pages/AdminOrgContext"), "admin-org-context");
+const WarRoom = lazyWithRouteRecovery(() => import("@/pages/WarRoom"), "admin-war-room");
 const AdminParticipantImport = lazyWithRouteRecovery(() => import("@/pages/AdminParticipantImport"), "admin-participant-import");
 const AdminModelEvaluator = lazyWithRouteRecovery(() => import("@/pages/AdminModelEvaluator"), "admin-model-evaluator");
 const CareerLanding = lazy(() => import("@/pages/CareerLanding"));
@@ -302,6 +303,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/war-room" component={WarRoom} />
       <Route path="/admin/pilot-applications" component={AdminPilotApplications} />
       <Route path="/admin/invites" component={AdminManageInvites} />
       <Route path="/admin/momentum" component={AdminSuccessPartnerQueue} />

@@ -21,6 +21,7 @@ import {
   Briefcase,
   Link2,
   LayoutDashboard,
+  ShieldAlert,
   Phone,
   AlertCircle,
   UserCog,
@@ -51,6 +52,7 @@ import AdminOperationsSidebar from "@/components/AdminOperationsSidebar";
 
 const ADMIN_NAV_ITEMS: PlatformNavItem[] = [
   { label: "Admin Dashboard", icon: LayoutDashboard, href: "/admin" },
+  { label: "War Room OS", icon: ShieldAlert, href: "/admin/war-room" },
   { label: "Model Evaluator", icon: Scale, href: "/admin/model-evaluator" },
   { label: "Pilot Applications", icon: Briefcase, href: "/admin/pilot-applications" },
   { label: "Manage Invites", icon: Link2, href: "/admin/invites" },
