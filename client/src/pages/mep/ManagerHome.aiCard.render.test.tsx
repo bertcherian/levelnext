@@ -15,6 +15,7 @@ vi.mock("@/lib/trpc", () => ({
       getTodayBriefSnapshot: { useQuery: () => ({ data: { priorityFocus: '<cite index="m-1">Coach one team member today.</cite>', managementChallenge: '<cite>Clarify the one outcome that matters most.</cite>' }, refetch: vi.fn() }) },
       getDailyBrief: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
+    tenant: { myTenant: { useQuery: () => ({ data: null }) } },
     aiSuggestionFeedback: { submit: { useMutation: () => ({ mutate: mocks.feedbackMutate, isPending: false }) }, listMine: { useQuery: (...args: any[]) => mocks.feedbackEntriesQuery(...args) }, getMyFeedbackAnalytics: { useQuery: (...args: any[]) => mocks.feedbackAnalyticsQuery(...args) } },
   },
 }));

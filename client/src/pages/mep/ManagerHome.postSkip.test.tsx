@@ -18,6 +18,7 @@ vi.mock("@/lib/trpc", () => ({
       getTodayBriefSnapshot: { useQuery: () => ({ data: { priorityFocus: "Coach one team member today." }, refetch: vi.fn() }) },
       getDailyBrief: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
+    tenant: { myTenant: { useQuery: () => ({ data: null }) } },
     aiSuggestionFeedback: {
       submit: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       listMine: { useQuery: () => ({ data: [], isLoading: false, isError: false, refetch: vi.fn() }) },
