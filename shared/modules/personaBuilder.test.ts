@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseFallbackIntervention, deriveNextPersonaAction, PERSONA_PATTERN_FALLBACK } from "./personaBuilder";
+import { chooseFallbackIntervention, deriveNextDayNumber, deriveNextPersonaAction, getPersonaDayPlan, PERSONA_DAY_PLANS, PERSONA_PATTERN_FALLBACK } from "./personaBuilder";
 
 describe("Persona Builder behavior loop contracts", () => {
   it("routes context and power signals away from Persona theatre", () => {
@@ -18,5 +18,20 @@ describe("Persona Builder behavior loop contracts", () => {
     expect(deriveNextPersonaAction("arose", "yes")).toBe("increase_difficulty");
     expect(deriveNextPersonaAction("arose", "partly")).toBe("repeat_with_adjustment");
     expect(deriveNextPersonaAction("arose", "no")).toBe("simplify_and_practice");
+  });
+
+  it("defines a bounded 14-day path with a completion review", () => {
+    expect(PERSONA_DAY_PLANS).toHaveLength(14);
+    expect(getPersonaDayPlan(1)).toMatchObject({ dayNumber: 1, title: "Name the Moment" });
+    expect(getPersonaDayPlan(14)).toMatchObject({ dayNumber: 14, title: "Complete the review" });
+    expect(getPersonaDayPlan(99).dayNumber).toBe(14);
+  });
+
+  it("advances only when the evidence decision calls for progression", () => {
+    expect(deriveNextDayNumber(6, "increase_difficulty")).toBe(7);
+    expect(deriveNextDayNumber(6, "keep_rep")).toBe(7);
+    expect(deriveNextDayNumber(6, "repeat_with_adjustment")).toBe(6);
+    expect(deriveNextDayNumber(6, "simplify_and_practice")).toBe(6);
+    expect(deriveNextDayNumber(14, "increase_difficulty")).toBe(14);
   });
 });

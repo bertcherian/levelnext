@@ -212,3 +212,60 @@ export const PERSONA_REP_FALLBACK: PersonaRepContent = {
   fallbackIfUnsafe: "Write down the question and request a safer follow-up conversation instead of confronting the person in public.",
   difficulty: 1,
 };
+
+export const PERSONA_DAY_PLANS = [
+  ["Name the Moment", "Notice the situation without trying to fix it."],
+  ["Separate facts from story", "Write down what was observable and what you inferred."],
+  ["Find the pressure point", "Notice the state, skill, information, power, and context factors."],
+  ["Choose the Commitment", "Name the standard you want to practice."],
+  ["Rehearse the first move", "Practise the smallest useful line before the next opportunity."],
+  ["Make the Rep", "Use the behavior once in a real or simulated conversation."],
+  ["Review the signal", "Notice what changed and what stayed difficult."],
+  ["Adjust the Rep", "Repeat with one deliberate adjustment, not a wholesale reinvention."],
+  ["Practise under pressure", "Use Practice Partner or Simulator to meet realistic resistance."],
+  ["Try the higher-stakes version", "Carry the behavior into a more consequential moment."],
+  ["Gather outside evidence", "Look for an observable outcome or stakeholder signal."],
+  ["Reduce the scaffold", "Use the Persona less explicitly and keep the behavior."],
+  ["Test transfer", "Apply the Commitment in a different context or relationship."],
+  ["Complete the review", "Decide what to keep, retire, or test next."],
+] as const;
+
+export type PersonaDayPlan = {
+  dayNumber: number;
+  title: string;
+  focus: string;
+  status: "locked" | "in_progress" | "complete" | "skipped";
+  availableAt?: string | Date | null;
+  repId?: number | null;
+  practiceSessionId?: number | null;
+  simulatorSessionId?: number | null;
+  evidenceCount: number;
+  adaptation?: {
+    source: "checkin" | "practice" | "simulator" | "system";
+    decision: "keep_rep" | "repeat_with_adjustment" | "increase_difficulty" | "simplify_and_practice";
+    reason: string;
+  } | null;
+  completedAt?: string | Date | null;
+};
+
+export const createPersonaCompletionReviewSchema = z.object({
+  journeyId: z.number().int().positive(),
+  overallShift: z.string().trim().min(10).max(1500),
+  whatChanged: z.string().trim().min(10).max(1500),
+  whatDidNotChange: z.string().trim().min(10).max(1500),
+  nextExperiment: z.string().trim().min(10).max(1500),
+  rating: z.number().int().min(1).max(5),
+  nextChoice: z.enum(["continue_persona", "retire_persona", "switch_intervention", "pause"]),
+});
+export type CreatePersonaCompletionReviewInput = z.infer<typeof createPersonaCompletionReviewSchema>;
+
+export function getPersonaDayPlan(dayNumber: number): { dayNumber: number; title: string; focus: string } {
+  const safeDay = Math.min(14, Math.max(1, Math.round(dayNumber)));
+  const [title, focus] = PERSONA_DAY_PLANS[safeDay - 1];
+  return { dayNumber: safeDay, title, focus };
+}
+
+export function deriveNextDayNumber(currentDay: number, decision: "keep_rep" | "repeat_with_adjustment" | "increase_difficulty" | "simplify_and_practice"): number {
+  if (decision === "repeat_with_adjustment" || decision === "simplify_and_practice") return Math.min(14, currentDay);
+  return Math.min(14, currentDay + 1);
+}

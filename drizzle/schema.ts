@@ -1691,6 +1691,9 @@ export type MepDailyBrief = typeof mepDailyBriefs.$inferSelect;
 export const mepPracticeSessions = mysqlTable("mep_practice_sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  personaRepId: int("personaRepId"),
+  personaJourneyId: int("personaJourneyId"),
+  personaDayNumber: int("personaDayNumber"),
   scenario: varchar("scenario", { length: 255 }).notNull(),
   scenarioType: varchar("scenarioType", { length: 100 }),
   // Personality of the AI counterpart
@@ -2160,6 +2163,9 @@ export type InsertUserResume = typeof userResumes.$inferInsert;
 export const simSessions = mysqlTable("sim_sessions", {
   id: int("id").primaryKey().autoincrement(),
   userId: int("userId").notNull().references(() => users.id),
+  personaRepId: int("personaRepId"),
+  personaJourneyId: int("personaJourneyId"),
+  personaDayNumber: int("personaDayNumber"),
   platform: varchar("platform", { length: 50 }).notNull(), // leadership | manager | career | young
   // Scenario (AI-inferred)
   userPrompt: text("userPrompt").notNull(),
@@ -4848,6 +4854,7 @@ export const personaBuilderReps = mysqlTable(
     userId: int("userId").notNull().references(() => users.id),
     personaId: int("personaId").references(() => personaBuilderPersonas.id),
     commitmentId: int("commitmentId").notNull().references(() => personaBuilderCommitments.id),
+    dayNumber: int("dayNumber").default(1).notNull(),
     instruction: text("instruction").notNull(),
     trigger: text("trigger").notNull(),
     successSignal: text("successSignal").notNull(),
@@ -4887,3 +4894,54 @@ export const personaBuilderCheckins = mysqlTable(
 );
 export type PersonaBuilderCheckin = typeof personaBuilderCheckins.$inferSelect;
 export type InsertPersonaBuilderCheckin = typeof personaBuilderCheckins.$inferInsert;
+
+export const personaBuilderDays = mysqlTable(
+  "persona_builder_days",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    dayNumber: int("dayNumber").notNull(),
+    title: varchar("title", { length: 160 }).notNull(),
+    focus: text("focus").notNull(),
+    status: mysqlEnum("status", ["locked", "in_progress", "complete", "skipped"]).default("locked").notNull(),
+    repId: int("repId"),
+    practiceSessionId: int("practiceSessionId"),
+    simulatorSessionId: int("simulatorSessionId"),
+    evidenceCount: int("evidenceCount").default(0).notNull(),
+    adaptation: json("adaptation").$type<Record<string, unknown> | null>(),
+    completionNote: text("completionNote"),
+    availableAt: timestamp("availableAt"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("persona_builder_days_journey_day_uq").on(table.journeyId, table.dayNumber),
+    index("persona_builder_days_user_status_idx").on(table.userId, table.status),
+  ],
+);
+export type PersonaBuilderDay = typeof personaBuilderDays.$inferSelect;
+export type InsertPersonaBuilderDay = typeof personaBuilderDays.$inferInsert;
+
+export const personaBuilderCompletionReviews = mysqlTable(
+  "persona_builder_completion_reviews",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    overallShift: text("overallShift").notNull(),
+    whatChanged: text("whatChanged").notNull(),
+    whatDidNotChange: text("whatDidNotChange").notNull(),
+    nextExperiment: text("nextExperiment").notNull(),
+    rating: int("rating").notNull(),
+    nextChoice: mysqlEnum("nextChoice", ["continue_persona", "retire_persona", "switch_intervention", "pause"]).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("persona_builder_reviews_journey_idx").on(table.journeyId, table.createdAt),
+    index("persona_builder_reviews_user_idx").on(table.userId, table.createdAt),
+  ],
+);
+export type PersonaBuilderCompletionReview = typeof personaBuilderCompletionReviews.$inferSelect;
+export type InsertPersonaBuilderCompletionReview = typeof personaBuilderCompletionReviews.$inferInsert;

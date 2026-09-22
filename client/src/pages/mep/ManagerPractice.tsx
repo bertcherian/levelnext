@@ -44,8 +44,21 @@ export default function ManagerPractice() {
   const animFrameRef = useRef<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const [personaRepId] = useState<number | undefined>(() => {
+    const value = Number(new URLSearchParams(window.location.search).get("personaRepId"));
+    return Number.isInteger(value) && value > 0 ? value : undefined;
+  });
+  const [personaJourneyId] = useState<number | undefined>(() => {
+    const value = Number(new URLSearchParams(window.location.search).get("journeyId"));
+    return Number.isInteger(value) && value > 0 ? value : undefined;
+  });
+
   const { data: scenarios } = trpc.mep.getPracticeScenarios.useQuery();
   const { data: pastSessions } = trpc.mep.listPracticeSessions.useQuery();
+  const { data: personaContext } = trpc.personaBuilder.getRepPracticeContext.useQuery(
+    { repId: personaRepId! },
+    { enabled: Boolean(personaRepId) },
+  );
 
   const startSession = trpc.mep.startPracticeSession.useMutation({
     onSuccess: (data) => {
@@ -174,6 +187,8 @@ export default function ManagerPractice() {
       scenarioId: scenario.id,
       scenarioLabel: scenario.label,
       counterpartPersonality: "realistic",
+      personaRepId,
+      personaJourneyId,
     });
   };
 
@@ -204,6 +219,17 @@ export default function ManagerPractice() {
               Role-play difficult management conversations before they happen. Get real-time feedback and a debrief.
             </p>
           </div>
+
+          {personaContext && (
+            <div className="rounded-2xl border px-5 py-4" style={{ background: "#FFFDF5", borderColor: "#D4AF3780" }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#9B7A17" }}>Persona Rep rehearsal</p>
+              <p className="mt-2 text-sm font-semibold" style={{ color: "var(--color-ln-navy)" }}>{personaContext.rep.instruction}</p>
+              <p className="mt-1 text-xs leading-relaxed" style={{ color: "oklch(45% 0.02 248.6)" }}>Use this role-play to rehearse the behavior before you carry it into real work. The session will be linked to your 14-day journey.</p>
+              <Button size="sm" className="mt-3" style={{ background: "#0A1A2F", color: "white" }} onClick={() => handleStart({ id: "persona_rep", label: personaContext.practice.scenarioLabel })} disabled={startSession.isPending}>
+                {startSession.isPending ? <><Loader2 size={12} className="mr-1.5 animate-spin" /> Starting…</> : <>Start Rep rehearsal <ChevronRight size={12} className="ml-1" /></>}
+              </Button>
+            </div>
+          )}
 
           {/* Voice Practice Simulator Banner */}
           <a

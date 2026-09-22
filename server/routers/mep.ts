@@ -34,6 +34,7 @@ import { buildMepFactorReportRows, getMepDiagnostic, scoreMepDiagnostic, MEP_DIA
 import { getMepPracticeRole } from "../../shared/modules/mepPracticeRoles";
 import { normalizeAiData } from "../../shared/citationSanitization";
 import { getMepDailyBriefDateKey } from "../../shared/modules/mepDailyBriefDate";
+import { getPersonaRepPracticeContext, linkPersonaPracticeSession } from "../personaBuilder";
 import {
   COMMITMENT_SUGGESTIONS_FALLBACK,
   commitmentSuggestionsSchema,
@@ -813,14 +814,22 @@ Return a JSON object with these exact keys:
       scenarioId: z.string(),
       scenarioLabel: z.string(),
       counterpartPersonality: z.string().optional(),
+      personaRepId: z.number().int().positive().optional(),
+      personaJourneyId: z.number().int().positive().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const personaContext = input.personaRepId ? await getPersonaRepPracticeContext(ctx.user.id, input.personaRepId) : null;
+      const scenarioLabel = personaContext?.practice.scenarioLabel ?? input.scenarioLabel;
+      const scenarioType = personaContext ? "persona_rep" : input.scenarioId;
       const [inserted] = await db.insert(mepPracticeSessions).values({
         userId: ctx.user.id,
-        scenario: input.scenarioLabel,
-        scenarioType: input.scenarioId,
+        personaRepId: personaContext?.rep.id ?? input.personaRepId ?? null,
+        personaJourneyId: personaContext?.journey?.id ?? input.personaJourneyId ?? null,
+        personaDayNumber: personaContext?.day?.dayNumber ?? null,
+        scenario: scenarioLabel,
+        scenarioType,
         counterpartPersonality: input.counterpartPersonality ?? "realistic",
         messages: [],
         status: "active",
@@ -837,8 +846,9 @@ Return a JSON object with these exact keys:
             role: "user" as const,
             content: `
 You are playing the role of ${roleProfile.characterDescription} in a management practice scenario.
-Scenario: ${input.scenarioLabel}
+Scenario: ${scenarioLabel}
 Manager context: ${context}
+${personaContext ? `Persona Rep: ${personaContext.rep.instruction}\nRep trigger: ${personaContext.rep.trigger}\nSuccess signal: ${personaContext.rep.successSignal}` : ""}
 ${roleProfile.roleInstruction}
 Generate a realistic opening line (1-2 sentences) that starts the conversation from ${roleProfile.openingPerspective}.
 Return just the dialogue, no labels or quotes.
@@ -856,6 +866,8 @@ Return just the dialogue, no labels or quotes.
         .update(mepPracticeSessions)
         .set({ messages })
         .where(eq(mepPracticeSessions.id, inserted.id));
+
+      if (personaContext?.rep.id) await linkPersonaPracticeSession(ctx.user.id, personaContext.rep.id, inserted.id);
 
       return { id: inserted.id, opening };
     }),

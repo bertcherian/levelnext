@@ -321,6 +321,10 @@ export default function SimulatorStart() {
   const path = window.location.pathname;
   const simulatorParams = new URLSearchParams(window.location.search);
   const samplePreset = simulatorParams.get("sample") === "voice-simulator";
+  const personaRepParam = Number(simulatorParams.get("personaRepId"));
+  const personaRepId = Number.isInteger(personaRepParam) && personaRepParam > 0 ? personaRepParam : undefined;
+  const personaJourneyParam = Number(simulatorParams.get("journeyId"));
+  const personaJourneyId = Number.isInteger(personaJourneyParam) && personaJourneyParam > 0 ? personaJourneyParam : undefined;
   const effectivenessBehavior = simulatorParams.get("ei_behavior");
   const effectivenessMove = simulatorParams.get("ei_move");
   const effectivenessGoal = simulatorParams.get("ei_goal");
@@ -356,6 +360,10 @@ export default function SimulatorStart() {
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const previewTimeoutRef = useRef<number | null>(null);
   const activePreviewVoiceRef = useRef<VoiceId | null>(null);
+  const { data: personaContext } = trpc.personaBuilder.getRepPracticeContext.useQuery(
+    { repId: personaRepId! },
+    { enabled: Boolean(personaRepId) },
+  );
 
   const clearPreviewState = (voice?: VoiceId) => {
     if (voice && activePreviewVoiceRef.current !== voice) return;
@@ -439,6 +447,11 @@ export default function SimulatorStart() {
     }));
   }, [samplePreset, behaviouralHandoff]);
 
+  useEffect(() => {
+    if (!personaContext) return;
+    setPrompt(personaContext.practice.userPrompt);
+  }, [personaContext]);
+
   const inferMutation = trpc.simulator.inferScenario.useMutation({
     onSuccess: (data) => {
       setScenario(data);
@@ -510,6 +523,8 @@ export default function SimulatorStart() {
         characterName: scenario.characterName,
         characterStyle: scenario.characterStyle,
         voice: selectedVoice,
+        personaRepId,
+        personaJourneyId,
       });
 
       if (samplePreset && !behaviouralHandoff) {
@@ -602,6 +617,17 @@ export default function SimulatorStart() {
             Describe the situation in your own words — the AI will build a realistic scenario and character for you.
           </p>
         </div>
+
+        {personaContext && (
+          <div className="mb-6 rounded-2xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 p-5 text-left">
+            <div className="flex items-center gap-2 text-[#D4AF37] text-xs font-semibold uppercase tracking-widest">
+              <Sparkles className="w-4 h-4" /> Persona Rep rehearsal · Day {personaContext.day?.dayNumber ?? ""}
+            </div>
+            <h2 className="mt-2 text-white font-semibold">{personaContext.rep.instruction}</h2>
+            <p className="mt-1 text-white/65 text-sm leading-relaxed">The prompt below is grounded in your Rep, trigger, and success signal. Build the scenario, then practise staying with the behavior under pressure.</p>
+            <p className="mt-3 text-xs text-[#D4AF37]">Success signal: {personaContext.rep.successSignal}</p>
+          </div>
+        )}
 
         {behaviouralHandoff && (
           <div className="mb-6 rounded-2xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 p-5 text-left">

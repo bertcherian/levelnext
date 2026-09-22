@@ -1,10 +1,12 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import { z } from "zod";
 import {
   biEvidence,
   biMoments,
   personaBuilderCheckins,
+  personaBuilderCompletionReviews,
   personaBuilderCommitments,
+  personaBuilderDays,
   personaBuilderEpisodes,
   personaBuilderJourneys,
   personaBuilderPatternSnapshots,
@@ -16,11 +18,15 @@ import {
   PERSONA_PATTERN_FALLBACK,
   PERSONA_REP_FALLBACK,
   chooseFallbackIntervention,
+  deriveNextDayNumber,
   deriveNextPersonaAction,
+  getPersonaDayPlan,
+  PERSONA_DAY_PLANS,
   personaCandidateSchema,
   personaPatternSchema,
   personaRepContentSchema,
   type AddPersonaEpisodeInput,
+  type CreatePersonaCompletionReviewInput,
   type PersonaCheckinInput,
   type StartPersonaJourneyInput,
 } from "../shared/modules/personaBuilder";
@@ -46,16 +52,44 @@ function provenance(kind: "user_stated" | "user_confirmed", sourceType: string, 
   return { kind, sourceType, ...(sourceId ? { sourceId } : {}), createdAt: new Date().toISOString() };
 }
 
+async function ensurePersonaDays(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, journeyId: number, userId: number) {
+  const existing = await db.select().from(personaBuilderDays).where(eq(personaBuilderDays.journeyId, journeyId)).orderBy(personaBuilderDays.dayNumber);
+  if (existing.length === PERSONA_DAY_PLANS.length) return existing;
+  const existingNumbers = new Set(existing.map((day) => day.dayNumber));
+  for (let index = 0; index < PERSONA_DAY_PLANS.length; index += 1) {
+    const dayNumber = index + 1;
+    if (existingNumbers.has(dayNumber)) continue;
+    const plan = getPersonaDayPlan(dayNumber);
+    await db.insert(personaBuilderDays).values({
+      journeyId,
+      userId,
+      dayNumber,
+      title: plan.title,
+      focus: plan.focus,
+      status: dayNumber === 1 ? "in_progress" : "locked",
+      availableAt: dayNumber === 1 ? new Date() : new Date(Date.now() + (dayNumber - 1) * 24 * 60 * 60 * 1000),
+    });
+  }
+  return db.select().from(personaBuilderDays).where(eq(personaBuilderDays.journeyId, journeyId)).orderBy(personaBuilderDays.dayNumber);
+}
+
+async function getCurrentPersonaDay(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, journeyId: number) {
+  const [day] = await db.select().from(personaBuilderDays).where(and(eq(personaBuilderDays.journeyId, journeyId), eq(personaBuilderDays.status, "in_progress"))).orderBy(personaBuilderDays.dayNumber).limit(1);
+  return day;
+}
+
 export async function getPersonaBuilderHome(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const [journey] = await db
     .select()
     .from(personaBuilderJourneys)
-    .where(and(eq(personaBuilderJourneys.userId, userId), eq(personaBuilderJourneys.status, "active")))
+    .where(and(eq(personaBuilderJourneys.userId, userId), or(eq(personaBuilderJourneys.status, "active"), eq(personaBuilderJourneys.status, "completed"))))
     .orderBy(desc(personaBuilderJourneys.updatedAt))
     .limit(1);
   if (!journey) return { journey: null };
+
+  const timeline = await ensurePersonaDays(db, journey.id, userId);
 
   const [moment] = await db.select().from(biMoments).where(eq(biMoments.id, journey.momentId)).limit(1);
   const episodes = await db.select().from(personaBuilderEpisodes).where(eq(personaBuilderEpisodes.journeyId, journey.id)).orderBy(desc(personaBuilderEpisodes.createdAt));
@@ -66,6 +100,7 @@ export async function getPersonaBuilderHome(userId: number) {
   const reps = await db.select().from(personaBuilderReps).where(and(eq(personaBuilderReps.journeyId, journey.id), eq(personaBuilderReps.status, "active"))).orderBy(desc(personaBuilderReps.createdAt)).limit(1);
   const checkins = await db.select().from(personaBuilderCheckins).where(eq(personaBuilderCheckins.journeyId, journey.id)).orderBy(desc(personaBuilderCheckins.createdAt)).limit(5);
   const evidence = await db.select().from(biEvidence).where(and(eq(biEvidence.momentId, journey.momentId), eq(biEvidence.userId, userId))).orderBy(desc(biEvidence.createdAt)).limit(5);
+  const [completionReview] = await db.select().from(personaBuilderCompletionReviews).where(and(eq(personaBuilderCompletionReviews.journeyId, journey.id), eq(personaBuilderCompletionReviews.userId, userId))).orderBy(desc(personaBuilderCompletionReviews.createdAt)).limit(1);
 
   return {
     journey,
@@ -78,6 +113,8 @@ export async function getPersonaBuilderHome(userId: number) {
     rep: reps[0] ?? null,
     checkins,
     evidence,
+    timeline,
+    completionReview: completionReview ?? null,
   };
 }
 
@@ -113,6 +150,7 @@ export async function startPersonaJourney(userId: number, input: StartPersonaJou
     integrationStatus: "scaffold_needed",
     targetEndAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
   });
+  await ensurePersonaDays(db, inserted.insertId, userId);
   await db.update(biMoments).set({ status: "draft", updatedAt: new Date() }).where(eq(biMoments.id, moment.id));
   return getPersonaBuilderHome(userId);
 }
@@ -225,10 +263,25 @@ export async function selectPersona(userId: number, journeyId: number, candidate
 
 export async function createPersonaRep(userId: number, journeyId: number) {
   const { db, journey } = await getOwnedJourney(journeyId, userId);
+  if (journey.status !== "active") throw new Error("This Persona Builder journey is complete. Start a new Moment to create another Rep.");
+  const day = await getCurrentPersonaDay(db, journey.id);
+  if (!day) throw new Error("There is no active day in this journey yet.");
+  const [existingRep] = await db.select().from(personaBuilderReps).where(and(eq(personaBuilderReps.journeyId, journey.id), eq(personaBuilderReps.status, "active"))).limit(1);
+  if (existingRep) return existingRep;
+  const [previousCheckin] = await db.select().from(personaBuilderCheckins).where(eq(personaBuilderCheckins.journeyId, journey.id)).orderBy(desc(personaBuilderCheckins.createdAt)).limit(1);
+  const adaptiveDirection = day.dayNumber === 1
+    ? "Start with the smallest useful, low-risk version of the behavior."
+    : previousCheckin?.nextAction === "increase_difficulty"
+      ? "Increase difficulty one notch: retain the behavior but use a more consequential stakeholder, more resistance, or a clearer decision point."
+      : previousCheckin?.nextAction === "repeat_with_adjustment"
+        ? "Repeat the same core behavior with one concrete adjustment that makes it easier to notice and execute."
+        : previousCheckin?.nextAction === "simplify_and_practice"
+          ? "Simplify the behavior and make it rehearsal-ready before expecting it in real work."
+          : "Keep the behavior small and seek the next realistic opportunity to apply it.";
   const [commitment] = await db.select().from(personaBuilderCommitments).where(and(eq(personaBuilderCommitments.journeyId, journey.id), eq(personaBuilderCommitments.status, "active"))).orderBy(desc(personaBuilderCommitments.createdAt)).limit(1);
   if (!commitment) throw new Error("Confirm one Commitment before creating a Rep.");
   const [persona] = await db.select().from(personaBuilderPersonas).where(and(eq(personaBuilderPersonas.journeyId, journey.id), eq(personaBuilderPersonas.status, "selected"))).orderBy(desc(personaBuilderPersonas.createdAt)).limit(1);
-  const fallback = PERSONA_REP_FALLBACK;
+  const fallback = { ...PERSONA_REP_FALLBACK, difficulty: Math.min(5, Math.max(1, day.dayNumber >= 10 ? 3 : day.dayNumber >= 6 ? 2 : 1)) };
   const result = await invokeStructured({
     context: "persona_builder.generate_rep",
     schemaName: "persona_builder_rep",
@@ -237,8 +290,8 @@ export async function createPersonaRep(userId: number, journeyId: number) {
     request: {
       model: "claude-haiku-4-5",
       messages: [
-        { role: "system", content: "Create exactly one small, observable, safe workplace behavior experiment connected to the Commitment. Avoid vague traits. Return only JSON." },
-        { role: "user", content: `Commitment: ${commitment.statement}\nObservable behavior: ${commitment.observableBehavior}\nPersona: ${persona ? JSON.stringify(persona.persona) : "No Persona; use the smallest useful intervention."}` },
+        { role: "system", content: "Create exactly one small, observable, safe workplace behavior experiment connected to the Commitment. Avoid vague traits. The Rep must fit the supplied adaptive direction and stay appropriate for the stated day. Return only JSON." },
+        { role: "user", content: `Journey day ${day.dayNumber}: ${day.title}\nDay focus: ${day.focus}\nAdaptive direction: ${adaptiveDirection}\nCommitment: ${commitment.statement}\nObservable behavior: ${commitment.observableBehavior}\nPersona: ${persona ? JSON.stringify(persona.persona) : "No Persona; use the smallest useful intervention."}` },
       ],
     },
   });
@@ -248,6 +301,7 @@ export async function createPersonaRep(userId: number, journeyId: number) {
     userId,
     personaId: persona?.id ?? null,
     commitmentId: commitment.id,
+    dayNumber: day.dayNumber,
     instruction: result.value.instruction,
     trigger: result.value.trigger,
     successSignal: result.value.successSignal,
@@ -255,6 +309,7 @@ export async function createPersonaRep(userId: number, journeyId: number) {
     difficulty: result.value.difficulty,
     status: "active",
   });
+  await db.update(personaBuilderDays).set({ repId: inserted.insertId, status: "in_progress", updatedAt: new Date() }).where(eq(personaBuilderDays.id, day.id));
   await db.update(personaBuilderJourneys).set({ currentStage: "evidence", updatedAt: new Date() }).where(eq(personaBuilderJourneys.id, journey.id));
   const [rep] = await db.select().from(personaBuilderReps).where(eq(personaBuilderReps.id, inserted.insertId)).limit(1);
   return rep;
@@ -265,6 +320,7 @@ export async function recordPersonaCheckin(userId: number, input: PersonaCheckin
   if (!db) throw new Error("Database not available");
   const [rep] = await db.select().from(personaBuilderReps).where(and(eq(personaBuilderReps.id, input.repId), eq(personaBuilderReps.userId, userId))).limit(1);
   if (!rep) throw new Error("Rep not found or access denied.");
+  if (rep.status !== "active") throw new Error("This Rep has already been checked in. Create the next Rep from your journey timeline.");
   const nextAction = deriveNextPersonaAction(input.opportunityStatus, input.executionStatus);
   let evidenceId: number | null = null;
   if (input.opportunityStatus === "arose" && ["yes", "partly"].includes(input.executionStatus)) {
@@ -292,7 +348,93 @@ export async function recordPersonaCheckin(userId: number, input: PersonaCheckin
     nextAction,
   });
   await db.update(personaBuilderReps).set({ status: "completed", updatedAt: new Date() }).where(eq(personaBuilderReps.id, rep.id));
+  const [day] = await db.select().from(personaBuilderDays).where(and(eq(personaBuilderDays.journeyId, rep.journeyId), eq(personaBuilderDays.dayNumber, rep.dayNumber))).limit(1);
+  if (day) {
+    const nextDayNumber = deriveNextDayNumber(day.dayNumber, nextAction);
+    const isFinalDayComplete = day.dayNumber === 14 && input.opportunityStatus === "arose" && ["yes", "partly"].includes(input.executionStatus);
+    const advanced = nextDayNumber > day.dayNumber || isFinalDayComplete;
+    await db.update(personaBuilderDays).set({
+      status: advanced ? "complete" : "in_progress",
+      evidenceCount: day.evidenceCount + (evidenceId ? 1 : 0),
+      adaptation: {
+        source: "checkin",
+        decision: nextAction,
+        reason: input.opportunityStatus === "did_not_arise" ? "The opportunity did not arise; repeat the same small Rep." : "The check-in indicates whether to repeat, simplify, or increase difficulty.",
+      },
+      completedAt: advanced ? new Date() : null,
+      updatedAt: new Date(),
+    }).where(eq(personaBuilderDays.id, day.id));
+    if (advanced && nextDayNumber > day.dayNumber) {
+      await db.update(personaBuilderDays).set({ status: "in_progress", updatedAt: new Date() }).where(and(eq(personaBuilderDays.journeyId, rep.journeyId), eq(personaBuilderDays.dayNumber, nextDayNumber)));
+    }
+  }
   await db.update(personaBuilderJourneys).set({ currentStage: "evidence", updatedAt: new Date() }).where(eq(personaBuilderJourneys.id, rep.journeyId));
   const [checkin] = await db.select().from(personaBuilderCheckins).where(eq(personaBuilderCheckins.id, inserted.insertId)).limit(1);
   return { checkin, evidenceId, nextAction };
+}
+
+export async function getPersonaRepPracticeContext(userId: number, repId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [rep] = await db.select().from(personaBuilderReps).where(and(eq(personaBuilderReps.id, repId), eq(personaBuilderReps.userId, userId))).limit(1);
+  if (!rep) throw new Error("Persona Rep not found or access denied.");
+  const [journey] = await db.select().from(personaBuilderJourneys).where(and(eq(personaBuilderJourneys.id, rep.journeyId), eq(personaBuilderJourneys.userId, userId))).limit(1);
+  const [moment] = await db.select().from(biMoments).where(eq(biMoments.id, rep.momentId)).limit(1);
+  const [commitment] = await db.select().from(personaBuilderCommitments).where(eq(personaBuilderCommitments.id, rep.commitmentId)).limit(1);
+  const [persona] = rep.personaId ? await db.select().from(personaBuilderPersonas).where(eq(personaBuilderPersonas.id, rep.personaId)).limit(1) : [];
+  const [day] = await db.select().from(personaBuilderDays).where(and(eq(personaBuilderDays.journeyId, rep.journeyId), eq(personaBuilderDays.dayNumber, rep.dayNumber))).limit(1);
+  return {
+    rep,
+    journey,
+    day,
+    moment,
+    commitment,
+    persona,
+    practice: {
+      scenarioId: `persona_rep_${rep.id}`,
+      scenarioLabel: `Persona Rep — ${rep.instruction}`,
+      stakeholder: moment?.role || "Workplace stakeholder",
+      objective: rep.successSignal,
+      expectedChallenge: "The stakeholder may challenge the assumption or ask you to defend your position. Stay with the Rep before explaining.",
+      characterStyle: "Realistic, mildly resistant, and responsive to clear listening.",
+      userPrompt: `${rep.instruction} Trigger: ${rep.trigger}. Success: ${rep.successSignal}`,
+    },
+  };
+}
+
+async function updatePersonaDaySessionLink(userId: number, repId: number, field: "practiceSessionId" | "simulatorSessionId", sessionId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [rep] = await db.select().from(personaBuilderReps).where(and(eq(personaBuilderReps.id, repId), eq(personaBuilderReps.userId, userId))).limit(1);
+  if (!rep) throw new Error("Persona Rep not found or access denied.");
+  await db.update(personaBuilderDays).set({ [field]: sessionId, updatedAt: new Date() }).where(and(eq(personaBuilderDays.journeyId, rep.journeyId), eq(personaBuilderDays.dayNumber, rep.dayNumber)));
+  return { linked: true, repId, sessionId, field };
+}
+
+export function linkPersonaPracticeSession(userId: number, repId: number, sessionId: number) {
+  return updatePersonaDaySessionLink(userId, repId, "practiceSessionId", sessionId);
+}
+
+export function linkPersonaSimulatorSession(userId: number, repId: number, sessionId: number) {
+  return updatePersonaDaySessionLink(userId, repId, "simulatorSessionId", sessionId);
+}
+
+export async function createPersonaCompletionReview(userId: number, input: CreatePersonaCompletionReviewInput) {
+  const { db, journey } = await getOwnedJourney(input.journeyId, userId);
+  const [day14] = await db.select().from(personaBuilderDays).where(and(eq(personaBuilderDays.journeyId, journey.id), eq(personaBuilderDays.dayNumber, 14))).limit(1);
+  if (!day14 || day14.status !== "complete") throw new Error("Complete the Day 14 Rep before writing the completion review.");
+  const [reviewInsert] = await db.insert(personaBuilderCompletionReviews).values({
+    journeyId: journey.id,
+    userId,
+    overallShift: input.overallShift,
+    whatChanged: input.whatChanged,
+    whatDidNotChange: input.whatDidNotChange,
+    nextExperiment: input.nextExperiment,
+    rating: input.rating,
+    nextChoice: input.nextChoice,
+  });
+  const integrationStatus = input.nextChoice === "retire_persona" ? "integrated" : input.nextChoice === "continue_persona" ? "increasingly_natural" : input.nextChoice === "switch_intervention" ? "less_activation_needed" : "scaffold_can_be_activated";
+  await db.update(personaBuilderJourneys).set({ status: "completed", currentStage: "completed", integrationStatus, completedAt: new Date(), updatedAt: new Date() }).where(eq(personaBuilderJourneys.id, journey.id));
+  const [review] = await db.select().from(personaBuilderCompletionReviews).where(eq(personaBuilderCompletionReviews.id, reviewInsert.insertId)).limit(1);
+  return review;
 }

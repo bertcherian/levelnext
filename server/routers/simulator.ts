@@ -7,6 +7,7 @@ import { extractJsonObject, invokeLLM } from "../_core/llm";
 import { academyProgressEvents, simSessions } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 import { getOrCreateAcademyProfile } from "../academyService";
+import { getPersonaRepPracticeContext, linkPersonaSimulatorSession } from "../personaBuilder";
 
 const PLATFORM_CONTEXT: Record<string, { label: string; coachingStyle: string; behaviourDimensions: string[] }> = {
   leadership: {
@@ -203,12 +204,15 @@ followUpQuestion: if you genuinely need one clarification, include a short quest
       characterName: z.string(),
       characterStyle: z.string(),
       voice: z.enum(["nova", "shimmer", "alloy", "fable", "shubh", "sumit", "simran", "ishita"]).default("shubh"),
+      personaRepId: z.number().int().positive().optional(),
+      personaJourneyId: z.number().int().positive().optional(),
     }))
         .mutation(async ({ input, ctx }) => {
       try {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
       const ctx_platform = PLATFORM_CONTEXT[input.platform];
+      const personaContext = input.personaRepId ? await getPersonaRepPracticeContext(ctx.user.id, input.personaRepId) : null;
       // Ensure integers (LLM may return floats)
       const difficulty = Math.round(input.difficulty);
       const estimatedMinutes = Math.round(input.estimatedMinutes);
@@ -223,6 +227,7 @@ Character style: ${input.characterStyle}
 Scenario: ${input.conversationType}
 What the manager (user) wants to achieve: ${input.objective}
 How you (${input.characterName}) will make it challenging: ${input.expectedChallenge}
+${personaContext ? `Persona Rep to rehearse: ${personaContext.rep.instruction}\nTrigger: ${personaContext.rep.trigger}\nSuccess signal: ${personaContext.rep.successSignal}` : ""}
 
 IMPORTANT: You are NOT the manager. You are the ${input.stakeholder}. React to the manager, do not lead the conversation.
 Write a single opening line (1-2 sentences) as ${input.characterName} to set the scene — you are waiting for the manager to address you, perhaps slightly guarded or neutral. Do not take charge. Do not break the fourth wall.`,
@@ -239,6 +244,9 @@ Write a single opening line (1-2 sentences) as ${input.characterName} to set the
 
       const result = await db.insert(simSessions).values({
         userId: ctx.user.id,
+        personaRepId: personaContext?.rep.id ?? input.personaRepId ?? null,
+        personaJourneyId: personaContext?.journey?.id ?? input.personaJourneyId ?? null,
+        personaDayNumber: personaContext?.day?.dayNumber ?? null,
         platform: input.platform,
         userPrompt: input.userPrompt,
         conversationType: input.conversationType,
@@ -255,6 +263,7 @@ Write a single opening line (1-2 sentences) as ${input.characterName} to set the
       }).$returningId();
 
       const sessionId = result[0].id;
+      if (personaContext?.rep.id) await linkPersonaSimulatorSession(ctx.user.id, personaContext.rep.id, sessionId);
       return { sessionId, opening };
       } catch (err: any) {
         console.error("[simulator.startSession] ERROR:", err?.message ?? err);

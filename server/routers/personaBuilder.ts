@@ -1,9 +1,11 @@
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import {
   addPersonaEpisodeSchema,
   analysePersonaPatternSchema,
   createPersonaCommitmentSchema,
+  createPersonaCompletionReviewSchema,
   createPersonaRepSchema,
   recordPersonaCheckinSchema,
   selectPersonaSchema,
@@ -14,8 +16,10 @@ import {
   analysePersonaPattern,
   createPersonaCommitment,
   createPersonaRep,
+  createPersonaCompletionReview,
   generatePersonaCandidates,
   getPersonaBuilderHome,
+  getPersonaRepPracticeContext,
   recordPersonaCheckin,
   selectPersona,
   startPersonaJourney,
@@ -82,6 +86,20 @@ export const personaBuilderRouter = router({
   recordCheckin: protectedProcedure.input(recordPersonaCheckinSchema).mutation(async ({ ctx, input }) => {
     try {
       return await recordPersonaCheckin(ctx.user.id, input);
+    } catch (error) {
+      return toBadRequest(error);
+    }
+  }),
+  getRepPracticeContext: protectedProcedure.input(z.object({ repId: z.number().int().positive() })).query(async ({ ctx, input }) => {
+    try {
+      return await getPersonaRepPracticeContext(ctx.user.id, input.repId);
+    } catch (error) {
+      return toBadRequest(error);
+    }
+  }),
+  createCompletionReview: protectedProcedure.input(createPersonaCompletionReviewSchema).mutation(async ({ ctx, input }) => {
+    try {
+      return await createPersonaCompletionReview(ctx.user.id, input);
     } catch (error) {
       return toBadRequest(error);
     }

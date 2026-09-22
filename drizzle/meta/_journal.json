@@ -673,6 +673,13 @@
       "when": 1790098120156,
       "tag": "0095_blushing_mandarin",
       "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "5",
+      "when": 1790099621902,
+      "tag": "0096_ordinary_power_man",
+      "breakpoints": true
     }
   ]
 }
