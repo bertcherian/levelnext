@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowRight, CalendarCheck2, CheckCircle2, CircleAlert, LockKeyhole, MessageSquareText, Mic, Sparkles, Target, Zap } from "lucide-react";
+import { ArrowRight, Award, Bell, CalendarCheck2, Check, CheckCircle2, CircleAlert, Copy, LockKeyhole, MessageSquareText, Mic, Share2, Sparkles, Target, Zap } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,12 @@ export default function PersonaBuilder() {
   const [nextExperiment, setNextExperiment] = useState("");
   const [rating, setRating] = useState(3);
   const [nextChoice, setNextChoice] = useState<"continue_persona" | "retire_persona" | "switch_intervention" | "pause">("continue_persona");
+  const [coachEmail, setCoachEmail] = useState("");
+  const [shareWithCoach, setShareWithCoach] = useState(false);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderHour, setReminderHour] = useState(9);
+  const [reminderTimeZone, setReminderTimeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate("/login?returnTo=%2Fpersona");
@@ -69,6 +75,22 @@ export default function PersonaBuilder() {
   const repMutation = trpc.personaBuilder.createRep.useMutation({ onSuccess: () => utils.personaBuilder.getHome.invalidate() });
   const checkinMutation = trpc.personaBuilder.recordCheckin.useMutation({ onSuccess: () => { setReflection(""); setOutcome(""); void utils.personaBuilder.getHome.invalidate(); } });
   const completionReviewMutation = trpc.personaBuilder.createCompletionReview.useMutation({ onSuccess: () => void utils.personaBuilder.getHome.invalidate() });
+  const reminderQuery = trpc.personaBuilder.getReminderSettings.useQuery(undefined, { enabled: isAuthenticated });
+  const sharingMutation = trpc.personaBuilder.saveCoachSharing.useMutation({ onSuccess: () => void utils.personaBuilder.getHome.invalidate() });
+  const createShareMutation = trpc.personaBuilder.createCoachShare.useMutation({ onSuccess: () => void utils.personaBuilder.getHome.invalidate() });
+  const reminderMutation = trpc.personaBuilder.saveReminderSettings.useMutation({ onSuccess: () => void reminderQuery.refetch() });
+
+  useEffect(() => {
+    if (!reminderQuery.data) return;
+    setReminderEnabled(reminderQuery.data.enabled);
+    setReminderHour(reminderQuery.data.localHour);
+    setReminderTimeZone(reminderQuery.data.timeZone);
+  }, [reminderQuery.data]);
+  useEffect(() => {
+    if (!home?.coachConsent) return;
+    setShareWithCoach(home.coachConsent.consented);
+    setCoachEmail(home.coachConsent.coachEmail ?? "");
+  }, [home?.coachConsent]);
 
   const pattern = useMemo(() => (home?.pattern?.pattern ?? null) as PersonaPattern | null, [home?.pattern?.pattern]);
   const candidates = useMemo(() => (home?.personaCandidates ?? []).map((row) => row.persona as PersonaCandidate), [home?.personaCandidates]);
@@ -76,7 +98,7 @@ export default function PersonaBuilder() {
   const currentJourneyId = home?.journey?.id;
   const day14 = home?.timeline?.find((day) => day.dayNumber === 14);
   const journeyIsComplete = home?.journey?.status === "completed";
-  const errorMessage = [startMutation.error, episodeMutation.error, patternMutation.error, commitmentMutation.error, candidatesMutation.error, selectMutation.error, repMutation.error, checkinMutation.error, completionReviewMutation.error].find(Boolean)?.message;
+  const errorMessage = [startMutation.error, episodeMutation.error, patternMutation.error, commitmentMutation.error, candidatesMutation.error, selectMutation.error, repMutation.error, checkinMutation.error, completionReviewMutation.error, sharingMutation.error, createShareMutation.error, reminderMutation.error].find(Boolean)?.message;
 
   if (loading || (isAuthenticated && homeQuery.isLoading)) {
     return <div className="grid min-h-screen place-items-center bg-[#F8F5F0] text-[#0A1A2F]">Loading your private practice space…</div>;
@@ -90,6 +112,13 @@ export default function PersonaBuilder() {
   const stage = home?.journey?.currentStage;
   const launchPracticePartner = (repId: number) => navigate(`/manager/practice?personaRepId=${repId}&journeyId=${currentJourneyId}`);
   const launchSimulator = (repId: number) => navigate(`/manager/simulate?personaRepId=${repId}&journeyId=${currentJourneyId}`);
+  const coachShareLink = home?.coachShare ? `${window.location.origin}/persona/coach/${home.coachShare.token}` : "";
+  const copyCoachShareLink = async () => {
+    if (!coachShareLink) return;
+    await navigator.clipboard?.writeText(coachShareLink);
+    setCopiedShareLink(true);
+    window.setTimeout(() => setCopiedShareLink(false), 1800);
+  };
 
   return (
     <main className="min-h-screen bg-[#F8F5F0] text-[#1C1C1C]">
@@ -153,6 +182,9 @@ export default function PersonaBuilder() {
             <aside className="space-y-6">
               <Card className="border-[#0A1A2F]/10 bg-[#0A1A2F] text-white shadow-sm"><CardHeader><CardDescription className="font-bold uppercase tracking-[0.14em] text-[#F1D77A]">Your current stage</CardDescription><CardTitle className="mt-2 text-2xl text-white">{stage === "completed" ? "Review the shift" : stage === "evidence" ? "Test it in reality" : stage === "persona" ? "Choose the useful scaffold" : stage === "commitment" ? "Choose what you stand for" : "Understand the Moment"}</CardTitle></CardHeader><CardContent><div className="flex items-center gap-3 text-sm text-white/75"><Target className="h-5 w-5 text-[#D4AF37]" /> One situation. One next move. No personality scores.</div></CardContent></Card>
               {home.timeline && <JourneyTimeline days={home.timeline} />}
+              {home.certificate && <CertificateCard certificate={home.certificate} />}
+              <CoachSharingCard shareWithCoach={shareWithCoach} coachEmail={coachEmail} coachShareLink={coachShareLink} copied={copiedShareLink} onToggle={(value) => { setShareWithCoach(value); sharingMutation.mutate({ journeyId: currentJourneyId!, shareWithCoach: value, coachEmail }); }} onEmailChange={setCoachEmail} onSave={() => sharingMutation.mutate({ journeyId: currentJourneyId!, shareWithCoach, coachEmail })} onCreateLink={() => createShareMutation.mutate({ journeyId: currentJourneyId! })} onCopy={copyCoachShareLink} pending={sharingMutation.isPending || createShareMutation.isPending} />
+              <ReminderSettingsCard enabled={reminderEnabled} hour={reminderHour} timeZone={reminderTimeZone} onEnabledChange={setReminderEnabled} onHourChange={setReminderHour} onTimeZoneChange={setReminderTimeZone} onSave={() => reminderMutation.mutate({ enabled: reminderEnabled, localHour: reminderHour, timeZone: reminderTimeZone })} pending={reminderMutation.isPending} />
               <Card className="border-[#0A1A2F]/10 bg-white"><CardHeader><CardTitle className="text-lg text-[#0A1A2F]">What we will protect</CardTitle></CardHeader><CardContent className="space-y-3 text-sm leading-6 text-slate-600"><p>AI interpretations remain hypotheses until you confirm or correct them.</p><p>Evidence is labeled by source. Self-report is not presented as objective observation.</p><p>If a Persona is not the right intervention, the system will say so.</p></CardContent></Card>
               {home.evidence.length > 0 && <Card className="border-emerald-200 bg-emerald-50"><CardHeader><CardTitle className="text-lg text-emerald-950">Evidence gathered</CardTitle></CardHeader><CardContent><p className="text-sm leading-6 text-emerald-900">{home.evidence.length} workplace evidence item{home.evidence.length === 1 ? "" : "s"} recorded. Your next step is to learn from what happened, not to chase a streak.</p></CardContent></Card>}
             </aside>
@@ -175,6 +207,19 @@ function JourneyTimeline({ days }: { days: Array<{ id: number; dayNumber: number
 function CompletionReviewCard({ overallShift, whatChanged, whatDidNotChange, nextExperiment, rating, nextChoice, setOverallShift, setWhatChanged, setWhatDidNotChange, setNextExperiment, setRating, setNextChoice, onSubmit, pending }: { overallShift: string; whatChanged: string; whatDidNotChange: string; nextExperiment: string; rating: number; nextChoice: "continue_persona" | "retire_persona" | "switch_intervention" | "pause"; setOverallShift: (value: string) => void; setWhatChanged: (value: string) => void; setWhatDidNotChange: (value: string) => void; setNextExperiment: (value: string) => void; setRating: (value: number) => void; setNextChoice: (value: "continue_persona" | "retire_persona" | "switch_intervention" | "pause") => void; onSubmit: () => void; pending: boolean }) {
   const ready = overallShift.length >= 10 && whatChanged.length >= 10 && whatDidNotChange.length >= 10 && nextExperiment.length >= 10;
   return <Card className="border-[#D4AF37]/60 bg-[#FFFDF5]"><CardHeader><CardDescription className="font-bold uppercase tracking-[0.14em] text-[#9B7A17]">Day 14 completion review</CardDescription><CardTitle className="mt-2 text-2xl text-[#0A1A2F]">Decide what is actually changing.</CardTitle><CardDescription>Rate the evidence honestly. A completed journey is not a claim of permanent transformation.</CardDescription></CardHeader><CardContent className="space-y-4"><div><Label htmlFor="review-shift">What is the overall shift you notice?</Label><Textarea id="review-shift" value={overallShift} onChange={(event) => setOverallShift(event.target.value)} className="mt-2 min-h-20 bg-white" placeholder="Describe the behavioral shift, not a personality label." /></div><div><Label htmlFor="review-changed">What changed in observable terms?</Label><Textarea id="review-changed" value={whatChanged} onChange={(event) => setWhatChanged(event.target.value)} className="mt-2 min-h-20 bg-white" placeholder="What did you do, say, or produce differently?" /></div><div><Label htmlFor="review-not-changed">What did not change yet?</Label><Textarea id="review-not-changed" value={whatDidNotChange} onChange={(event) => setWhatDidNotChange(event.target.value)} className="mt-2 min-h-20 bg-white" placeholder="Name the remaining difficulty without self-judgment." /></div><div><Label htmlFor="review-next">What is the next experiment?</Label><Textarea id="review-next" value={nextExperiment} onChange={(event) => setNextExperiment(event.target.value)} className="mt-2 min-h-20 bg-white" placeholder="Choose one follow-on action that would test transfer." /></div><div className="grid gap-4 sm:grid-cols-2"><div><Label htmlFor="review-rating">Evidence rating (1–5)</Label><Input id="review-rating" type="number" min={1} max={5} value={rating} onChange={(event) => setRating(Math.min(5, Math.max(1, Number(event.target.value) || 1)))} className="mt-2 bg-white" /></div><div><Label htmlFor="review-choice">What comes next?</Label><select id="review-choice" value={nextChoice} onChange={(event) => setNextChoice(event.target.value as typeof nextChoice)} className="mt-2 h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-[#0A1A2F]"><option value="continue_persona">Continue the Persona scaffold</option><option value="retire_persona">Retire the Persona; keep the behavior</option><option value="switch_intervention">Switch to another intervention</option><option value="pause">Pause and observe</option></select></div></div><Button type="button" onClick={onSubmit} disabled={!ready || pending} className="bg-[#0A1A2F] text-white hover:bg-[#12345A]">{pending ? "Completing…" : "Complete 14-day review"}</Button></CardContent></Card>;
+}
+
+function CertificateCard({ certificate }: { certificate: { certificateCode: string; recipientName: string; journeyTitle: string; completedDays: number; evidenceCount: number; rating: number; issuedAt: Date | string } }) {
+  const printCertificate = () => window.print();
+  return <Card className="overflow-hidden border-[#D4AF37]/70 bg-[#FFFDF5] print:border-0 print:shadow-none"><div className="h-1.5 bg-[#D4AF37]" /><CardHeader><CardDescription className="flex items-center gap-2 font-bold uppercase tracking-[0.14em] text-[#9B7A17]"><Award className="h-4 w-4" /> Completion certificate</CardDescription><CardTitle className="mt-2 text-xl text-[#0A1A2F]">14-day journey completed</CardTitle><CardDescription>Issued to {certificate.recipientName} for completing {certificate.completedDays} days and gathering {certificate.evidenceCount} evidence item{certificate.evidenceCount === 1 ? "" : "s"}.</CardDescription></CardHeader><CardContent className="space-y-3"><div className="rounded-xl border border-[#D4AF37]/30 bg-white p-4"><p className="text-xs uppercase tracking-wider text-[#9B7A17]">{certificate.journeyTitle}</p><p className="mt-2 text-sm text-slate-600">Evidence rating: <strong className="text-[#0A1A2F]">{certificate.rating}/5</strong></p><p className="mt-1 font-mono text-xs text-slate-500">Certificate {certificate.certificateCode}</p></div><Button type="button" variant="outline" onClick={printCertificate} className="w-full"><Award className="mr-2 h-4 w-4" />Print or save certificate</Button></CardContent></Card>;
+}
+
+function CoachSharingCard({ shareWithCoach, coachEmail, coachShareLink, copied, onToggle, onEmailChange, onSave, onCreateLink, onCopy, pending }: { shareWithCoach: boolean; coachEmail: string; coachShareLink: string; copied: boolean; onToggle: (value: boolean) => void; onEmailChange: (value: string) => void; onSave: () => void; onCreateLink: () => void; onCopy: () => void; pending: boolean }) {
+  return <Card className="border-[#0A1A2F]/10 bg-white"><CardHeader><CardDescription className="flex items-center gap-2 font-bold uppercase tracking-[0.14em] text-[#9B7A17]"><Share2 className="h-4 w-4" /> Coach-facing summary</CardDescription><CardTitle className="mt-2 text-lg text-[#0A1A2F]">Share progress, not private reflections.</CardTitle><CardDescription>The coach view requires your explicit consent. It shows aggregate progress, the Commitment, completion status, and evidence counts. Episodes, reflections, outcomes, completion-review text, transcripts, and raw notes stay hidden.</CardDescription></CardHeader><CardContent className="space-y-4"><label className="flex items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm text-slate-700"><input type="checkbox" checked={shareWithCoach} onChange={(event) => onToggle(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#0A1A2F]" /> <span><strong className="text-[#0A1A2F]">I consent to share this safe summary with my coach.</strong><br /><span className="text-xs text-slate-500">You can revoke access at any time. Revoking invalidates active links.</span></span></label>{shareWithCoach && <><div><Label htmlFor="coach-email">Coach email (optional)</Label><Input id="coach-email" type="email" value={coachEmail} onChange={(event) => onEmailChange(event.target.value)} placeholder="coach@example.com" className="mt-2" /></div><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={onSave} disabled={pending}>{pending ? "Saving…" : "Save sharing preferences"}</Button><Button type="button" onClick={onCreateLink} disabled={pending} className="bg-[#0A1A2F] text-white hover:bg-[#12345A]"><Share2 className="mr-2 h-4 w-4" />{pending ? "Updating…" : "Create coach link"}</Button>{coachShareLink && <Button type="button" variant="outline" onClick={onCopy}><Copy className="mr-2 h-4 w-4" />{copied ? "Copied" : "Copy link"}</Button>}</div>{coachShareLink && <p className="break-all rounded-lg bg-slate-50 p-3 text-[11px] text-slate-500">{coachShareLink}</p>}</>}</CardContent></Card>;
+}
+
+function ReminderSettingsCard({ enabled, hour, timeZone, onEnabledChange, onHourChange, onTimeZoneChange, onSave, pending }: { enabled: boolean; hour: number; timeZone: string; onEnabledChange: (value: boolean) => void; onHourChange: (value: number) => void; onTimeZoneChange: (value: string) => void; onSave: () => void; pending: boolean }) {
+  return <Card className="border-[#0A1A2F]/10 bg-white"><CardHeader><CardDescription className="flex items-center gap-2 font-bold uppercase tracking-[0.14em] text-[#9B7A17]"><Bell className="h-4 w-4" /> Journey reminders</CardDescription><CardTitle className="mt-2 text-lg text-[#0A1A2F]">Choose whether LevelNext nudges you once a day.</CardTitle><CardDescription>Reminders run only while you have an active journey. They contain no private reflections or check-in notes.</CardDescription></CardHeader><CardContent className="space-y-4"><label className="flex items-center gap-3 text-sm text-slate-700"><input type="checkbox" checked={enabled} onChange={(event) => onEnabledChange(event.target.checked)} className="h-4 w-4 accent-[#0A1A2F]" /> Send me an optional daily journey reminder</label><div className="grid gap-3 sm:grid-cols-2"><div><Label htmlFor="reminder-hour">Local hour</Label><select id="reminder-hour" value={hour} onChange={(event) => onHourChange(Number(event.target.value))} className="mt-2 h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-[#0A1A2F]">{Array.from({ length: 24 }, (_, value) => <option key={value} value={value}>{String(value).padStart(2, "0")}:00</option>)}</select></div><div><Label htmlFor="reminder-timezone">Timezone</Label><Input id="reminder-timezone" value={timeZone} onChange={(event) => onTimeZoneChange(event.target.value)} className="mt-2" placeholder="Asia/Kolkata" /></div></div><Button type="button" variant="outline" onClick={onSave} disabled={pending}>{pending ? "Saving…" : <><Check className="mr-2 h-4 w-4" />Save reminder settings</>}</Button><p className="text-[11px] leading-5 text-slate-500">The background scheduler checks hourly and sends at your selected local hour. You can disable it here at any time.</p></CardContent></Card>;
 }
 
 function RepCard({ rep, reflection, outcome, setReflection, setOutcome, onSubmit, pending }: { rep: { id: number; instruction: string; trigger: string; successSignal: string; fallbackIfUnsafe: string }; reflection: string; outcome: string; setReflection: (value: string) => void; setOutcome: (value: string) => void; onSubmit: (opportunityStatus: "arose" | "did_not_arise" | "unclear", executionStatus: "yes" | "partly" | "no" | "not_applicable") => void; pending: boolean }) {

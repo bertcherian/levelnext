@@ -4945,3 +4945,86 @@ export const personaBuilderCompletionReviews = mysqlTable(
 );
 export type PersonaBuilderCompletionReview = typeof personaBuilderCompletionReviews.$inferSelect;
 export type InsertPersonaBuilderCompletionReview = typeof personaBuilderCompletionReviews.$inferInsert;
+
+// ─── Persona Builder Consent, Coach Summary, Certificate, and Reminders ──────
+export const personaBuilderCoachConsents = mysqlTable(
+  "persona_builder_coach_consents",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    consented: boolean("consented").default(false).notNull(),
+    consentVersion: varchar("consentVersion", { length: 64 }).notNull(),
+    coachEmail: varchar("coachEmail", { length: 320 }),
+    consentedAt: timestamp("consentedAt"),
+    revokedAt: timestamp("revokedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("persona_builder_coach_consent_journey_uq").on(table.journeyId),
+    index("persona_builder_coach_consent_user_idx").on(table.userId, table.consented),
+  ],
+);
+export type PersonaBuilderCoachConsent = typeof personaBuilderCoachConsents.$inferSelect;
+export type InsertPersonaBuilderCoachConsent = typeof personaBuilderCoachConsents.$inferInsert;
+
+export const personaBuilderCoachShares = mysqlTable(
+  "persona_builder_coach_shares",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    consentId: int("consentId").notNull().references(() => personaBuilderCoachConsents.id),
+    token: varchar("token", { length: 128 }).notNull().unique(),
+    expiresAt: timestamp("expiresAt").notNull(),
+    revokedAt: timestamp("revokedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("persona_builder_coach_share_journey_idx").on(table.journeyId, table.revokedAt),
+    index("persona_builder_coach_share_user_idx").on(table.userId, table.createdAt),
+  ],
+);
+export type PersonaBuilderCoachShare = typeof personaBuilderCoachShares.$inferSelect;
+export type InsertPersonaBuilderCoachShare = typeof personaBuilderCoachShares.$inferInsert;
+
+export const personaBuilderCertificates = mysqlTable(
+  "persona_builder_certificates",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    journeyId: int("journeyId").notNull().references(() => personaBuilderJourneys.id),
+    userId: int("userId").notNull().references(() => users.id),
+    certificateCode: varchar("certificateCode", { length: 40 }).notNull().unique(),
+    recipientName: varchar("recipientName", { length: 255 }).notNull(),
+    journeyTitle: varchar("journeyTitle", { length: 255 }).notNull(),
+    completedDays: int("completedDays").notNull(),
+    evidenceCount: int("evidenceCount").notNull(),
+    rating: int("rating").notNull(),
+    issuedAt: timestamp("issuedAt").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("persona_builder_certificate_journey_uq").on(table.journeyId),
+    index("persona_builder_certificate_user_idx").on(table.userId, table.issuedAt),
+  ],
+);
+export type PersonaBuilderCertificate = typeof personaBuilderCertificates.$inferSelect;
+export type InsertPersonaBuilderCertificate = typeof personaBuilderCertificates.$inferInsert;
+
+export const personaBuilderReminderSettings = mysqlTable(
+  "persona_builder_reminder_settings",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id).unique(),
+    enabled: boolean("enabled").default(false).notNull(),
+    localHour: int("localHour").default(9).notNull(),
+    timeZone: varchar("timeZone", { length: 80 }).default("UTC").notNull(),
+    scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+    lastReminderAt: timestamp("lastReminderAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [index("persona_builder_reminder_task_idx").on(table.scheduleCronTaskUid)],
+);
+export type PersonaBuilderReminderSetting = typeof personaBuilderReminderSettings.$inferSelect;
+export type InsertPersonaBuilderReminderSetting = typeof personaBuilderReminderSettings.$inferInsert;

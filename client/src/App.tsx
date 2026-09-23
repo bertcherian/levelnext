@@ -117,6 +117,7 @@ const NarrativeIntelligence = lazy(() => import("./pages/NarrativeIntelligence")
 const BehaviouralIntelligenceStudio = lazy(() => import("@/pages/BehaviouralIntelligenceStudio"));
 const BehaviouralSponsorHeatmap = lazy(() => import("@/pages/BehaviouralSponsorHeatmap"));
 const PersonaBuilder = lazy(() => import("@/pages/PersonaBuilder"));
+const PersonaCoachSummary = lazy(() => import("@/pages/PersonaCoachSummary"));
 const SponsorCapacityDashboard = lazy(() => import("@/pages/SponsorCapacityDashboard"));
 const AcademyHome = lazy(() => import("@/pages/AcademyHome"));
 const AcademyDiagnostic = lazy(() => import("@/pages/AcademyDiagnostic"));
@@ -279,6 +280,7 @@ function Router() {
       <Route path="/narrative-intelligence" component={NarrativeIntelligence} />
       <Route path="/behavioural-intelligence" component={() => <BehaviouralIntelligenceStudio />} />
       <Route path="/persona" component={PersonaBuilder} />
+      <Route path="/persona/coach/:token" component={PersonaCoachSummary} />
       <Route path="/organisation/behavioural-intelligence" component={BehaviouralSponsorHeatmap} />
       <Route path="/organisation/effectiveness" component={SponsorCapacityDashboard} />
       {/* LevelNext Academy */}

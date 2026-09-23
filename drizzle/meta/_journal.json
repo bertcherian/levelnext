@@ -680,6 +680,13 @@
       "when": 1790099621902,
       "tag": "0096_ordinary_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "5",
+      "when": 1790125688908,
+      "tag": "0097_numerous_legion",
+      "breakpoints": true
     }
   ]
 }

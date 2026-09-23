@@ -259,6 +259,81 @@ export const createPersonaCompletionReviewSchema = z.object({
 });
 export type CreatePersonaCompletionReviewInput = z.infer<typeof createPersonaCompletionReviewSchema>;
 
+export const PERSONA_COACH_CONSENT_VERSION = "persona-coach-summary-v1";
+export const personaCoachSharingSchema = z.object({
+  journeyId: z.number().int().positive(),
+  shareWithCoach: z.boolean(),
+  coachEmail: z.string().trim().email().max(320).optional().or(z.literal("")),
+});
+export type PersonaCoachSharingInput = z.infer<typeof personaCoachSharingSchema>;
+
+export const personaCoachTokenSchema = z.object({
+  token: z.string().trim().min(24).max(128),
+});
+
+export const personaReminderSettingsSchema = z.object({
+  enabled: z.boolean(),
+  localHour: z.number().int().min(0).max(23),
+  timeZone: z.string().trim().min(1).max(80).refine((value) => {
+    try { new Intl.DateTimeFormat("en-US", { timeZone: value }); return true; } catch { return false; }
+  }, "A valid IANA timezone is required."),
+});
+export type PersonaReminderSettingsInput = z.infer<typeof personaReminderSettingsSchema>;
+
+export type PersonaCoachSafeSummary = {
+  journeyId: number;
+  stage: PersonaJourneyStage;
+  startedAt: Date;
+  completedAt?: Date | null;
+  targetEndAt?: Date | null;
+  outcome: string | null;
+  commitment: string | null;
+  personaName: string | null;
+  progress: { completedDays: number; totalDays: number; evidenceCount: number; practiceSessions: number; simulatorSessions: number };
+  adaptiveDecisions: Record<string, number>;
+  completion: { rating: number; nextChoice: string } | null;
+  privacyNote: string;
+};
+
+export function buildPersonaCoachSafeSummary(input: {
+  journey: { id: number; currentStage: PersonaJourneyStage; startedAt: Date; completedAt?: Date | null; targetEndAt?: Date | null };
+  desiredOutcome?: string | null;
+  commitment?: string | null;
+  personaName?: string | null;
+  days: Array<{ status: string; evidenceCount: number; practiceSessionId?: number | null; simulatorSessionId?: number | null; adaptation?: { decision?: string } | null }>;
+  completion?: { overallShift: string; rating: number; nextChoice: string } | null;
+}): PersonaCoachSafeSummary {
+  const adaptiveDecisions: Record<string, number> = {};
+  for (const day of input.days) {
+    const decision = day.adaptation?.decision;
+    if (decision) adaptiveDecisions[decision] = (adaptiveDecisions[decision] ?? 0) + 1;
+  }
+  return {
+    journeyId: input.journey.id,
+    stage: input.journey.currentStage,
+    startedAt: input.journey.startedAt,
+    completedAt: input.journey.completedAt,
+    targetEndAt: input.journey.targetEndAt,
+    outcome: input.desiredOutcome ?? null,
+    commitment: input.commitment ?? null,
+    personaName: input.personaName ?? null,
+    progress: {
+      completedDays: input.days.filter((day) => day.status === "complete").length,
+      totalDays: input.days.length,
+      evidenceCount: input.days.reduce((sum, day) => sum + day.evidenceCount, 0),
+      practiceSessions: input.days.filter((day) => Boolean(day.practiceSessionId)).length,
+      simulatorSessions: input.days.filter((day) => Boolean(day.simulatorSessionId)).length,
+    },
+    adaptiveDecisions,
+    completion: input.completion ? { rating: input.completion.rating, nextChoice: input.completion.nextChoice } : null,
+    privacyNote: "Private episodes, check-in reflections, outcomes, completion-review text, transcripts, and raw notes are not shared in this view.",
+  };
+}
+
+export function isPersonaCertificateEligible(input: { day14Complete: boolean; reviewRating: number | null | undefined }) {
+  return input.day14Complete && typeof input.reviewRating === "number" && input.reviewRating >= 1 && input.reviewRating <= 5;
+}
+
 export function getPersonaDayPlan(dayNumber: number): { dayNumber: number; title: string; focus: string } {
   const safeDay = Math.min(14, Math.max(1, Math.round(dayNumber)));
   const [title, focus] = PERSONA_DAY_PLANS[safeDay - 1];

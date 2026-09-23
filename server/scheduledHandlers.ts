@@ -30,6 +30,8 @@ import {
   earlyCareerProfiles,
   executiveDecisionJournal,
   executiveDecisionReviewReminderSettings,
+  personaBuilderJourneys,
+  personaBuilderReminderSettings,
 } from "../drizzle/schema";
 import { eq, gte, and, desc, sql, isNotNull, lte } from "drizzle-orm";
 import { sdk } from "./_core/sdk";
@@ -184,6 +186,44 @@ export async function momentumCheckinHandler(req: Request, res: Response) {
   } catch (err) {
     console.error("[MomentumCheckin] Handler error:", err);
     res.status(500).json({ error: String(err), timestamp: new Date().toISOString() });
+  }
+}
+
+// ── Persona Builder Daily Journey Reminder ────────────────────────────────────
+// Invoked hourly by a platform-managed Heartbeat. Each user's setting controls
+// the local hour; only one reminder is sent per local calendar day, and only
+// while that user has an active Persona Builder journey.
+export async function personaBuilderReminderHandler(req: Request, res: Response) {
+  let taskUid: string | undefined;
+  try {
+    const cronUser = await sdk.authenticateRequest(req);
+    if (!cronUser.isCron || !cronUser.taskUid) return res.status(403).json({ error: "cron-only" });
+    taskUid = cronUser.taskUid;
+    const db = await getDb();
+    if (!db) return res.json({ ok: true, skipped: "no-db" });
+    const [setting] = await db.select().from(personaBuilderReminderSettings).where(and(eq(personaBuilderReminderSettings.scheduleCronTaskUid, taskUid), eq(personaBuilderReminderSettings.enabled, true))).limit(1);
+    if (!setting) return res.json({ ok: true, skipped: "orphan-or-disabled" });
+    const [journey] = await db.select().from(personaBuilderJourneys).where(and(eq(personaBuilderJourneys.userId, setting.userId), eq(personaBuilderJourneys.status, "active"))).orderBy(desc(personaBuilderJourneys.updatedAt)).limit(1);
+    const [user] = await db.select().from(users).where(eq(users.id, setting.userId)).limit(1);
+    if (!journey || !user?.email) return res.json({ ok: true, skipped: !journey ? "no-active-journey" : "no-email" });
+    const now = new Date();
+    const localParts = new Intl.DateTimeFormat("en-US", { timeZone: setting.timeZone, hour: "numeric", hourCycle: "h23" }).formatToParts(now);
+    const localHour = Number(localParts.find((part) => part.type === "hour")?.value);
+    if (localHour !== setting.localHour) return res.json({ ok: true, skipped: "not-local-hour" });
+    const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: setting.timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+    const previousDayKey = setting.lastReminderAt ? new Intl.DateTimeFormat("en-CA", { timeZone: setting.timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(setting.lastReminderAt) : null;
+    if (previousDayKey === dayKey) return res.json({ ok: true, skipped: "already-sent-today" });
+    const origin = resolveRequestOrigin(req);
+    await sendEmail({
+      to: user.email,
+      subject: "Your LevelNext journey is waiting",
+      html: `<div style="font-family:Arial,sans-serif;color:#10243e;max-width:560px"><p style="color:#9a6a24;font-size:11px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase">LevelNext Persona Builder</p><h2 style="margin:0 0 12px">Keep the next move small and observable.</h2><p>Hi ${user.name ?? "there"}, your active 14-day journey is ready for its next step. Return to your private practice space to see today's focus, rehearse if useful, and record evidence only when something real happened.</p><p><a href="${origin}/manager/persona" style="display:inline-block;background:#10243e;color:#fff;text-decoration:none;padding:12px 18px;font-weight:700">Open my journey →</a></p><p style="color:#667385;font-size:12px">This reminder contains no private reflections or check-in notes. You can change reminder settings in Persona Builder.</p></div>`,
+    });
+    await db.update(personaBuilderReminderSettings).set({ lastReminderAt: now }).where(eq(personaBuilderReminderSettings.id, setting.id));
+    return res.json({ ok: true, sent: 1, journeyId: journey.id });
+  } catch (error) {
+    console.error("[PersonaBuilderReminder] Error:", error);
+    return res.status(500).json({ ok: false, error: String(error), context: { taskUid }, timestamp: new Date().toISOString() });
   }
 }
 

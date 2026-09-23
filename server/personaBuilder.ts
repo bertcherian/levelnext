@@ -1,9 +1,13 @@
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import {
   biEvidence,
   biMoments,
   personaBuilderCheckins,
+  personaBuilderCertificates,
+  personaBuilderCoachConsents,
+  personaBuilderCoachShares,
   personaBuilderCompletionReviews,
   personaBuilderCommitments,
   personaBuilderDays,
@@ -12,6 +16,7 @@ import {
   personaBuilderPatternSnapshots,
   personaBuilderPersonas,
   personaBuilderReps,
+  users,
 } from "../drizzle/schema";
 import {
   PERSONA_CANDIDATE_FALLBACKS,
@@ -22,6 +27,9 @@ import {
   deriveNextPersonaAction,
   getPersonaDayPlan,
   PERSONA_DAY_PLANS,
+  buildPersonaCoachSafeSummary,
+  isPersonaCertificateEligible,
+  PERSONA_COACH_CONSENT_VERSION,
   personaCandidateSchema,
   personaPatternSchema,
   personaRepContentSchema,
@@ -101,6 +109,9 @@ export async function getPersonaBuilderHome(userId: number) {
   const checkins = await db.select().from(personaBuilderCheckins).where(eq(personaBuilderCheckins.journeyId, journey.id)).orderBy(desc(personaBuilderCheckins.createdAt)).limit(5);
   const evidence = await db.select().from(biEvidence).where(and(eq(biEvidence.momentId, journey.momentId), eq(biEvidence.userId, userId))).orderBy(desc(biEvidence.createdAt)).limit(5);
   const [completionReview] = await db.select().from(personaBuilderCompletionReviews).where(and(eq(personaBuilderCompletionReviews.journeyId, journey.id), eq(personaBuilderCompletionReviews.userId, userId))).orderBy(desc(personaBuilderCompletionReviews.createdAt)).limit(1);
+  const [coachConsent] = await db.select().from(personaBuilderCoachConsents).where(and(eq(personaBuilderCoachConsents.journeyId, journey.id), eq(personaBuilderCoachConsents.userId, userId))).limit(1);
+  const [coachShare] = await db.select().from(personaBuilderCoachShares).where(and(eq(personaBuilderCoachShares.journeyId, journey.id), eq(personaBuilderCoachShares.userId, userId), isNull(personaBuilderCoachShares.revokedAt))).orderBy(desc(personaBuilderCoachShares.createdAt)).limit(1);
+  const [certificate] = await db.select().from(personaBuilderCertificates).where(and(eq(personaBuilderCertificates.journeyId, journey.id), eq(personaBuilderCertificates.userId, userId))).limit(1);
 
   return {
     journey,
@@ -115,6 +126,9 @@ export async function getPersonaBuilderHome(userId: number) {
     evidence,
     timeline,
     completionReview: completionReview ?? null,
+    coachConsent: coachConsent ? { consented: coachConsent.consented, coachEmail: coachConsent.coachEmail, consentedAt: coachConsent.consentedAt, consentVersion: coachConsent.consentVersion } : null,
+    coachShare: coachShare ? { token: coachShare.token, expiresAt: coachShare.expiresAt, createdAt: coachShare.createdAt } : null,
+    certificate: certificate ?? null,
   };
 }
 
@@ -422,7 +436,7 @@ export function linkPersonaSimulatorSession(userId: number, repId: number, sessi
 export async function createPersonaCompletionReview(userId: number, input: CreatePersonaCompletionReviewInput) {
   const { db, journey } = await getOwnedJourney(input.journeyId, userId);
   const [day14] = await db.select().from(personaBuilderDays).where(and(eq(personaBuilderDays.journeyId, journey.id), eq(personaBuilderDays.dayNumber, 14))).limit(1);
-  if (!day14 || day14.status !== "complete") throw new Error("Complete the Day 14 Rep before writing the completion review.");
+  if (!isPersonaCertificateEligible({ day14Complete: day14?.status === "complete", reviewRating: input.rating })) throw new Error("Complete the Day 14 Rep with a valid review before receiving a completion certificate.");
   const [reviewInsert] = await db.insert(personaBuilderCompletionReviews).values({
     journeyId: journey.id,
     userId,
@@ -436,5 +450,96 @@ export async function createPersonaCompletionReview(userId: number, input: Creat
   const integrationStatus = input.nextChoice === "retire_persona" ? "integrated" : input.nextChoice === "continue_persona" ? "increasingly_natural" : input.nextChoice === "switch_intervention" ? "less_activation_needed" : "scaffold_can_be_activated";
   await db.update(personaBuilderJourneys).set({ status: "completed", currentStage: "completed", integrationStatus, completedAt: new Date(), updatedAt: new Date() }).where(eq(personaBuilderJourneys.id, journey.id));
   const [review] = await db.select().from(personaBuilderCompletionReviews).where(eq(personaBuilderCompletionReviews.id, reviewInsert.insertId)).limit(1);
-  return review;
+  const completedDays = await db.select().from(personaBuilderDays).where(and(eq(personaBuilderDays.journeyId, journey.id), eq(personaBuilderDays.status, "complete")));
+  const evidenceCount = completedDays.reduce((sum, day) => sum + day.evidenceCount, 0);
+  const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+  let [certificate] = await db.select().from(personaBuilderCertificates).where(and(eq(personaBuilderCertificates.journeyId, journey.id), eq(personaBuilderCertificates.userId, userId))).limit(1);
+  if (!certificate) {
+    const [certificateInsert] = await db.insert(personaBuilderCertificates).values({
+      journeyId: journey.id,
+      userId,
+      certificateCode: `LN-PB-${randomBytes(6).toString("hex").toUpperCase()}`,
+      recipientName: user?.name ?? "LevelNext learner",
+      journeyTitle: "14-Day Behaviour Change Journey",
+      completedDays: completedDays.length,
+      evidenceCount,
+      rating: input.rating,
+    });
+    [certificate] = await db.select().from(personaBuilderCertificates).where(eq(personaBuilderCertificates.id, certificateInsert.insertId)).limit(1);
+  }
+  return { review, certificate };
+}
+
+export async function savePersonaCoachSharing(userId: number, input: { journeyId: number; shareWithCoach: boolean; coachEmail?: string }) {
+  const { db, journey } = await getOwnedJourney(input.journeyId, userId);
+  const [existing] = await db.select().from(personaBuilderCoachConsents).where(and(eq(personaBuilderCoachConsents.journeyId, journey.id), eq(personaBuilderCoachConsents.userId, userId))).limit(1);
+  const now = new Date();
+  if (existing) {
+    await db.update(personaBuilderCoachConsents).set({
+      consented: input.shareWithCoach,
+      consentVersion: PERSONA_COACH_CONSENT_VERSION,
+      coachEmail: input.coachEmail || null,
+      consentedAt: input.shareWithCoach ? (existing.consentedAt ?? now) : null,
+      revokedAt: input.shareWithCoach ? null : now,
+      updatedAt: now,
+    }).where(eq(personaBuilderCoachConsents.id, existing.id));
+    if (!input.shareWithCoach) await db.update(personaBuilderCoachShares).set({ revokedAt: now }).where(and(eq(personaBuilderCoachShares.journeyId, journey.id), eq(personaBuilderCoachShares.userId, userId), isNull(personaBuilderCoachShares.revokedAt)));
+  } else {
+    await db.insert(personaBuilderCoachConsents).values({
+      journeyId: journey.id,
+      userId,
+      consented: input.shareWithCoach,
+      consentVersion: PERSONA_COACH_CONSENT_VERSION,
+      coachEmail: input.coachEmail || null,
+      consentedAt: input.shareWithCoach ? now : null,
+      revokedAt: input.shareWithCoach ? null : now,
+    });
+  }
+  return getPersonaBuilderHome(userId);
+}
+
+export async function createPersonaCoachShare(userId: number, journeyId: number) {
+  const { db, journey } = await getOwnedJourney(journeyId, userId);
+  const [consent] = await db.select().from(personaBuilderCoachConsents).where(and(eq(personaBuilderCoachConsents.journeyId, journey.id), eq(personaBuilderCoachConsents.userId, userId), eq(personaBuilderCoachConsents.consented, true))).limit(1);
+  if (!consent) throw new Error("Give explicit consent before creating a coach summary link.");
+  const now = new Date();
+  await db.update(personaBuilderCoachShares).set({ revokedAt: now }).where(and(eq(personaBuilderCoachShares.journeyId, journey.id), eq(personaBuilderCoachShares.userId, userId), isNull(personaBuilderCoachShares.revokedAt)));
+  const [inserted] = await db.insert(personaBuilderCoachShares).values({
+    journeyId: journey.id,
+    userId,
+    consentId: consent.id,
+    token: randomBytes(32).toString("base64url"),
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  });
+  const [share] = await db.select().from(personaBuilderCoachShares).where(eq(personaBuilderCoachShares.id, inserted.insertId)).limit(1);
+  return share;
+}
+
+export async function getPersonaCoachSummaryByToken(token: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [share] = await db.select().from(personaBuilderCoachShares).where(and(eq(personaBuilderCoachShares.token, token), isNull(personaBuilderCoachShares.revokedAt))).limit(1);
+  if (!share || share.expiresAt.getTime() < Date.now()) throw new Error("This coach summary link is expired or has been revoked.");
+  const [consent] = await db.select().from(personaBuilderCoachConsents).where(and(eq(personaBuilderCoachConsents.id, share.consentId), eq(personaBuilderCoachConsents.consented, true))).limit(1);
+  if (!consent) throw new Error("This coach summary is no longer shared.");
+  const [journey] = await db.select().from(personaBuilderJourneys).where(eq(personaBuilderJourneys.id, share.journeyId)).limit(1);
+  if (!journey) throw new Error("Journey not found.");
+  const [moment] = await db.select().from(biMoments).where(eq(biMoments.id, journey.momentId)).limit(1);
+  const [commitment] = await db.select().from(personaBuilderCommitments).where(and(eq(personaBuilderCommitments.journeyId, journey.id), eq(personaBuilderCommitments.status, "active"))).orderBy(desc(personaBuilderCommitments.createdAt)).limit(1);
+  const [persona] = await db.select().from(personaBuilderPersonas).where(and(eq(personaBuilderPersonas.journeyId, journey.id), eq(personaBuilderPersonas.status, "selected"))).orderBy(desc(personaBuilderPersonas.createdAt)).limit(1);
+  const days = await db.select().from(personaBuilderDays).where(eq(personaBuilderDays.journeyId, journey.id)).orderBy(personaBuilderDays.dayNumber);
+  const [completion] = await db.select().from(personaBuilderCompletionReviews).where(eq(personaBuilderCompletionReviews.journeyId, journey.id)).orderBy(desc(personaBuilderCompletionReviews.createdAt)).limit(1);
+  const [owner] = await db.select({ name: users.name }).from(users).where(eq(users.id, share.userId)).limit(1);
+  return {
+    ownerName: owner?.name ?? "LevelNext learner",
+    expiresAt: share.expiresAt,
+    summary: buildPersonaCoachSafeSummary({
+      journey,
+      desiredOutcome: moment?.desiredOutcome,
+      commitment: commitment?.statement,
+      personaName: persona?.persona && typeof persona.persona === "object" && "name" in persona.persona ? String(persona.persona.name) : null,
+      days,
+      completion,
+    }),
+  };
 }
