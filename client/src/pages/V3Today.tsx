@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, BrainCircuit, CheckCircle2, CircleHelp, Compass, Gauge, History, MessageSquareText, Mic2, Sparkles, Target, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -49,10 +49,53 @@ function formatDate(value: Date | string | null | undefined): string {
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+type BrowserSpeechRecognitionResult = {
+  isFinal: boolean;
+  length: number;
+  [index: number]: { transcript: string };
+};
+
+type BrowserSpeechRecognitionEvent = Event & {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: BrowserSpeechRecognitionResult;
+  };
+};
+
+type BrowserSpeechRecognition = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: (() => void) | null;
+  onresult: ((event: BrowserSpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event & { error?: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+};
+
+type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
+
+function getSpeechRecognitionConstructor(): BrowserSpeechRecognitionConstructor | null {
+  if (typeof window === "undefined") return null;
+  const browserWindow = window as Window & {
+    SpeechRecognition?: BrowserSpeechRecognitionConstructor;
+    webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor;
+  };
+  return browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition ?? null;
+}
+
 export default function V3Today() {
   const [, navigate] = useLocation();
   const [situation, setSituation] = useState("");
   const [intent, setIntent] = useState<V3IntentMode>("talk_it_through");
+  const [voiceSupported, setVoiceSupported] = useState<boolean | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const voiceFinalTextRef = useRef("");
   const [result, setResult] = useState<ReturnType<typeof trpc.v3Situation.capture.useMutation>["data"]>(undefined);
   const recent = trpc.v3Situation.listRecent.useQuery(undefined, { retry: 1 });
   const capture = trpc.v3Situation.capture.useMutation({
@@ -66,6 +109,83 @@ export default function V3Today() {
   const selectedIntent = useMemo(() => INTENTS.find((item) => item.value === intent) ?? INTENTS[0], [intent]);
   const route = result ? ROUTE_META[result.route] : null;
   const RouteIcon = route?.icon ?? Sparkles;
+
+  useEffect(() => {
+    setVoiceSupported(Boolean(getSpeechRecognitionConstructor()));
+  }, []);
+
+  useEffect(() => () => {
+    recognitionRef.current?.abort();
+    recognitionRef.current = null;
+  }, []);
+
+  const stopVoiceCapture = () => {
+    recognitionRef.current?.stop();
+  };
+
+  const startVoiceCapture = () => {
+    const SpeechRecognition = getSpeechRecognitionConstructor();
+    if (!SpeechRecognition) {
+      setVoiceSupported(false);
+      setVoiceStatus("Voice input is not available in this browser. You can still type your situation.");
+      return;
+    }
+    if (isListening) {
+      stopVoiceCapture();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    voiceFinalTextRef.current = situation.trim();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = typeof navigator !== "undefined" && navigator.language ? navigator.language : "en-IN";
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceStatus("Listening… speak naturally, then tap the microphone again to finish.");
+    };
+    recognition.onresult = (event) => {
+      let interimText = "";
+      let finalText = voiceFinalTextRef.current;
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const transcript = event.results[index]?.[0]?.transcript?.trim() ?? "";
+        if (!transcript) continue;
+        if (event.results[index].isFinal) {
+          finalText = `${finalText} ${transcript}`.trim();
+        } else {
+          interimText = `${interimText} ${transcript}`.trim();
+        }
+      }
+      voiceFinalTextRef.current = finalText;
+      setSituation(`${finalText} ${interimText}`.trim());
+      setResult(undefined);
+    };
+    recognition.onerror = (event) => {
+      const error = event.error;
+      const message = error === "not-allowed" || error === "service-not-allowed"
+        ? "Microphone access was blocked. Allow microphone access in your browser settings, then try again."
+        : error === "no-speech"
+          ? "No speech was detected. Try again when you are ready."
+          : "Voice input is unavailable right now. You can continue by typing your situation.";
+      setVoiceStatus(message);
+      setIsListening(false);
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+      setSituation(voiceFinalTextRef.current);
+      setVoiceStatus(voiceFinalTextRef.current ? "Voice note added. Edit the text if you want, then find your next move." : null);
+    };
+    recognitionRef.current = recognition;
+    setVoiceStatus("Starting microphone…");
+    try {
+      recognition.start();
+    } catch {
+      recognitionRef.current = null;
+      setIsListening(false);
+      setVoiceStatus("Your microphone could not start. Please try again or type your situation.");
+    }
+  };
 
   const handleSubmit = () => {
     const trimmed = situation.trim();
@@ -107,7 +227,16 @@ export default function V3Today() {
               </div>
             </div>
 
-            <Textarea value={situation} onChange={(event) => { setSituation(event.target.value); setResult(undefined); }} placeholder="For example: I need to challenge a senior stakeholder who keeps changing the priority, but I do not want the relationship to become political." className="mt-6 min-h-36 resize-y border-slate-200 bg-[#FFFEFA] text-sm leading-6 text-[#0A1A2F] shadow-none focus-visible:border-[#D4AF37] focus-visible:ring-[#D4AF37]/20" aria-label="Describe your workplace situation" />
+            <div className="relative mt-6">
+              <Textarea value={situation} onChange={(event) => { setSituation(event.target.value); setResult(undefined); setVoiceStatus(null); }} placeholder="For example: I need to challenge a senior stakeholder who keeps changing the priority, but I do not want the relationship to become political." className="min-h-36 resize-y border-slate-200 bg-[#FFFEFA] pb-14 pr-14 text-sm leading-6 text-[#0A1A2F] shadow-none focus-visible:border-[#D4AF37] focus-visible:ring-[#D4AF37]/20" aria-label="Describe your workplace situation" />
+              <button type="button" onClick={startVoiceCapture} disabled={voiceSupported === false} aria-label={isListening ? "Stop voice input" : "Use voice input"} aria-pressed={isListening} className={`absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 ${isListening ? "border-red-300 bg-red-50 text-red-600 shadow-sm" : voiceSupported === false ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300" : "border-[#D4AF37]/70 bg-[#FFF9E8] text-[#A47618] hover:border-[#D4AF37] hover:bg-[#FFF4C7]"}`}>
+                <Mic2 size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="mt-2 flex min-h-5 items-start justify-between gap-3 text-xs" aria-live="polite">
+              <p className={isListening ? "font-semibold text-red-600" : "text-slate-500"}>{voiceStatus ?? (voiceSupported === false ? "Voice input is not available in this browser. You can still type." : "Speak your situation with the microphone, or type it below.")}</p>
+              {isListening && <button type="button" onClick={stopVoiceCapture} className="shrink-0 font-semibold text-[#0A1A2F] underline underline-offset-2">Finish voice note</button>}
+            </div>
 
             <div className="mt-5">
               <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#A47618]">What would help most?</p><span className="text-xs text-slate-400">Optional direction</span></div>
