@@ -7,11 +7,35 @@ import { invokeLLM } from "../_core/llm";
 import {
   practiceSessions,
   practiceAttempts,
+  commitments,
   userProductEnrollments,
   type PracticeScenario,
   type PracticeMessage,
   type PracticeFeedback,
 } from "../../drizzle/schema";
+
+async function createAutomaticPracticeCommitment(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  userId: number,
+  attemptId: number,
+  scenario: PracticeScenario,
+  feedback: PracticeFeedback,
+) {
+  const action = feedback.suggestedRealWorldAction?.trim();
+  if (!action) return null;
+  const commitmentText = `In my next ${scenario.conversationType || "leadership"} conversation, I will ${action.replace(/[.!?]+$/, "")}.`;
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 7);
+  const [created] = await db.insert(commitments).values({
+    userId,
+    text: commitmentText,
+    dueDate,
+    sourceType: "roleplay",
+    sourceId: attemptId,
+    status: "pending",
+  }).$returningId();
+  return { id: created.id, text: commitmentText, dueDate };
+}
 
 // ── Career Intelligence prompts ─────────────────────────────────────────────────────
 const CI_CONVERSATION_TYPES = [
@@ -762,6 +786,9 @@ export const practiceRouter = router({
         .limit(1);
       const attempt = rows[0];
       if (!attempt) throw new TRPCError({ code: "NOT_FOUND" });
+      if (attempt.completedAt && attempt.feedback) {
+        return { feedback: attempt.feedback as PracticeFeedback, attemptId: input.attemptId, commitment: null };
+      }
 
       const sessionRows = await db
         .select()
@@ -811,7 +838,8 @@ export const practiceRouter = router({
         console.warn("[NarrativePracticeBridge] Failed to record practice evidence:", bridgeErr);
       }
 
-      return { feedback, attemptId: input.attemptId };
+      const commitment = await createAutomaticPracticeCommitment(db, ctx.user.id, input.attemptId, scenario, feedback);
+      return { feedback, attemptId: input.attemptId, commitment };
     }),
 
   // Generate commitment from a situation
@@ -1072,6 +1100,9 @@ export const practiceRouter = router({
         .limit(1);
       const attempt = rows[0];
       if (!attempt) throw new TRPCError({ code: "NOT_FOUND" });
+      if (attempt.completedAt && attempt.feedback) {
+        return { feedback: attempt.feedback as PracticeFeedback, attemptId: input.attemptId, commitment: null };
+      }
 
       const sessionRows = await db
         .select()
@@ -1114,7 +1145,8 @@ export const practiceRouter = router({
         .set({ status: "feedback" })
         .where(eq(practiceSessions.id, attempt.sessionId));
 
-      return { feedback, attemptId: input.attemptId };
+      const commitment = await createAutomaticPracticeCommitment(db, ctx.user.id, input.attemptId, scenario, feedback);
+      return { feedback, attemptId: input.attemptId, commitment };
     }),
 
   // Get attempts for a session

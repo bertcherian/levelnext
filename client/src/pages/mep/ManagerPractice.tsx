@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Zap, Send, Loader2, CheckCircle2, ChevronRight, RotateCcw, Mic, MicOff, AlertCircle, X } from "lucide-react";
+import { Zap, Send, Loader2, CheckCircle2, ChevronRight, RotateCcw, Mic, MicOff, AlertCircle, Target, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -530,6 +530,19 @@ export default function ManagerPractice() {
             <div className="rounded-2xl px-5 py-4" style={{ background: "oklch(from #fb923c l c h / 0.06)", border: "1px solid oklch(from #fb923c l c h / 0.2)" }}>
               <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#fb923c" }}>Key Takeaway</p>
               <p className="text-sm leading-relaxed" style={{ color: "oklch(30% 0.02 248.6)" }}>{debrief.keyTakeaway}</p>
+            </div>
+          )}
+
+          {debrief.commitment && (
+            <div className="rounded-2xl border border-[#D4AF37]/60 bg-[#FFF9E8] px-5 py-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0A1A2F] text-[#D4AF37]"><Target size={16} /></div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A47618]">Real-world commitment created</p>
+                  <p className="mt-1 text-sm font-semibold leading-relaxed text-[#0A1A2F]">{debrief.commitment.text}</p>
+                  <p className="mt-2 text-xs text-slate-500">It is now active in your Manager Effectiveness commitments, with a seven-day check-in window.</p>
+                </div>
+              </div>
             </div>
           )}
 

@@ -80,6 +80,7 @@ import { effectivenessIntelligenceRouter } from "./routers/effectivenessIntellig
 import { warRoomRouter } from "./routers/warRoom";
 import { personaBuilderRouter } from "./routers/personaBuilder";
 import { v3SituationRouter } from "./routers/v3Situation";
+import { managerAltitudeRouter } from "./routers/managerAltitude";
 
 export const appRouter = router({
   system: systemRouter,
@@ -169,6 +170,7 @@ export const appRouter = router({
   warRoom: warRoomRouter,
   personaBuilder: personaBuilderRouter,
   v3Situation: v3SituationRouter,
+  managerAltitude: managerAltitudeRouter,
 });
 
 export type AppRouter = typeof appRouter;

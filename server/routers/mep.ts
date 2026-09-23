@@ -941,6 +941,9 @@ Stay in character. Respond naturally and realistically. Keep responses to 1-3 se
           eq(mepPracticeSessions.userId, ctx.user.id),
         ));
       if (!session) throw new TRPCError({ code: "NOT_FOUND" });
+      if (session.status === "completed") {
+        return { ...(session.coachingFeedback as Record<string, unknown> ?? {}), debrief: session.coachingFeedback, commitment: null };
+      }
 
       const messages = (session.messages as any[]) ?? [];
       const managerMessages = messages.filter((m: any) => m.role === "manager").map((m: any) => m.content).join("\n");
@@ -983,7 +986,18 @@ Return coaching feedback as JSON:
         .set({ status: "completed", coachingFeedback: feedback })
         .where(eq(mepPracticeSessions.id, input.sessionId));
 
-      return { ...feedback, debrief: feedback };
+      const commitmentText = `In my next ${session.scenario} conversation, I will ${feedback.nextPractice.trim().replace(/[.!?]+$/, "")}.`;
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + 7);
+      const [commitment] = await db.insert(behaviourCommitments).values({
+        userId: ctx.user.id,
+        commitment: commitmentText,
+        sourceDiagnostic: "mep_practice",
+        targetDate,
+        checkIns: [],
+      }).$returningId();
+
+      return { ...feedback, debrief: feedback, commitment: { id: commitment.id, text: commitmentText, targetDate } };
     }),
 
   listPracticeSessions: protectedProcedure.query(async ({ ctx }) => {

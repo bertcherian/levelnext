@@ -39,6 +39,7 @@ import {
   LayoutDashboard,
   X,
   Flame,
+  Compass,
 } from "lucide-react";
 
 type EffectivenessDashboardData = {
@@ -165,6 +166,8 @@ export default function ManagerHome() {
   const effectivenessQuery = effectivenessApi?.getDashboard?.useQuery?.() ?? { data: undefined, refetch: async () => undefined };
   const effectivenessData = effectivenessQuery.data as EffectivenessDashboardData | undefined;
   const refetchEffectiveness = effectivenessQuery.refetch;
+  const altitudeApi = (trpc as typeof trpc & { managerAltitude?: any }).managerAltitude;
+  const altitudeStatus = altitudeApi?.getStatus?.useQuery?.() ?? { data: undefined, isLoading: true };
   const respondNblaMutation = effectivenessApi?.respondToNbla?.useMutation?.({
     onSuccess: () => {
       toast.success("Action updated");
@@ -323,6 +326,22 @@ export default function ManagerHome() {
             ))}
           </div>
         </div>
+
+        {!altitudeStatus.isLoading && !altitudeStatus.data && (
+          <Link href="/manager/altitude" className="group block rounded-2xl border border-[#D4AF37]/70 bg-[#FFF9E8] p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A1A2F] text-[#D4AF37]"><Compass size={18} /></div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A47618]">Start here · 60 seconds</p>
+                  <h2 className="mt-1 text-base font-bold text-[#0A1A2F]">Calibrate your development starting point</h2>
+                  <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600">Answer four questions about your role, pressure patterns, and growth edge before you choose a diagnostic.</p>
+                </div>
+              </div>
+              <span className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#0A1A2F] px-4 py-2.5 text-xs font-semibold text-white transition-colors group-hover:bg-[#122B49]">Take the 60-second check <ArrowRight size={14} className="ml-2" /></span>
+            </div>
+          </Link>
+        )}
 
         {/* V3 situation-first entry point */}
         <Link href="/manager/today" className="group block rounded-2xl border border-[#D4AF37]/70 bg-[#FFFDF7] p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">

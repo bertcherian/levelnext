@@ -67,6 +67,7 @@ describe("V3 Today entry page", () => {
     const voiceButton = screen.getByRole("button", { name: "Use voice input" });
     await waitFor(() => expect(voiceButton).toHaveProperty("disabled", false));
     fireEvent.click(voiceButton);
+    expect(screen.getByRole("status", { name: /Audio waveform: microphone is listening/i })).not.toBeNull();
     FakeSpeechRecognition.instance?.onresult?.({
       resultIndex: 0,
       results: [{ isFinal: true, 0: { transcript: "I need to reset expectations with my team" } }],

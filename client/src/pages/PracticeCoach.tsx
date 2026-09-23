@@ -2261,7 +2261,7 @@ function RolePlayScreen({
   sessionId: number;
   scenario: PracticeScenario;
   onBack: () => void;
-  onFeedback: (feedback: PracticeFeedback, score: number, attemptId: number) => void;
+  onFeedback: (feedback: PracticeFeedback, score: number, attemptId: number, commitment?: { id: number; text: string; dueDate: Date | string }) => void;
 }) {
   const [messages, setMessages] = useState<PracticeMessage[]>([]);
   const [input, setInput] = useState('');
@@ -2284,7 +2284,7 @@ function RolePlayScreen({
     onSuccess: (data) => setPauseNote(data.coaching),
   });
   const endSimulation = trpc.practice.endSimulation.useMutation({
-    onSuccess: (data) => onFeedback(data.feedback, data.feedback.overallScore ?? 0, data.attemptId),
+    onSuccess: (data) => onFeedback(data.feedback, data.feedback.overallScore ?? 0, data.attemptId, data.commitment ?? undefined),
   });
   useEffect(() => {
     startRolePlay.mutate({ sessionId });
@@ -2416,6 +2416,7 @@ function FeedbackScreen({
   score,
   sessionId,
   attemptId,
+  commitment: automaticCommitment,
   onRetry,
   onHome,
 }: {
@@ -2423,6 +2424,7 @@ function FeedbackScreen({
   score: number;
   sessionId: number;
   attemptId: number;
+  commitment?: { id: number; text: string; dueDate: Date | string };
   onRetry: () => void;
   onHome: () => void;
 }) {
@@ -2538,15 +2540,19 @@ function FeedbackScreen({
               Suggested Real-World Action
             </p>
             <p className="text-sm text-[var(--color-ln-navy)]/80 mb-3">{feedback.suggestedRealWorldAction}</p>
-              <Button
-                size="sm"
-                onClick={() => addCommitment.mutate({ text: feedback.suggestedRealWorldAction!, sourceType: 'roleplay', sourceId: sessionId })}
-                disabled={addCommitment.isPending}
-                className="bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] text-xs"
-              >
-                <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                Add to Commitments
-              </Button>
+              {automaticCommitment ? (
+                <p className="flex items-center gap-2 text-xs font-semibold text-emerald-700"><CheckCircle className="h-3.5 w-3.5" /> Automatically added to your commitments for the next seven days.</p>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => addCommitment.mutate({ text: feedback.suggestedRealWorldAction!, sourceType: 'roleplay', sourceId: sessionId })}
+                  disabled={addCommitment.isPending}
+                  className="bg-[var(--color-ln-gold)] text-[var(--color-ln-navy)] text-xs"
+                >
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                  Add to Commitments
+                </Button>
+              )}
               {effectivenessApi && (
                 <div className="mt-4 border-t border-[var(--color-ln-navy)]/10 pt-4">
                   {contractCreated ? (
@@ -2880,7 +2886,7 @@ export default function PracticeCoach() {
   });
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [scenario, setScenario] = useState<PracticeScenario | null>(null);
-  const [feedback, setFeedback] = useState<{ feedback: PracticeFeedback; score: number; attemptId: number } | null>(null);
+  const [feedback, setFeedback] = useState<{ feedback: PracticeFeedback; score: number; attemptId: number; commitment?: { id: number; text: string; dueDate: Date | string } } | null>(null);
   const [briefData, setBriefData] = useState<{ briefId: number; brief: BeforeMeetingBriefData } | null>(null);
   const [debriefData, setDebriefData] = useState<{ debriefId: number; report: AfterMeetingDebriefData } | null>(null);
 
@@ -2946,7 +2952,7 @@ export default function PracticeCoach() {
           sessionId={sessionId}
           scenario={scenario}
           onBack={() => setScreen('scenario-setup')}
-          onFeedback={(fb, score, aid) => { setFeedback({ feedback: fb, score, attemptId: aid }); setScreen('feedback'); }}
+          onFeedback={(fb, score, aid, commitment) => { setFeedback({ feedback: fb, score, attemptId: aid, commitment }); setScreen('feedback'); }}
         />
       );
     }
@@ -2957,6 +2963,7 @@ export default function PracticeCoach() {
           score={feedback.score}
           sessionId={sessionId}
           attemptId={feedback.attemptId}
+          commitment={feedback.commitment}
           onRetry={() => setScreen('scenario-setup')}
           onHome={goHome}
         />

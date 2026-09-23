@@ -207,6 +207,7 @@ export default function V3Today() {
 
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-10 lg:py-9" style={{ background: "var(--color-ln-ivory)" }}>
+      <style>{`@keyframes v3VoiceWave { 0%, 100% { transform: scaleY(.35); opacity: .55; } 50% { transform: scaleY(1); opacity: 1; } } @media (prefers-reduced-motion: reduce) { .v3-voice-wave-bar { animation: none !important; transform: scaleY(.7); opacity: .8; } }`}</style>
       <div className="mx-auto max-w-6xl">
         <header className="flex flex-col gap-5 border-b border-slate-200 pb-7 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -237,6 +238,7 @@ export default function V3Today() {
               <p className={isListening ? "font-semibold text-red-600" : "text-slate-500"}>{voiceStatus ?? (voiceSupported === false ? "Voice input is not available in this browser. You can still type." : "Speak your situation with the microphone, or type it below.")}</p>
               {isListening && <button type="button" onClick={stopVoiceCapture} className="shrink-0 font-semibold text-[#0A1A2F] underline underline-offset-2">Finish voice note</button>}
             </div>
+            {isListening && <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#D4AF37]/40 bg-[#FFF9E8] px-3 py-2.5" role="status" aria-label="Audio waveform: microphone is listening"><div className="flex h-6 items-center gap-1" aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => <span key={bar} className="v3-voice-wave-bar block w-1 rounded-full bg-[#D4AF37]" style={{ height: `${10 + ((bar * 7) % 13)}px`, animation: `v3VoiceWave ${620 + (bar % 4) * 90}ms ease-in-out ${bar * 70}ms infinite` }} />)}</div><span className="text-xs font-semibold text-[#A47618]">Live audio · speak naturally</span></div>}
 
             <div className="mt-5">
               <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#A47618]">What would help most?</p><span className="text-xs text-slate-400">Optional direction</span></div>

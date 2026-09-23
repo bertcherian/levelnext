@@ -68,6 +68,7 @@ const AdminProductEnrollments = lazyWithRouteRecovery(() => import("@/pages/Admi
 const ManagerEffectivenessLanding = lazy(() => import("@/pages/ManagerEffectivenessLanding"));
 const ManagerHome = lazy(() => import("@/pages/mep/ManagerHome"));
 const V3Today = lazy(() => import("@/pages/V3Today"));
+const ManagerAltitudeIntake = lazy(() => import("@/pages/ManagerAltitudeIntake"));
 const WorkGenomeScan = lazy(() => import("@/pages/WorkGenomeScan"));
 const WorkDiary = lazy(() => import("@/pages/WorkDiary"));
 const ManagerDiagnostics = lazyWithRouteRecovery(() => import("@/pages/mep/ManagerDiagnostics"), "manager-diagnostics");
@@ -337,6 +338,7 @@ function Router() {
       {/* Manager Effectiveness Platform — 6-item nav */}
       <Route path="/manager" component={withMepLayout(<ManagerHome />)} />
       <Route path="/manager/today" component={withMepLayout(<V3Today />)} />
+      <Route path="/manager/altitude" component={withMepLayout(<ManagerAltitudeIntake />)} />
       <Route path="/manager/work-genome" component={withMepLayout(<WorkGenomeScan />)} />
       <Route path="/manager/work-diary" component={withMepLayout(<WorkDiary />)} />
       <Route path="/manager/diagnostics" component={withMepLayout(<ManagerDiagnostics />)} />

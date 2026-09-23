@@ -15,6 +15,7 @@ import {
 import type { SelfLeadershipAnalysis, SelfLeadershipCareerStage, SelfLeadershipConfidence, SelfLeadershipDimension } from "../shared/modules/selfLeadershipIntelligence";
 import type { WarRoomIndicator } from "../shared/modules/warRoom";
 import type { V3DecisionEvidence, V3IntentMode, V3RouteTarget, V3SituationKey } from "../shared/modules/v3SituationRouting";
+import type { ManagerAltitudeAnswer, ManagerDevelopmentAltitude } from "../shared/modules/managerAltitude";
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 export const users = mysqlTable("users", {
@@ -3042,6 +3043,25 @@ export const v3SituationDecisions = mysqlTable("v3_situation_decisions", {
 ]);
 export type V3SituationDecision = typeof v3SituationDecisions.$inferSelect;
 export type InsertV3SituationDecision = typeof v3SituationDecisions.$inferInsert;
+
+// ─── Manager Development Altitude: private first-login calibration ────────────
+export const managerAltitudeIntakes = mysqlTable("manager_altitude_intakes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  answers: json("answers").$type<ManagerAltitudeAnswer>().notNull(),
+  altitude: mysqlEnum("altitude", ["foundation", "building", "scaling", "multiplying"]).notNull().$type<ManagerDevelopmentAltitude>(),
+  score: int("score").notNull(),
+  focus: text("focus").notNull(),
+  explanation: text("explanation").notNull(),
+  completedAt: timestamp("completedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("manager_altitude_intakes_user_uq").on(table.userId),
+  index("manager_altitude_intakes_completed_idx").on(table.completedAt),
+]);
+export type ManagerAltitudeIntake = typeof managerAltitudeIntakes.$inferSelect;
+export type InsertManagerAltitudeIntake = typeof managerAltitudeIntakes.$inferInsert;
 
 // ─── Intelligence Core: Private Self-Leadership Mirrors ───────────────────────
 // Individual-owned coaching reflections. These records must not be surfaced in
