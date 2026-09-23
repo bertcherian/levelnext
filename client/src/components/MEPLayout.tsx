@@ -29,6 +29,7 @@ const LOGO_URL = "/logo.png";
 
 export const MEP_NAV_ITEMS = [
   { href: "/manager", label: "Home", icon: Home, exact: true },
+  { href: "/manager/today", label: "Today", icon: Sparkles },
   { href: "/manager/diagnostics", label: "Diagnostics", icon: LayoutGrid },
   { href: "/manager/coach", label: "Coach", icon: MessageSquare },
   { href: "/manager/practice", label: "Practice", icon: Zap },

@@ -324,6 +324,21 @@ export default function ManagerHome() {
           </div>
         </div>
 
+        {/* V3 situation-first entry point */}
+        <Link href="/manager/today" className="group block rounded-2xl border border-[#D4AF37]/70 bg-[#FFFDF7] p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A1A2F] text-[#D4AF37]"><Sparkles size={18} /></div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A47618]">V3 · Start with the moment</p>
+                <h2 className="mt-1 text-base font-bold text-[#0A1A2F]">What are you dealing with today?</h2>
+                <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600">Bring a real workplace situation and LevelNext will help you choose the smallest useful next move—coach, prepare, practise, or learn.</p>
+              </div>
+            </div>
+            <span className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#0A1A2F] px-4 py-2.5 text-xs font-semibold text-white transition-colors group-hover:bg-[#122B49]">Open Today <ArrowRight size={14} className="ml-2" /></span>
+          </div>
+        </Link>
+
         {effectivenessApi && <DiaryQuickCapture effectivenessApi={effectivenessApi} />}
         {effectivenessApi && effectivenessData?.contracts?.length ? <ContractCheckIn effectivenessApi={effectivenessApi} dashboard={effectivenessData} onSaved={refetchEffectiveness} /> : null}
 

@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm/mysql-core";
 import type { SelfLeadershipAnalysis, SelfLeadershipCareerStage, SelfLeadershipConfidence, SelfLeadershipDimension } from "../shared/modules/selfLeadershipIntelligence";
 import type { WarRoomIndicator } from "../shared/modules/warRoom";
+import type { V3DecisionEvidence, V3IntentMode, V3RouteTarget, V3SituationKey } from "../shared/modules/v3SituationRouting";
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 export const users = mysqlTable("users", {
@@ -2980,6 +2981,67 @@ export const icPracticeProgress = mysqlTable("ic_practice_progress", {
 });
 export type IcPracticeProgress = typeof icPracticeProgress.$inferSelect;
 export type InsertIcPracticeProgress = typeof icPracticeProgress.$inferInsert;
+
+// ─── V3 Situation-First MVP ───────────────────────────────────────────────────
+// Participant-private workplace situations and the explainable deterministic
+// decision that routes each situation to an existing intervention surface.
+export const v3SituationIntakes = mysqlTable("v3_situation_intakes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  situation: text("situation").notNull(),
+  intent: mysqlEnum("intent", [
+    "talk_it_through",
+    "perspective",
+    "decide",
+    "prepare",
+    "practice",
+    "challenge",
+    "teach",
+    "listen",
+  ]).notNull().$type<V3IntentMode>(),
+  situationKey: mysqlEnum("situationKey", [
+    "delegation",
+    "difficult_feedback",
+    "underperformance",
+    "stakeholder_challenge",
+    "conflict",
+    "executive_communication",
+    "coaching",
+    "accountability",
+    "priority_management",
+    "managing_up",
+  ]).$type<V3SituationKey | null>(),
+  situationLabel: varchar("situationLabel", { length: 160 }).notNull(),
+  status: mysqlEnum("status", ["active", "archived"]).notNull().default("active"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("v3_situation_intakes_user_created_idx").on(table.userId, table.createdAt),
+]);
+export type V3SituationIntake = typeof v3SituationIntakes.$inferSelect;
+export type InsertV3SituationIntake = typeof v3SituationIntakes.$inferInsert;
+
+export const v3SituationDecisions = mysqlTable("v3_situation_decisions", {
+  id: int("id").autoincrement().primaryKey(),
+  situationId: int("situationId").notNull().references(() => v3SituationIntakes.id),
+  userId: int("userId").notNull().references(() => users.id),
+  route: mysqlEnum("route", ["coach", "practice_partner", "simulator", "diagnostic", "clarify"]).notNull().$type<V3RouteTarget>(),
+  confidence: float("confidence").notNull(),
+  alternatives: json("alternatives").$type<V3RouteTarget[]>().notNull(),
+  evidence: json("evidence").$type<V3DecisionEvidence[]>().notNull(),
+  decisionMethod: varchar("decisionMethod", { length: 100 }).notNull(),
+  modelVersion: varchar("modelVersion", { length: 100 }).notNull(),
+  escalation: boolean("escalation").notNull().default(false),
+  clarificationPrompt: text("clarificationPrompt"),
+  rationale: text("rationale").notNull(),
+  traceId: varchar("traceId", { length: 80 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("v3_situation_decisions_user_created_idx").on(table.userId, table.createdAt),
+  index("v3_situation_decisions_situation_idx").on(table.situationId),
+]);
+export type V3SituationDecision = typeof v3SituationDecisions.$inferSelect;
+export type InsertV3SituationDecision = typeof v3SituationDecisions.$inferInsert;
 
 // ─── Intelligence Core: Private Self-Leadership Mirrors ───────────────────────
 // Individual-owned coaching reflections. These records must not be surfaced in
