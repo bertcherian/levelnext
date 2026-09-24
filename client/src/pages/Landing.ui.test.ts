@@ -23,6 +23,7 @@ describe("LevelNext business-diagnostic landing page", () => {
 
     expect(page).toContain("How much could manager performance leakage");
     expect(page).toContain("be costing you?");
+    expect(page).toContain("Calculate Your Manager Ineffectiveness Cost");
     expect(page).toContain("Number of managers");
     expect(page).toContain("Average team size");
     expect(page).toContain("Estimated avoidable hours lost per manager/team each week");
@@ -63,6 +64,10 @@ describe("LevelNext business-diagnostic landing page", () => {
     expect(page).toContain("Give us 30 days.");
     expect(page).toContain("30-Day Manager Impact Test");
     expect(page).toContain("Run a 30-Day Pilot Test");
+    expect(page).toContain("Choose pilot scope");
+    expect(page).toContain("Small cohort");
+    expect(page).toContain("Business unit");
+    expect(page).toContain("pilot_scope=small_cohort");
     expect(page).toContain("20–30 managers");
     expect(page).toContain("Day-30 Impact Review booked before launch");
     expect(page).toContain("Scale what works. Stop what doesn’t.");
@@ -80,6 +85,8 @@ describe("LevelNext business-diagnostic landing page", () => {
     expect(styles).toContain(".ln-gap-grid");
     expect(styles).toContain(".ln-evidence-flow");
     expect(styles).toContain(".ln-test-card");
+    expect(styles).toContain(".ln-input-range");
+    expect(styles).toContain(".ln-pilot-toggle");
     expect(styles).toContain("--ln-gold:#D4AF37");
   });
 });
