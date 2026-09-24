@@ -24,12 +24,18 @@ describe("LevelNext business-diagnostic landing page", () => {
     expect(page).toContain("How much could manager performance leakage");
     expect(page).toContain("be costing you?");
     expect(page).toContain("Calculate Your Manager Ineffectiveness Cost");
+    expect(page).toContain("Quick baseline");
+    expect(page).toContain("50 managers");
+    expect(page).toContain("100 managers");
+    expect(page).toContain("250 managers");
+    expect(page).toContain("500+ managers");
     expect(page).toContain("Number of managers");
     expect(page).toContain("Average team size");
     expect(page).toContain("Estimated avoidable hours lost per manager/team each week");
     expect(page).toContain("Estimated productivity capacity at risk");
     expect(page).toContain("Indicative estimate based on your assumptions.");
     expect(page).toContain("Refine the Estimate");
+    expect(page).toContain("Export Summary");
   });
 
   it("lets buyers diagnose up to three behaviour gaps and shows the adaptive focus", () => {
@@ -87,6 +93,8 @@ describe("LevelNext business-diagnostic landing page", () => {
     expect(styles).toContain(".ln-test-card");
     expect(styles).toContain(".ln-input-range");
     expect(styles).toContain(".ln-pilot-toggle");
+    expect(styles).toContain(".ln-preset-row");
+    expect(styles).toContain(".ln-export-button");
     expect(styles).toContain("--ln-gold:#D4AF37");
   });
 });

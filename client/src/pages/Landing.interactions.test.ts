@@ -2,8 +2,11 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import Landing from "./Landing";
+
+const { generateLandingSummaryPdfMock } = vi.hoisted(() => ({ generateLandingSummaryPdfMock: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/lib/landingSummaryPdf", () => ({ generateLandingSummaryPdf: generateLandingSummaryPdfMock }));
 
 afterEach(() => cleanup());
 
@@ -44,6 +47,29 @@ describe("LevelNext landing page interactions", () => {
     await user.click(screen.getByRole("button", { name: "Feedback comes too late" }));
     const personalizedLink = screen.getAllByRole("link", { name: /Run a 30-Day Pilot Test/i })[0];
     expect(personalizedLink.getAttribute("href")).toContain("manager_behaviours=Feedback+comes+too+late");
+  });
+
+  it("applies company-size presets to the baseline calculator values", async () => {
+    const user = userEvent.setup();
+    render(createElement(Landing));
+
+    await user.click(screen.getByRole("button", { name: "250 managers" }));
+
+    expect((screen.getAllByRole("spinbutton")[0] as HTMLInputElement).value).toBe("250");
+    expect((screen.getAllByRole("spinbutton")[1] as HTMLInputElement).value).toBe("8");
+    expect((screen.getByRole("button", { name: "250 managers" }) as HTMLButtonElement).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("exports a branded summary using the current calculator, gaps, and pilot scope", async () => {
+    const user = userEvent.setup();
+    render(createElement(Landing));
+
+    await user.click(screen.getByRole("button", { name: "100 managers" }));
+    await user.click(screen.getByRole("button", { name: "Weak accountability" }));
+    await user.click(screen.getByRole("switch", { name: "Choose pilot scope" }));
+    await user.click(screen.getByRole("button", { name: "Export Summary" }));
+
+    expect(generateLandingSummaryPdfMock).toHaveBeenCalledWith(expect.objectContaining({ managers: 100, teamSize: 7, hoursLost: 1.5, selectedGaps: ["Weak accountability"], pilotScope: "business_unit" }));
   });
 
   it("selects up to three behaviour gaps and enables the test CTA", async () => {

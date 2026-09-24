@@ -21,6 +21,7 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
+import { generateLandingSummaryPdf } from "@/lib/landingSummaryPdf";
 import "./landing.css";
 
 const pilotUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=30_day_impact_test";
@@ -56,6 +57,12 @@ const beforeAfter = [
 ] as const;
 
 const personas = ["Early Career", "Individual Contributors", "Managers", "Leaders", "Executives"] as const;
+const companySizePresets = [
+  { label: "50 managers", managers: 50, teamSize: 6, hoursLost: 1.5 },
+  { label: "100 managers", managers: 100, teamSize: 7, hoursLost: 1.5 },
+  { label: "250 managers", managers: 250, teamSize: 8, hoursLost: 2 },
+  { label: "500+ managers", managers: 500, teamSize: 10, hoursLost: 3 },
+] as const;
 
 function formatINR(value: number): string {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
@@ -112,6 +119,8 @@ export default function Landing() {
   const [hoursLost, setHoursLost] = useState(2);
   const [selectedGaps, setSelectedGaps] = useState<string[]>([]);
   const [pilotScope, setPilotScope] = useState<PilotScope>("small_cohort");
+  const [activePreset, setActivePreset] = useState<number | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const closeMenu = () => setMobileMenuOpen(false);
   const estimatedRisk = useMemo(() => managers * teamSize * hoursLost * 52 * 500, [managers, teamSize, hoursLost]);
   const focus = selectedGaps.length ? selectedGaps.join(" • ") : "Choose up to three behaviours to expose the gap.";
@@ -124,13 +133,29 @@ export default function Landing() {
     if (selectedGaps.length) scrollToSection("impact-test");
   };
 
+  const applyPreset = (preset: (typeof companySizePresets)[number], index: number) => {
+    setManagers(preset.managers);
+    setTeamSize(preset.teamSize);
+    setHoursLost(preset.hoursLost);
+    setActivePreset(index);
+  };
+
+  const handleExportSummary = async () => {
+    setIsExporting(true);
+    try {
+      await generateLandingSummaryPdf({ managers, teamSize, hoursLost, estimatedRisk, selectedGaps, pilotScope });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return <main className="ln-landing" id="top">
     <header className="ln-nav"><a className="ln-brand" href="/" aria-label="LevelNext home"><img src="/logo.png" alt="LevelNext" /></a><nav className="ln-nav__links" aria-label="Primary navigation"><a href="#how-it-works">How It Works</a><a href="#impact-test">Impact Test</a><a href="#privacy">Evidence &amp; Privacy</a></nav><div className="ln-nav__actions"><button type="button" className="ln-nav__cost" onClick={() => scrollToSection("calculator")}>Calculate the Cost</button><a className="ln-login" href="/login?returnTo=%2Fleader">Login</a><PilotButton className="ln-button--nav" selectedGaps={selectedGaps} pilotScope={pilotScope} /></div><button type="button" className="ln-menu-toggle" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}>{mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}</button></header>
     {mobileMenuOpen && <nav className="ln-mobile-nav" id="mobile-navigation" aria-label="Mobile navigation"><a href="#how-it-works" onClick={closeMenu}>How It Works</a><a href="#impact-test" onClick={closeMenu}>Impact Test</a><a href="#privacy" onClick={closeMenu}>Evidence &amp; Privacy</a><button type="button" onClick={() => { closeMenu(); scrollToSection("calculator"); }}>Calculate the Cost</button><a href="/login?returnTo=%2Fleader" onClick={closeMenu}>Login</a><PilotButton className="ln-button--mobile" selectedGaps={selectedGaps} pilotScope={pilotScope} /></nav>}
 
     <section className="ln-hero" aria-labelledby="hero-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-section-frame ln-hero__frame"><div className="ln-hero__copy"><SectionEyebrow icon={CircleDollarSign} light>Management performance leakage</SectionEyebrow><h1 id="hero-title">What are ineffective managers costing your business?</h1><p className="ln-hero__subhead">Delayed feedback. Avoided conversations. Poor delegation. Weak accountability. Slow decisions.</p><p className="ln-hero__lede">The cost shows up in lost time, rework, slower execution, manager overload and unwanted attrition.</p><div className="ln-hero__actions"><CostButton /><PilotButton selectedGaps={selectedGaps} pilotScope={pilotScope} /></div><p className="ln-hero__support">Identify the gap. Change the behaviour. Measure what moves.</p></div><BusinessChain /></div></section>
 
-    <section className="ln-calculator" id="calculator" aria-labelledby="calculator-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={CircleDollarSign}>Make the hidden cost visible</SectionEyebrow><SectionHeading id="calculator-title" first="How much could manager performance leakage" second="be costing you?" /></div><div className="ln-calculator__layout"><div className="ln-input-panel"><p className="ln-panel-label">Start with three inputs</p><CalculatorField label="Number of managers" min={1} max={100000} value={managers} onChange={setManagers} /><CalculatorField label="Average team size" min={1} max={100} value={teamSize} onChange={setTeamSize} /><CalculatorField label="Estimated avoidable hours lost per manager/team each week" min={0.5} max={40} step={0.5} value={hoursLost} onChange={setHoursLost} /></div><aside className="ln-cost-result"><span className="ln-cost-result__label">Estimated productivity capacity at risk</span><strong>{formatINR(estimatedRisk)}<small>/ year</small></strong><p>Indicative estimate based on your assumptions. Adjust the inputs to reflect your organization.</p><button type="button" className="ln-text-link" onClick={() => scrollToSection("gap")}>Refine the Estimate <ArrowRight size={15} /></button></aside></div></div></section>
+    <section className="ln-calculator" id="calculator" aria-labelledby="calculator-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={CircleDollarSign}>Make the hidden cost visible</SectionEyebrow><SectionHeading id="calculator-title" first="How much could manager performance leakage" second="be costing you?" /></div><div className="ln-preset-row" aria-label="Company size presets"><span>Quick baseline</span>{companySizePresets.map((preset, index) => <button key={preset.label} type="button" className={activePreset === index ? "is-active" : ""} aria-pressed={activePreset === index} onClick={() => applyPreset(preset, index)}>{preset.label}</button>)}</div><div className="ln-calculator__layout"><div className="ln-input-panel"><p className="ln-panel-label">Start with three inputs</p><CalculatorField label="Number of managers" min={1} max={100000} value={managers} onChange={(value) => { setManagers(value); setActivePreset(null); }} /><CalculatorField label="Average team size" min={1} max={100} value={teamSize} onChange={(value) => { setTeamSize(value); setActivePreset(null); }} /><CalculatorField label="Estimated avoidable hours lost per manager/team each week" min={0.5} max={40} step={0.5} value={hoursLost} onChange={(value) => { setHoursLost(value); setActivePreset(null); }} /></div><aside className="ln-cost-result"><span className="ln-cost-result__label">Estimated productivity capacity at risk</span><strong>{formatINR(estimatedRisk)}<small>/ year</small></strong><p>Indicative estimate based on your assumptions. Adjust the inputs to reflect your organization.</p><div className="ln-cost-result__actions"><button type="button" className="ln-text-link" onClick={() => scrollToSection("gap")}>Refine the Estimate <ArrowRight size={15} /></button><button type="button" className="ln-export-button" onClick={() => void handleExportSummary()} disabled={isExporting}><BarChart3 size={15} />{isExporting ? "Preparing PDF…" : "Export Summary"}</button></div></aside></div></div></section>
 
     <section className="ln-gap-selector" id="gap" aria-labelledby="gap-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={Target}>Diagnose the gap</SectionEyebrow><SectionHeading id="gap-title" first="Where does manager effectiveness" second="break down?" /><p>Select up to three behaviours. The point is not to label managers—it is to identify the business gap worth testing.</p></div><div className="ln-gap-grid">{behaviourGaps.map((gap) => <button key={gap} type="button" className={selectedGaps.includes(gap) ? "is-selected" : ""} onClick={() => toggleGap(gap)} aria-pressed={selectedGaps.includes(gap)}><span>{selectedGaps.includes(gap) ? <Check size={15} /> : <span className="ln-gap-dot" />}</span>{gap}</button>)}</div><div className="ln-gap-result"><div><span className="ln-gap-result__label">Your 30-Day Impact Test could focus on:</span><strong>{focus}</strong></div><button type="button" className="ln-button" onClick={handleTestBehaviours} disabled={!selectedGaps.length}>Test These Behaviours <ArrowRight size={16} /></button></div></div></section>
 
