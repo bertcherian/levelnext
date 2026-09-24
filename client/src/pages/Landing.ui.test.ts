@@ -21,7 +21,7 @@ describe("LevelNext business-diagnostic landing page", () => {
   it("includes the three-input manager cost calculator", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain("How much could management-performance leakage");
+    expect(page).toContain("How much could manager performance leakage");
     expect(page).toContain("be costing you?");
     expect(page).toContain("Number of managers");
     expect(page).toContain("Average team size");
@@ -35,6 +35,7 @@ describe("LevelNext business-diagnostic landing page", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
     ["Feedback comes too late", "Difficult conversations are avoided", "Managers don’t delegate enough", "Weak accountability", "Slow decision-making", "Too much escalation", "Low ownership", "Manager overload", "Rework", "Unwanted attrition"].forEach((gap) => expect(page).toContain(gap));
+    expect(page).toContain("Where does manager effectiveness");
     expect(page).toContain("Your 30-Day Impact Test could focus on:");
     expect(page).toContain("Test These Behaviours");
   });
@@ -61,6 +62,7 @@ describe("LevelNext business-diagnostic landing page", () => {
 
     expect(page).toContain("Give us 30 days.");
     expect(page).toContain("30-Day Manager Impact Test");
+    expect(page).toContain("Run a 30-Day Pilot Test");
     expect(page).toContain("20–30 managers");
     expect(page).toContain("Day-30 Impact Review booked before launch");
     expect(page).toContain("Scale what works. Stop what doesn’t.");

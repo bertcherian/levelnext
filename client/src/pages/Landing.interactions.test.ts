@@ -26,7 +26,7 @@ describe("LevelNext landing page interactions", () => {
     render(createElement(Landing));
 
     expect(screen.getAllByRole("button", { name: /Calculate Your Manager Cost/i }).length).toBeGreaterThan(0);
-    const impactLinks = screen.getAllByRole("link", { name: /Run a 30-Day Impact Test/i });
+    const impactLinks = screen.getAllByRole("link", { name: /Run a 30-Day Pilot Test/i });
     expect(impactLinks.length).toBeGreaterThan(0);
     expect(impactLinks[0].getAttribute("href")).toContain("utm_campaign=30_day_impact_test");
   });
