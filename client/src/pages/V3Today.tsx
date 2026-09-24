@@ -94,8 +94,13 @@ export default function V3Today() {
   const [voiceSupported, setVoiceSupported] = useState<boolean | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+  const [voiceAmplitude, setVoiceAmplitude] = useState(0);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const voiceFinalTextRef = useRef("");
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const microphoneStreamRef = useRef<MediaStream | null>(null);
+  const amplitudeFrameRef = useRef<number | null>(null);
   const [result, setResult] = useState<ReturnType<typeof trpc.v3Situation.capture.useMutation>["data"]>(undefined);
   const recent = trpc.v3Situation.listRecent.useQuery(undefined, { retry: 1 });
   const capture = trpc.v3Situation.capture.useMutation({
@@ -114,9 +119,62 @@ export default function V3Today() {
     setVoiceSupported(Boolean(getSpeechRecognitionConstructor()));
   }, []);
 
+  const stopAmplitudeMeter = () => {
+    if (amplitudeFrameRef.current !== null) {
+      cancelAnimationFrame(amplitudeFrameRef.current);
+      amplitudeFrameRef.current = null;
+    }
+    microphoneStreamRef.current?.getTracks().forEach((track) => track.stop());
+    microphoneStreamRef.current = null;
+    analyserRef.current = null;
+    void audioContextRef.current?.close();
+    audioContextRef.current = null;
+    setVoiceAmplitude(0);
+  };
+
+  const startAmplitudeMeter = async () => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
+    const browserWindow = window as Window & { webkitAudioContext?: typeof AudioContext };
+    const AudioContextConstructor = window.AudioContext ?? browserWindow.webkitAudioContext;
+    if (!AudioContextConstructor) return;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioContext = new AudioContextConstructor();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.72;
+      audioContext.createMediaStreamSource(stream).connect(analyser);
+      microphoneStreamRef.current = stream;
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      await audioContext.resume();
+
+      const waveform = new Uint8Array(analyser.fftSize);
+      const sample = () => {
+        if (!analyserRef.current) return;
+        analyser.getByteTimeDomainData(waveform);
+        let squaredTotal = 0;
+        for (let index = 0; index < waveform.length; index += 1) {
+          const centered = ((waveform[index] ?? 128) - 128) / 128;
+          squaredTotal += centered * centered;
+        }
+        const rms = Math.sqrt(squaredTotal / waveform.length);
+        const normalizedAmplitude = Math.min(1, rms * 3.6);
+        setVoiceAmplitude((previous) => previous * 0.55 + normalizedAmplitude * 0.45);
+        amplitudeFrameRef.current = requestAnimationFrame(sample);
+      };
+      amplitudeFrameRef.current = requestAnimationFrame(sample);
+    } catch {
+      // Speech recognition can still work when a separate Web Audio stream is unavailable.
+      stopAmplitudeMeter();
+    }
+  };
+
   useEffect(() => () => {
     recognitionRef.current?.abort();
     recognitionRef.current = null;
+    stopAmplitudeMeter();
   }, []);
 
   const stopVoiceCapture = () => {
@@ -143,6 +201,7 @@ export default function V3Today() {
     recognition.onstart = () => {
       setIsListening(true);
       setVoiceStatus("Listening… speak naturally, then tap the microphone again to finish.");
+      void startAmplitudeMeter();
     };
     recognition.onresult = (event) => {
       let interimText = "";
@@ -169,10 +228,12 @@ export default function V3Today() {
           : "Voice input is unavailable right now. You can continue by typing your situation.";
       setVoiceStatus(message);
       setIsListening(false);
+      stopAmplitudeMeter();
     };
     recognition.onend = () => {
       setIsListening(false);
       recognitionRef.current = null;
+      stopAmplitudeMeter();
       setSituation(voiceFinalTextRef.current);
       setVoiceStatus(voiceFinalTextRef.current ? "Voice note added. Edit the text if you want, then find your next move." : null);
     };
@@ -183,6 +244,7 @@ export default function V3Today() {
     } catch {
       recognitionRef.current = null;
       setIsListening(false);
+      stopAmplitudeMeter();
       setVoiceStatus("Your microphone could not start. Please try again or type your situation.");
     }
   };
@@ -238,7 +300,7 @@ export default function V3Today() {
               <p className={isListening ? "font-semibold text-red-600" : "text-slate-500"}>{voiceStatus ?? (voiceSupported === false ? "Voice input is not available in this browser. You can still type." : "Speak your situation with the microphone, or type it below.")}</p>
               {isListening && <button type="button" onClick={stopVoiceCapture} className="shrink-0 font-semibold text-[#0A1A2F] underline underline-offset-2">Finish voice note</button>}
             </div>
-            {isListening && <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#D4AF37]/40 bg-[#FFF9E8] px-3 py-2.5" role="status" aria-label="Audio waveform: microphone is listening"><div className="flex h-6 items-center gap-1" aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => <span key={bar} className="v3-voice-wave-bar block w-1 rounded-full bg-[#D4AF37]" style={{ height: `${10 + ((bar * 7) % 13)}px`, animation: `v3VoiceWave ${620 + (bar % 4) * 90}ms ease-in-out ${bar * 70}ms infinite` }} />)}</div><span className="text-xs font-semibold text-[#A47618]">Live audio · speak naturally</span></div>}
+            {isListening && <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#D4AF37]/40 bg-[#FFF9E8] px-3 py-2.5" role="status" aria-label="Audio waveform: microphone is listening"><div className="flex h-6 items-center gap-1" aria-hidden="true" data-testid="v3-voice-wave-bars" data-amplitude={voiceAmplitude.toFixed(2)}>{[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => { const profile = [0.65, 0.85, 1, 0.8, 0.95, 0.72, 1, 0.82, 0.62][bar]; const height = 5 + Math.round(voiceAmplitude * (12 + profile * 9)); return <span key={bar} className="v3-voice-wave-bar block w-1 rounded-full bg-[#D4AF37] transition-[height] duration-100" style={{ height: `${height}px`, animation: `v3VoiceWave ${620 + (bar % 4) * 90}ms ease-in-out ${bar * 70}ms infinite` }} />; })}</div><span className="text-xs font-semibold text-[#A47618]">Live audio · speak naturally</span></div>}
 
             <div className="mt-5">
               <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#A47618]">What would help most?</p><span className="text-xs text-slate-400">Optional direction</span></div>

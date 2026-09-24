@@ -29,6 +29,8 @@ afterEach(cleanup);
 afterEach(() => {
   delete (window as Window & { SpeechRecognition?: unknown }).SpeechRecognition;
   delete (window as Window & { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+  delete (window as Window & { AudioContext?: unknown }).AudioContext;
+  delete (navigator as { mediaDevices?: unknown }).mediaDevices;
 });
 
 describe("V3 Today entry page", () => {
@@ -48,6 +50,18 @@ describe("V3 Today entry page", () => {
   });
 
   it("inserts a completed browser transcript into the situation input", async () => {
+    class FakeAnalyser {
+      fftSize = 0;
+      smoothingTimeConstant = 0;
+      getByteTimeDomainData(data: Uint8Array) { data.fill(200); }
+    }
+    class FakeAudioContext {
+      analyser = new FakeAnalyser();
+      createAnalyser() { return this.analyser; }
+      createMediaStreamSource() { return { connect: () => undefined }; }
+      resume() { return Promise.resolve(); }
+      close() { return Promise.resolve(); }
+    }
     class FakeSpeechRecognition {
       static instance: FakeSpeechRecognition | null = null;
       continuous = false;
@@ -63,11 +77,16 @@ describe("V3 Today entry page", () => {
       abort() { this.onend?.(); }
     }
     Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: FakeSpeechRecognition });
+    Object.defineProperty(window, "AudioContext", { configurable: true, value: FakeAudioContext });
+    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] }) } });
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback: FrameRequestCallback) => window.setTimeout(() => callback(performance.now()), 0));
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id: number) => window.clearTimeout(id));
     render(<V3Today />);
     const voiceButton = screen.getByRole("button", { name: "Use voice input" });
     await waitFor(() => expect(voiceButton).toHaveProperty("disabled", false));
     fireEvent.click(voiceButton);
     expect(screen.getByRole("status", { name: /Audio waveform: microphone is listening/i })).not.toBeNull();
+    await waitFor(() => expect(screen.getByTestId("v3-voice-wave-bars").getAttribute("data-amplitude")).not.toBe("0.00"));
     FakeSpeechRecognition.instance?.onresult?.({
       resultIndex: 0,
       results: [{ isFinal: true, 0: { transcript: "I need to reset expectations with my team" } }],
