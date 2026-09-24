@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, BrainCircuit, CheckCircle2, CircleHelp, Compass, Gauge, History, MessageSquareText, Mic2, Sparkles, Target, Zap } from "lucide-react";
+import { ArrowRight, BrainCircuit, CheckCircle2, CircleHelp, Compass, Gauge, History, MessageSquareText, Mic2, Pause, Play, Sparkles, Target, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -87,6 +87,12 @@ function getSpeechRecognitionConstructor(): BrowserSpeechRecognitionConstructor 
   return browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition ?? null;
 }
 
+export const VOICE_SILENCE_TIMEOUT_MS = 5_000;
+
+export function isVoiceSilent(lastVoiceAt: number, now: number): boolean {
+  return now - lastVoiceAt >= VOICE_SILENCE_TIMEOUT_MS;
+}
+
 export default function V3Today() {
   const [, navigate] = useLocation();
   const [situation, setSituation] = useState("");
@@ -95,12 +101,21 @@ export default function V3Today() {
   const [isListening, setIsListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
   const [voiceAmplitude, setVoiceAmplitude] = useState(0);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const voiceFinalTextRef = useRef("");
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const microphoneStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const amplitudeFrameRef = useRef<number | null>(null);
+  const audioSessionRef = useRef(0);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioPreviewUrlRef = useRef<string | null>(null);
+  const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
+  const lastVoiceAtRef = useRef(0);
+  const silenceStopRequestedRef = useRef(false);
   const [result, setResult] = useState<ReturnType<typeof trpc.v3Situation.capture.useMutation>["data"]>(undefined);
   const recent = trpc.v3Situation.listRecent.useQuery(undefined, { retry: 1 });
   const capture = trpc.v3Situation.capture.useMutation({
@@ -119,7 +134,21 @@ export default function V3Today() {
     setVoiceSupported(Boolean(getSpeechRecognitionConstructor()));
   }, []);
 
+  const stopAudioRecorder = () => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+    mediaRecorderRef.current = null;
+  };
+
+  const clearAudioPreview = () => {
+    if (audioPreviewUrlRef.current && typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(audioPreviewUrlRef.current);
+    audioPreviewUrlRef.current = null;
+    setAudioPreviewUrl(null);
+    setIsPlayingPreview(false);
+  };
+
   const stopAmplitudeMeter = () => {
+    audioSessionRef.current += 1;
     if (amplitudeFrameRef.current !== null) {
       cancelAnimationFrame(amplitudeFrameRef.current);
       amplitudeFrameRef.current = null;
@@ -132,14 +161,43 @@ export default function V3Today() {
     setVoiceAmplitude(0);
   };
 
+  const startAudioRecorder = (stream: MediaStream) => {
+    if (typeof MediaRecorder === "undefined") return;
+    try {
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        if (!audioChunksRef.current.length) return;
+        clearAudioPreview();
+        if (typeof URL.createObjectURL !== "function") return;
+        const previewUrl = URL.createObjectURL(new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" }));
+        audioPreviewUrlRef.current = previewUrl;
+        setAudioPreviewUrl(previewUrl);
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+    } catch {
+      mediaRecorderRef.current = null;
+    }
+  };
+
   const startAmplitudeMeter = async () => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
     const browserWindow = window as Window & { webkitAudioContext?: typeof AudioContext };
     const AudioContextConstructor = window.AudioContext ?? browserWindow.webkitAudioContext;
     if (!AudioContextConstructor) return;
 
+    const sessionId = audioSessionRef.current + 1;
+    audioSessionRef.current = sessionId;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (sessionId !== audioSessionRef.current || !recognitionRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       const audioContext = new AudioContextConstructor();
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
@@ -148,6 +206,7 @@ export default function V3Today() {
       microphoneStreamRef.current = stream;
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
+      startAudioRecorder(stream);
       await audioContext.resume();
 
       const waveform = new Uint8Array(analyser.fftSize);
@@ -161,7 +220,14 @@ export default function V3Today() {
         }
         const rms = Math.sqrt(squaredTotal / waveform.length);
         const normalizedAmplitude = Math.min(1, rms * 3.6);
+        if (normalizedAmplitude > 0.08) lastVoiceAtRef.current = Date.now();
         setVoiceAmplitude((previous) => previous * 0.55 + normalizedAmplitude * 0.45);
+        if (isVoiceSilent(lastVoiceAtRef.current, Date.now())) {
+          silenceStopRequestedRef.current = true;
+          setVoiceStatus("No voice detected for five seconds. Your voice note has been paused—review it below or continue speaking.");
+          recognitionRef.current?.stop();
+          return;
+        }
         amplitudeFrameRef.current = requestAnimationFrame(sample);
       };
       amplitudeFrameRef.current = requestAnimationFrame(sample);
@@ -174,11 +240,24 @@ export default function V3Today() {
   useEffect(() => () => {
     recognitionRef.current?.abort();
     recognitionRef.current = null;
+    stopAudioRecorder();
     stopAmplitudeMeter();
+    clearAudioPreview();
   }, []);
 
   const stopVoiceCapture = () => {
     recognitionRef.current?.stop();
+  };
+
+  const toggleAudioPreview = () => {
+    const audio = audioPreviewRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      void audio.play().then(() => setIsPlayingPreview(true)).catch(() => setVoiceStatus("The audio preview could not start. Try the player controls below."));
+    } else {
+      audio.pause();
+      setIsPlayingPreview(false);
+    }
   };
 
   const startVoiceCapture = () => {
@@ -201,6 +280,9 @@ export default function V3Today() {
     recognition.onstart = () => {
       setIsListening(true);
       setVoiceStatus("Listening… speak naturally, then tap the microphone again to finish.");
+      lastVoiceAtRef.current = Date.now();
+      silenceStopRequestedRef.current = false;
+      clearAudioPreview();
       void startAmplitudeMeter();
     };
     recognition.onresult = (event) => {
@@ -228,14 +310,18 @@ export default function V3Today() {
           : "Voice input is unavailable right now. You can continue by typing your situation.";
       setVoiceStatus(message);
       setIsListening(false);
+      stopAudioRecorder();
       stopAmplitudeMeter();
     };
     recognition.onend = () => {
       setIsListening(false);
       recognitionRef.current = null;
+      stopAudioRecorder();
       stopAmplitudeMeter();
       setSituation(voiceFinalTextRef.current);
-      setVoiceStatus(voiceFinalTextRef.current ? "Voice note added. Edit the text if you want, then find your next move." : null);
+      setVoiceStatus(silenceStopRequestedRef.current
+        ? "No voice detected for five seconds. Your voice note has been paused—review it below or continue speaking."
+        : voiceFinalTextRef.current ? "Voice note added. Edit the text if you want, then find your next move." : null);
     };
     recognitionRef.current = recognition;
     setVoiceStatus("Starting microphone…");
@@ -244,6 +330,7 @@ export default function V3Today() {
     } catch {
       recognitionRef.current = null;
       setIsListening(false);
+      stopAudioRecorder();
       stopAmplitudeMeter();
       setVoiceStatus("Your microphone could not start. Please try again or type your situation.");
     }
@@ -291,7 +378,7 @@ export default function V3Today() {
             </div>
 
             <div className="relative mt-6">
-              <Textarea value={situation} onChange={(event) => { setSituation(event.target.value); setResult(undefined); setVoiceStatus(null); }} placeholder="For example: I need to challenge a senior stakeholder who keeps changing the priority, but I do not want the relationship to become political." className="min-h-36 resize-y border-slate-200 bg-[#FFFEFA] pb-14 pr-14 text-sm leading-6 text-[#0A1A2F] shadow-none focus-visible:border-[#D4AF37] focus-visible:ring-[#D4AF37]/20" aria-label="Describe your workplace situation" />
+              <Textarea value={situation} onChange={(event) => { setSituation(event.target.value); setResult(undefined); setVoiceStatus(null); clearAudioPreview(); }} placeholder="For example: I need to challenge a senior stakeholder who keeps changing the priority, but I do not want the relationship to become political." className="min-h-36 resize-y border-slate-200 bg-[#FFFEFA] pb-14 pr-14 text-sm leading-6 text-[#0A1A2F] shadow-none focus-visible:border-[#D4AF37] focus-visible:ring-[#D4AF37]/20" aria-label="Describe your workplace situation" />
               <button type="button" onClick={startVoiceCapture} disabled={voiceSupported === false} aria-label={isListening ? "Stop voice input" : "Use voice input"} aria-pressed={isListening} className={`absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 ${isListening ? "border-red-300 bg-red-50 text-red-600 shadow-sm" : voiceSupported === false ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300" : "border-[#D4AF37]/70 bg-[#FFF9E8] text-[#A47618] hover:border-[#D4AF37] hover:bg-[#FFF4C7]"}`}>
                 <Mic2 size={18} aria-hidden="true" />
               </button>
@@ -301,6 +388,7 @@ export default function V3Today() {
               {isListening && <button type="button" onClick={stopVoiceCapture} className="shrink-0 font-semibold text-[#0A1A2F] underline underline-offset-2">Finish voice note</button>}
             </div>
             {isListening && <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#D4AF37]/40 bg-[#FFF9E8] px-3 py-2.5" role="status" aria-label="Audio waveform: microphone is listening"><div className="flex h-6 items-center gap-1" aria-hidden="true" data-testid="v3-voice-wave-bars" data-amplitude={voiceAmplitude.toFixed(2)}>{[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => { const profile = [0.65, 0.85, 1, 0.8, 0.95, 0.72, 1, 0.82, 0.62][bar]; const height = 5 + Math.round(voiceAmplitude * (12 + profile * 9)); return <span key={bar} className="v3-voice-wave-bar block w-1 rounded-full bg-[#D4AF37] transition-[height] duration-100" style={{ height: `${height}px`, animation: `v3VoiceWave ${620 + (bar % 4) * 90}ms ease-in-out ${bar * 70}ms infinite` }} />; })}</div><span className="text-xs font-semibold text-[#A47618]">Live audio · speak naturally</span></div>}
+            {audioPreviewUrl && !isListening && <div className="mt-3 rounded-xl border border-[#D4AF37]/50 bg-[#FFF9E8] p-3" aria-label="Recorded voice note preview"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-[#A47618]">Voice note ready</p><p className="mt-1 text-xs text-slate-600">Preview your recording before finding the next move.</p></div><button type="button" onClick={toggleAudioPreview} aria-label={isPlayingPreview ? "Pause voice note preview" : "Play voice note preview"} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0A1A2F] text-[#D4AF37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]">{isPlayingPreview ? <Pause size={15} aria-hidden="true" /> : <Play size={15} aria-hidden="true" />}</button></div><audio ref={audioPreviewRef} src={audioPreviewUrl} controls preload="metadata" aria-label="Recorded voice note audio player" onPlay={() => setIsPlayingPreview(true)} onPause={() => setIsPlayingPreview(false)} onEnded={() => setIsPlayingPreview(false)} className="mt-3 h-9 w-full" /></div>}
 
             <div className="mt-5">
               <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#A47618]">What would help most?</p><span className="text-xs text-slate-400">Optional direction</span></div>

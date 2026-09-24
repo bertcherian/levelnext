@@ -22,21 +22,29 @@ describe("LevelNext landing page interactions", () => {
     expect(screen.queryByRole("navigation", { name: "Mobile navigation" })).toBeNull();
   });
 
-  it("exposes a primary pilot CTA and a pilot anchor in the hero", () => {
+  it("exposes the cost calculator and Impact Test conversion paths", () => {
     render(createElement(Landing));
 
-    const pilotLinks = screen.getAllByRole("link", { name: /Start a 60-day pilot/i });
-    expect(pilotLinks.length).toBeGreaterThan(0);
-    expect(pilotLinks[0].getAttribute("href")).toContain("utm_campaign=60_day_pilot");
-    expect(screen.getByRole("link", { name: /See the pilot/i }).getAttribute("href")).toBe("#pilot");
+    expect(screen.getAllByRole("button", { name: /Calculate Your Manager Cost/i }).length).toBeGreaterThan(0);
+    const impactLinks = screen.getAllByRole("link", { name: /Run a 30-Day Impact Test/i });
+    expect(impactLinks.length).toBeGreaterThan(0);
+    expect(impactLinks[0].getAttribute("href")).toContain("utm_campaign=30_day_impact_test");
   });
 
-  it("keeps the pilot flow focused on evidence and measurable change", () => {
+  it("selects up to three behaviour gaps and enables the test CTA", async () => {
+    const user = userEvent.setup();
     render(createElement(Landing));
 
-    expect(screen.getByRole("heading", { name: /Test it for 60 days/i })).toBeTruthy();
-    expect(screen.getByText("Measure first. Change behaviour. Measure again. Scale what works.")).toBeTruthy();
-    const talkLinks = screen.getAllByRole("link", { name: /Talk to LevelNext/i });
-    expect(talkLinks.some((link) => link.getAttribute("href")?.includes("utm_campaign=talk_to_levelnext"))).toBe(true);
+    const testButton = screen.getByRole("button", { name: "Test These Behaviours" });
+    expect(testButton).toHaveProperty("disabled", true);
+    await user.click(screen.getByRole("button", { name: "Feedback comes too late" }));
+    await user.click(screen.getByRole("button", { name: "Weak accountability" }));
+    await user.click(screen.getByRole("button", { name: "Rework" }));
+
+    expect(screen.getByRole("button", { name: "Test These Behaviours" })).toHaveProperty("disabled", false);
+    expect(screen.getByText("Feedback comes too late • Weak accountability • Rework")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Slow decision-making" }));
+    expect(screen.getByRole("button", { name: "Slow decision-making" }).getAttribute("aria-pressed")).toBe("false");
   });
 });

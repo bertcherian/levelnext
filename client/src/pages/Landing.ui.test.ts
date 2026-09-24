@@ -4,99 +4,80 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import Landing from "./Landing";
 
-describe("LevelNext conversion landing page", () => {
-  it("communicates the behaviour-change proposition in the hero", () => {
+describe("LevelNext business-diagnostic landing page", () => {
+  it("leads with business pain and the management leakage chain", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain("Trained your Managers?");
-    expect(page).toContain("But nothing changed, right?");
-    expect(page).toContain("LevelNext turns leadership development into measurable behaviour change — through AI coaching, Human touch, Practice and Real-Work Actions.");
-    expect(page).toContain("20–50 people");
-    expect(page).toContain("Measure before &amp; after");
-    expect(page).toContain("Scale only if it works");
-    expect(page).toContain("60-day pilot journey");
-    expect(page).toContain("Pre / post visibility");
-    expect(page).toContain("Growth in action");
-    expect(page).toContain("Illustrative behaviour-change signal rising from baseline to day 60");
-    expect(page).toContain("Day 60");
-    expect(page).not.toContain("Behaviour change cockpit");
-    expect(page).not.toContain("ln-product-visual");
+    expect(page).toContain("What are ineffective managers costing your business?");
+    expect(page).toContain("Delayed feedback. Avoided conversations. Poor delegation. Weak accountability. Slow decisions.");
+    expect(page).toContain("lost time, rework, slower execution, manager overload and unwanted attrition");
+    expect(page).toContain("MANAGEMENT BEHAVIOUR");
+    expect(page).toContain("BUSINESS IMPACT");
+    expect(page).toContain("Poor management behaviour has a business cost.");
+    expect(page).not.toContain("Trained your Managers?");
+    expect(page).not.toContain("One platform for every stage");
   });
 
-  it("follows the buyer journey from impact to pilot", () => {
+  it("includes the three-input manager cost calculator", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).not.toContain("The current state");
-    expect(page).not.toContain("Knowing isn’t the problem.");
-    expect(page).toContain("Small action gaps.");
-    expect(page).toContain("Big business costs.");
-    expect(page).toContain("Manager bottlenecks");
-    expect((page.match(/ln-impact-list__visual/g) ?? []).length).toBe(5);
-    expect(page).not.toContain("ln-impact-list__number");
-    expect(page).toContain("Delegation and team capacity");
-    expect(page).toContain("Coaching and team independence");
-    expect(page).toContain("Feedback and performance");
-    expect(page).toContain("Influence and decision speed");
-    expect(page).toContain("Strategic capacity and operating rhythm");
-    expect(page).toContain("Don’t take our word.");
-    expect(page).not.toContain("Don’t take our word for it.");
-    expect(page).toContain("Test it for 60 days.");
-    expect(page).not.toContain("The proof standard");
-    expect(page).not.toContain("Built on real");
-    expect(page).toContain("Every person in a LevelNext programme is assigned a Success Partner");
-    expect(page).toContain("A human supports.");
-    expect(page).not.toContain("A human supports you.");
-    expect(page).toContain("Support");
-    expect(page).toContain("Encourage");
-    expect(page).toContain("Provide accountability");
+    expect(page).toContain("How much could management-performance leakage");
+    expect(page).toContain("be costing you?");
+    expect(page).toContain("Number of managers");
+    expect(page).toContain("Average team size");
+    expect(page).toContain("Estimated avoidable hours lost per manager/team each week");
+    expect(page).toContain("Estimated productivity capacity at risk");
+    expect(page).toContain("Indicative estimate based on your assumptions.");
+    expect(page).toContain("Refine the Estimate");
   });
 
-  it("includes the concise career-stage pathway and evidence-led pilot content", () => {
+  it("lets buyers diagnose up to three behaviour gaps and shows the adaptive focus", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain("One platform.");
-    expect(page).toContain("Every career stage.");
-    expect(page).toContain("Early Career");
-    expect(page).toContain("Managers");
-    expect(page).toContain("Executives");
-    expect((page.match(/ln-career-path__number/g) ?? []).length).toBe(5);
-    expect((page.match(/ln-career-path__icon/g) ?? []).length).toBe(5);
-    expect(page).toContain("Designed for evidence");
-    expect(page).toContain("A focused test of behaviour change.");
-    expect(page).not.toContain("Professional intelligence for what comes next.");
-    expect(page).not.toContain("The Leadership Intelligence Platform");
+    ["Feedback comes too late", "Difficult conversations are avoided", "Managers don’t delegate enough", "Weak accountability", "Slow decision-making", "Too much escalation", "Low ownership", "Manager overload", "Rework", "Unwanted attrition"].forEach((gap) => expect(page).toContain(gap));
+    expect(page).toContain("Your 30-Day Impact Test could focus on:");
+    expect(page).toContain("Test These Behaviours");
   });
 
-  it("uses the canonical product pathways and repeated pilot conversion URL", () => {
+  it("shows the gap, real-work conversation, evidence, and privacy story", () => {
     const page = renderToStaticMarkup(createElement(Landing));
 
-    expect(page).toContain('href="/early-career-intelligence"');
-    expect(page).toContain('href="/professional-intelligence"');
-    expect(page).toContain('href="/manager-intelligence"');
-    expect(page).toContain('href="/leader-intelligence"');
-    expect(page).toContain('href="/executive-intelligence"');
-    expect(page.match(/utm_campaign=60_day_pilot/g)?.length).toBeGreaterThanOrEqual(4);
-    expect(page).not.toContain("Explore the platform");
-    expect(page).not.toContain("One B2B platform.");
-    expect(page).not.toContain("The behaviour-change engine");
-    expect(page).not.toContain("Don’t just teach it.");
+    expect(page).toContain("Your managers probably know");
+    expect(page).toContain("The problem is doing it when the moment arrives.");
+    expect(page).toContain("Change behaviour where");
+    expect(page).toContain("the work actually happens.");
+    expect(page).toContain("No course to find. No pathway to choose.");
+    expect(page).toContain("THINK");
+    expect(page).toContain("PRACTICE");
+    expect(page).toContain("COMMIT");
+    expect(page).toContain("TIME TO ACTION");
+    expect(page).toContain("Private for the individual.");
+    expect(page).toContain("Evidence for the organization.");
+    expect(page).toContain("Private coaching stays private.");
   });
 
-  it("adds an accessible Chrome Yellow glow to career-stage cards", () => {
+  it("offers a controlled 30-day Impact Test without pathway marketing", () => {
+    const page = renderToStaticMarkup(createElement(Landing));
+
+    expect(page).toContain("Give us 30 days.");
+    expect(page).toContain("30-Day Manager Impact Test");
+    expect(page).toContain("20–30 managers");
+    expect(page).toContain("Day-30 Impact Review booked before launch");
+    expect(page).toContain("Scale what works. Stop what doesn’t.");
+    expect(page).toContain("utm_campaign=30_day_impact_test");
+    expect(page).not.toContain("Early Career Intelligence");
+    expect(page).not.toContain("One platform.");
+    expect(page).not.toContain("60-day pilot journey");
+  });
+
+  it("uses the new premium landing-page visual system", () => {
     const styles = readFileSync("client/src/pages/landing.css", "utf8");
 
-    expect(styles).toContain(".ln-career-path a:hover,.ln-career-path a:focus-visible");
-    expect(styles).toContain("outline:1px solid rgba(212,175,55,.82)");
-    expect(styles).toContain("box-shadow:0 0 18px rgba(212,175,55,.16)");
-  });
-
-  it("gives the hero headline and supporting lines more breathing room", () => {
-    const styles = readFileSync("client/src/pages/landing.css", "utf8");
-
-    expect(styles).toContain("letter-spacing:-.035em");
-    expect(styles).toContain("font-weight:400;letter-spacing:-.02em");
-    expect(styles).toContain(".ln-hero__subhead{max-width:820px;margin-top:62px;");
-    expect(styles).toContain(".ln-proofline{margin-top:38px;");
-    expect(styles).toContain(".ln-hero__subhead{margin-top:42px;font-size:15px}");
+    expect(styles).toContain(".ln-business-chain");
+    expect(styles).toContain(".ln-calculator__layout");
+    expect(styles).toContain(".ln-gap-grid");
+    expect(styles).toContain(".ln-evidence-flow");
+    expect(styles).toContain(".ln-test-card");
+    expect(styles).toContain("--ln-gold:#D4AF37");
   });
 });

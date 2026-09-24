@@ -1,96 +1,142 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  Activity,
+  ArrowDown,
   ArrowRight,
   BarChart3,
-  CalendarClock,
   Check,
   ChevronDown,
+  CircleDollarSign,
+  Clock3,
   FlaskConical,
-  Layers3,
-  MessageCircle,
+  Gauge,
+  Lightbulb,
   Menu,
+  MessageCircle,
+  MoveRight,
   ShieldCheck,
   Sparkles,
   Target,
+  TrendingDown,
   TrendingUp,
   UsersRound,
   X,
 } from "lucide-react";
-import { careerStages } from "./landingData";
 import "./landing.css";
 
-const pilotUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=60_day_pilot";
+const pilotUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=30_day_impact_test";
 const talkUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=talk_to_levelnext";
 
-const impactRows = [
-  { gap: "Poor delegation", consequence: "Manager bottlenecks", icon: UsersRound, label: "Delegation and team capacity" },
-  { gap: "Weak coaching", consequence: "Dependent teams", icon: MessageCircle, label: "Coaching and team independence" },
-  { gap: "Avoided feedback", consequence: "Persistent performance problems", icon: ShieldCheck, label: "Feedback and performance" },
-  { gap: "Weak influence", consequence: "Slower decisions", icon: TrendingUp, label: "Influence and decision speed" },
-  { gap: "Operational thinking", consequence: "Less strategic capacity", icon: Activity, label: "Strategic capacity and operating rhythm" },
+const behaviourGaps = [
+  "Feedback comes too late",
+  "Difficult conversations are avoided",
+  "Managers don’t delegate enough",
+  "Weak accountability",
+  "Slow decision-making",
+  "Too much escalation",
+  "Low ownership",
+  "Manager overload",
+  "Rework",
+  "Unwanted attrition",
 ] as const;
 
-const careerStageIcons = [Sparkles, Target, UsersRound, TrendingUp, ShieldCheck] as const;
-
-const pilotSteps = [
-  ["01", "BASELINE", "Identify the behaviours that matter and measure the current state."],
-  ["02", "CHANGE", "Participants practise, apply and improve through LevelNext."],
-  ["03", "MEASURE", "Assess what changed after 60 days."],
-  ["04", "DECIDE", "Review the evidence and decide whether to scale."],
+const beforeAfter = [
+  ["Feedback delayed", "Feedback happens sooner"],
+  ["Difficult conversations avoided", "Conversations addressed"],
+  ["Manager solves everything", "Manager delegates outcomes"],
+  ["Problems escalate upward", "Managers handle more"],
+  ["Decisions postponed", "Decisions happen faster"],
 ] as const;
 
-const pilotIncludes = ["20–50 participants", "Multiple employee levels", "Pre/post diagnostics", "AI coaching + simulations", "Real-work behaviour actions", "Outcome report"] as const;
+const personas = ["Early Career", "Individual Contributors", "Managers", "Leaders", "Executives"] as const;
 
-function PilotButton({ children = "Start a 60-day pilot", className = "" }: { children?: React.ReactNode; className?: string }) {
+function formatINR(value: number): string {
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
+}
+
+function scrollToSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function PilotButton({ children = "Run a 30-Day Impact Test", className = "" }: { children?: React.ReactNode; className?: string }) {
   return <a className={`ln-button ${className}`.trim()} href={pilotUrl} target="_blank" rel="noreferrer">{children} <ArrowRight size={16} aria-hidden="true" /></a>;
+}
+
+function CostButton({ children = "Calculate Your Manager Cost", className = "" }: { children?: React.ReactNode; className?: string }) {
+  return <button type="button" className={`ln-button ln-button--ghost ${className}`.trim()} onClick={() => scrollToSection("calculator")}>{children} <ArrowRight size={16} aria-hidden="true" /></button>;
 }
 
 function SectionEyebrow({ icon: Icon, children, light = false }: { icon: React.ElementType; children: React.ReactNode; light?: boolean }) {
   return <p className={`ln-eyebrow ${light ? "ln-eyebrow--gold" : ""}`}><span className="ln-eyebrow__icon"><Icon size={14} strokeWidth={2} aria-hidden="true" /></span>{children}</p>;
 }
 
-function SectionHeading({ id, first, second }: { id?: string; first: string; second: string }) {
-  return <h2 id={id} className="ln-section-heading"><span>{first}</span><em>{second}</em></h2>;
+function SectionHeading({ id, first, second }: { id?: string; first: string; second?: string }) {
+  return <h2 id={id} className="ln-section-heading"><span>{first}</span>{second && <em>{second}</em>}</h2>;
 }
 
-function PilotVisual() {
-  const stages = [
-    ["01", "Baseline", "Measure"],
-    ["02", "Practice", "Apply"],
-    ["03", "Evidence", "Review"],
-  ] as const;
+function BusinessChain() {
+  return <div className="ln-business-chain" aria-label="Poor management behaviour creates business cost">
+    <div className="ln-chain-node ln-chain-node--behaviour"><span className="ln-chain-icon"><Gauge size={18} /></span><div><b>MANAGEMENT BEHAVIOUR</b><small>Delayed feedback · Poor delegation · Avoided conversations · Weak accountability</small></div></div>
+    <ArrowDown className="ln-chain-arrow" aria-hidden="true" />
+    <div className="ln-chain-node ln-chain-node--impact"><span className="ln-chain-icon"><TrendingDown size={18} /></span><div><b>BUSINESS IMPACT</b><small>Lost time · Rework · Slow execution · Escalation · Attrition</small></div></div>
+    <p className="ln-chain-caption">Poor management behaviour has a business cost.</p>
+  </div>;
+}
 
-  return <div className="ln-pilot-visual" aria-label="60-day pilot journey: baseline, practice, evidence, and illustrative growth">
-    <div className="ln-pilot-visual__header"><span><Target size={15} aria-hidden="true" /> 60-day pilot journey</span><b>Manager cohort</b></div>
-    <div className="ln-pilot-visual__body"><div className="ln-pilot-visual__track">{stages.map(([number, title, detail], index) => <div className="ln-pilot-visual__stage" key={number}><span className="ln-pilot-visual__number">{number}</span><div><strong>{title}</strong><small>{detail}</small></div>{index < stages.length - 1 && <i aria-hidden="true" />}</div>)}</div><div className="ln-pilot-visual__chart" aria-label="Illustrative behaviour-change signal rising from baseline to day 60"><div className="ln-pilot-visual__chart-title"><span><TrendingUp size={14} aria-hidden="true" /> Growth in action</span><b>Illustrative</b></div><svg viewBox="0 0 260 112" role="img" aria-label="A rising line from baseline through practice to day 60"><g className="ln-pilot-visual__chart-grid"><line x1="10" y1="18" x2="250" y2="18" /><line x1="10" y1="52" x2="250" y2="52" /><line x1="10" y1="86" x2="250" y2="86" /></g><polyline className="ln-pilot-visual__chart-line" points="10,84 48,80 82,76 115,62 148,65 182,48 214,34 250,20" /><circle cx="10" cy="84" r="3" /><circle cx="148" cy="65" r="3" /><circle cx="250" cy="20" r="3" /></svg><div className="ln-pilot-visual__chart-labels"><span>Baseline</span><span>Day 30</span><span>Day 60</span></div></div></div>
-    <div className="ln-pilot-visual__footer"><span><BarChart3 size={14} aria-hidden="true" /> Pre / post visibility</span><span><CalendarClock size={14} aria-hidden="true" /> 8 weeks of action</span></div>
+function ConversationVisual() {
+  return <div className="ln-conversation" aria-label="Example LevelNext conversation">
+    <div className="ln-conversation__top"><span><MessageCircle size={15} /> LevelNext</span><small>Real situation → right help</small></div>
+    <div className="ln-message ln-message--platform"><b>LevelNext</b><p>What are you dealing with today?</p></div>
+    <div className="ln-message ln-message--manager"><b>Manager</b><p>“I’ve been putting off a difficult conversation with one of my team.”</p></div>
+    <div className="ln-message ln-message--platform"><b>LevelNext</b><p>What’s making the conversation difficult?</p></div>
+    <div className="ln-message ln-message--manager"><b>Manager</b><p>“I’m worried he’ll become defensive.”</p></div>
+    <div className="ln-message ln-message--platform"><b>LevelNext</b><p>Let’s prepare for that. Talk it through or practise the conversation?</p><div className="ln-conversation__actions"><button type="button">Talk it through</button><button type="button">Practise it</button></div></div>
   </div>;
 }
 
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [managers, setManagers] = useState(250);
+  const [teamSize, setTeamSize] = useState(8);
+  const [hoursLost, setHoursLost] = useState(2);
+  const [selectedGaps, setSelectedGaps] = useState<string[]>([]);
   const closeMenu = () => setMobileMenuOpen(false);
+  const estimatedRisk = useMemo(() => managers * teamSize * hoursLost * 52 * 500, [managers, teamSize, hoursLost]);
+  const focus = selectedGaps.length ? selectedGaps.join(" • ") : "Choose up to three behaviours to expose the gap.";
+
+  const toggleGap = (gap: string) => {
+    setSelectedGaps((current) => current.includes(gap) ? current.filter((item) => item !== gap) : current.length < 3 ? [...current, gap] : current);
+  };
+
+  const handleTestBehaviours = () => {
+    if (selectedGaps.length) scrollToSection("impact-test");
+  };
 
   return <main className="ln-landing" id="top">
-    <header className="ln-nav"><a className="ln-brand" href="/" aria-label="LevelNext home"><img src="/logo.png" alt="LevelNext" /></a><nav className="ln-nav__links" aria-label="Primary navigation"><a href="#who-its-for">Who it’s for</a><a href="#pilot">Pilot</a></nav><div className="ln-nav__actions"><a className="ln-login" href="/login?returnTo=%2Fleader">Login</a><PilotButton className="ln-button--nav" /></div><button type="button" className="ln-menu-toggle" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}>{mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}</button></header>
-    {mobileMenuOpen && <nav className="ln-mobile-nav" id="mobile-navigation" aria-label="Mobile navigation"><a href="#who-its-for" onClick={closeMenu}>Who it’s for</a><a href="#pilot" onClick={closeMenu}>Pilot</a><a href="/login?returnTo=%2Fleader" onClick={closeMenu}>Login</a><PilotButton className="ln-button--mobile" /></nav>}
+    <header className="ln-nav"><a className="ln-brand" href="/" aria-label="LevelNext home"><img src="/logo.png" alt="LevelNext" /></a><nav className="ln-nav__links" aria-label="Primary navigation"><a href="#how-it-works">How It Works</a><a href="#impact-test">Impact Test</a><a href="#privacy">Evidence &amp; Privacy</a></nav><div className="ln-nav__actions"><button type="button" className="ln-nav__cost" onClick={() => scrollToSection("calculator")}>Calculate the Cost</button><a className="ln-login" href="/login?returnTo=%2Fleader">Login</a><PilotButton className="ln-button--nav" /></div><button type="button" className="ln-menu-toggle" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}>{mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}</button></header>
+    {mobileMenuOpen && <nav className="ln-mobile-nav" id="mobile-navigation" aria-label="Mobile navigation"><a href="#how-it-works" onClick={closeMenu}>How It Works</a><a href="#impact-test" onClick={closeMenu}>Impact Test</a><a href="#privacy" onClick={closeMenu}>Evidence &amp; Privacy</a><button type="button" onClick={() => { closeMenu(); scrollToSection("calculator"); }}>Calculate the Cost</button><a href="/login?returnTo=%2Fleader" onClick={closeMenu}>Login</a><PilotButton className="ln-button--mobile" /></nav>}
 
-    <section className="ln-hero" aria-labelledby="hero-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-hero__content ln-section-frame"><div className="ln-hero__copy-block"><SectionEyebrow icon={Sparkles} light>Human + AI behaviour change</SectionEyebrow><h1 id="hero-title"><span>Trained your Managers?</span><em>But nothing changed, right?</em></h1><p className="ln-hero__subhead">LevelNext turns leadership development into measurable behaviour change — through AI coaching, Human touch, Practice and Real-Work Actions.</p><div className="ln-hero__actions"><PilotButton /><a className="ln-button ln-button--ghost" href="#pilot">See the pilot <ArrowRight size={16} /></a></div><p className="ln-proofline"><span>20–50 people</span><i /><span>Measure before &amp; after</span><i /><span>Scale only if it works</span></p><PilotVisual /></div></div></section>
+    <section className="ln-hero" aria-labelledby="hero-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-section-frame ln-hero__frame"><div className="ln-hero__copy"><SectionEyebrow icon={CircleDollarSign} light>Management performance leakage</SectionEyebrow><h1 id="hero-title">What are ineffective managers costing your business?</h1><p className="ln-hero__subhead">Delayed feedback. Avoided conversations. Poor delegation. Weak accountability. Slow decisions.</p><p className="ln-hero__lede">The cost shows up in lost time, rework, slower execution, manager overload and unwanted attrition.</p><div className="ln-hero__actions"><CostButton /><PilotButton /></div><p className="ln-hero__support">Identify the gap. Change the behaviour. Measure what moves.</p></div><BusinessChain /></div></section>
 
-    <section className="ln-impact" aria-labelledby="impact-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={TrendingUp} light>The business impact</SectionEyebrow><SectionHeading id="impact-title" first="Small action gaps." second="Big business costs." /><p>Leadership capability isn’t an HR issue when it starts affecting execution.</p></div><div className="ln-impact-list">{impactRows.map(({ gap, consequence, icon: Icon, label }) => <div key={gap}><span className="ln-impact-list__visual" aria-label={label}><Icon size={20} strokeWidth={1.8} aria-hidden="true" /></span><strong>{gap}</strong><ArrowRight size={18} /><b>{consequence}</b></div>)}</div></div></section>
+    <section className="ln-calculator" id="calculator" aria-labelledby="calculator-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={CircleDollarSign}>Make the hidden cost visible</SectionEyebrow><SectionHeading id="calculator-title" first="How much could management-performance leakage" second="be costing you?" /></div><div className="ln-calculator__layout"><div className="ln-input-panel"><p className="ln-panel-label">Start with three inputs</p><label>Number of managers<input type="number" min="1" max="100000" value={managers} onChange={(event) => setManagers(Math.max(1, Number(event.target.value) || 1))} /></label><label>Average team size<input type="number" min="1" max="100" value={teamSize} onChange={(event) => setTeamSize(Math.max(1, Number(event.target.value) || 1))} /></label><label>Estimated avoidable hours lost per manager/team each week<input type="number" min="0.5" max="40" step="0.5" value={hoursLost} onChange={(event) => setHoursLost(Math.max(0.5, Number(event.target.value) || 0.5))} /></label></div><aside className="ln-cost-result"><span className="ln-cost-result__label">Estimated productivity capacity at risk</span><strong>{formatINR(estimatedRisk)}<small>/ year</small></strong><p>Indicative estimate based on your assumptions. Adjust the inputs to reflect your organization.</p><button type="button" className="ln-text-link" onClick={() => scrollToSection("gap")}>Refine the Estimate <ArrowRight size={15} /></button></aside></div></div></section>
 
-    <section className="ln-human-support" aria-labelledby="human-support-title"><div className="ln-section-frame ln-human-support__frame"><div className="ln-human-support__intro"><SectionEyebrow icon={UsersRound} light>AI + human support</SectionEyebrow><SectionHeading id="human-support-title" first="AI helps practise." second="A human supports." /><p>Every person in a LevelNext programme is assigned a Success Partner—a real person who stays close to their journey, not just their dashboard.</p></div><div className="ln-human-support__commitments"><article><span><UsersRound size={18} aria-hidden="true" /></span><div><h3>Support</h3><p>Help participants turn insight into a practical next step at work.</p></div></article><article><span><Sparkles size={18} aria-hidden="true" /></span><div><h3>Encourage</h3><p>Keep momentum going when everyday priorities get in the way.</p></div></article><article><span><ShieldCheck size={18} aria-hidden="true" /></span><div><h3>Provide accountability</h3><p>Offer the human follow-through that helps each person succeed.</p></div></article></div></div></section>
+    <section className="ln-gap-selector" id="gap" aria-labelledby="gap-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={Target}>Diagnose the gap</SectionEyebrow><SectionHeading id="gap-title" first="Where does management effectiveness" second="break down?" /><p>Select up to three behaviours. The point is not to label managers—it is to identify the business gap worth testing.</p></div><div className="ln-gap-grid">{behaviourGaps.map((gap) => <button key={gap} type="button" className={selectedGaps.includes(gap) ? "is-selected" : ""} onClick={() => toggleGap(gap)} aria-pressed={selectedGaps.includes(gap)}><span>{selectedGaps.includes(gap) ? <Check size={15} /> : <span className="ln-gap-dot" />}</span>{gap}</button>)}</div><div className="ln-gap-result"><div><span className="ln-gap-result__label">Your 30-Day Impact Test could focus on:</span><strong>{focus}</strong></div><button type="button" className="ln-button" onClick={handleTestBehaviours} disabled={!selectedGaps.length}>Test These Behaviours <ArrowRight size={16} /></button></div></div></section>
 
-    <section className="ln-platform" id="who-its-for" aria-labelledby="platform-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={Layers3} light>One platform for every stage</SectionEyebrow><SectionHeading id="platform-title" first="One platform." second="Every career stage." /><p>Different roles. Different challenges. One way to turn development into behaviour change.</p></div><div className="ln-career-path">{careerStages.map((stage, index) => { const StageIcon = careerStageIcons[index]; return <a href={stage.href} key={stage.key}><span className="ln-career-path__number">0{index + 1}</span><span className="ln-career-path__icon" aria-hidden="true"><StageIcon size={20} strokeWidth={1.8} /></span><strong>{stage.shortName}</strong><small>{stage.audience}</small><ArrowRight className="ln-career-path__arrow" size={15} /></a>; })}</div></div></section>
+    <section className="ln-gap-story" id="how-it-works" aria-labelledby="gap-story-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={Lightbulb}>The gap</SectionEyebrow><SectionHeading id="gap-story-title" first="Your managers probably know" second="what they should do." /></div><div className="ln-know-do"><div><b>KNOWING</b><ul><li>Give feedback sooner.</li><li>Delegate outcomes.</li><li>Hold people accountable.</li><li>Challenge poor thinking.</li><li>Make decisions.</li><li>Have the difficult conversation.</li></ul></div><div className="ln-know-do__gap"><span>THE GAP</span><MoveRight size={30} /></div><div className="ln-know-do__doing"><b>DOING</b><p>The problem is doing it when the moment arrives.</p></div></div><p className="ln-gap-story__footer">Traditional development often happens away from the moment of performance. <strong>LevelNext works inside it.</strong></p></div></section>
 
-    <section className="ln-pilot" id="pilot" aria-labelledby="pilot-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={FlaskConical}>The 60-day pilot</SectionEyebrow><SectionHeading id="pilot-title" first="Don’t take our word." second="Test it for 60 days." /><p>Start with a defined population and a measurable behaviour challenge. Learn what changes before you decide what to scale.</p></div><div className="ln-pilot-layout"><div className="ln-pilot-steps">{pilotSteps.map(([number, title, description]) => <article key={number}><span>{number}</span><div><h3>{title}</h3><p>{description}</p></div></article>)}</div><aside className="ln-pilot-card"><SectionEyebrow icon={Activity} light>Designed for evidence</SectionEyebrow><h3>A focused test of behaviour change.</h3><ul>{pilotIncludes.map((item) => <li key={item}><Check size={15} /> {item}</li>)}</ul><PilotButton /><small>Measure first. Change behaviour. Measure again. Scale what works.</small></aside></div></div></section>
+    <section className="ln-show" aria-labelledby="show-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={MessageCircle} light>Show LevelNext</SectionEyebrow><SectionHeading id="show-title" first="Change behaviour where" second="the work actually happens." /></div><div className="ln-show__layout"><ConversationVisual /><div className="ln-show__side"><p className="ln-show__lead">No course to find. No pathway to choose.</p><p>LevelNext understands the person, their context and the situation—and serves up the help they need.</p><div className="ln-loop"><span>THINK</span><ArrowRight /><span>PRACTICE</span><ArrowRight /><span>COMMIT</span><ArrowRight /><span>ACT</span><ArrowRight /><span>FOLLOW UP</span></div><p className="ln-show__small">Sometimes listening. Sometimes coaching. Sometimes advice, challenge or practice. <strong>One LevelNext. Different help for every person and situation.</strong></p><div className="ln-personas">{personas.map((persona) => <span key={persona}>{persona}</span>)}</div></div></div></div></section>
 
-    <section className="ln-final-cta" aria-labelledby="final-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-section-frame"><SectionEyebrow icon={CalendarClock} light>Your next 60 days</SectionEyebrow><SectionHeading id="final-title" first="What could change" second="in 60 days?" /><p>Choose 20–50 people. Identify the behaviours that matter. Let LevelNext help them practise and apply them. Then measure what changed.</p><div className="ln-final-cta__actions"><PilotButton>Start your pilot</PilotButton><a className="ln-button ln-button--ghost" href={talkUrl} target="_blank" rel="noreferrer">Talk to LevelNext</a></div></div></section>
+    <section className="ln-change" aria-labelledby="change-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={TrendingUp}>Show the change</SectionEyebrow><SectionHeading id="change-title" first="What should change?" /></div><div className="ln-before-after">{beforeAfter.map(([before, after]) => <div key={before}><span>{before}</span><ArrowRight /><b>{after}</b></div>)}</div><p className="ln-change__note">These are behavioural movements LevelNext is designed to support and test—not exaggerated causal claims.</p></div></section>
 
-    <footer className="ln-footer"><div className="ln-section-frame ln-footer__frame"><div className="ln-footer__brand"><a href="/" aria-label="LevelNext home"><img src="/logo.png" alt="LevelNext" /></a><p>The platform that turns leadership development into measurable behaviour change.</p></div><div className="ln-footer__links"><div><p>Explore</p><a href="#who-its-for">Who it’s for</a><a href="#pilot">60-day pilot</a></div><div><p>For people</p><a href="/early-career">Early Career</a><a href="/pe">Professionals</a><a href="/manager-effectiveness">Managers</a><a href="/leader">Leaders</a><a href="/executive">Executives</a></div></div><p className="ln-footer__meta">LevelNext — A Meta Results Platform <a href="#top">Back to top <ChevronDown size={13} /></a></p></div></footer>
+    <section className="ln-measure" aria-labelledby="measure-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={BarChart3} light>Measure action</SectionEyebrow><SectionHeading id="measure-title" first="Don’t measure learning." second="Measure what people do differently." /></div><div className="ln-evidence-flow"><div><span>REAL SITUATION</span><small>Difficult conversation identified</small></div><ArrowDown /><div><span>PRACTICE</span><small>Conversation rehearsed</small></div><ArrowDown /><div><span>COMMITMENT</span><small>Real-world action agreed</small></div><ArrowDown /><div><span>ACTION</span><small>Conversation completed</small></div><ArrowDown /><div className="ln-evidence-flow__result"><span>EVIDENCE</span><small>Time to action: <strong>2 days</strong></small></div></div><div className="ln-time-to-action"><Clock3 size={21} /><div><b>TIME TO ACTION</b><p>Measure the time between recognizing an important situation and taking the required real-world action.</p></div></div></div></section>
+
+    <section className="ln-privacy" id="privacy" aria-labelledby="privacy-title"><div className="ln-section-frame"><div className="ln-section-intro"><SectionEyebrow icon={ShieldCheck}>Privacy, kept short</SectionEyebrow><SectionHeading id="privacy-title" first="Private for the individual." second="Evidence for the organization." /></div><div className="ln-privacy__layout"><div><span>INDIVIDUAL</span><p>Private coaching<br />Reflection<br />Practice</p></div><div><span>ORGANIZATION</span><p>Participation<br />Approved measures<br />Aggregated behaviour evidence<br />Capability movement</p></div><blockquote>“Private coaching stays private.”<small>Organizations should see appropriate development evidence—not private coaching conversations.</small></blockquote></div></div></section>
+
+    <section className="ln-impact-test" id="impact-test" aria-labelledby="impact-test-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={FlaskConical} light>Prove it before you scale it</SectionEyebrow><SectionHeading id="impact-test-title" first="Give us 30 days." second="Measure what moves." /><p>Choose three management behaviours affecting performance. Give LevelNext 30 days to demonstrate measurable movement.</p></div><div className="ln-impact-test__layout"><div className="ln-test-steps">{[["01", "IDENTIFY", "Choose 2–3 costly management behaviours."], ["02", "BASELINE", "Establish current behaviour and agreed success measures."], ["03", "CHANGE", "Work on real situations using coaching, practice, commitments and follow-through."], ["04", "MEASURE", "Assess behaviour movement, action and evidence."], ["05", "DECIDE", "Scale or stop."]].map(([number, title, copy]) => <article key={number}><span>{number}</span><div><b>{title}</b><p>{copy}</p></div></article>)}</div><aside className="ln-test-card"><h3>30-Day Manager Impact Test</h3><ul><li><Check size={15} /> 20–30 managers</li><li><Check size={15} /> 30 days</li><li><Check size={15} /> 2–3 agreed behaviours</li><li><Check size={15} /> Named executive sponsor</li><li><Check size={15} /> Baseline before launch</li><li><Check size={15} /> Day-30 Impact Review booked before launch</li></ul><PilotButton /><small>Scale what works. Stop what doesn’t.</small></aside></div></div></section>
+
+    <section className="ln-final-cta" aria-labelledby="final-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-section-frame"><SectionEyebrow icon={Target} light>The controlled business experiment</SectionEyebrow><SectionHeading id="final-title" first="Pick three behaviours." second="Give us 30 days." /><p>See whether LevelNext can move management behaviour before you decide to scale.</p><div className="ln-final-cta__actions"><PilotButton>Run a 30-Day Impact Test</PilotButton><CostButton>Calculate Your Manager Cost</CostButton></div><strong className="ln-final-cta__close">Scale what works. Stop what doesn’t.</strong></div></section>
+
+    <footer className="ln-footer"><div className="ln-section-frame ln-footer__frame"><div className="ln-footer__brand"><a href="/" aria-label="LevelNext home"><img src="/logo.png" alt="LevelNext" /></a><p>A management effectiveness platform that changes behaviour in the flow of real work.</p></div><div className="ln-footer__links"><div><p>Explore</p><a href="#how-it-works">How It Works</a><a href="#impact-test">Impact Test</a><a href="#privacy">Evidence &amp; Privacy</a></div><div><p>Action</p><button type="button" onClick={() => scrollToSection("calculator")}>Calculate the Cost</button><a href={talkUrl} target="_blank" rel="noreferrer">Talk to LevelNext</a></div></div><p className="ln-footer__meta">LevelNext — A Meta Results Platform <a href="#top">Back to top <ChevronDown size={13} /></a></p></div></footer>
   </main>;
 }
 
-export { PilotButton, PilotVisual, SectionEyebrow, SectionHeading };
-export { impactRows, pilotSteps, pilotIncludes, pilotUrl, talkUrl };
+export { PilotButton, CostButton, BusinessChain, ConversationVisual, SectionEyebrow, SectionHeading, behaviourGaps, pilotUrl, talkUrl, formatINR };
