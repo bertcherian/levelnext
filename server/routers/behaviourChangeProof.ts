@@ -14,6 +14,7 @@ import {
   getProofPackPayload,
   getProofParticipant,
   getProofSecurityWorkspace,
+  getProofLivePilotGovernance,
   getProofSponsorDashboard,
   createProofSecurityRequirement,
   deliverProofNudges,
@@ -26,6 +27,7 @@ import {
   reportProofAccessIssue,
   recordProofTrustEvent,
   recordProofMobileEvent,
+  recordProofParticipantConsent,
   resolveProofQrJoin,
   revokeProofQrLink,
   saveProofPersonalGoal,
@@ -36,12 +38,17 @@ import {
   updateProofSecurityRequirement,
   recommendPilot,
   requestProofSecurityReview,
+  recordProofSponsorConsent,
+  saveProofBaselineMeasure,
+  saveProofDay30Review,
 } from "../behaviourChangeProof";
 import {
   proofAccessIssueSchema,
   proofBaselineSchema,
+  proofBaselineMeasureSchema,
   proofCreatePilotSchema,
   proofDailyActionSchema,
+  proofDay30ReviewSchema,
   proofDocumentUpdateSchema,
   proofDocumentUploadSchema,
   proofInviteSchema,
@@ -49,6 +56,7 @@ import {
   proofPilotIdSchema,
   proofObserverPulseSchema,
   proofParticipantProfileSchema,
+  proofParticipantConsentSchema,
   proofPreviewSchema,
   proofQrResolveSchema,
   proofMobileEventSchema,
@@ -57,6 +65,7 @@ import {
   proofRepSchema,
   proofRealWorkSchema,
   proofTrustEventSchema,
+  proofSponsorConsentSchema,
   proofTokenSchema,
 } from "../../shared/modules/behaviourChangeProof";
 
@@ -68,6 +77,10 @@ export const behaviourChangeProofRouter = router({
   sponsorDashboard: protectedProcedure.input(z.object({ pilotId: z.number().int().positive().optional() }).optional()).query(async ({ ctx, input }) => {
     return getProofSponsorDashboard(ctx.user.id, input?.pilotId);
   }),
+  livePilotGovernance: protectedProcedure.input(proofPilotIdSchema).query(({ ctx, input }) => getProofLivePilotGovernance(ctx.user.id, input.pilotId)),
+  recordSponsorConsent: protectedProcedure.input(proofSponsorConsentSchema).mutation(({ ctx, input }) => recordProofSponsorConsent(ctx.user.id, input)),
+  saveBaselineMeasure: protectedProcedure.input(proofBaselineMeasureSchema).mutation(({ ctx, input }) => saveProofBaselineMeasure(ctx.user.id, input)),
+  saveDay30Review: protectedProcedure.input(proofDay30ReviewSchema).mutation(({ ctx, input }) => saveProofDay30Review(ctx.user.id, input)),
 
   inviteParticipants: protectedProcedure.input(proofInviteSchema).mutation(async ({ ctx, input }) => {
     const result = await inviteProofParticipants(ctx.user.id, input.pilotId, input.participants, input.origin);
@@ -115,6 +128,7 @@ export const behaviourChangeProofRouter = router({
   resolveQrJoin: publicProcedure.input(proofQrResolveSchema).mutation(({ input }) => resolveProofQrJoin(input.token, input.email, input.isMobile)),
   recordMobileEvent: publicProcedure.input(proofMobileEventSchema).mutation(({ input }) => recordProofMobileEvent(input)),
   recordTrustEvent: publicProcedure.input(proofTrustEventSchema).mutation(({ input }) => recordProofTrustEvent(input.token, input.eventType, input.response, input.detail)),
+  recordParticipantConsent: publicProcedure.input(proofParticipantConsentSchema).mutation(({ input }) => recordProofParticipantConsent(input.token)),
   savePersonalGoal: publicProcedure.input(proofParticipantProfileSchema).mutation(({ input }) => saveProofPersonalGoal(input.token, input.personalGoal)),
   completeBaseline: publicProcedure.input(proofBaselineSchema).mutation(({ input }) => recordProofBaseline(input.token, input.currentSituation, input.desiredMovement)),
   completeRep: publicProcedure.input(proofRepSchema).mutation(({ input }) => recordProofRep(input.token, input.practiceRole)),

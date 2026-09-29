@@ -3,6 +3,8 @@ import { nanoid } from "nanoid";
 import {
   pilotlabAgents,
   pilotlabEvents,
+  pilotlabPredicateResults,
+  pilotlabReleaseGates,
   pilotlabResults,
   pilotlabRuns,
   type PilotlabAgent,
@@ -12,6 +14,8 @@ import { getDb } from "./db";
 import {
   initialAgentState,
   DEFAULT_PILOTLAB_CHAOS_CONFIG,
+  derivePilotlabReleaseGates,
+  evaluatePilotlabPredicates,
   PILOTLAB_AGENT_PROFILES,
   PILOTLAB_DIMENSIONS,
   PILOTLAB_SCENARIOS,
@@ -19,6 +23,8 @@ import {
   type PilotlabAgentProfile,
   type PilotlabAgentState,
   type PilotlabDimensionResult,
+  type PilotlabPredicateResult,
+  type PilotlabReleaseGate,
   type PilotlabFailureCode,
   type PilotlabChaosConfig,
   type PilotlabAssuranceReport,
@@ -257,12 +263,11 @@ function applyTrajectory(profile: PilotlabAgentProfile, scenario: PilotlabScenar
   return { next, evidenceLevel, completed, failureCode, severity, note };
 }
 
-function resultForDimension(dimension: typeof PILOTLAB_DIMENSIONS[number], events: EventProjection[]): PilotlabDimensionResult {
-  const failures = events.filter((event) => event.failureCode);
-  const passed = Math.max(0, events.length - failures.length);
-  const critical = events.filter((event) => event.severity === "critical").length;
-  const significant = events.filter((event) => event.severity === "significant").length;
-  const score = clamp(100 - failures.length * 4 - critical * 20 - significant * 8);
+function resultForDimension(dimension: typeof PILOTLAB_DIMENSIONS[number], predicates: PilotlabPredicateResult[]): PilotlabDimensionResult {
+  const checks = predicates.filter((predicate) => predicate.dimension === dimension);
+  const passed = checks.filter((predicate) => predicate.passed).length;
+  const failed = checks.length - passed;
+  const score = checks.length ? clamp((passed / checks.length) * 100) : 0;
   const evidenceMap: Record<typeof PILOTLAB_DIMENSIONS[number], string> = {
     "Outcome Orientation": "Scenarios test whether a clear outcome, ownership, and next action are distinguished from task activity.",
     "Timely Feedback": "Scenarios test whether feedback becomes observable, timely, and connected to a next action rather than a personality label.",
@@ -275,11 +280,18 @@ function resultForDimension(dimension: typeof PILOTLAB_DIMENSIONS[number], event
     "Evidence Integrity": "Self-report is capped at evidence level 4; simulated business consequences never become proven ROI.",
     "Sponsor Reporting": "The sponsor conclusion reports limits and next tests rather than manufacturing causal certainty.",
   };
-  return { dimension, score, passed, failed: failures.length, evidence: evidenceMap[dimension] };
+  return { dimension, score, checked: checks.length, passed, failed, evidence: evidenceMap[dimension] };
 }
 
 function buildSummary(run: PilotlabRun, events: EventProjection[]): PilotlabSimulationSummary {
-  const dimensions = PILOTLAB_DIMENSIONS.map((dimension) => resultForDimension(dimension, events));
+  const predicates = events.flatMap((event) => evaluatePilotlabPredicates({
+    scenarioCode: event.scenarioCode,
+    failureCode: event.failureCode,
+    levelNextResponse: event.levelNextResponse,
+    evidenceLevel: event.evidenceLevel,
+    evaluatorResult: event.evaluatorResult,
+  }));
+  const dimensions = PILOTLAB_DIMENSIONS.map((dimension) => resultForDimension(dimension, predicates));
   const failureCounts = events.reduce<Record<string, number>>((counts, event) => {
     if (event.failureCode) counts[event.failureCode] = (counts[event.failureCode] ?? 0) + 1;
     return counts;
@@ -291,6 +303,7 @@ function buildSummary(run: PilotlabRun, events: EventProjection[]): PilotlabSimu
     interactions: events.length,
     goldenScenariosExecuted: events.filter((event) => event.actorType === "levelnext_simulation").length,
     dimensions,
+    releaseGates: derivePilotlabReleaseGates(predicates),
     failureCounts,
     leakageEvents: failureCounts.F3_INFORMATION_LEAKAGE ?? 0,
     privacyViolations: failureCounts.F12_PRIVACY_BOUNDARY_FAILURE ?? 0,
@@ -322,6 +335,39 @@ async function fetchEventProjection(db: Db, runId: number) {
     evaluatorResult: pilotlabEvents.evaluatorResult,
     createdAt: pilotlabEvents.createdAt,
   }).from(pilotlabEvents).where(eq(pilotlabEvents.runId, runId)).orderBy(asc(pilotlabEvents.virtualDay), asc(pilotlabEvents.id));
+}
+
+async function persistAssuranceResults(db: Db, runId: number, events: EventProjection[], summary: PilotlabSimulationSummary) {
+  const predicateRows = events.flatMap((event) => evaluatePilotlabPredicates({
+    scenarioCode: event.scenarioCode,
+    failureCode: event.failureCode,
+    levelNextResponse: event.levelNextResponse,
+    evidenceLevel: event.evidenceLevel,
+    evaluatorResult: event.evaluatorResult,
+  }).map((predicate) => ({ runId, eventId: event.id, ...predicate })));
+
+  await db.delete(pilotlabPredicateResults).where(eq(pilotlabPredicateResults.runId, runId));
+  await db.delete(pilotlabReleaseGates).where(eq(pilotlabReleaseGates.runId, runId));
+  await db.delete(pilotlabResults).where(eq(pilotlabResults.runId, runId));
+  if (predicateRows.length) await db.insert(pilotlabPredicateResults).values(predicateRows);
+  await db.insert(pilotlabResults).values(summary.dimensions.map((dimension) => ({
+    runId,
+    dimension: dimension.dimension,
+    score: dimension.score,
+    checked: dimension.checked,
+    passed: dimension.passed,
+    failed: dimension.failed,
+    evidence: dimension.evidence,
+  })));
+  await db.insert(pilotlabReleaseGates).values(summary.releaseGates.map((gate) => ({
+    runId,
+    gateCode: gate.code,
+    state: gate.state,
+    triggered: gate.triggered,
+    handled: gate.handled,
+    regressed: gate.regressed,
+    rationale: gate.rationale,
+  })));
 }
 
 export async function createPilotlabRun(ownerUserId: number, name: string, platformVersion = "current-preview", chaosConfig: PilotlabChaosConfig = DEFAULT_PILOTLAB_CHAOS_CONFIG) {
@@ -421,17 +467,7 @@ export async function advancePilotlabRun(runId: number, requestedDays: number) {
     completedAt: completed ? new Date() : null,
   }).where(eq(pilotlabRuns.id, runId));
 
-  if (completed) {
-    await db.delete(pilotlabResults).where(eq(pilotlabResults.runId, runId));
-    await db.insert(pilotlabResults).values(summary.dimensions.map((dimension) => ({
-      runId,
-      dimension: dimension.dimension,
-      score: dimension.score,
-      passed: dimension.passed,
-      failed: dimension.failed,
-      evidence: dimension.evidence,
-    })));
-  }
+  if (completed) await persistAssuranceResults(db, runId, events, summary);
 
   return getPilotlabRunDetails(runId);
 }
@@ -440,13 +476,15 @@ export async function getPilotlabRunDetails(runId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const run = await getRunOrThrow(db, runId);
-  const [agents, events, results] = await Promise.all([
+  const [agents, events, results, predicateResults, releaseGates] = await Promise.all([
     db.select({ id: pilotlabAgents.id, managerKey: pilotlabAgents.managerKey, name: pilotlabAgents.name, role: pilotlabAgents.role, trajectory: pilotlabAgents.trajectory, managerReality: pilotlabAgents.managerReality, levelNextReality: pilotlabAgents.levelNextReality, currentState: pilotlabAgents.currentState }).from(pilotlabAgents).where(eq(pilotlabAgents.runId, runId)).orderBy(asc(pilotlabAgents.id)),
     fetchEventProjection(db, runId),
     db.select().from(pilotlabResults).where(eq(pilotlabResults.runId, runId)).orderBy(asc(pilotlabResults.dimension)),
+    db.select().from(pilotlabPredicateResults).where(eq(pilotlabPredicateResults.runId, runId)).orderBy(asc(pilotlabPredicateResults.eventId)),
+    db.select().from(pilotlabReleaseGates).where(eq(pilotlabReleaseGates.runId, runId)).orderBy(asc(pilotlabReleaseGates.gateCode)),
   ]);
   const summary = run.summary ? run.summary as unknown as PilotlabSimulationSummary : buildSummary(run, events);
-  return { run, agents, events, results, summary, scenarioInventory: PILOTLAB_SCENARIOS.map(publicScenarioProjection) };
+  return { run, agents, events, results, predicateResults, releaseGates, summary, scenarioInventory: PILOTLAB_SCENARIOS.map(publicScenarioProjection) };
 }
 
 export async function getPilotlabWorkspace() {

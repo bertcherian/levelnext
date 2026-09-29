@@ -4,6 +4,7 @@ import {
   buildProofCommunicationPack,
   defaultProofPrivacyConfig,
   deriveEvidenceStrength,
+  deriveDay30ReviewReadiness,
   deriveMomentumState,
   derivePilotHealth,
   deriveTrustState,
@@ -77,5 +78,11 @@ describe("30-Day Behaviour Change Proof contracts", () => {
 
   it("keeps the automated milestone plan bounded to Day 3, Day 7, Day 15, and Day 30", () => {
     expect(PROOF_NUDGE_DAYS).toEqual([3, 7, 15, 30]);
+  });
+
+  it("requires governance consent, an aggregate baseline, cohort consent, and Day 30 before review completion", () => {
+    expect(deriveDay30ReviewReadiness({ day: 12, sponsorConsented: false, baselineMeasureCount: 0, participantCount: 3, participantConsentCount: 1 }).ready).toBe(false);
+    const ready = deriveDay30ReviewReadiness({ day: 30, sponsorConsented: true, baselineMeasureCount: 1, participantCount: 3, participantConsentCount: 3 });
+    expect(ready).toEqual({ ready: true, blockers: [] });
   });
 });

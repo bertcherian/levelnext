@@ -12,6 +12,10 @@ import {
   proofPilotQrLinks,
   proofPilotAccessTokens,
   proofMobileEvents,
+  proofParticipantConsents,
+  proofPilotBaselineMeasures,
+  proofPilotDay30Reviews,
+  proofPilotGovernance,
   users,
   type ProofPilot,
   type ProofPilotParticipant,
@@ -26,15 +30,18 @@ import {
   deriveTrustState,
   PROOF_NUDGE_DAYS,
   deriveEvidenceStrength,
+  deriveDay30ReviewReadiness,
   deriveMomentumState,
   derivePilotHealth,
   getProofDailyAction,
   nextBestPilotAction,
   PROOF_MOBILE_EVENT_TYPES,
+  PROOF_CONSENT_VERSION,
   recommendPilot,
   type ProofCommunicationPack,
   type ProofPrivacyConfig,
   type ProofCreatePilotInput,
+  type ProofDay30Decision,
 } from "../shared/modules/behaviourChangeProof";
 
 function token() {
@@ -67,6 +74,137 @@ async function ownedPilot(userId: number, pilotId: number) {
   const [pilot] = await db.select().from(proofPilots).where(and(eq(proofPilots.id, pilotId), eq(proofPilots.ownerUserId, userId))).limit(1);
   if (!pilot) throw new TRPCError({ code: "NOT_FOUND", message: "Pilot not found" });
   return { db, pilot };
+}
+
+export async function recordProofSponsorConsent(userId: number, input: { pilotId: number; dataBoundaryAcknowledged: true; baselinePlanAcknowledged: true; reviewOwnerName: string; reviewOwnerEmail: string }) {
+  const { db, pilot } = await ownedPilot(userId, input.pilotId);
+  const now = new Date();
+  await db.insert(proofPilotGovernance).values({
+    pilotId: pilot.id,
+    sponsorConsentVersion: PROOF_CONSENT_VERSION,
+    sponsorConsentedAt: now,
+    dataBoundaryAcknowledged: input.dataBoundaryAcknowledged,
+    baselinePlanAcknowledged: input.baselinePlanAcknowledged,
+    reviewOwnerName: input.reviewOwnerName,
+    reviewOwnerEmail: input.reviewOwnerEmail,
+  }).onDuplicateKeyUpdate({ set: {
+    sponsorConsentVersion: PROOF_CONSENT_VERSION,
+    sponsorConsentedAt: now,
+    dataBoundaryAcknowledged: input.dataBoundaryAcknowledged,
+    baselinePlanAcknowledged: input.baselinePlanAcknowledged,
+    reviewOwnerName: input.reviewOwnerName,
+    reviewOwnerEmail: input.reviewOwnerEmail,
+    updatedAt: now,
+  } });
+  return getProofLivePilotGovernance(userId, pilot.id);
+}
+
+export async function recordProofParticipantConsent(tokenValue: string) {
+  const { db, pilot, participant } = await participantContext(tokenValue);
+  const now = new Date();
+  const [governance] = await db.select().from(proofPilotGovernance).where(eq(proofPilotGovernance.pilotId, pilot.id)).limit(1);
+  if (!governance?.dataBoundaryAcknowledged || !governance.baselinePlanAcknowledged) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "The sponsor must record the live-pilot boundaries before participant consent can be collected." });
+  }
+  await db.insert(proofParticipantConsents).values({
+    pilotId: pilot.id,
+    participantId: participant.id,
+    consentVersion: PROOF_CONSENT_VERSION,
+    participationConsentedAt: now,
+    privacyAcknowledgedAt: now,
+  }).onDuplicateKeyUpdate({ set: {
+    consentVersion: PROOF_CONSENT_VERSION,
+    participationConsentedAt: now,
+    privacyAcknowledgedAt: now,
+    revokedAt: null,
+    updatedAt: now,
+  } });
+  await db.insert(proofParticipantTrustEvents).values({ pilotId: pilot.id, participantId: participant.id, eventType: "informed_consent_recorded", response: PROOF_CONSENT_VERSION });
+  return getProofParticipant(tokenValue);
+}
+
+export async function saveProofBaselineMeasure(userId: number, input: { pilotId: number; measureKey: string; label: string; baselineValue: number; targetValue?: number; unit: string; source: string; definition: string }) {
+  const { db, pilot } = await ownedPilot(userId, input.pilotId);
+  const now = new Date();
+  await db.insert(proofPilotBaselineMeasures).values({
+    pilotId: pilot.id,
+    measureKey: input.measureKey,
+    label: input.label,
+    baselineValue: input.baselineValue,
+    targetValue: input.targetValue ?? null,
+    unit: input.unit,
+    source: input.source,
+    definition: input.definition,
+    recordedByUserId: userId,
+    recordedAt: now,
+  }).onDuplicateKeyUpdate({ set: {
+    label: input.label,
+    baselineValue: input.baselineValue,
+    targetValue: input.targetValue ?? null,
+    unit: input.unit,
+    source: input.source,
+    definition: input.definition,
+    recordedByUserId: userId,
+    recordedAt: now,
+    updatedAt: now,
+  } });
+  return getProofLivePilotGovernance(userId, pilot.id);
+}
+
+export async function getProofLivePilotGovernance(userId: number, pilotId: number) {
+  const { db, pilot } = await ownedPilot(userId, pilotId);
+  const [governance, measures, participants, consents, review] = await Promise.all([
+    db.select().from(proofPilotGovernance).where(eq(proofPilotGovernance.pilotId, pilot.id)).limit(1),
+    db.select().from(proofPilotBaselineMeasures).where(eq(proofPilotBaselineMeasures.pilotId, pilot.id)).orderBy(desc(proofPilotBaselineMeasures.recordedAt)),
+    db.select({ id: proofPilotParticipants.id }).from(proofPilotParticipants).where(eq(proofPilotParticipants.pilotId, pilot.id)),
+    db.select({ participantId: proofParticipantConsents.participantId }).from(proofParticipantConsents).where(and(eq(proofParticipantConsents.pilotId, pilot.id), isNull(proofParticipantConsents.revokedAt))),
+    db.select().from(proofPilotDay30Reviews).where(eq(proofPilotDay30Reviews.pilotId, pilot.id)).limit(1),
+  ]);
+  const readiness = deriveDay30ReviewReadiness({
+    day: daysSince(pilot.launchedAt),
+    sponsorConsented: Boolean(governance[0]?.dataBoundaryAcknowledged && governance[0]?.baselinePlanAcknowledged),
+    baselineMeasureCount: measures.length,
+    participantCount: participants.length,
+    participantConsentCount: consents.length,
+  });
+  return {
+    consentVersion: PROOF_CONSENT_VERSION,
+    pilotId: pilot.id,
+    day: daysSince(pilot.launchedAt),
+    governance: governance[0] ?? null,
+    baselineMeasures: measures,
+    participantCount: participants.length,
+    participantConsentCount: consents.length,
+    review: review[0] ?? null,
+    readiness,
+  };
+}
+
+export async function saveProofDay30Review(userId: number, input: { pilotId: number; status: "draft" | "completed"; decision: ProofDay30Decision; summary: string; evidenceBoundaryAcknowledged: true }) {
+  const governance = await getProofLivePilotGovernance(userId, input.pilotId);
+  if (input.status === "completed" && !governance.readiness.ready) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: `Day-30 review is not ready: ${governance.readiness.blockers.join(" ")}` });
+  }
+  const db = await database();
+  const now = new Date();
+  await db.insert(proofPilotDay30Reviews).values({
+    pilotId: input.pilotId,
+    reviewedByUserId: userId,
+    status: input.status,
+    decision: input.decision,
+    summary: input.summary,
+    evidenceBoundaryAcknowledged: input.evidenceBoundaryAcknowledged,
+    reviewedAt: now,
+  }).onDuplicateKeyUpdate({ set: {
+    reviewedByUserId: userId,
+    status: input.status,
+    decision: input.decision,
+    summary: input.summary,
+    evidenceBoundaryAcknowledged: input.evidenceBoundaryAcknowledged,
+    reviewedAt: now,
+    updatedAt: now,
+  } });
+  return getProofLivePilotGovernance(userId, input.pilotId);
 }
 
 function safeParticipant(participant: ProofPilotParticipant) {
@@ -129,6 +267,10 @@ export async function createProofPilot(userId: number, input: ProofCreatePilotIn
 
 export async function inviteProofParticipants(userId: number, pilotId: number, participants: Array<{ email: string; name?: string }>, origin = "https://levelnext.coach") {
   const { db, pilot } = await ownedPilot(userId, pilotId);
+  const [governance] = await db.select().from(proofPilotGovernance).where(eq(proofPilotGovernance.pilotId, pilotId)).limit(1);
+  if (!governance?.dataBoundaryAcknowledged || !governance.baselinePlanAcknowledged) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Record sponsor consent to the participant and data boundaries before sending invitations." });
+  }
   const existing = await db.select({ email: proofPilotParticipants.email }).from(proofPilotParticipants).where(eq(proofPilotParticipants.pilotId, pilotId));
   const existingEmails = new Set(existing.map((row) => row.email.toLowerCase()));
   const insertedParticipants: ProofPilotParticipant[] = [];
@@ -174,6 +316,7 @@ export async function getProofParticipant(tokenValue: string) {
     await db.update(proofPilotParticipants).set({ inviteStatus: "opened", inviteOpenedAt: openedAt, lastActivityAt: openedAt }).where(eq(proofPilotParticipants.id, participant.id));
     await db.insert(proofParticipantTrustEvents).values({ pilotId: pilot.id, participantId: participant.id, eventType: "invitation_opened" });
   }
+  const [consent] = await db.select().from(proofParticipantConsents).where(and(eq(proofParticipantConsents.pilotId, pilot.id), eq(proofParticipantConsents.participantId, participant.id), isNull(proofParticipantConsents.revokedAt))).limit(1);
   return {
     pilot: {
       name: pilot.name,
@@ -191,7 +334,7 @@ export async function getProofParticipant(tokenValue: string) {
       day: daysSince(pilot.launchedAt),
       dailyAction: getProofDailyAction(Math.max(1, daysSince(pilot.launchedAt)), pilot.targetBehaviours),
     },
-    participant: safeParticipant(participant),
+    participant: { ...safeParticipant(participant), informedConsent: Boolean(consent) },
   };
 }
 
@@ -216,6 +359,8 @@ async function resolveParticipantToken(db: Awaited<ReturnType<typeof database>>,
 
 export async function recordProofBaseline(tokenValue: string, currentSituation: string, desiredMovement: string) {
   const { db, pilot, participant } = await participantContext(tokenValue);
+  const [consent] = await db.select().from(proofParticipantConsents).where(and(eq(proofParticipantConsents.pilotId, pilot.id), eq(proofParticipantConsents.participantId, participant.id), isNull(proofParticipantConsents.revokedAt))).limit(1);
+  if (!consent) throw new TRPCError({ code: "FORBIDDEN", message: "Confirm your informed participation and privacy boundary before recording a baseline." });
   const now = new Date();
   await db.update(proofPilotParticipants).set({ inviteStatus: "active", baselineCompletedAt: now, lastActivityAt: now }).where(eq(proofPilotParticipants.id, participant.id));
   await db.insert(proofObservations).values({ pilotId: pilot.id, participantId: participant.id, source: "behavioural", observationType: "baseline", summary: "Participant completed a baseline for a current workplace situation.", outcomeSignal: anonymisePracticeText(desiredMovement), evidenceLevel: 1, privacyScope: "private" });

@@ -40,6 +40,15 @@ export const PILOTLAB_FAILURE_CODES = [
 ] as const;
 export type PilotlabFailureCode = (typeof PILOTLAB_FAILURE_CODES)[number];
 
+export const PILOTLAB_RELEASE_GATE_CODES = [
+  "F5_MISSED_COMMITMENT",
+  "F10_DIAGNOSTIC_GAMING",
+  "F14_UNNECESSARY_INTERVENTION",
+] as const;
+export type PilotlabReleaseGateCode = (typeof PILOTLAB_RELEASE_GATE_CODES)[number];
+export const PILOTLAB_RELEASE_GATE_STATES = ["not_triggered", "handled", "regressed"] as const;
+export type PilotlabReleaseGateState = (typeof PILOTLAB_RELEASE_GATE_STATES)[number];
+
 export const pilotlabRunStatusSchema = z.enum(["draft", "running", "completed", "failed"]);
 export type PilotlabRunStatus = z.infer<typeof pilotlabRunStatusSchema>;
 
@@ -254,7 +263,26 @@ export type PilotlabDimensionResult = {
   score: number;
   passed: number;
   failed: number;
+  checked: number;
   evidence: string;
+};
+
+export type PilotlabPredicateResult = {
+  predicateId: string;
+  dimension: PilotlabDimension;
+  passed: boolean;
+  expected: string;
+  observed: string;
+  releaseGateCode?: PilotlabReleaseGateCode;
+};
+
+export type PilotlabReleaseGate = {
+  code: PilotlabReleaseGateCode;
+  state: PilotlabReleaseGateState;
+  triggered: number;
+  handled: number;
+  regressed: number;
+  rationale: string;
 };
 
 export type PilotlabSimulationSummary = {
@@ -264,6 +292,7 @@ export type PilotlabSimulationSummary = {
   interactions: number;
   goldenScenariosExecuted: number;
   dimensions: PilotlabDimensionResult[];
+  releaseGates: PilotlabReleaseGate[];
   failureCounts: Record<string, number>;
   leakageEvents: number;
   privacyViolations: number;
@@ -335,11 +364,12 @@ export type PilotlabAssuranceReport = {
     scenariosExecuted: number;
     interactions: number;
     dimensions: PilotlabDimensionResult[];
+    releaseGates: PilotlabReleaseGate[];
     failureCounts: Record<string, number>;
     liveEvaluationCount: number;
     chaosConfig: PilotlabChaosConfig;
   }>;
-  comparison: Array<{ dimension: PilotlabDimension; scores: Array<{ runCode: string; platformVersion: string; score: number }> }>;
+  comparison: Array<{ dimension: PilotlabDimension; scores: Array<{ runCode: string; platformVersion: string; score: number }>; delta?: number }>;
   limitations: string[];
 };
 
@@ -377,4 +407,77 @@ export function getPilotlabScenarioCounts() {
     difficultConversations: PILOTLAB_SCENARIOS.filter((scenario) => scenario.behavior === "difficult_conversations").length,
     crossBehavior: PILOTLAB_SCENARIOS.filter((scenario) => scenario.behavior === "cross_behavior").length,
   };
+}
+
+export type PilotlabPredicateEvent = {
+  scenarioCode: string;
+  failureCode: string | null;
+  levelNextResponse: string | null;
+  evidenceLevel: number;
+  evaluatorResult?: Record<string, unknown> | null;
+};
+
+function includesAny(text: string, terms: string[]) {
+  return terms.some((term) => text.includes(term));
+}
+
+export function evaluatePilotlabPredicates(event: PilotlabPredicateEvent): PilotlabPredicateResult[] {
+  const response = (event.levelNextResponse ?? "").toLowerCase();
+  const claimLimit = String(event.evaluatorResult?.platformClaimLimit ?? event.evaluatorResult?.claimLimit ?? "").toLowerCase();
+  const results: PilotlabPredicateResult[] = [];
+  const add = (predicateId: string, dimension: PilotlabDimension, passed: boolean, expected: string, observed: string, releaseGateCode?: PilotlabReleaseGateCode) => {
+    results.push({ predicateId, dimension, passed, expected, observed, releaseGateCode });
+  };
+
+  if (event.scenarioCode.startsWith("OO-")) {
+    add("outcome_owner_next_action", "Outcome Orientation", includesAny(response, ["outcome", "ownership", "owner"]) && includesAny(response, ["action", "commitment", "decision"]), "Name an outcome or owner and a next observable action.", event.levelNextResponse ?? "No response recorded.");
+  }
+  if (event.scenarioCode.startsWith("FB-")) {
+    add("feedback_observable_specific", "Timely Feedback", includesAny(response, ["facts", "observable", "specific"]) && includesAny(response, ["action", "impact", "next step"]), "Ground feedback in observable facts and a next step.", event.levelNextResponse ?? "No response recorded.");
+  }
+  if (event.scenarioCode.startsWith("GF-")) {
+    add("conversation_clarity_boundary", "Difficult Conversations", includesAny(response, ["facts", "specific", "clear request", "boundary"]) && includesAny(response, ["action", "commitment", "outcome"]), "Support a specific request, boundary, or outcome without avoiding the tension.", event.levelNextResponse ?? "No response recorded.");
+  }
+
+  add("coaching_grounded_in_permitted_context", "Coaching Relevance", response.length > 20 && !includesAny(response, ["ground truth", "hidden narrative", "guaranteed roi"]), "Return an actionable response without hidden truth or an unbounded claim.", event.levelNextResponse ?? "No response recorded.");
+  add("sponsor_claim_boundary", "Sponsor Reporting", includesAny(claimLimit, ["no real-world", "does not prove", "api execution only", "synthetic"]), "Retain the synthetic, non-causal evidence boundary in the auditor record.", claimLimit || "No claim boundary recorded.");
+
+  if (event.failureCode === "F5_MISSED_COMMITMENT" || event.failureCode === "F1_MEMORY_FAILURE") {
+    const passed = includesAny(response, ["prior action", "unverified", "commitment", "prior commitments", "continuity"]);
+    add("continuity_preserves_prior_commitment", "Memory & Continuity", passed, "Keep the prior commitment or pattern visible when a commitment is missed or continuity is stressed.", event.levelNextResponse ?? "No response recorded.");
+    add("missed_commitment_not_promoted", "Commitment Follow-Through", passed, "Do not treat an unverified action as completed; reopen a specific next commitment.", event.levelNextResponse ?? "No response recorded.", "F5_MISSED_COMMITMENT");
+  }
+  if (event.failureCode === "F10_DIAGNOSTIC_GAMING") {
+    const passed = includesAny(response, ["self-reported", "self report"]) && includesAny(response, ["corroboration", "observable", "evidence"]);
+    add("self_report_requires_corroboration", "Evidence Integrity", passed, "Keep articulate self-report below corroborated outcome evidence.", event.levelNextResponse ?? "No response recorded.", "F10_DIAGNOSTIC_GAMING");
+  }
+  if (event.failureCode === "F14_UNNECESSARY_INTERVENTION") {
+    const passed = includesAny(response, ["higher-order", "higher order", "shared ownership"]) && includesAny(response, ["do not force", "maintaining"]);
+    add("strong_manager_receives_higher_order_edge", "Personalization", passed, "Avoid basic remediation for a strong manager; select an appropriate higher-order edge.", event.levelNextResponse ?? "No response recorded.", "F14_UNNECESSARY_INTERVENTION");
+  }
+  if (includesAny(response, ["practise", "practice"])) {
+    add("practice_remains_rehearsal", "Practice Quality", event.evidenceLevel <= 4 && !includesAny(response, ["proven business", "guaranteed outcome"]), "Treat rehearsal as practice rather than proven workplace or business impact.", event.levelNextResponse ?? "No response recorded.");
+  }
+  return results;
+}
+
+export function derivePilotlabReleaseGates(predicates: PilotlabPredicateResult[]): PilotlabReleaseGate[] {
+  const rationale: Record<PilotlabReleaseGateCode, string> = {
+    F5_MISSED_COMMITMENT: "A missed commitment must remain visible and be reopened as a concrete next action.",
+    F10_DIAGNOSTIC_GAMING: "Self-report must remain below corroborated behavioral or outcome evidence.",
+    F14_UNNECESSARY_INTERVENTION: "A strong manager must receive a higher-order edge rather than unnecessary remedial coaching.",
+  };
+  return PILOTLAB_RELEASE_GATE_CODES.map((code) => {
+    const checks = predicates.filter((predicate) => predicate.releaseGateCode === code);
+    const handled = checks.filter((predicate) => predicate.passed).length;
+    const regressed = checks.length - handled;
+    return {
+      code,
+      state: checks.length === 0 ? "not_triggered" : regressed > 0 ? "regressed" : "handled",
+      triggered: checks.length,
+      handled,
+      regressed,
+      rationale: rationale[code],
+    };
+  });
 }

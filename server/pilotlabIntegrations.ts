@@ -2,7 +2,9 @@ import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { pilotlabEvents, pilotlabRuns } from "../drizzle/schema";
 import { getDb } from "./db";
+import { advancePilotlabRun, createPilotlabRun } from "./pilotlab";
 import {
+  DEFAULT_PILOTLAB_CHAOS_CONFIG,
   PILOTLAB_AGENT_PROFILES,
   PILOTLAB_DIMENSIONS,
   type PilotlabAssuranceReport,
@@ -117,6 +119,7 @@ export async function buildPilotlabAssuranceReport(runIds: number[]) {
     const events = await db.select({ actorType: pilotlabEvents.actorType }).from(pilotlabEvents).where(eq(pilotlabEvents.runId, run.id));
     const summary = (run.summary ?? {}) as Record<string, unknown>;
     const dimensions = Array.isArray(summary.dimensions) ? summary.dimensions as PilotlabAssuranceReport["runs"][number]["dimensions"] : [];
+    const releaseGates = Array.isArray(summary.releaseGates) ? summary.releaseGates as PilotlabAssuranceReport["runs"][number]["releaseGates"] : [];
     return {
       runId: run.id,
       runCode: run.runCode,
@@ -126,6 +129,7 @@ export async function buildPilotlabAssuranceReport(runIds: number[]) {
       scenariosExecuted: run.scenariosExecuted,
       interactions: run.interactions,
       dimensions,
+      releaseGates,
       failureCounts: (run.failureSummary ?? {}) as Record<string, number>,
       liveEvaluationCount: events.filter((event) => event.actorType.startsWith("live_")).length,
       chaosConfig: (run.chaosConfig ?? {}) as PilotlabAssuranceReport["runs"][number]["chaosConfig"],
@@ -133,14 +137,14 @@ export async function buildPilotlabAssuranceReport(runIds: number[]) {
     };
   }));
 
-  const comparison = PILOTLAB_DIMENSIONS.map((dimension) => ({
-    dimension,
-    scores: reportRuns.map((run) => ({
+  const comparison = PILOTLAB_DIMENSIONS.map((dimension) => {
+    const scores = reportRuns.map((run) => ({
       runCode: run.runCode,
       platformVersion: run.platformVersion,
       score: run.dimensions.find((candidate) => candidate.dimension === dimension)?.score ?? 0,
-    })),
-  }));
+    }));
+    return { dimension, scores, delta: scores.length >= 2 ? scores[scores.length - 1]!.score - scores[0]!.score : undefined };
+  });
   const report: PilotlabAssuranceReport = {
     reportCode: `PLR-${nanoid(8).toUpperCase()}`,
     generatedAt: new Date().toISOString(),
@@ -159,11 +163,39 @@ export async function buildPilotlabAssuranceReport(runIds: number[]) {
     ["Generated at", report.generatedAt],
     ["Platform versions", report.platform.comparedVersions.join(" | ")],
     [],
-    ["Run code", "Platform version", "Status", "Virtual day", "Scenarios executed", "Interactions", "Live evaluations", "Failure counts"],
-    ...report.runs.map((run) => [run.runCode, run.platformVersion, run.status, run.virtualDay, run.scenariosExecuted, run.interactions, run.liveEvaluationCount, JSON.stringify(run.failureCounts)]),
+    ["Run code", "Platform version", "Status", "Virtual day", "Scenarios executed", "Interactions", "Live evaluations", "Failure counts", "Release gates"],
+    ...report.runs.map((run) => [run.runCode, run.platformVersion, run.status, run.virtualDay, run.scenariosExecuted, run.interactions, run.liveEvaluationCount, JSON.stringify(run.failureCounts), JSON.stringify(run.releaseGates)]),
     [],
-    ["Dimension", "Run code", "Platform version", "Score"],
-    ...report.comparison.flatMap((comparison) => comparison.scores.map((score) => [comparison.dimension, score.runCode, score.platformVersion, score.score])),
+    ["Dimension", "Run code", "Platform version", "Score", "Delta vs first selected run"],
+    ...report.comparison.flatMap((comparison) => comparison.scores.map((score) => [comparison.dimension, score.runCode, score.platformVersion, score.score, comparison.delta ?? ""])),
   ];
   return { report, csv: rows.map((row) => row.map(csvEscape).join(",")).join("\n") };
+}
+
+export async function runPilotlabPairedComparison(ownerUserId: number, ctx: TrpcContext, platformVersion: string) {
+  const baseline = await createPilotlabRun(ownerUserId, `Paired baseline — ${platformVersion}`, platformVersion, DEFAULT_PILOTLAB_CHAOS_CONFIG);
+  const completedBaseline = await advancePilotlabRun(baseline.run.id, 60);
+  await runPilotlabLiveEvaluation(completedBaseline.run.id, ctx, "XB-005");
+
+  const chaosProfile = {
+    enabled: true,
+    resistanceVariance: 12,
+    workloadShockDay: 30,
+    memoryGaps: true,
+    stakeholderEscalation: true,
+    evidenceAmbiguity: true,
+    unpredictableRelapse: true,
+    notes: "Paired resilience profile: memory, evidence, workload, stakeholder, and relapse perturbations.",
+  };
+  const chaos = await createPilotlabRun(ownerUserId, `Paired chaos — ${platformVersion}`, platformVersion, chaosProfile);
+  const completedChaos = await advancePilotlabRun(chaos.run.id, 60);
+  await runPilotlabLiveEvaluation(completedChaos.run.id, ctx, "XB-005");
+
+  const assurance = await buildPilotlabAssuranceReport([completedBaseline.run.id, completedChaos.run.id]);
+  return {
+    baselineRunId: completedBaseline.run.id,
+    chaosRunId: completedChaos.run.id,
+    report: assurance.report,
+    csv: assurance.csv,
+  };
 }

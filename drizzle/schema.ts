@@ -5205,6 +5205,7 @@ export const pilotlabResults = mysqlTable(
     runId: int("runId").notNull().references(() => pilotlabRuns.id),
     dimension: varchar("dimension", { length: 80 }).notNull(),
     score: int("score").notNull(),
+    checked: int("checked").default(0).notNull(),
     passed: int("passed").default(0).notNull(),
     failed: int("failed").default(0).notNull(),
     evidence: text("evidence").notNull(),
@@ -5217,6 +5218,50 @@ export const pilotlabResults = mysqlTable(
 );
 export type PilotlabResult = typeof pilotlabResults.$inferSelect;
 export type InsertPilotlabResult = typeof pilotlabResults.$inferInsert;
+
+export const pilotlabPredicateResults = mysqlTable(
+  "pilotlab_predicate_results",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    runId: int("runId").notNull().references(() => pilotlabRuns.id),
+    eventId: int("eventId").notNull().references(() => pilotlabEvents.id),
+    dimension: varchar("dimension", { length: 80 }).notNull(),
+    predicateId: varchar("predicateId", { length: 120 }).notNull(),
+    passed: boolean("passed").notNull(),
+    expected: text("expected").notNull(),
+    observed: text("observed").notNull(),
+    releaseGateCode: varchar("releaseGateCode", { length: 64 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("pilotlab_predicate_event_id_uq").on(table.eventId, table.predicateId),
+    index("pilotlab_predicate_run_dimension_idx").on(table.runId, table.dimension, table.passed),
+  ],
+);
+export type PilotlabPredicateResultRecord = typeof pilotlabPredicateResults.$inferSelect;
+export type InsertPilotlabPredicateResultRecord = typeof pilotlabPredicateResults.$inferInsert;
+
+export const pilotlabReleaseGates = mysqlTable(
+  "pilotlab_release_gates",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    runId: int("runId").notNull().references(() => pilotlabRuns.id),
+    gateCode: varchar("gateCode", { length: 64 }).notNull(),
+    state: mysqlEnum("state", ["not_triggered", "handled", "regressed"]).notNull(),
+    triggered: int("triggered").default(0).notNull(),
+    handled: int("handled").default(0).notNull(),
+    regressed: int("regressed").default(0).notNull(),
+    rationale: text("rationale").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("pilotlab_gate_run_code_uq").on(table.runId, table.gateCode),
+    index("pilotlab_gate_run_state_idx").on(table.runId, table.state),
+  ],
+);
+export type PilotlabReleaseGateRecord = typeof pilotlabReleaseGates.$inferSelect;
+export type InsertPilotlabReleaseGateRecord = typeof pilotlabReleaseGates.$inferInsert;
 
 // ─── 30-Day Behaviour Change Proof ────────────────────────────────────────────
 export const proofPilots = mysqlTable(
@@ -5482,3 +5527,87 @@ export const proofSecurityRequirements = mysqlTable(
 );
 export type ProofSecurityRequirement = typeof proofSecurityRequirements.$inferSelect;
 export type InsertProofSecurityRequirement = typeof proofSecurityRequirements.$inferInsert;
+
+// ─── 30-Day Behaviour Change Proof: Live Pilot Governance ──────────────────────
+export const proofPilotGovernance = mysqlTable(
+  "proof_pilot_governance",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id).unique(),
+    sponsorConsentVersion: varchar("sponsorConsentVersion", { length: 32 }).notNull(),
+    sponsorConsentedAt: timestamp("sponsorConsentedAt").notNull(),
+    dataBoundaryAcknowledged: boolean("dataBoundaryAcknowledged").default(false).notNull(),
+    baselinePlanAcknowledged: boolean("baselinePlanAcknowledged").default(false).notNull(),
+    reviewOwnerName: varchar("reviewOwnerName", { length: 160 }),
+    reviewOwnerEmail: varchar("reviewOwnerEmail", { length: 320 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [index("proof_governance_review_owner_idx").on(table.reviewOwnerEmail)],
+);
+export type ProofPilotGovernance = typeof proofPilotGovernance.$inferSelect;
+export type InsertProofPilotGovernance = typeof proofPilotGovernance.$inferInsert;
+
+export const proofParticipantConsents = mysqlTable(
+  "proof_participant_consents",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    participantId: int("participantId").notNull().references(() => proofPilotParticipants.id),
+    consentVersion: varchar("consentVersion", { length: 32 }).notNull(),
+    participationConsentedAt: timestamp("participationConsentedAt").notNull(),
+    privacyAcknowledgedAt: timestamp("privacyAcknowledgedAt").notNull(),
+    revokedAt: timestamp("revokedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("proof_participant_consent_uq").on(table.pilotId, table.participantId),
+    index("proof_participant_consent_pilot_idx").on(table.pilotId, table.revokedAt),
+  ],
+);
+export type ProofParticipantConsent = typeof proofParticipantConsents.$inferSelect;
+export type InsertProofParticipantConsent = typeof proofParticipantConsents.$inferInsert;
+
+export const proofPilotBaselineMeasures = mysqlTable(
+  "proof_pilot_baseline_measures",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    measureKey: varchar("measureKey", { length: 100 }).notNull(),
+    label: varchar("label", { length: 180 }).notNull(),
+    baselineValue: float("baselineValue").notNull(),
+    targetValue: float("targetValue"),
+    unit: varchar("unit", { length: 80 }).notNull(),
+    source: varchar("source", { length: 180 }).notNull(),
+    definition: text("definition").notNull(),
+    recordedByUserId: int("recordedByUserId").notNull().references(() => users.id),
+    recordedAt: timestamp("recordedAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("proof_baseline_measure_pilot_key_uq").on(table.pilotId, table.measureKey),
+    index("proof_baseline_measure_pilot_idx").on(table.pilotId, table.recordedAt),
+  ],
+);
+export type ProofPilotBaselineMeasure = typeof proofPilotBaselineMeasures.$inferSelect;
+export type InsertProofPilotBaselineMeasure = typeof proofPilotBaselineMeasures.$inferInsert;
+
+export const proofPilotDay30Reviews = mysqlTable(
+  "proof_pilot_day30_reviews",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id).unique(),
+    reviewedByUserId: int("reviewedByUserId").notNull().references(() => users.id),
+    status: mysqlEnum("status", ["draft", "completed"]).default("draft").notNull(),
+    decision: mysqlEnum("decision", ["continue_controlled", "extend_pilot", "prepare_scale_review", "stop"]).default("continue_controlled").notNull(),
+    summary: text("summary").notNull(),
+    evidenceBoundaryAcknowledged: boolean("evidenceBoundaryAcknowledged").default(false).notNull(),
+    reviewedAt: timestamp("reviewedAt").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [index("proof_day30_review_status_idx").on(table.status, table.reviewedAt)],
+);
+export type ProofPilotDay30Review = typeof proofPilotDay30Reviews.$inferSelect;
+export type InsertProofPilotDay30Review = typeof proofPilotDay30Reviews.$inferInsert;

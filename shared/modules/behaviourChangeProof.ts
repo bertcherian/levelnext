@@ -19,6 +19,9 @@ export const PROOF_ACCESS_LANES = ["instant", "corporate_browser", "enterprise"]
 export type ProofAccessLane = (typeof PROOF_ACCESS_LANES)[number];
 export const PROOF_HEALTH_STATES = ["green", "amber", "red"] as const;
 export type ProofHealthState = (typeof PROOF_HEALTH_STATES)[number];
+export const PROOF_CONSENT_VERSION = "live-pilot-v1";
+export const PROOF_DAY30_DECISIONS = ["continue_controlled", "extend_pilot", "prepare_scale_review", "stop"] as const;
+export type ProofDay30Decision = (typeof PROOF_DAY30_DECISIONS)[number];
 
 export const proofParticipantInputSchema = z.object({
   email: z.string().email(),
@@ -95,6 +98,39 @@ export const proofAccessIssueSchema = z.object({
 
 export const proofSecurityReviewSchema = z.object({ pilotId: z.number().int().positive() });
 
+export const proofSponsorConsentSchema = z.object({
+  pilotId: proofPilotIdSchema.shape.pilotId,
+  dataBoundaryAcknowledged: z.literal(true),
+  baselinePlanAcknowledged: z.literal(true),
+  reviewOwnerName: z.string().trim().min(2).max(160),
+  reviewOwnerEmail: z.string().trim().email(),
+});
+
+export const proofParticipantConsentSchema = z.object({
+  token: proofTokenSchema.shape.token,
+  participationAcknowledged: z.literal(true),
+  privacyAcknowledged: z.literal(true),
+});
+
+export const proofBaselineMeasureSchema = z.object({
+  pilotId: proofPilotIdSchema.shape.pilotId,
+  measureKey: z.string().trim().regex(/^[a-z0-9_]{2,100}$/),
+  label: z.string().trim().min(3).max(180),
+  baselineValue: z.number().finite(),
+  targetValue: z.number().finite().optional(),
+  unit: z.string().trim().min(1).max(80),
+  source: z.string().trim().min(3).max(180),
+  definition: z.string().trim().min(8).max(1200),
+});
+
+export const proofDay30ReviewSchema = z.object({
+  pilotId: proofPilotIdSchema.shape.pilotId,
+  status: z.enum(["draft", "completed"]).default("completed"),
+  decision: z.enum(PROOF_DAY30_DECISIONS),
+  summary: z.string().trim().min(20).max(2400),
+  evidenceBoundaryAcknowledged: z.literal(true),
+});
+
 export type ProofDailyAction = {
   day: number;
   title: string;
@@ -105,6 +141,16 @@ export type ProofDailyAction = {
 export type ProofCreatePilotInput = z.infer<typeof proofCreatePilotSchema>;
 export type ProofParticipantInput = z.infer<typeof proofParticipantInputSchema>;
 export type ProofPreview = ReturnType<typeof recommendPilot>;
+
+export function deriveDay30ReviewReadiness(input: { day: number; sponsorConsented: boolean; baselineMeasureCount: number; participantCount: number; participantConsentCount: number }) {
+  const blockers: string[] = [];
+  if (!input.sponsorConsented) blockers.push("Record sponsor consent to the participant and data boundaries.");
+  if (input.baselineMeasureCount === 0) blockers.push("Record at least one aggregate baseline measure.");
+  if (input.participantCount === 0) blockers.push("Invite at least one approved participant before completing the review.");
+  if (input.participantCount > 0 && input.participantConsentCount < input.participantCount) blockers.push("Collect informed participant consent before interpreting the cohort evidence.");
+  if (input.day < 30) blockers.push("The Day-30 review becomes complete on or after Day 30; drafts can be saved earlier.");
+  return { ready: blockers.length === 0, blockers };
+}
 
 const RECOMMENDATION_RULES: Array<{
   keywords: string[];

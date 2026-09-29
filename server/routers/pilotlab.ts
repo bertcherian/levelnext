@@ -7,7 +7,7 @@ import {
   getPilotlabRunForAdmin,
   getPilotlabWorkspace,
 } from "../pilotlab";
-import { buildPilotlabAssuranceReport, runPilotlabLiveEvaluation } from "../pilotlabIntegrations";
+import { buildPilotlabAssuranceReport, runPilotlabLiveEvaluation, runPilotlabPairedComparison } from "../pilotlabIntegrations";
 import { pilotlabCreateRunSchema } from "../../shared/modules/pilotlab";
 
 function toTrpcError(error: unknown): never {
@@ -52,6 +52,16 @@ export const pilotlabRouter = router({
   })).mutation(async ({ ctx, input }) => {
     try {
       return await runPilotlabLiveEvaluation(input.runId, ctx, input.scenarioCode);
+    } catch (error) {
+      return toTrpcError(error);
+    }
+  }),
+
+  runPairedComparison: adminProcedure.input(z.object({
+    platformVersion: z.string().trim().min(1).max(80),
+  })).mutation(async ({ ctx, input }) => {
+    try {
+      return await runPilotlabPairedComparison(ctx.user.id, ctx, input.platformVersion);
     } catch (error) {
       return toTrpcError(error);
     }
