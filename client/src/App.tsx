@@ -95,6 +95,9 @@ const WarRoom = lazyWithRouteRecovery(() => import("@/pages/WarRoom"), "admin-wa
 const AdminParticipantImport = lazyWithRouteRecovery(() => import("@/pages/AdminParticipantImport"), "admin-participant-import");
 const AdminModelEvaluator = lazyWithRouteRecovery(() => import("@/pages/AdminModelEvaluator"), "admin-model-evaluator");
 const Pilotlab = lazyWithRouteRecovery(() => import("@/pages/Pilotlab"), "admin-pilotlab");
+const PilotBuilder = lazy(() => import("@/pages/PilotBuilder"));
+const PilotProofDashboard = lazy(() => import("@/pages/PilotProofDashboard"));
+const PilotParticipant = lazy(() => import("@/pages/PilotParticipant"));
 const CareerLanding = lazy(() => import("@/pages/CareerLanding"));
 const CareerInvestment = lazy(() => import("@/pages/CareerInvestment"));
 const ResumeMakeover = lazy(() => import("@/pages/ci/ResumeMakeover"));
@@ -307,6 +310,9 @@ function Router() {
       <Route path="/apply" component={ApplyForPilot} />
       <Route path="/join" component={JoinPage} />
       <Route path="/join-product" component={JoinProduct} />
+      <Route path="/pilot" component={PilotBuilder} />
+      <Route path="/pilot/dashboard" component={PilotProofDashboard} />
+      <Route path="/pilot/participant/:token" component={PilotParticipant} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/admin" component={AdminDashboard} />

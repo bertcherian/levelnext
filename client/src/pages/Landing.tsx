@@ -24,15 +24,15 @@ import {
 import { generateLandingSummaryPdf } from "@/lib/landingSummaryPdf";
 import "./landing.css";
 
-const pilotUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=30_day_impact_test";
+const pilotUrl = "/pilot";
 const talkUrl = "https://tidycal.com/metaresults/pilot?utm_source=levelnext&utm_medium=landing&utm_campaign=talk_to_levelnext";
 type PilotScope = "small_cohort" | "business_unit";
 
 function getPilotBookingUrl(selectedGaps: string[], pilotScope: PilotScope): string {
-  const url = new URL(pilotUrl);
-  if (selectedGaps.length) url.searchParams.set("manager_behaviours", selectedGaps.join(", "));
-  url.searchParams.set("pilot_scope", pilotScope);
-  return url.toString();
+  const params = new URLSearchParams();
+  if (selectedGaps.length) params.set("manager_behaviours", selectedGaps.join(", "));
+  params.set("pilot_scope", pilotScope);
+  return `${pilotUrl}?${params.toString()}`;
 }
 
 const behaviourGaps = [
@@ -72,8 +72,8 @@ function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function PilotButton({ children = "Run a 30-Day Pilot Test", className = "", selectedGaps = [], pilotScope = "small_cohort" }: { children?: React.ReactNode; className?: string; selectedGaps?: string[]; pilotScope?: PilotScope }) {
-  return <a className={`ln-button ${className}`.trim()} href={getPilotBookingUrl(selectedGaps, pilotScope)} target="_blank" rel="noreferrer">{children} <ArrowRight size={16} aria-hidden="true" /></a>;
+function PilotButton({ children = "Start a Pilot", className = "", selectedGaps = [], pilotScope = "small_cohort" }: { children?: React.ReactNode; className?: string; selectedGaps?: string[]; pilotScope?: PilotScope }) {
+  return <a className={`ln-button ${className}`.trim()} href={getPilotBookingUrl(selectedGaps, pilotScope)}>{children} <ArrowRight size={16} aria-hidden="true" /></a>;
 }
 
 function CostButton({ children = "Calculate Your Manager Ineffectiveness Cost", className = "" }: { children?: React.ReactNode; className?: string }) {
@@ -171,7 +171,7 @@ export default function Landing() {
 
     <section className="ln-impact-test" id="impact-test" aria-labelledby="impact-test-title"><div className="ln-section-frame"><div className="ln-section-intro ln-section-intro--light"><SectionEyebrow icon={FlaskConical} light>Prove it before you scale it</SectionEyebrow><SectionHeading id="impact-test-title" first="Give us 30 days." second="Measure what moves." /><p>Choose three management behaviours affecting performance. Give LevelNext 30 days to demonstrate measurable movement.</p></div><div className="ln-impact-test__layout"><div className="ln-test-steps">{[["01", "IDENTIFY", "Choose 2–3 costly management behaviours."], ["02", "BASELINE", "Establish current behaviour and agreed success measures."], ["03", "CHANGE", "Work on real situations using coaching, practice, commitments and follow-through."], ["04", "MEASURE", "Assess behaviour movement, action and evidence."], ["05", "DECIDE", "Scale or stop."]].map(([number, title, copy]) => <article key={number}><span>{number}</span><div><b>{title}</b><p>{copy}</p></div></article>)}</div><aside className="ln-test-card"><h3>30-Day Manager Impact Test</h3><div className="ln-pilot-toggle" aria-label="Choose pilot size"><span className={pilotScope === "small_cohort" ? "is-active" : ""}>Small cohort</span><button type="button" role="switch" aria-checked={pilotScope === "business_unit"} aria-label="Choose pilot scope" onClick={() => setPilotScope((scope) => scope === "small_cohort" ? "business_unit" : "small_cohort")}><span /></button><span className={pilotScope === "business_unit" ? "is-active" : ""}>Business unit</span></div><p className="ln-pilot-scope-note">{pilotScope === "small_cohort" ? "A focused group of 20–30 managers." : "A larger 50+ manager business-unit test."}</p><ul><li><Check size={15} /> {pilotScope === "small_cohort" ? "20–30 managers" : "50+ managers"}</li><li><Check size={15} /> 30 days</li><li><Check size={15} /> 2–3 agreed behaviours</li><li><Check size={15} /> Named executive sponsor</li><li><Check size={15} /> Baseline before launch</li><li><Check size={15} /> Day-30 Impact Review booked before launch</li></ul><PilotButton selectedGaps={selectedGaps} pilotScope={pilotScope} /><small>Scale what works. Stop what doesn’t.</small></aside></div></div></section>
 
-    <section className="ln-final-cta" aria-labelledby="final-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-section-frame"><SectionEyebrow icon={Target} light>The controlled business experiment</SectionEyebrow><SectionHeading id="final-title" first="Pick three behaviours." second="Give us 30 days." /><p>See whether LevelNext can move management behaviour before you decide to scale.</p><div className="ln-final-cta__actions"><PilotButton>Run a 30-Day Pilot Test</PilotButton><CostButton>Calculate Your Manager Ineffectiveness Cost</CostButton></div><strong className="ln-final-cta__close">Scale what works. Stop what doesn’t.</strong></div></section>
+    <section className="ln-final-cta" aria-labelledby="final-title"><div className="ln-grid" aria-hidden="true" /><div className="ln-section-frame"><SectionEyebrow icon={Target} light>The controlled business experiment</SectionEyebrow><SectionHeading id="final-title" first="Pick three behaviours." second="Give us 30 days." /><p>See whether LevelNext can move management behaviour before you decide to scale.</p><div className="ln-final-cta__actions"><PilotButton>Start a Pilot</PilotButton><CostButton>Calculate Your Manager Ineffectiveness Cost</CostButton></div><strong className="ln-final-cta__close">Scale what works. Stop what doesn’t.</strong></div></section>
 
     <footer className="ln-footer"><div className="ln-section-frame ln-footer__frame"><div className="ln-footer__brand"><a href="/" aria-label="LevelNext home"><img src="/logo.png" alt="LevelNext" /></a><p>A management effectiveness platform that changes behaviour in the flow of real work.</p></div><div className="ln-footer__links"><div><p>Explore</p><a href="#how-it-works">How It Works</a><a href="#impact-test">Impact Test</a><a href="#privacy">Evidence &amp; Privacy</a></div><div><p>Action</p><button type="button" onClick={() => scrollToSection("calculator")}>Calculate the Cost</button><a href={talkUrl} target="_blank" rel="noreferrer">Talk to LevelNext</a></div></div><p className="ln-footer__meta">LevelNext — A Meta Results Platform <a href="#top">Back to top <ChevronDown size={13} /></a></p></div></footer>
   </main>;

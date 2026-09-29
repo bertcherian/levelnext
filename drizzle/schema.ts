@@ -5217,3 +5217,80 @@ export const pilotlabResults = mysqlTable(
 );
 export type PilotlabResult = typeof pilotlabResults.$inferSelect;
 export type InsertPilotlabResult = typeof pilotlabResults.$inferInsert;
+
+// ─── 30-Day Behaviour Change Proof ────────────────────────────────────────────
+export const proofPilots = mysqlTable(
+  "proof_pilots",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    ownerUserId: int("ownerUserId").notNull().references(() => users.id),
+    name: varchar("name", { length: 160 }).notNull(),
+    companyContext: varchar("companyContext", { length: 255 }),
+    businessProblem: text("businessProblem").notNull(),
+    targetBehaviours: json("targetBehaviours").$type<string[]>().notNull(),
+    observableActions: json("observableActions").$type<string[]>().notNull(),
+    businessSignals: json("businessSignals").$type<string[]>().notNull(),
+    durationDays: int("durationDays").default(30).notNull(),
+    baselineMethod: varchar("baselineMethod", { length: 160 }).notNull(),
+    nudgeCadence: varchar("nudgeCadence", { length: 160 }).notNull(),
+    observerPulse: varchar("observerPulse", { length: 160 }).notNull(),
+    status: mysqlEnum("status", ["draft", "active", "completed", "paused"]).default("draft").notNull(),
+    launchedAt: timestamp("launchedAt"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("proof_pilots_owner_created_idx").on(table.ownerUserId, table.createdAt),
+    index("proof_pilots_status_idx").on(table.status, table.updatedAt),
+  ],
+);
+export type ProofPilot = typeof proofPilots.$inferSelect;
+export type InsertProofPilot = typeof proofPilots.$inferInsert;
+
+export const proofPilotParticipants = mysqlTable(
+  "proof_pilot_participants",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    email: varchar("email", { length: 320 }).notNull(),
+    name: varchar("name", { length: 160 }),
+    role: mysqlEnum("role", ["participant", "observer"]).default("participant").notNull(),
+    inviteToken: varchar("inviteToken", { length: 96 }).notNull().unique(),
+    inviteStatus: mysqlEnum("inviteStatus", ["pending", "opened", "active", "completed"]).default("pending").notNull(),
+    baselineCompletedAt: timestamp("baselineCompletedAt"),
+    firstRepAt: timestamp("firstRepAt"),
+    firstRealWorkAt: timestamp("firstRealWorkAt"),
+    lastActivityAt: timestamp("lastActivityAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("proof_participants_pilot_email_uq").on(table.pilotId, table.email),
+    index("proof_participants_pilot_status_idx").on(table.pilotId, table.inviteStatus),
+  ],
+);
+export type ProofPilotParticipant = typeof proofPilotParticipants.$inferSelect;
+export type InsertProofPilotParticipant = typeof proofPilotParticipants.$inferInsert;
+
+export const proofObservations = mysqlTable(
+  "proof_observations",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    participantId: int("participantId").notNull().references(() => proofPilotParticipants.id),
+    source: mysqlEnum("source", ["system", "behavioural", "human", "business_signal"]).notNull(),
+    observationType: varchar("observationType", { length: 80 }).notNull(),
+    summary: text("summary").notNull(),
+    outcomeSignal: text("outcomeSignal"),
+    evidenceLevel: int("evidenceLevel").default(1).notNull(),
+    privacyScope: mysqlEnum("privacyScope", ["private", "sponsor_aggregate"]).default("private").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("proof_observations_pilot_created_idx").on(table.pilotId, table.createdAt),
+    index("proof_observations_pilot_source_idx").on(table.pilotId, table.source),
+  ],
+);
+export type ProofObservation = typeof proofObservations.$inferSelect;
+export type InsertProofObservation = typeof proofObservations.$inferInsert;

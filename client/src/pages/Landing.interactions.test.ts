@@ -25,13 +25,13 @@ describe("LevelNext landing page interactions", () => {
     expect(screen.queryByRole("navigation", { name: "Mobile navigation" })).toBeNull();
   });
 
-  it("exposes the ineffectiveness calculator and personalized Pilot Test conversion paths", () => {
+  it("exposes the ineffectiveness calculator and personalized self-service pilot paths", () => {
     render(createElement(Landing));
 
     expect(screen.getAllByRole("button", { name: /Calculate Your Manager Ineffectiveness Cost/i }).length).toBeGreaterThan(0);
-    const pilotLinks = screen.getAllByRole("link", { name: /Run a 30-Day Pilot Test/i });
+    const pilotLinks = screen.getAllByRole("link", { name: /Start a Pilot/i });
     expect(pilotLinks.length).toBeGreaterThan(0);
-    expect(pilotLinks[0].getAttribute("href")).toContain("utm_campaign=30_day_impact_test");
+    expect(pilotLinks[0].getAttribute("href")).toContain("/pilot?");
     expect(pilotLinks[0].getAttribute("href")).toContain("pilot_scope=small_cohort");
   });
 
@@ -45,7 +45,7 @@ describe("LevelNext landing page interactions", () => {
     expect((managerSlider as HTMLInputElement).value).toBe("500");
 
     await user.click(screen.getByRole("button", { name: "Feedback comes too late" }));
-    const personalizedLink = screen.getAllByRole("link", { name: /Run a 30-Day Pilot Test/i })[0];
+    const personalizedLink = screen.getAllByRole("link", { name: /Start a Pilot/i })[0];
     expect(personalizedLink.getAttribute("href")).toContain("manager_behaviours=Feedback+comes+too+late");
   });
 
@@ -102,6 +102,6 @@ describe("LevelNext landing page interactions", () => {
     expect(scopeSwitch.getAttribute("aria-checked")).toBe("true");
     expect(screen.getByText("A larger 50+ manager business-unit test.")).toBeTruthy();
     expect(screen.getByText("50+ managers")).toBeTruthy();
-    expect(screen.getAllByRole("link", { name: /Run a 30-Day Pilot Test/i })[0].getAttribute("href")).toContain("pilot_scope=business_unit");
+    expect(screen.getAllByRole("link", { name: /Start a Pilot/i })[0].getAttribute("href")).toContain("pilot_scope=business_unit");
   });
 });

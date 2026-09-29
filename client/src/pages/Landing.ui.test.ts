@@ -69,7 +69,7 @@ describe("LevelNext business-diagnostic landing page", () => {
 
     expect(page).toContain("Give us 30 days.");
     expect(page).toContain("30-Day Manager Impact Test");
-    expect(page).toContain("Run a 30-Day Pilot Test");
+    expect(page).toContain("Start a Pilot");
     expect(page).toContain("Choose pilot scope");
     expect(page).toContain("Small cohort");
     expect(page).toContain("Business unit");
@@ -77,7 +77,7 @@ describe("LevelNext business-diagnostic landing page", () => {
     expect(page).toContain("20–30 managers");
     expect(page).toContain("Day-30 Impact Review booked before launch");
     expect(page).toContain("Scale what works. Stop what doesn’t.");
-    expect(page).toContain("utm_campaign=30_day_impact_test");
+    expect(page).toContain("/pilot?pilot_scope=small_cohort");
     expect(page).not.toContain("Early Career Intelligence");
     expect(page).not.toContain("One platform.");
     expect(page).not.toContain("60-day pilot journey");

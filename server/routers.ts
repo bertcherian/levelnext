@@ -82,6 +82,7 @@ import { personaBuilderRouter } from "./routers/personaBuilder";
 import { v3SituationRouter } from "./routers/v3Situation";
 import { managerAltitudeRouter } from "./routers/managerAltitude";
 import { pilotlabRouter } from "./routers/pilotlab";
+import { behaviourChangeProofRouter } from "./routers/behaviourChangeProof";
 
 export const appRouter = router({
   system: systemRouter,
@@ -173,6 +174,7 @@ export const appRouter = router({
   v3Situation: v3SituationRouter,
   managerAltitude: managerAltitudeRouter,
   pilotlab: pilotlabRouter,
+  behaviourChangeProof: behaviourChangeProofRouter,
 });
 
 export type AppRouter = typeof appRouter;
