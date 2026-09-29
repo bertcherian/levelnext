@@ -210,8 +210,21 @@ export function derivePilotHealth(input: { participants: number; baselineComplet
 
 export const PROOF_TRUST_STATES = ["green", "amber", "red"] as const;
 export const PROOF_NUDGE_DAYS = [3, 7, 15, 30] as const;
+export const PROOF_MOBILE_EVENT_TYPES = [
+  "qr_generated",
+  "qr_scanned",
+  "mobile_opened",
+  "mobile_activation_completed",
+  "first_behaviour_rep",
+  "install_offer_shown",
+  "install_accepted",
+  "mobile_return",
+  "deep_link_nudge_opened",
+  "real_work_pull_from_mobile",
+] as const;
 export type ProofTrustState = (typeof PROOF_TRUST_STATES)[number];
 export type ProofNudgeDay = (typeof PROOF_NUDGE_DAYS)[number];
+export type ProofMobileEventType = (typeof PROOF_MOBILE_EVENT_TYPES)[number];
 
 export const proofTrustEventSchema = z.object({
   token: proofTokenSchema.shape.token,
@@ -229,6 +242,20 @@ export const proofNudgeSettingsSchema = z.object({
   pilotId: proofPilotIdSchema.shape.pilotId,
   enabled: z.boolean(),
 });
+
+export const proofQrTokenSchema = z.object({ token: z.string().trim().min(32).max(128) });
+export const proofQrResolveSchema = z.object({
+  token: proofQrTokenSchema.shape.token,
+  email: z.string().trim().email(),
+  isMobile: z.boolean().default(false),
+});
+export const proofMobileEventSchema = z.object({
+  token: z.string().trim().min(16).max(128).optional(),
+  qrToken: z.string().trim().min(32).max(128).optional(),
+  eventType: z.enum(PROOF_MOBILE_EVENT_TYPES),
+  isMobile: z.boolean().default(false),
+  metadata: z.record(z.string(), z.string()).optional(),
+}).refine((input) => Boolean(input.token || input.qrToken), "A participant or QR token is required.");
 
 export const proofDocumentUploadSchema = z.object({
   pilotId: proofPilotIdSchema.shape.pilotId,

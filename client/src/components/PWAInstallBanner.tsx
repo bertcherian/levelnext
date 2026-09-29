@@ -1,130 +1,54 @@
-import { useState, useEffect } from "react";
-import { Download, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, Share, X } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
-// Extend Window to include the beforeinstallprompt event
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
-
-function isIOS() {
-  return /iphone|ipad|ipod/i.test(navigator.userAgent);
-}
-function isInStandaloneMode() {
-  return window.matchMedia("(display-mode: standalone)").matches ||
-    ("standalone" in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true);
-}
+function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function isInStandaloneMode() { return window.matchMedia("(display-mode: standalone)").matches || ("standalone" in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true); }
+function participantToken() { const match = window.location.pathname.match(/^\/pilot\/participant\/([^/]+)/); return match?.[1] ?? ""; }
+function isParticipantRoute() { return window.location.pathname.startsWith("/pilot/participant/"); }
 
 export default function PWAInstallBanner() {
+  const record = trpc.behaviourChangeProof.recordMobileEvent.useMutation();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const shownRef = useRef(false);
+  const token = participantToken();
 
   useEffect(() => {
-    // Don't show if already dismissed this session
-    if (sessionStorage.getItem("pwa-banner-dismissed")) return;
-    // Don't show if already installed (standalone mode)
-    if (isInStandaloneMode()) return;
-
-    // iOS Safari: no beforeinstallprompt event, show manual instructions
-    if (isIOS()) {
-      setVisible(true);
-      setShowIOSInstructions(true);
-      return;
-    }
-
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setVisible(true);
+    if (!isParticipantRoute() || isInStandaloneMode()) return;
+    const hasFirstValue = () => localStorage.getItem("levelnext_first_value_seen") === "1" || sessionStorage.getItem("levelnext_first_value_seen") === "1";
+    const maybeShow = () => {
+      if (!hasFirstValue()) return;
+      if (isIOS()) { setShowIOSInstructions(true); setVisible(true); return; }
+      if (deferredPrompt) setVisible(true);
     };
-
+    const handler = (event: Event) => { event.preventDefault(); setDeferredPrompt(event as BeforeInstallPromptEvent); if (hasFirstValue()) setVisible(true); };
+    const valueListener = () => window.setTimeout(maybeShow, 0);
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+    window.addEventListener("levelnext:first-value", valueListener);
+    maybeShow();
+    return () => { window.removeEventListener("beforeinstallprompt", handler); window.removeEventListener("levelnext:first-value", valueListener); };
+  }, [deferredPrompt]);
+
+  useEffect(() => {
+    if (!visible || shownRef.current || !token) return;
+    shownRef.current = true;
+    record.mutate({ token, eventType: "install_offer_shown", isMobile: true, metadata: { surface: "participant" } });
+  }, [record, token, visible]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      setVisible(false);
-    }
-    setDeferredPrompt(null);
+    if (outcome === "accepted" && token) record.mutate({ token, eventType: "install_accepted", isMobile: true, metadata: { surface: "participant" } });
+    setVisible(false); setDeferredPrompt(null);
   };
-
-  const handleDismiss = () => {
-    setVisible(false);
-    setDismissed(true);
-    sessionStorage.setItem("pwa-banner-dismissed", "1");
-  };
-
-  if (!visible || dismissed) return null;
-
-  return (
-    <div
-      className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-50 mx-4 mb-2 lg:hidden"
-      style={{ animation: "slideUp 0.3s cubic-bezier(0.23,1,0.32,1)" }}
-    >
-      <div
-        className="rounded-2xl p-4 flex items-center gap-3 shadow-xl"
-        style={{
-          background: "var(--color-ln-navy)",
-          border: "1px solid oklch(from var(--color-ln-yellow) l c h / 0.3)",
-        }}
-      >
-        {/* LN icon */}
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: "var(--color-ln-yellow)" }}
-        >
-          <span className="text-sm font-bold" style={{ color: "var(--color-ln-navy)" }}>LN</span>
-        </div>
-
-        {/* Text */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white leading-tight">Add LevelNext to your home screen</p>
-          <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.6)" }}>
-            Instant access, works offline
-          </p>
-        </div>
-
-        {/* Install button — Android/Chrome */}
-        {!showIOSInstructions && (
-          <button
-            onClick={handleInstall}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0 transition-opacity hover:opacity-90 active:scale-[0.97]"
-            style={{ background: "var(--color-ln-yellow)", color: "var(--color-ln-navy)" }}
-          >
-            <Download className="w-3.5 h-3.5" />
-            Install
-          </button>
-        )}
-
-        {/* Dismiss */}
-        <button
-          onClick={handleDismiss}
-          className="p-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
-          aria-label="Dismiss"
-        >
-          <X className="w-4 h-4 text-white/60" />
-        </button>
-      </div>
-
-      {/* iOS-specific instructions */}
-      {showIOSInstructions && (
-        <div className="mt-2 rounded-xl px-4 py-3 text-xs" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.8)" }}>
-          Tap <span className="font-semibold text-white">Share</span> (⬆) at the bottom of Safari, then <span className="font-semibold text-white">Add to Home Screen</span>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes slideUp {
-          from { transform: translateY(100%); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-      `}</style>
-    </div>
-  );
+  const dismiss = () => { setVisible(false); sessionStorage.setItem("levelnext-install-dismissed", "1"); };
+  if (!visible || sessionStorage.getItem("levelnext-install-dismissed") === "1") return null;
+  return <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-50 mx-3 mb-2 md:hidden" role="dialog" aria-label="Add LevelNext to your phone"><div className="rounded-2xl border border-[#D4AF37]/50 bg-[#0A1A2F] p-4 text-white shadow-2xl"><div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#D4AF37] text-sm font-bold text-[#0A1A2F]">LN</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold leading-tight">Add LevelNext to your phone</p><p className="mt-1 text-xs leading-5 text-white/65">Return to today’s pilot action in one tap. You can keep using the browser if you prefer.</p></div><button onClick={dismiss} className="rounded-full p-1 text-white/60 hover:bg-white/10" aria-label="Not now"><X size={16} /></button></div>{showIOSInstructions ? <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-xs leading-5 text-white/80"><Share className="mr-1 inline-block" size={13} />Tap <b className="text-white">Share</b> in Safari, then <b className="text-white">Add to Home Screen</b>.</p> : <button onClick={() => void handleInstall()} className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#D4AF37] px-4 text-sm font-semibold text-[#0A1A2F] active:scale-[0.98]"><Download size={16} /> Add LevelNext</button>}</div></div>;
 }

@@ -2,27 +2,36 @@
   "name": "LevelNext — Leadership Intelligence Platform",
   "short_name": "LevelNext",
   "description": "Build your Leadership Edge through AI coaching, diagnostics, and daily practice.",
-  "start_url": "/home",
+  "start_url": "/pilot",
+  "id": "/pilot",
   "display": "standalone",
-  "background_color": "#12345A",
-  "theme_color": "#12345A",
+  "background_color": "#F8F5F0",
+  "theme_color": "#0A1A2F",
   "orientation": "portrait-primary",
   "scope": "/",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
   "categories": ["productivity", "education", "business"],
+  "shortcuts": [
+    {
+      "name": "My pilot",
+      "short_name": "My pilot",
+      "url": "/pilot",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
   "screenshots": [],
   "prefer_related_applications": false
 }

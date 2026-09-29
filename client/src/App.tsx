@@ -98,6 +98,7 @@ const Pilotlab = lazyWithRouteRecovery(() => import("@/pages/Pilotlab"), "admin-
 const PilotBuilder = lazy(() => import("@/pages/PilotBuilder"));
 const PilotProofDashboard = lazy(() => import("@/pages/PilotProofDashboard"));
 const PilotParticipant = lazy(() => import("@/pages/PilotParticipant"));
+const PilotJoin = lazy(() => import("@/pages/PilotJoin"));
 const CareerLanding = lazy(() => import("@/pages/CareerLanding"));
 const CareerInvestment = lazy(() => import("@/pages/CareerInvestment"));
 const ResumeMakeover = lazy(() => import("@/pages/ci/ResumeMakeover"));
@@ -241,6 +242,20 @@ function LegacyLeaderHomeRedirect() {
   return <Home />;
 }
 
+function MobileParticipantReturnRedirect() {
+  const [location, navigate] = useLocation();
+  useEffect(() => {
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || ("standalone" in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true);
+    if (location !== "/pilot" || !standalone) return;
+    try {
+      const path = localStorage.getItem("levelnext_pilot_return_path");
+      const savedAt = Number(localStorage.getItem("levelnext_pilot_return_at") ?? 0);
+      if (path?.startsWith("/pilot/participant/") && Date.now() - savedAt < 45 * 24 * 60 * 60 * 1000) navigate(path, { replace: true });
+    } catch { /* storage may be unavailable */ }
+  }, [location, navigate]);
+  return null;
+}
+
 function Router() {
   return (
     <Switch>
@@ -312,6 +327,7 @@ function Router() {
       <Route path="/join-product" component={JoinProduct} />
       <Route path="/pilot" component={PilotBuilder} />
       <Route path="/pilot/dashboard" component={PilotProofDashboard} />
+      <Route path="/pilot/join/:token" component={PilotJoin} />
       <Route path="/pilot/participant/:token" component={PilotParticipant} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
@@ -446,6 +462,7 @@ function App() {
           <Suspense fallback={<LaunchRouteFallback />}>
             <Router />
           </Suspense>
+          <MobileParticipantReturnRedirect />
           <PostLoginProductActivator />
           <ClientErrorTelemetry />
           <VersionUpdateBanner />

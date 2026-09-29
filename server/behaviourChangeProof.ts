@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, inArray, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import {
   proofObservations,
@@ -9,6 +9,9 @@ import {
   proofNudgeDeliveries,
   proofSecurityDocuments,
   proofSecurityRequirements,
+  proofPilotQrLinks,
+  proofPilotAccessTokens,
+  proofMobileEvents,
   users,
   type ProofPilot,
   type ProofPilotParticipant,
@@ -27,6 +30,7 @@ import {
   derivePilotHealth,
   getProofDailyAction,
   nextBestPilotAction,
+  PROOF_MOBILE_EVENT_TYPES,
   recommendPilot,
   type ProofCommunicationPack,
   type ProofPrivacyConfig,
@@ -119,6 +123,7 @@ export async function createProofPilot(userId: number, input: ProofCreatePilotIn
   }).$returningId();
   const [pilot] = await db.select().from(proofPilots).where(eq(proofPilots.id, inserted.id)).limit(1);
   if (!pilot) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Pilot could not be created" });
+  await createProofQrLink(userId, pilot.id);
   return buildSponsorDashboard(pilot, [], []);
 }
 
@@ -160,7 +165,7 @@ export async function inviteProofParticipants(userId: number, pilotId: number, p
 
 export async function getProofParticipant(tokenValue: string) {
   const db = await database();
-  const [participant] = await db.select().from(proofPilotParticipants).where(eq(proofPilotParticipants.inviteToken, tokenValue)).limit(1);
+  const participant = await resolveParticipantToken(db, tokenValue);
   if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant invite not found" });
   const [pilot] = await db.select().from(proofPilots).where(eq(proofPilots.id, participant.pilotId)).limit(1);
   if (!pilot) throw new TRPCError({ code: "NOT_FOUND", message: "Pilot not found" });
@@ -192,11 +197,21 @@ export async function getProofParticipant(tokenValue: string) {
 
 async function participantContext(tokenValue: string) {
   const db = await database();
-  const [participant] = await db.select().from(proofPilotParticipants).where(eq(proofPilotParticipants.inviteToken, tokenValue)).limit(1);
+  const participant = await resolveParticipantToken(db, tokenValue);
   if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant invite not found" });
   const [pilot] = await db.select().from(proofPilots).where(eq(proofPilots.id, participant.pilotId)).limit(1);
   if (!pilot) throw new TRPCError({ code: "NOT_FOUND", message: "Pilot not found" });
   return { db, pilot, participant };
+}
+
+async function resolveParticipantToken(db: Awaited<ReturnType<typeof database>>, tokenValue: string) {
+  const [direct] = await db.select().from(proofPilotParticipants).where(eq(proofPilotParticipants.inviteToken, tokenValue)).limit(1);
+  if (direct) return direct;
+  const [access] = await db.select().from(proofPilotAccessTokens).where(and(eq(proofPilotAccessTokens.token, tokenValue), isNull(proofPilotAccessTokens.revokedAt), gt(proofPilotAccessTokens.expiresAt, new Date()))).limit(1);
+  if (!access) throw new TRPCError({ code: "NOT_FOUND", message: "Participant invite not found" });
+  await db.update(proofPilotAccessTokens).set({ lastUsedAt: new Date() }).where(eq(proofPilotAccessTokens.id, access.id));
+  const [participant] = await db.select().from(proofPilotParticipants).where(eq(proofPilotParticipants.id, access.participantId)).limit(1);
+  return participant;
 }
 
 export async function recordProofBaseline(tokenValue: string, currentSituation: string, desiredMovement: string) {
@@ -444,6 +459,87 @@ export async function getProofCommunicationPack(userId: number, pilotId: number)
   };
 }
 
+function qrExpiry() {
+  return new Date(Date.now() + 45 * 24 * 60 * 60 * 1000);
+}
+
+export async function createProofQrLink(userId: number, pilotId: number, rotate = false) {
+  const { db, pilot } = await ownedPilot(userId, pilotId);
+  const now = new Date();
+  if (rotate) await db.update(proofPilotQrLinks).set({ revokedAt: now }).where(and(eq(proofPilotQrLinks.pilotId, pilot.id), isNull(proofPilotQrLinks.revokedAt)));
+  if (!rotate) {
+    const [current] = await db.select().from(proofPilotQrLinks).where(and(eq(proofPilotQrLinks.pilotId, pilot.id), isNull(proofPilotQrLinks.revokedAt), gt(proofPilotQrLinks.expiresAt, now))).orderBy(desc(proofPilotQrLinks.createdAt)).limit(1);
+    if (current) return current;
+  }
+  const [created] = await db.insert(proofPilotQrLinks).values({ pilotId: pilot.id, createdByUserId: userId, token: token(), expiresAt: qrExpiry() }).$returningId();
+  const [link] = await db.select().from(proofPilotQrLinks).where(eq(proofPilotQrLinks.id, created.id)).limit(1);
+  if (!link) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Pilot QR link could not be created" });
+  await db.insert(proofMobileEvents).values({ pilotId: pilot.id, eventType: "qr_generated", source: "sponsor", isMobile: false, metadata: { rotated: String(rotate) } });
+  return link;
+}
+
+export async function getProofQrOverview(userId: number, pilotId: number, origin: string) {
+  const { db, pilot } = await ownedPilot(userId, pilotId);
+  const [link] = await db.select().from(proofPilotQrLinks).where(and(eq(proofPilotQrLinks.pilotId, pilot.id), isNull(proofPilotQrLinks.revokedAt), gt(proofPilotQrLinks.expiresAt, new Date()))).orderBy(desc(proofPilotQrLinks.createdAt)).limit(1);
+  const events = await db.select().from(proofMobileEvents).where(eq(proofMobileEvents.pilotId, pilot.id)).orderBy(desc(proofMobileEvents.createdAt));
+  const count = (eventType: string) => events.filter((event) => event.eventType === eventType).length;
+  return {
+    pilotId: pilot.id,
+    pilotName: pilot.name,
+    joinUrl: link ? `${origin.replace(/\/$/, "")}/pilot/join/${link.token}` : null,
+    token: link?.token ?? null,
+    expiresAt: link?.expiresAt ?? null,
+    revokedAt: link?.revokedAt ?? null,
+    scanCount: link?.scanCount ?? 0,
+    mobileMetrics: {
+      qrGenerated: count("qr_generated"), qrScanned: count("qr_scanned"), mobileOpened: count("mobile_opened"),
+      mobileActivationCompleted: count("mobile_activation_completed"), firstBehaviourRep: count("first_behaviour_rep"),
+      installOfferShown: count("install_offer_shown"), installAccepted: count("install_accepted"), mobileReturn: count("mobile_return"),
+      deepLinkNudgeOpened: count("deep_link_nudge_opened"), realWorkPullFromMobile: count("real_work_pull_from_mobile"),
+    },
+  };
+}
+
+export async function revokeProofQrLink(userId: number, pilotId: number) {
+  const { db, pilot } = await ownedPilot(userId, pilotId);
+  const now = new Date();
+  await db.update(proofPilotQrLinks).set({ revokedAt: now }).where(and(eq(proofPilotQrLinks.pilotId, pilot.id), isNull(proofPilotQrLinks.revokedAt)));
+  await db.update(proofPilotAccessTokens).set({ revokedAt: now }).where(and(eq(proofPilotAccessTokens.pilotId, pilot.id), isNull(proofPilotAccessTokens.revokedAt)));
+  return { revoked: true };
+}
+
+export async function resolveProofQrJoin(qrToken: string, email: string, isMobile: boolean) {
+  const db = await database();
+  const now = new Date();
+  const [link] = await db.select().from(proofPilotQrLinks).where(and(eq(proofPilotQrLinks.token, qrToken), isNull(proofPilotQrLinks.revokedAt), gt(proofPilotQrLinks.expiresAt, now))).limit(1);
+  if (!link) throw new TRPCError({ code: "NOT_FOUND", message: "This pilot QR is no longer active. Ask the sponsor for a new QR." });
+  await db.update(proofPilotQrLinks).set({ scanCount: sql`${proofPilotQrLinks.scanCount} + 1`, lastScannedAt: now }).where(eq(proofPilotQrLinks.id, link.id));
+  await db.insert(proofMobileEvents).values({ pilotId: link.pilotId, eventType: "qr_scanned", source: "qr_join", isMobile, metadata: { emailDomain: email.trim().toLowerCase().split("@")[1] ?? "unknown" } });
+  const [participant] = await db.select().from(proofPilotParticipants).where(and(eq(proofPilotParticipants.pilotId, link.pilotId), eq(proofPilotParticipants.email, email.trim().toLowerCase()))).limit(1);
+  if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Use the email address included in your LevelNext invitation, or ask the sponsor to add you." });
+  const accessToken = token();
+  const expiresAt = new Date(Math.min(link.expiresAt.getTime(), now.getTime() + 31 * 24 * 60 * 60 * 1000));
+  await db.insert(proofPilotAccessTokens).values({ pilotId: link.pilotId, participantId: participant.id, token: accessToken, expiresAt });
+  await db.insert(proofMobileEvents).values({ pilotId: link.pilotId, participantId: participant.id, eventType: "mobile_opened", source: "qr_join", isMobile, metadata: { access: "email_bound" } });
+  return { participantToken: accessToken, expiresAt };
+}
+
+export async function recordProofMobileEvent(input: { token?: string; qrToken?: string; eventType: typeof PROOF_MOBILE_EVENT_TYPES[number]; isMobile: boolean; metadata?: Record<string, string> }) {
+  const db = await database();
+  let pilotId: number | undefined; let participantId: number | undefined;
+  if (input.token) {
+    const participant = await resolveParticipantToken(db, input.token);
+    if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant token not found" });
+    pilotId = participant.pilotId; participantId = participant.id;
+  } else if (input.qrToken) {
+    const [link] = await db.select({ pilotId: proofPilotQrLinks.pilotId }).from(proofPilotQrLinks).where(eq(proofPilotQrLinks.token, input.qrToken)).limit(1);
+    pilotId = link?.pilotId;
+  }
+  if (!pilotId) throw new TRPCError({ code: "NOT_FOUND", message: "Mobile access token not found" });
+  await db.insert(proofMobileEvents).values({ pilotId, participantId: participantId ?? null, eventType: input.eventType, source: input.qrToken ? "qr_join" : "participant", isMobile: input.isMobile, metadata: input.metadata ?? null });
+  return { ok: true };
+}
+
 export async function recordProofTrustEvent(tokenValue: string, eventType: string, response?: string, detail?: string) {
   const { db, pilot, participant } = await participantContext(tokenValue);
   const now = new Date();
@@ -517,7 +613,7 @@ export async function deliverProofNudges(taskUid: string, origin: string) {
     const deliveryKey = `participant:${participant.id}:${milestone}`;
     const prior = await db.select({ id: proofNudgeDeliveries.id }).from(proofNudgeDeliveries).where(eq(proofNudgeDeliveries.deliveryKey, deliveryKey)).limit(1);
     if (prior.length) continue;
-    const link = `${origin}/pilot/participant/${participant.inviteToken}`;
+    const link = `${origin}/pilot/participant/${participant.inviteToken}?source=nudge`;
     await sendEmail({ to: participant.email, subject: copy.participantSubject, html: brandedNudgeEmail(participant.name || "there", copy.participantBody, link, "Start my 30-day experience →") });
     await db.insert(proofNudgeDeliveries).values({ pilotId: pilot.id, participantId: participant.id, recipientType: "participant", milestoneDay: milestone, deliveryKey, deliveredAt: now });
     await db.update(proofPilotParticipants).set({ lastNudgeAt: now }).where(eq(proofPilotParticipants.id, participant.id));

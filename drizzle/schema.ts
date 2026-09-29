@@ -5306,6 +5306,69 @@ export const proofPilotParticipants = mysqlTable(
 export type ProofPilotParticipant = typeof proofPilotParticipants.$inferSelect;
 export type InsertProofPilotParticipant = typeof proofPilotParticipants.$inferInsert;
 
+export const proofPilotQrLinks = mysqlTable(
+  "proof_pilot_qr_links",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    createdByUserId: int("createdByUserId").notNull().references(() => users.id),
+    token: varchar("token", { length: 96 }).notNull().unique(),
+    expiresAt: timestamp("expiresAt").notNull(),
+    revokedAt: timestamp("revokedAt"),
+    scanCount: int("scanCount").default(0).notNull(),
+    lastScannedAt: timestamp("lastScannedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("proof_qr_links_pilot_idx").on(table.pilotId, table.revokedAt),
+    index("proof_qr_links_expiry_idx").on(table.expiresAt),
+  ],
+);
+export type ProofPilotQrLink = typeof proofPilotQrLinks.$inferSelect;
+export type InsertProofPilotQrLink = typeof proofPilotQrLinks.$inferInsert;
+
+export const proofPilotAccessTokens = mysqlTable(
+  "proof_pilot_access_tokens",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    participantId: int("participantId").notNull().references(() => proofPilotParticipants.id),
+    token: varchar("token", { length: 96 }).notNull().unique(),
+    tokenType: mysqlEnum("tokenType", ["qr_join"]).default("qr_join").notNull(),
+    expiresAt: timestamp("expiresAt").notNull(),
+    revokedAt: timestamp("revokedAt"),
+    lastUsedAt: timestamp("lastUsedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("proof_access_tokens_participant_idx").on(table.participantId, table.expiresAt),
+    index("proof_access_tokens_pilot_idx").on(table.pilotId, table.expiresAt),
+  ],
+);
+export type ProofPilotAccessToken = typeof proofPilotAccessTokens.$inferSelect;
+export type InsertProofPilotAccessToken = typeof proofPilotAccessTokens.$inferInsert;
+
+export const proofMobileEvents = mysqlTable(
+  "proof_mobile_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    participantId: int("participantId").references(() => proofPilotParticipants.id),
+    eventType: varchar("eventType", { length: 80 }).notNull(),
+    source: varchar("source", { length: 40 }).notNull(),
+    isMobile: boolean("isMobile").default(false).notNull(),
+    metadata: json("metadata").$type<Record<string, string>>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("proof_mobile_events_pilot_type_idx").on(table.pilotId, table.eventType, table.createdAt),
+    index("proof_mobile_events_participant_idx").on(table.participantId, table.createdAt),
+  ],
+);
+export type ProofMobileEvent = typeof proofMobileEvents.$inferSelect;
+export type InsertProofMobileEvent = typeof proofMobileEvents.$inferInsert;
+
 export const proofObservations = mysqlTable(
   "proof_observations",
   {
