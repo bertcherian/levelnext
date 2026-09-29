@@ -708,6 +708,13 @@
       "when": 1790694842192,
       "tag": "0100_clammy_marvel_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "5",
+      "when": 1790696343021,
+      "tag": "0101_curvy_white_tiger",
+      "breakpoints": true
     }
   ]
 }

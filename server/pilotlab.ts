@@ -11,6 +11,7 @@ import {
 import { getDb } from "./db";
 import {
   initialAgentState,
+  DEFAULT_PILOTLAB_CHAOS_CONFIG,
   PILOTLAB_AGENT_PROFILES,
   PILOTLAB_DIMENSIONS,
   PILOTLAB_SCENARIOS,
@@ -19,10 +20,14 @@ import {
   type PilotlabAgentState,
   type PilotlabDimensionResult,
   type PilotlabFailureCode,
+  type PilotlabChaosConfig,
+  type PilotlabAssuranceReport,
+  type PilotlabLiveEvaluation,
   type PilotlabScenario,
   type PilotlabSeverity,
   type PilotlabSimulationSummary,
 } from "../shared/modules/pilotlab";
+import type { TrpcContext } from "./_core/context";
 
 const RUN_CODE_PREFIX = "PL";
 const MAX_DAYS = 60;
@@ -78,6 +83,21 @@ function profileFor(key: string) {
   const profile = PILOTLAB_AGENT_PROFILES.find((candidate) => candidate.key === key);
   if (!profile) throw new Error(`Unknown Pilotlab manager: ${key}`);
   return profile;
+}
+
+function chaosFor(value: unknown): PilotlabChaosConfig {
+  const config = asRecord(value);
+  return {
+    ...DEFAULT_PILOTLAB_CHAOS_CONFIG,
+    enabled: Boolean(config.enabled),
+    resistanceVariance: Math.max(0, Math.min(30, Number(config.resistanceVariance ?? 0))),
+    workloadShockDay: config.workloadShockDay == null ? null : Math.max(1, Math.min(60, Number(config.workloadShockDay))),
+    memoryGaps: Boolean(config.memoryGaps),
+    stakeholderEscalation: Boolean(config.stakeholderEscalation),
+    evidenceAmbiguity: Boolean(config.evidenceAmbiguity),
+    unpredictableRelapse: Boolean(config.unpredictableRelapse),
+    notes: String(config.notes ?? ""),
+  };
 }
 
 function agentPlaneSeed(profile: PilotlabAgentProfile) {
@@ -138,17 +158,21 @@ function expectedPlatformResponse(profile: PilotlabAgentProfile, scenario: Pilot
   return { disclosure, response, missedCommitment, possibleGaming, relapse, alreadyStrong };
 }
 
-function applyTrajectory(profile: PilotlabAgentProfile, scenario: PilotlabScenario, current: PilotlabAgentState) {
+function applyTrajectory(profile: PilotlabAgentProfile, scenario: PilotlabScenario, current: PilotlabAgentState, chaos: PilotlabChaosConfig) {
   const next = { ...current };
   let evidenceLevel = Math.max(1, current.evidenceLevel);
   let completed = false;
   let failureCode: PilotlabFailureCode | null = null;
   let severity: PilotlabSeverity = "informational";
   let note = "A permitted interaction was evaluated without accessing hidden ground truth.";
+  const chaosActive = chaos.enabled;
+  const resistanceVariance = chaosActive ? chaos.resistanceVariance : 0;
+  const workloadShock = chaosActive && chaos.workloadShockDay === scenario.virtualDay;
+  const memoryGap = chaosActive && chaos.memoryGaps && scenario.virtualDay % 3 === 0;
 
   if (profile.trajectory === "resistant_breakthrough") {
     if (scenario.virtualDay < 20) {
-      next.resistance = clamp(next.resistance + 3);
+      next.resistance = clamp(next.resistance + 3 + resistanceVariance);
       next.missedCommitments += 1;
       evidenceLevel = 2;
       failureCode = "F5_MISSED_COMMITMENT";
@@ -171,14 +195,14 @@ function applyTrajectory(profile: PilotlabAgentProfile, scenario: PilotlabScenar
     note = "The manager's self-report is intentionally articulate but remains uncorroborated. Treating this as observable outcome would be a critical evidence-integrity failure.";
   } else if (profile.trajectory === "improvement_relapse_recovery") {
     if (scenario.virtualDay >= 30 && scenario.virtualDay < 43) {
-      next.workload = clamp(next.workload + 25);
+      next.workload = clamp(next.workload + 25 + (workloadShock ? 20 : 0));
       next.resistance = clamp(next.resistance + 14);
       next.relapseDetected = true;
       next.missedCommitments += 1;
       evidenceLevel = 2;
-      failureCode = "F1_MEMORY_FAILURE";
+      failureCode = memoryGap ? "F1_MEMORY_FAILURE" : "F5_MISSED_COMMITMENT";
       severity = "warning";
-      note = "The manager has relapsed under workload pressure. The test is whether the system preserves continuity and detects the deviation from prior behavior.";
+      note = `The manager has relapsed under workload pressure${workloadShock ? " with a configured workload shock" : ""}. The test is whether the system preserves continuity and detects the deviation from prior behavior.`;
     } else if (scenario.virtualDay >= 43) {
       next.workload = clamp(next.workload - 10);
       next.completedCommitments += 1;
@@ -212,6 +236,23 @@ function applyTrajectory(profile: PilotlabAgentProfile, scenario: PilotlabScenar
   }
 
   next.evidenceLevel = Math.max(next.evidenceLevel, evidenceLevel);
+  if (memoryGap) {
+    next.evidenceLevel = Math.max(1, next.evidenceLevel - 1);
+    note += " A configured memory-gap perturbation reduced permitted continuity evidence for this event.";
+  }
+  if (chaosActive && chaos.evidenceAmbiguity && scenario.virtualDay % 2 === 0) {
+    next.evidenceLevel = Math.min(next.evidenceLevel, 2);
+    note += " A configured evidence-ambiguity perturbation kept the result at a low evidence level.";
+  }
+  if (chaosActive && chaos.stakeholderEscalation && scenario.virtualDay % 4 === 0) {
+    next.emotion = clamp(next.emotion - 12);
+    note += " A configured stakeholder escalation increased emotional load without changing hidden truth.";
+  }
+  if (chaosActive && chaos.unpredictableRelapse && scenario.virtualDay >= 18 && scenario.virtualDay % 5 === 0) {
+    next.relapseDetected = true;
+    next.resistance = clamp(next.resistance + 9);
+    note += " A configured unpredictable relapse variation was introduced for resilience testing.";
+  }
   next.emotion = clamp(profile.trajectory === "improvement_relapse_recovery" && scenario.virtualDay >= 30 && scenario.virtualDay < 43 ? 38 : next.emotion + (completed ? 5 : -3));
   return { next, evidenceLevel, completed, failureCode, severity, note };
 }
@@ -283,7 +324,7 @@ async function fetchEventProjection(db: Db, runId: number) {
   }).from(pilotlabEvents).where(eq(pilotlabEvents.runId, runId)).orderBy(asc(pilotlabEvents.virtualDay), asc(pilotlabEvents.id));
 }
 
-export async function createPilotlabRun(ownerUserId: number, name: string) {
+export async function createPilotlabRun(ownerUserId: number, name: string, platformVersion = "current-preview", chaosConfig: PilotlabChaosConfig = DEFAULT_PILOTLAB_CHAOS_CONFIG) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const runCode = `${RUN_CODE_PREFIX}-${nanoid(7).toUpperCase()}`;
@@ -291,7 +332,9 @@ export async function createPilotlabRun(ownerUserId: number, name: string) {
     ownerUserId,
     runCode,
     name,
+    platformVersion,
     scenariosTotal: PILOTLAB_SCENARIOS.length,
+    chaosConfig,
   }).$returningId();
 
   const runId = created.id;
@@ -310,6 +353,7 @@ export async function advancePilotlabRun(runId: number, requestedDays: number) {
   if (run.status === "completed") return getPilotlabRunDetails(runId);
 
   const targetDay = Math.min(MAX_DAYS, Math.max(run.virtualDay + 1, run.virtualDay + requestedDays));
+  const chaos = chaosFor(run.chaosConfig);
   const executedCodes = new Set((await db.select({ scenarioCode: pilotlabEvents.scenarioCode }).from(pilotlabEvents).where(and(eq(pilotlabEvents.runId, runId), eq(pilotlabEvents.actorType, "levelnext_simulation")))).map((event) => event.scenarioCode));
   const agents = await db.select().from(pilotlabAgents).where(eq(pilotlabAgents.runId, runId));
   const agentsByKey = new Map(agents.map((agent) => [agent.managerKey, agent]));
@@ -324,7 +368,7 @@ export async function advancePilotlabRun(runId: number, requestedDays: number) {
     if (!agent) continue;
     const current = asAgentState(agent.currentState, profile);
     const projected = expectedPlatformResponse(profile, scenario, current);
-    const change = applyTrajectory(profile, scenario, current);
+    const change = applyTrajectory(profile, scenario, current, chaos);
     const permittedContext = {
       scenario: publicScenarioProjection(scenario),
       managerDisclosure: projected.disclosure,
@@ -350,7 +394,7 @@ export async function advancePilotlabRun(runId: number, requestedDays: number) {
       action: { expectedAction: scenario.expectedAction, completed: change.completed },
       stateChange: { before: current, after: change.next },
       evidenceGenerated: { level: change.evidenceLevel, label: change.evidenceLevel <= 3 ? "practice_or_intent" : "self_reported_action", warning: "Simulation evidence is not live-pilot evidence." },
-      evaluatorResult,
+      evaluatorResult: { ...evaluatorResult, chaos: chaos.enabled ? chaos : null },
       failureCode: change.failureCode,
       severity: change.severity,
       evidenceLevel: change.evidenceLevel,

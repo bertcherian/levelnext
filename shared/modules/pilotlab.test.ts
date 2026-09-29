@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_PILOTLAB_CHAOS_CONFIG,
   getPilotlabScenarioCounts,
   initialAgentState,
   PILOTLAB_AGENT_PROFILES,
@@ -42,5 +43,19 @@ describe("Pilotlab manager-agent states", () => {
     expect(state.completedCommitments).toBe(0);
     expect(state.narrative).toBe(profile.hiddenTension);
     expect(state.resistance).toBe(100 - profile.baseline.coachability);
+  });
+});
+
+describe("Pilotlab assurance guardrails", () => {
+  it("keeps the default chaos profile disabled and bounded for repeatable baseline comparisons", () => {
+    expect(DEFAULT_PILOTLAB_CHAOS_CONFIG).toMatchObject({
+      enabled: false,
+      resistanceVariance: 0,
+      workloadShockDay: null,
+      memoryGaps: false,
+      stakeholderEscalation: false,
+      evidenceAmbiguity: false,
+      unpredictableRelapse: false,
+    });
   });
 });

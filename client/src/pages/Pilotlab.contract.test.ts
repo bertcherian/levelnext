@@ -20,4 +20,13 @@ describe("Pilotlab integration contract", () => {
     expect(page).toContain("Ground truth remains auditor-only");
     expect(page).toContain("Truth is not coaching context");
   });
+
+  it("wires controlled live adapters, versioned assurance exports, and explicit chaos controls", () => {
+    expect(router).toContain("runLiveEvaluation: adminProcedure");
+    expect(router).toContain("assuranceReport: adminProcedure");
+    expect(page).toContain("Run live adapters");
+    expect(page).toContain("Download JSON + CSV");
+    expect(page).toContain("Enable chaos profile");
+    expect(page).toContain("Platform version label");
+  });
 });

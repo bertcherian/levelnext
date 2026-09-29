@@ -276,8 +276,72 @@ export type PilotlabSimulationSummary = {
 
 export const pilotlabCreateRunSchema = z.object({
   name: z.string().trim().min(3).max(160).default("60-day Manager Behaviour Pilot"),
+  platformVersion: z.string().trim().min(1).max(80).default("current-preview"),
+  chaosConfig: z.object({
+    enabled: z.boolean().default(false),
+    resistanceVariance: z.number().int().min(0).max(30).default(0),
+    workloadShockDay: z.number().int().min(1).max(60).nullable().default(null),
+    memoryGaps: z.boolean().default(false),
+    stakeholderEscalation: z.boolean().default(false),
+    evidenceAmbiguity: z.boolean().default(false),
+    unpredictableRelapse: z.boolean().default(false),
+    notes: z.string().trim().max(300).default(""),
+  }).default({
+    enabled: false,
+    resistanceVariance: 0,
+    workloadShockDay: null,
+    memoryGaps: false,
+    stakeholderEscalation: false,
+    evidenceAmbiguity: false,
+    unpredictableRelapse: false,
+    notes: "",
+  }),
 });
 export type PilotlabCreateRunInput = z.infer<typeof pilotlabCreateRunSchema>;
+
+export type PilotlabChaosConfig = PilotlabCreateRunInput["chaosConfig"];
+export const DEFAULT_PILOTLAB_CHAOS_CONFIG: PilotlabChaosConfig = {
+  enabled: false,
+  resistanceVariance: 0,
+  workloadShockDay: null,
+  memoryGaps: false,
+  stakeholderEscalation: false,
+  evidenceAmbiguity: false,
+  unpredictableRelapse: false,
+  notes: "",
+};
+
+export type PilotlabLiveEvaluation = {
+  executedAt: string;
+  platformVersion: string;
+  scenarioCode: string;
+  coach: { status: "passed" | "failed"; sessionId?: number; response?: string; error?: string };
+  practicePartner: { status: "passed" | "failed"; sessionId?: number; response?: string; error?: string };
+  simulator: { status: "passed" | "failed"; sessionId?: number; response?: string; error?: string };
+  evidenceBoundary: "synthetic_only";
+};
+
+export type PilotlabAssuranceReport = {
+  reportCode: string;
+  generatedAt: string;
+  platform: { version: string; comparedVersions: string[] };
+  runs: Array<{
+    runId: number;
+    runCode: string;
+    name: string;
+    platformVersion: string;
+    status: string;
+    virtualDay: number;
+    scenariosExecuted: number;
+    interactions: number;
+    dimensions: PilotlabDimensionResult[];
+    failureCounts: Record<string, number>;
+    liveEvaluationCount: number;
+    chaosConfig: PilotlabChaosConfig;
+  }>;
+  comparison: Array<{ dimension: PilotlabDimension; scores: Array<{ runCode: string; platformVersion: string; score: number }> }>;
+  limitations: string[];
+};
 
 export function publicScenarioProjection(scenario: PilotlabScenario) {
   return {

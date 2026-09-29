@@ -7,6 +7,7 @@ import {
   getPilotlabRunForAdmin,
   getPilotlabWorkspace,
 } from "../pilotlab";
+import { buildPilotlabAssuranceReport, runPilotlabLiveEvaluation } from "../pilotlabIntegrations";
 import { pilotlabCreateRunSchema } from "../../shared/modules/pilotlab";
 
 function toTrpcError(error: unknown): never {
@@ -28,7 +29,7 @@ export const pilotlabRouter = router({
 
   createRun: adminProcedure.input(pilotlabCreateRunSchema).mutation(async ({ ctx, input }) => {
     try {
-      return await createPilotlabRun(ctx.user.id, input.name);
+      return await createPilotlabRun(ctx.user.id, input.name, input.platformVersion, input.chaosConfig);
     } catch (error) {
       return toTrpcError(error);
     }
@@ -40,6 +41,27 @@ export const pilotlabRouter = router({
   })).mutation(async ({ input }) => {
     try {
       return await advancePilotlabRun(input.runId, input.days);
+    } catch (error) {
+      return toTrpcError(error);
+    }
+  }),
+
+  runLiveEvaluation: adminProcedure.input(z.object({
+    runId: z.number().int().positive(),
+    scenarioCode: z.string().trim().min(1).max(32).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    try {
+      return await runPilotlabLiveEvaluation(input.runId, ctx, input.scenarioCode);
+    } catch (error) {
+      return toTrpcError(error);
+    }
+  }),
+
+  assuranceReport: adminProcedure.input(z.object({
+    runIds: z.array(z.number().int().positive()).max(10).default([]),
+  })).mutation(async ({ input }) => {
+    try {
+      return await buildPilotlabAssuranceReport(input.runIds);
     } catch (error) {
       return toTrpcError(error);
     }
