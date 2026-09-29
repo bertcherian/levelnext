@@ -94,6 +94,7 @@ const AdminOrgContext = lazyWithRouteRecovery(() => import("@/pages/AdminOrgCont
 const WarRoom = lazyWithRouteRecovery(() => import("@/pages/WarRoom"), "admin-war-room");
 const AdminParticipantImport = lazyWithRouteRecovery(() => import("@/pages/AdminParticipantImport"), "admin-participant-import");
 const AdminModelEvaluator = lazyWithRouteRecovery(() => import("@/pages/AdminModelEvaluator"), "admin-model-evaluator");
+const Pilotlab = lazyWithRouteRecovery(() => import("@/pages/Pilotlab"), "admin-pilotlab");
 const CareerLanding = lazy(() => import("@/pages/CareerLanding"));
 const CareerInvestment = lazy(() => import("@/pages/CareerInvestment"));
 const ResumeMakeover = lazy(() => import("@/pages/ci/ResumeMakeover"));
@@ -361,6 +362,7 @@ function Router() {
       <Route path="/admin/org-context" component={AdminOrgContext} />
       <Route path="/admin/participants/import" component={AdminParticipantImport} />
       <Route path="/admin/model-evaluator" component={AdminModelEvaluator} />
+      <Route path="/admin/pilotlab" component={Pilotlab} />
       <Route path="/next-chapter" component={NextChapter} />
       <Route path="/next-chapter/portfolio" component={NextChapterPortfolio} />
       <Route path="/next-chapter/identity-assessment" component={IdentityClarityAssessment} />

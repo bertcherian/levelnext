@@ -5110,3 +5110,107 @@ export const personaBuilderReminderSettings = mysqlTable(
 );
 export type PersonaBuilderReminderSetting = typeof personaBuilderReminderSettings.$inferSelect;
 export type InsertPersonaBuilderReminderSetting = typeof personaBuilderReminderSettings.$inferInsert;
+
+// ─── Pilotlab: behavioral digital-twin simulation and audit trail ────────────
+export const pilotlabRuns = mysqlTable(
+  "pilotlab_runs",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    ownerUserId: int("ownerUserId").notNull().references(() => users.id),
+    runCode: varchar("runCode", { length: 32 }).notNull().unique(),
+    name: varchar("name", { length: 160 }).notNull(),
+    status: mysqlEnum("status", ["draft", "running", "completed", "failed"]).default("draft").notNull(),
+    virtualDay: int("virtualDay").default(0).notNull(),
+    virtualDurationDays: int("virtualDurationDays").default(60).notNull(),
+    managerCount: int("managerCount").default(5).notNull(),
+    interactions: int("interactions").default(0).notNull(),
+    scenariosTotal: int("scenariosTotal").default(50).notNull(),
+    scenariosExecuted: int("scenariosExecuted").default(0).notNull(),
+    summary: json("summary").$type<Record<string, unknown> | null>(),
+    failureSummary: json("failureSummary").$type<Record<string, unknown> | null>(),
+    startedAt: timestamp("startedAt"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("pilotlab_runs_owner_created_idx").on(table.ownerUserId, table.createdAt),
+    index("pilotlab_runs_status_idx").on(table.status, table.updatedAt),
+  ],
+);
+export type PilotlabRun = typeof pilotlabRuns.$inferSelect;
+export type InsertPilotlabRun = typeof pilotlabRuns.$inferInsert;
+
+export const pilotlabAgents = mysqlTable(
+  "pilotlab_agents",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    runId: int("runId").notNull().references(() => pilotlabRuns.id),
+    managerKey: varchar("managerKey", { length: 32 }).notNull(),
+    name: varchar("name", { length: 160 }).notNull(),
+    role: varchar("role", { length: 160 }).notNull(),
+    trajectory: mysqlEnum("trajectory", ["resistant_breakthrough", "false_positive", "improvement_relapse_recovery", "slow_compounder", "already_strong"]).notNull(),
+    groundTruth: json("groundTruth").$type<Record<string, unknown>>().notNull(),
+    managerReality: json("managerReality").$type<Record<string, unknown>>().notNull(),
+    levelNextReality: json("levelNextReality").$type<Record<string, unknown>>().notNull(),
+    currentState: json("currentState").$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("pilotlab_agents_run_manager_uq").on(table.runId, table.managerKey),
+    index("pilotlab_agents_run_idx").on(table.runId, table.createdAt),
+  ],
+);
+export type PilotlabAgent = typeof pilotlabAgents.$inferSelect;
+export type InsertPilotlabAgent = typeof pilotlabAgents.$inferInsert;
+
+export const pilotlabEvents = mysqlTable(
+  "pilotlab_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    runId: int("runId").notNull().references(() => pilotlabRuns.id),
+    agentId: int("agentId").references(() => pilotlabAgents.id),
+    scenarioCode: varchar("scenarioCode", { length: 32 }).notNull(),
+    virtualDay: int("virtualDay").notNull(),
+    actorType: varchar("actorType", { length: 40 }).notNull(),
+    informationPlane: mysqlEnum("informationPlane", ["ground_truth", "manager_reality", "levelnext_reality", "auditor", "sponsor"]).notNull(),
+    permittedContext: json("permittedContext").$type<Record<string, unknown>>().notNull(),
+    levelNextResponse: text("levelNextResponse"),
+    action: json("action").$type<Record<string, unknown> | null>(),
+    stateChange: json("stateChange").$type<Record<string, unknown> | null>(),
+    evidenceGenerated: json("evidenceGenerated").$type<Record<string, unknown> | null>(),
+    evaluatorResult: json("evaluatorResult").$type<Record<string, unknown> | null>(),
+    failureCode: varchar("failureCode", { length: 64 }),
+    severity: mysqlEnum("severity", ["informational", "warning", "significant", "critical"]).default("informational").notNull(),
+    evidenceLevel: int("evidenceLevel").default(1).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("pilotlab_events_run_day_idx").on(table.runId, table.virtualDay),
+    index("pilotlab_events_agent_day_idx").on(table.agentId, table.virtualDay),
+    index("pilotlab_events_failure_idx").on(table.runId, table.failureCode, table.severity),
+  ],
+);
+export type PilotlabEvent = typeof pilotlabEvents.$inferSelect;
+export type InsertPilotlabEvent = typeof pilotlabEvents.$inferInsert;
+
+export const pilotlabResults = mysqlTable(
+  "pilotlab_results",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    runId: int("runId").notNull().references(() => pilotlabRuns.id),
+    dimension: varchar("dimension", { length: 80 }).notNull(),
+    score: int("score").notNull(),
+    passed: int("passed").default(0).notNull(),
+    failed: int("failed").default(0).notNull(),
+    evidence: text("evidence").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("pilotlab_results_run_dimension_uq").on(table.runId, table.dimension),
+    index("pilotlab_results_run_idx").on(table.runId, table.createdAt),
+  ],
+);
+export type PilotlabResult = typeof pilotlabResults.$inferSelect;
+export type InsertPilotlabResult = typeof pilotlabResults.$inferInsert;

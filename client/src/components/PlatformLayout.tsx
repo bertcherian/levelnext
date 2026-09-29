@@ -36,6 +36,7 @@ import {
   Radio,
   ClipboardList,
   Scale,
+  FlaskConical,
   Search,
   X as XIcon,
 } from "lucide-react";
@@ -54,6 +55,7 @@ const ADMIN_NAV_ITEMS: PlatformNavItem[] = [
   { label: "Admin Dashboard", icon: LayoutDashboard, href: "/admin" },
   { label: "War Room OS", icon: ShieldAlert, href: "/admin/war-room" },
   { label: "Model Evaluator", icon: Scale, href: "/admin/model-evaluator" },
+  { label: "Pilotlab", icon: FlaskConical, href: "/admin/pilotlab" },
   { label: "Pilot Applications", icon: Briefcase, href: "/admin/pilot-applications" },
   { label: "Manage Invites", icon: Link2, href: "/admin/invites" },
   { label: "SP Workspace", icon: Zap, href: "/admin/lsos" },

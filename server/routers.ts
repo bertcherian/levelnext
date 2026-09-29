@@ -81,6 +81,7 @@ import { warRoomRouter } from "./routers/warRoom";
 import { personaBuilderRouter } from "./routers/personaBuilder";
 import { v3SituationRouter } from "./routers/v3Situation";
 import { managerAltitudeRouter } from "./routers/managerAltitude";
+import { pilotlabRouter } from "./routers/pilotlab";
 
 export const appRouter = router({
   system: systemRouter,
@@ -171,6 +172,7 @@ export const appRouter = router({
   personaBuilder: personaBuilderRouter,
   v3Situation: v3SituationRouter,
   managerAltitude: managerAltitudeRouter,
+  pilotlab: pilotlabRouter,
 });
 
 export type AppRouter = typeof appRouter;
