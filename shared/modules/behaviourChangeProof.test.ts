@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   anonymisePracticeText,
+  buildProofCommunicationPack,
+  defaultProofPrivacyConfig,
   deriveEvidenceStrength,
   deriveMomentumState,
   derivePilotHealth,
+  deriveTrustState,
   getProofDailyAction,
   nextBestPilotAction,
   recommendPilot,
   safePracticeWarnings,
+  PROOF_NUDGE_DAYS,
 } from "./behaviourChangeProof";
 
 describe("30-Day Behaviour Change Proof contracts", () => {
@@ -54,5 +58,24 @@ describe("30-Day Behaviour Change Proof contracts", () => {
     expect(safePracticeWarnings(source)).toEqual(expect.arrayContaining(["This may contain a person’s name.", "This may contain an email address.", "This may contain a financial figure or account identifier."]));
     expect(anonymisePracticeText(source)).toContain("[email removed]");
     expect(anonymisePracticeText(source)).toContain("[amount removed]");
+  });
+
+  it("creates a sponsor-led communication pack with actual privacy boundaries rather than generic privacy promises", () => {
+    const privacy = defaultProofPrivacyConfig("Priya Shah");
+    const pack = buildProofCommunicationPack({ participantName: "Alex", sponsorName: "Priya Shah", sponsorRole: "VP People", whyItMatters: "feedback delay is creating rework", behaviours: ["Timely feedback"], privacy });
+    expect(pack.message).toContain("Priya Shah");
+    expect(pack.message).toContain("feedback delay is creating rework");
+    expect(pack.privacy.notVisibleToOrganisation.join(" ")).toContain("private coaching");
+    expect(pack.faq.map((item) => item.question)).toContain("What if I do not find it useful?");
+  });
+
+  it("uses explicit, diagnostic trust states instead of a pseudo-scientific trust score", () => {
+    expect(deriveTrustState({ purposeUnderstood: true, privacyViewed: true, personalGoal: true, firstValue: true })).toBe("green");
+    expect(deriveTrustState({ purposeUnderstood: true, privacyViewed: false, personalGoal: false, firstValue: false })).toBe("amber");
+    expect(deriveTrustState({ purposeUnderstood: true, privacyViewed: true, personalGoal: true, firstValue: true, concern: "privacy" })).toBe("red");
+  });
+
+  it("keeps the automated milestone plan bounded to Day 3, Day 7, Day 15, and Day 30", () => {
+    expect(PROOF_NUDGE_DAYS).toEqual([3, 7, 15, 30]);
   });
 });

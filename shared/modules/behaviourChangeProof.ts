@@ -15,7 +15,6 @@ export type ProofBehaviour = (typeof PROOF_BEHAVIOURS)[number];
 
 export const PROOF_MOMENTUM_STATES = ["flowing", "slowing", "stalled", "blocked", "disengaged"] as const;
 export type ProofMomentumState = (typeof PROOF_MOMENTUM_STATES)[number];
-
 export const PROOF_ACCESS_LANES = ["instant", "corporate_browser", "enterprise"] as const;
 export type ProofAccessLane = (typeof PROOF_ACCESS_LANES)[number];
 export const PROOF_HEALTH_STATES = ["green", "amber", "red"] as const;
@@ -35,8 +34,10 @@ export const proofCreatePilotSchema = z.object({
   companyContext: z.string().trim().max(255).optional(),
   organisation: z.string().trim().max(255).optional(),
   sponsorName: z.string().trim().max(160).optional(),
+  sponsorRole: z.string().trim().max(160).optional(),
   businessProblem: z.string().trim().min(12).max(1000),
   whyItMatters: z.string().trim().min(8).max(600).optional(),
+  selectionRationale: z.string().trim().max(600).optional(),
   targetBehaviours: z.array(z.string().trim().min(2).max(120)).min(1).max(3),
   observableActions: z.array(z.string().trim().min(2).max(240)).min(1).max(6),
   businessSignals: z.array(z.string().trim().min(2).max(240)).min(1).max(6),
@@ -205,4 +206,117 @@ export function derivePilotHealth(input: { participants: number; baselineComplet
   const actionRate = input.participants ? input.realWorkApplications / input.participants : 0;
   if (activationRate >= 0.7 && actionRate >= 0.4) return { state: "green", label: "Pilot progressing well", action: "Keep the loop moving and prepare the midpoint or Day-30 review." };
   return { state: "amber", label: "Intervention required", action: "Use contextual prompts to move the next missing activation step." };
+}
+
+export const PROOF_TRUST_STATES = ["green", "amber", "red"] as const;
+export const PROOF_NUDGE_DAYS = [3, 7, 15, 30] as const;
+export type ProofTrustState = (typeof PROOF_TRUST_STATES)[number];
+export type ProofNudgeDay = (typeof PROOF_NUDGE_DAYS)[number];
+
+export const proofTrustEventSchema = z.object({
+  token: proofTokenSchema.shape.token,
+  eventType: z.enum(["purpose_understood", "privacy_viewed", "personal_goal_created", "first_value", "trust_signal", "concern_reported"]),
+  response: z.string().trim().max(120).optional(),
+  detail: z.string().trim().max(600).optional(),
+});
+
+export const proofParticipantProfileSchema = z.object({
+  token: proofTokenSchema.shape.token,
+  personalGoal: z.string().trim().min(8).max(600),
+});
+
+export const proofNudgeSettingsSchema = z.object({
+  pilotId: proofPilotIdSchema.shape.pilotId,
+  enabled: z.boolean(),
+});
+
+export const proofDocumentUploadSchema = z.object({
+  pilotId: proofPilotIdSchema.shape.pilotId,
+  title: z.string().trim().min(3).max(180),
+  description: z.string().trim().max(1200).optional(),
+  fileName: z.string().trim().min(1).max(255),
+  contentType: z.string().trim().min(1).max(160),
+  fileBase64: z.string().min(1).max(8_000_000),
+});
+
+export const proofDocumentUpdateSchema = z.object({
+  pilotId: proofPilotIdSchema.shape.pilotId,
+  documentId: z.number().int().positive(),
+  reviewOwnerName: z.string().trim().max(160).optional(),
+  reviewOwnerEmail: z.string().email().optional().or(z.literal("")),
+  status: z.enum(["uploaded", "in_review", "approved", "needs_action", "archived"]).optional(),
+  reviewNotes: z.string().trim().max(2000).optional(),
+});
+
+export const proofRequirementSchema = z.object({
+  pilotId: proofPilotIdSchema.shape.pilotId,
+  requirementKey: z.string().trim().min(2).max(100),
+  title: z.string().trim().min(3).max(180),
+  description: z.string().trim().min(3).max(1000),
+});
+
+export const proofRequirementUpdateSchema = z.object({
+  pilotId: proofPilotIdSchema.shape.pilotId,
+  requirementId: z.number().int().positive(),
+  status: z.enum(["not_started", "in_review", "approved", "blocked", "not_applicable"]).optional(),
+  ownerName: z.string().trim().max(160).optional(),
+  ownerEmail: z.string().email().optional().or(z.literal("")),
+  evidenceDocumentId: z.number().int().positive().nullable().optional(),
+  reviewNote: z.string().trim().max(2000).optional(),
+});
+
+export type ProofPrivacyConfig = {
+  privateToParticipant: string[];
+  visibleToOrganisation: string[];
+  notVisibleToOrganisation: string[];
+  retention: string;
+  contact: string;
+};
+
+export type ProofCommunicationPack = {
+  subject: string;
+  message: string;
+  whatToExpect: string[];
+  managerTalkingPoints: string;
+  faq: Array<{ question: string; answer: string }>;
+  privacy: ProofPrivacyConfig;
+};
+
+export function defaultProofPrivacyConfig(contact = "your pilot sponsor"): ProofPrivacyConfig {
+  return {
+    privateToParticipant: ["Personal coaching and reflection text", "Private practice wording and personal goal detail"],
+    visibleToOrganisation: ["Invitation and activation milestones", "Approved aggregate evidence and pilot-level movement signals"],
+    notVisibleToOrganisation: ["Your private coaching text", "Your individual reflection wording unless you choose to share it"],
+    retention: "Pilot records are retained according to the organisation’s agreed pilot governance and retention arrangement.",
+    contact,
+  };
+}
+
+export function buildProofCommunicationPack(input: { participantName?: string; sponsorName?: string; sponsorRole?: string; organisation?: string; whyItMatters?: string; behaviours: string[]; privacy?: ProofPrivacyConfig }): ProofCommunicationPack {
+  const sponsor = input.sponsorName || "your sponsor";
+  const privacy = input.privacy ?? defaultProofPrivacyConfig(sponsor);
+  const participant = input.participantName || "there";
+  const subject = "You’ve been selected for a 30-day LevelNext pilot";
+  const message = `Hi ${participant},\n\n${sponsor} has selected a small group of colleagues to participate in a 30-day pilot of LevelNext. You’ve been invited because ${input.whyItMatters || "we want to invest in practical development around everyday work"}.\n\nOver the next 30 days, LevelNext will help you work on ${input.behaviours.join(", ")}. This is not another course or a performance assessment. It is a practical way to prepare, practise, act and reflect around real work situations. Most interactions take only a few focused minutes.\n\nBefore you begin, LevelNext will explain what is recorded, what your organisation can see, and what remains private. Please bring it a real situation and tell us what is useful or not useful.\n\n${sponsor}${input.sponsorRole ? `\n${input.sponsorRole}` : ""}`;
+  return {
+    subject,
+    message,
+    whatToExpect: ["A short welcome and plain-language privacy explanation", "One personal goal connected to the pilot behaviours", "A practical first Behaviour Rep around a real situation", "Small, contextual actions over 30 days"],
+    managerTalkingPoints: `${participant}, you’ve been invited to the LevelNext pilot with a small group of colleagues. It is designed to help you work on ${input.behaviours.join(", ")} using situations you are already dealing with. It is not about adding training hours. Try it with real work and see whether it is useful.`,
+    faq: [
+      { question: "Why was I selected?", answer: "You were selected as part of a professional-development pilot. The invitation rationale is shown above; it should not be interpreted as a performance finding." },
+      { question: "Is this a performance assessment?", answer: "The pilot is designed for development and evidence-led learning. Your organisation’s actual governance arrangement determines how information may be used." },
+      { question: "How much time will it take?", answer: "Most interactions are short and connected to situations already happening in your work. You can choose fewer nudges if the timing is not useful." },
+      { question: "What does AI do?", answer: "AI can help you rehearse, structure a response, or suggest a next step. It is not a substitute for your judgement, and you should not enter confidential or regulated information." },
+      { question: "Who can see what?", answer: `Open the privacy details in the participant experience. ${privacy.visibleToOrganisation.join(" ")}.` },
+      { question: "What if I do not find it useful?", answer: "Tell us what would have made it more useful, choose a smaller action, or pause reminders. Skepticism is product feedback, not a failure." },
+    ],
+    privacy,
+  };
+}
+
+export function deriveTrustState(input: { purposeUnderstood: boolean; privacyViewed: boolean; personalGoal: boolean; firstValue: boolean; concern?: string | null }): ProofTrustState {
+  if (input.concern && ["privacy", "performance_monitoring", "ai_discomfort", "unknown_selection"].some((key) => input.concern?.includes(key))) return "red";
+  if (input.purposeUnderstood && input.privacyViewed && input.personalGoal && input.firstValue) return "green";
+  return "amber";
 }

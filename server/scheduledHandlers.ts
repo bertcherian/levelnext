@@ -37,6 +37,7 @@ import { eq, gte, and, desc, sql, isNotNull, lte } from "drizzle-orm";
 import { sdk } from "./_core/sdk";
 import { decideGuidedMirrorReminder, isLocalReminderTime, resolveRequestOrigin } from "./guidedMirrorReminderHelpers";
 import { cadenceWindowKey, nudgeMessage } from "./earlyCareerNudgeDelivery";
+import { deliverProofNudges } from "./behaviourChangeProof";
 
 // ── Weekly Practice Summary ───────────────────────────────────────────────────
 export async function weeklySummaryHandler(req: Request, res: Response) {
@@ -555,6 +556,25 @@ export async function earlyCareerNudgeDeliveryHandler(req: Request, res: Respons
     return res.json({ ok: true, configId: config.id, cadenceWindowKey: windowKey, at: now.toISOString() });
   } catch (error) {
     console.error("[EarlyCareerNudgeDelivery] Error:", error);
+    return res.status(500).json({ ok: false, error: String(error), context: { taskUid }, timestamp: new Date().toISOString() });
+  }
+}
+
+
+// ── 30-Day Behaviour Change Proof milestone nudges ────────────────────────────
+// Invoked hourly by Heartbeat. Delivery is idempotent per pilot, recipient, and
+// milestone day; participant preferences and sponsor ownership are respected.
+export async function proofNudgesHandler(req: Request, res: Response) {
+  let taskUid: string | undefined;
+  try {
+    const cronUser = await sdk.authenticateRequest(req);
+    if (!cronUser.isCron || !cronUser.taskUid) return res.status(403).json({ error: "cron-only" });
+    taskUid = cronUser.taskUid;
+    const origin = resolveRequestOrigin(req);
+    const result = await deliverProofNudges(taskUid, origin);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    console.error("[ProofNudges] Error:", error);
     return res.status(500).json({ ok: false, error: String(error), context: { taskUid }, timestamp: new Date().toISOString() });
   }
 }

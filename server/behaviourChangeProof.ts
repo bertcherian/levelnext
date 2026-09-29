@@ -5,19 +5,31 @@ import {
   proofObservations,
   proofPilotParticipants,
   proofPilots,
+  proofParticipantTrustEvents,
+  proofNudgeDeliveries,
+  proofSecurityDocuments,
+  proofSecurityRequirements,
+  users,
   type ProofPilot,
   type ProofPilotParticipant,
 } from "../drizzle/schema";
 import { getDb } from "./db";
 import { sendEmail } from "./_core/email";
+import { storagePut } from "./storage";
 import {
   anonymisePracticeText,
+  buildProofCommunicationPack,
+  defaultProofPrivacyConfig,
+  deriveTrustState,
+  PROOF_NUDGE_DAYS,
   deriveEvidenceStrength,
   deriveMomentumState,
   derivePilotHealth,
   getProofDailyAction,
   nextBestPilotAction,
   recommendPilot,
+  type ProofCommunicationPack,
+  type ProofPrivacyConfig,
   type ProofCreatePilotInput,
 } from "../shared/modules/behaviourChangeProof";
 
@@ -62,6 +74,13 @@ function safeParticipant(participant: ProofPilotParticipant) {
     baselineCompleted: Boolean(participant.baselineCompletedAt),
     firstRepCompleted: Boolean(participant.firstRepAt),
     firstRealWorkApplication: Boolean(participant.firstRealWorkAt),
+    purposeUnderstood: Boolean(participant.purposeUnderstoodAt),
+    privacyViewed: Boolean(participant.privacyViewedAt),
+    personalGoal: participant.personalGoal,
+    firstValue: Boolean(participant.firstValueAt),
+    trustState: participant.trustState,
+    trustConcern: participant.trustConcern,
+    nudgePreference: participant.nudgePreference,
     dailyActionCount: participant.dailyActionCount,
     missedActionCount: participant.missedActionCount,
     accessIssue: participant.accessIssue,
@@ -71,14 +90,21 @@ function safeParticipant(participant: ProofPilotParticipant) {
 
 export async function createProofPilot(userId: number, input: ProofCreatePilotInput) {
   const db = await database();
+  const privacy = defaultProofPrivacyConfig(input.sponsorName || "your pilot sponsor");
+  const communication = buildProofCommunicationPack({ sponsorName: input.sponsorName, sponsorRole: input.sponsorRole, organisation: input.organisation, whyItMatters: input.whyItMatters, behaviours: input.targetBehaviours, privacy });
   const [inserted] = await db.insert(proofPilots).values({
     ownerUserId: userId,
     name: input.name,
     companyContext: input.companyContext ?? null,
     organisation: input.organisation ?? input.companyContext ?? null,
     sponsorName: input.sponsorName ?? null,
+    sponsorRole: input.sponsorRole ?? null,
     businessProblem: input.businessProblem,
     whyItMatters: input.whyItMatters ?? null,
+    selectionRationale: input.selectionRationale ?? input.whyItMatters ?? null,
+    privacyConfig: privacy,
+    invitationSubject: communication.subject,
+    invitationMessage: communication.message,
     targetBehaviours: input.targetBehaviours,
     observableActions: input.observableActions,
     businessSignals: input.businessSignals,
@@ -105,12 +131,15 @@ export async function inviteProofParticipants(userId: number, pilotId: number, p
     const email = participant.email.trim().toLowerCase();
     if (existingEmails.has(email)) continue;
     const inviteToken = token();
+    const privacy = (pilot.privacyConfig as ProofPrivacyConfig | null) ?? defaultProofPrivacyConfig(pilot.sponsorName || "your pilot sponsor");
+    const communication = buildProofCommunicationPack({ participantName: participant.name, sponsorName: pilot.sponsorName ?? undefined, sponsorRole: pilot.sponsorRole ?? undefined, organisation: pilot.organisation ?? undefined, whyItMatters: pilot.whyItMatters ?? undefined, behaviours: pilot.targetBehaviours, privacy });
     const [inserted] = await db.insert(proofPilotParticipants).values({
       pilotId,
       email,
       name: participant.name?.trim() || null,
       inviteToken,
       inviteStatus: "pending",
+      invitedAt: new Date(),
     }).$returningId();
     const [created] = await db.select().from(proofPilotParticipants).where(eq(proofPilotParticipants.id, inserted.id)).limit(1);
     if (created) insertedParticipants.push(created);
@@ -118,8 +147,8 @@ export async function inviteProofParticipants(userId: number, pilotId: number, p
     const inviteUrl = new URL(`/pilot/participant/${inviteToken}`, origin).toString();
     sendEmail({
       to: email,
-      subject: `${pilot.name} — your 30-Day Behaviour Change Proof starts here`,
-      html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#1C1C1C"><div style="background:#0A1A2F;padding:28px;text-align:center"><img src="${origin}/logo.png" alt="LevelNext" style="height:36px" /></div><div style="padding:32px;background:#F8F5F0"><p style="color:#D4AF37;font-weight:700;letter-spacing:1px;text-transform:uppercase">30-Day Behaviour Change Proof</p><h1 style="color:#0A1A2F">This isn't another course.</h1><p>Over the next 30 days, LevelNext will help you practise one to three behaviours in situations you are already dealing with at work.</p><p>Most interactions take only a few minutes. Start with a short baseline, then use the loop: notice → choose → practise → do → reflect.</p><p><a href="${inviteUrl}" style="display:inline-block;background:#D4AF37;color:#0A1A2F;padding:13px 20px;border-radius:6px;text-decoration:none;font-weight:700">Start my baseline →</a></p><p style="font-size:12px;color:#64748B">Private coaching and reflection stay private. The sponsor sees appropriate aggregated evidence, not your personal coaching text.</p></div></div>`,
+      subject: communication.subject,
+      html: buildParticipantInvitationEmail({ origin, inviteUrl, participantName: participant.name ?? "there", sponsorName: pilot.sponsorName ?? "your sponsor", communication }),
     }).catch(() => undefined);
   }
   if (pilot.status === "draft") await db.update(proofPilots).set({ status: "active", launchedAt: new Date() }).where(eq(proofPilots.id, pilotId));
@@ -135,10 +164,20 @@ export async function getProofParticipant(tokenValue: string) {
   if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant invite not found" });
   const [pilot] = await db.select().from(proofPilots).where(eq(proofPilots.id, participant.pilotId)).limit(1);
   if (!pilot) throw new TRPCError({ code: "NOT_FOUND", message: "Pilot not found" });
-  if (participant.inviteStatus === "pending") await db.update(proofPilotParticipants).set({ inviteStatus: "opened", lastActivityAt: new Date() }).where(eq(proofPilotParticipants.id, participant.id));
+  if (participant.inviteStatus === "pending") {
+    const openedAt = new Date();
+    await db.update(proofPilotParticipants).set({ inviteStatus: "opened", inviteOpenedAt: openedAt, lastActivityAt: openedAt }).where(eq(proofPilotParticipants.id, participant.id));
+    await db.insert(proofParticipantTrustEvents).values({ pilotId: pilot.id, participantId: participant.id, eventType: "invitation_opened" });
+  }
   return {
     pilot: {
       name: pilot.name,
+      sponsorName: pilot.sponsorName,
+      sponsorRole: pilot.sponsorRole,
+      organisation: pilot.organisation,
+      selectionRationale: pilot.selectionRationale,
+      privacyConfig: (pilot.privacyConfig as ProofPrivacyConfig | null) ?? defaultProofPrivacyConfig(pilot.sponsorName || "your pilot sponsor"),
+      invitationMessage: pilot.invitationMessage,
       businessProblem: pilot.businessProblem,
       targetBehaviours: pilot.targetBehaviours,
       observableActions: pilot.observableActions,
@@ -383,3 +422,177 @@ function formatEvidenceLabel(value: string) {
 }
 
 export { recommendPilot };
+
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character] ?? character);
+}
+
+function buildParticipantInvitationEmail(input: { origin: string; inviteUrl: string; participantName: string; sponsorName: string; communication: ProofCommunicationPack }) {
+  const pack = input.communication;
+  const privacy = pack.privacy;
+  const expectationRows = pack.whatToExpect.map((item) => `<li style="margin:0 0 8px">${escapeHtml(item)}</li>`).join("");
+  return `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#1C1C1C"><div style="background:#0A1A2F;padding:28px;text-align:center"><img src="${escapeHtml(input.origin)}/logo.png" alt="LevelNext" style="height:36px" /></div><div style="padding:32px;background:#F8F5F0"><p style="color:#A78418;font-weight:700;letter-spacing:1px;text-transform:uppercase">30-Day Behaviour Change Proof</p><h1 style="color:#0A1A2F">You’ve been invited by ${escapeHtml(input.sponsorName)}</h1><p style="white-space:pre-line;line-height:1.65">${escapeHtml(pack.message)}</p><h3 style="color:#0A1A2F">What to expect</h3><ul style="padding-left:20px;line-height:1.5">${expectationRows}</ul><div style="background:#fff;border-left:4px solid #D4AF37;padding:16px;margin:22px 0"><b>Who can see what?</b><p style="font-size:13px;line-height:1.55;margin:8px 0">${escapeHtml(privacy.visibleToOrganisation.join(" "))} ${escapeHtml(privacy.notVisibleToOrganisation.join(" "))}</p></div><p><a href="${escapeHtml(input.inviteUrl)}" style="display:inline-block;background:#D4AF37;color:#0A1A2F;padding:13px 20px;border-radius:6px;text-decoration:none;font-weight:700">Start my 30-day experience →</a></p><p style="font-size:12px;color:#64748B">This is a development pilot, not a promise that information cannot be used for evaluation. Your organisation’s actual governance arrangement applies. You can ask questions, request fewer nudges, or raise a privacy concern from the participant space.</p></div></div>`;
+}
+
+export async function getProofCommunicationPack(userId: number, pilotId: number) {
+  const { pilot } = await ownedPilot(userId, pilotId);
+  const privacy = (pilot.privacyConfig as ProofPrivacyConfig | null) ?? defaultProofPrivacyConfig(pilot.sponsorName || "your pilot sponsor");
+  return {
+    pack: buildProofCommunicationPack({ sponsorName: pilot.sponsorName ?? undefined, sponsorRole: pilot.sponsorRole ?? undefined, organisation: pilot.organisation ?? undefined, whyItMatters: pilot.whyItMatters ?? undefined, behaviours: pilot.targetBehaviours, privacy }),
+    pilot: { id: pilot.id, name: pilot.name, sponsorName: pilot.sponsorName, sponsorRole: pilot.sponsorRole, organisation: pilot.organisation, invitationSubject: pilot.invitationSubject, invitationMessage: pilot.invitationMessage },
+  };
+}
+
+export async function recordProofTrustEvent(tokenValue: string, eventType: string, response?: string, detail?: string) {
+  const { db, pilot, participant } = await participantContext(tokenValue);
+  const now = new Date();
+  const fields: Record<string, unknown> = { lastActivityAt: now };
+  if (eventType === "purpose_understood") fields.purposeUnderstoodAt = now;
+  if (eventType === "privacy_viewed") fields.privacyViewedAt = now;
+  if (eventType === "personal_goal_created") fields.personalGoalAt = now;
+  if (eventType === "first_value") fields.firstValueAt = now;
+  if (eventType === "concern_reported") fields.trustConcern = response ?? "other";
+  const nextTrustState = deriveTrustState({
+    purposeUnderstood: eventType === "purpose_understood" || Boolean(participant.purposeUnderstoodAt),
+    privacyViewed: eventType === "privacy_viewed" || Boolean(participant.privacyViewedAt),
+    personalGoal: eventType === "personal_goal_created" || Boolean(participant.personalGoalAt),
+    firstValue: eventType === "first_value" || Boolean(participant.firstValueAt),
+    concern: eventType === "concern_reported" ? response : participant.trustConcern,
+  });
+  fields.trustState = nextTrustState;
+  if (eventType === "trust_signal" && response === "fewer_nudges") fields.nudgePreference = "fewer";
+  if (eventType === "trust_signal" && response === "pause_nudges") fields.nudgePreference = "paused";
+  await db.update(proofPilotParticipants).set(fields).where(eq(proofPilotParticipants.id, participant.id));
+  await db.insert(proofParticipantTrustEvents).values({ pilotId: pilot.id, participantId: participant.id, eventType, response: response ?? null, detail: detail ? anonymisePracticeText(detail) : null });
+  return getProofParticipant(tokenValue);
+}
+
+export async function saveProofPersonalGoal(tokenValue: string, personalGoal: string) {
+  const { db, pilot, participant } = await participantContext(tokenValue);
+  const now = new Date();
+  const trustState = deriveTrustState({ purposeUnderstood: Boolean(participant.purposeUnderstoodAt), privacyViewed: Boolean(participant.privacyViewedAt), personalGoal: true, firstValue: Boolean(participant.firstValueAt), concern: participant.trustConcern });
+  await db.update(proofPilotParticipants).set({ personalGoal, personalGoalAt: now, trustState, lastActivityAt: now }).where(eq(proofPilotParticipants.id, participant.id));
+  await db.insert(proofParticipantTrustEvents).values({ pilotId: pilot.id, participantId: participant.id, eventType: "personal_goal_created", detail: anonymisePracticeText(personalGoal) });
+  return getProofParticipant(tokenValue);
+}
+
+export async function setProofNudgeTaskUid(userId: number, pilotId: number, taskUid: string | null) {
+  const { db, pilot } = await ownedPilot(userId, pilotId);
+  await db.update(proofPilots).set({ nudgeScheduleCronTaskUid: taskUid }).where(eq(proofPilots.id, pilot.id));
+  return { pilotId, taskUid };
+}
+
+export async function setProofNudgeEnabled(userId: number, pilotId: number, enabled: boolean) {
+  const { db, pilot } = await ownedPilot(userId, pilotId);
+  await db.update(proofPilots).set({ nudgeEnabled: enabled }).where(eq(proofPilots.id, pilot.id));
+  return { enabled };
+}
+
+export async function getProofNudgeSettings(userId: number, pilotId: number) {
+  const { pilot } = await ownedPilot(userId, pilotId);
+  return { pilotId, enabled: pilot.nudgeEnabled, scheduleCronTaskUid: pilot.nudgeScheduleCronTaskUid };
+}
+
+export async function deliverProofNudges(taskUid: string, origin: string) {
+  const db = await database();
+  const [pilot] = await db.select().from(proofPilots).where(and(eq(proofPilots.nudgeScheduleCronTaskUid, taskUid), eq(proofPilots.nudgeEnabled, true))).limit(1);
+  if (!pilot) return { sent: 0, skipped: "orphan-or-disabled" };
+  const now = new Date();
+  const day = daysSince(pilot.launchedAt);
+  const milestone = PROOF_NUDGE_DAYS.filter((value) => day >= value).at(-1);
+  if (!milestone) return { sent: 0, skipped: "before-day-3" };
+  const participants = await db.select().from(proofPilotParticipants).where(eq(proofPilotParticipants.pilotId, pilot.id));
+  const [sponsor] = await db.select().from(users).where(eq(users.id, pilot.ownerUserId)).limit(1);
+  const messages: Record<number, { participantSubject: string; participantBody: string; sponsorSubject: string; sponsorBody: string }> = {
+    3: { participantSubject: "A small first step with LevelNext", participantBody: "How did the first useful step feel? If a real situation is coming up, LevelNext can help you rehearse it in a few minutes.", sponsorSubject: "Day 3 pilot check: is the first value clear?", sponsorBody: "Check whether participants understand why they were selected, what the pilot is for, and how to get help with a real situation." },
+    7: { participantSubject: "One week in: choose one real moment", participantBody: "What is one conversation, handoff, or decision this week where you would like to respond more effectively? Bring that moment into LevelNext when useful.", sponsorSubject: "Day 7 pilot check: look for activation friction", sponsorBody: "Review who has understood the purpose, seen the privacy explanation, and completed a first Behaviour Rep. Diagnose before sending a generic reminder." },
+    15: { participantSubject: "Midpoint: what feels more workable?", participantBody: "You are at the midpoint of the pilot. What is one response or behaviour that feels a little more workable now? You can also ask for fewer nudges.", sponsorSubject: "Day 15 midpoint: review movement, not completion", sponsorBody: "Look at early signals, real-work applications, trust concerns, and access friction. Use the next useful action rather than treating activity as proof." },
+    30: { participantSubject: "Your 30-day proof reflection", participantBody: "Your pilot has reached Day 30. Take a few minutes to compare your starting point with what you now do differently. Keep personal and confidential details private.", sponsorSubject: "Day 30: your Pilot Proof Pack is ready", sponsorBody: "Review the available signal mix, evidence gaps, participant trust risks, and security next steps before deciding whether to continue controlled testing." },
+  };
+  const copy = messages[milestone];
+  let sent = 0;
+  for (const participant of participants) {
+    if (!participant.email || participant.nudgePreference === "paused") continue;
+    const deliveryKey = `participant:${participant.id}:${milestone}`;
+    const prior = await db.select({ id: proofNudgeDeliveries.id }).from(proofNudgeDeliveries).where(eq(proofNudgeDeliveries.deliveryKey, deliveryKey)).limit(1);
+    if (prior.length) continue;
+    const link = `${origin}/pilot/participant/${participant.inviteToken}`;
+    await sendEmail({ to: participant.email, subject: copy.participantSubject, html: brandedNudgeEmail(participant.name || "there", copy.participantBody, link, "Start my 30-day experience →") });
+    await db.insert(proofNudgeDeliveries).values({ pilotId: pilot.id, participantId: participant.id, recipientType: "participant", milestoneDay: milestone, deliveryKey, deliveredAt: now });
+    await db.update(proofPilotParticipants).set({ lastNudgeAt: now }).where(eq(proofPilotParticipants.id, participant.id));
+    sent++;
+  }
+  if (sponsor?.email) {
+    const deliveryKey = `sponsor:${pilot.id}:${milestone}`;
+    const prior = await db.select({ id: proofNudgeDeliveries.id }).from(proofNudgeDeliveries).where(eq(proofNudgeDeliveries.deliveryKey, deliveryKey)).limit(1);
+    if (!prior.length) {
+      await sendEmail({ to: sponsor.email, subject: copy.sponsorSubject, html: brandedNudgeEmail(sponsor.name || pilot.sponsorName || "sponsor", copy.sponsorBody, `${origin}/pilot/dashboard?pilotId=${pilot.id}`, "Open sponsor proof workspace →") });
+      await db.insert(proofNudgeDeliveries).values({ pilotId: pilot.id, participantId: null, recipientType: "sponsor", milestoneDay: milestone, deliveryKey, deliveredAt: now });
+      sent++;
+    }
+  }
+  return { sent, milestone };
+}
+
+function brandedNudgeEmail(name: string, message: string, link: string, cta: string) {
+  return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1C1C1C"><div style="background:#0A1A2F;padding:24px;text-align:center"><img src="${escapeHtml(link.split("/pilot")[0])}/logo.png" alt="LevelNext" style="height:34px" /></div><div style="padding:28px;background:#F8F5F0"><p style="color:#A78418;font-weight:700;letter-spacing:1px;text-transform:uppercase">LevelNext · 30-Day Behaviour Change Proof</p><h2 style="color:#0A1A2F">A useful next step, ${escapeHtml(name)}</h2><p style="line-height:1.65">${escapeHtml(message)}</p><p><a href="${escapeHtml(link)}" style="display:inline-block;background:#D4AF37;color:#0A1A2F;padding:12px 18px;text-decoration:none;font-weight:700">${escapeHtml(cta)}</a></p><p style="font-size:12px;color:#64748B">No guilt, no streaks, and no private reflection text is included in this reminder. Use the participant controls if you need fewer nudges or have a concern.</p></div></div>`;
+}
+
+export async function getProofSecurityWorkspace(userId: number, pilotId: number) {
+  const { db, pilot } = await ownedPilot(userId, pilotId);
+  const existing = await db.select().from(proofSecurityRequirements).where(eq(proofSecurityRequirements.pilotId, pilot.id));
+  if (!existing.length) {
+    const defaults = [
+      ["access_lane", "Approved access lane", "Confirm whether this pilot uses instant, corporate-browser, or enterprise access."],
+      ["data_boundaries", "Data boundaries and privacy explanation", "Review participant-visible data boundaries and sponsor aggregation rules."],
+      ["ai_governance", "AI governance and acceptable use", "Record the organisation’s approved use position for AI-assisted practice."],
+      ["retention", "Retention and deletion arrangement", "Record the agreed pilot retention and deletion expectations."],
+      ["vendor_risk", "Vendor-risk or procurement review", "Track any vendor-risk, DPA, or procurement requirement that applies."],
+    ] as const;
+    await db.insert(proofSecurityRequirements).values(defaults.map(([requirementKey, title, description]) => ({ pilotId: pilot.id, requirementKey, title, description })));
+  }
+  const [documents, requirements] = await Promise.all([
+    db.select().from(proofSecurityDocuments).where(eq(proofSecurityDocuments.pilotId, pilot.id)).orderBy(desc(proofSecurityDocuments.createdAt)),
+    db.select().from(proofSecurityRequirements).where(eq(proofSecurityRequirements.pilotId, pilot.id)).orderBy(desc(proofSecurityRequirements.createdAt)),
+  ]);
+  return { pilot: { id: pilot.id, name: pilot.name, securityReviewStatus: pilot.securityReviewStatus, accessLane: pilot.accessLane }, documents, requirements };
+}
+
+export async function uploadProofSecurityDocument(userId: number, input: { pilotId: number; title: string; description?: string; fileName: string; contentType: string; fileBase64: string }) {
+  const { db, pilot } = await ownedPilot(userId, input.pilotId);
+  const raw = input.fileBase64.replace(/^data:[^;]+;base64,/, "");
+  const buffer = Buffer.from(raw, "base64");
+  if (buffer.length > 5_000_000) throw new TRPCError({ code: "BAD_REQUEST", message: "Security documents must be 5 MB or smaller." });
+  const safeName = input.fileName.replace(/[^a-z0-9._-]+/gi, "-").slice(-160);
+  const uploaded = await storagePut(`proof-security/${pilot.id}/${userId}/${safeName}`, buffer, input.contentType);
+  await db.insert(proofSecurityDocuments).values({ pilotId: pilot.id, uploadedByUserId: userId, title: input.title, description: input.description ?? null, storageKey: uploaded.key, storageUrl: uploaded.url, contentType: input.contentType, fileSize: buffer.length, status: "uploaded" });
+  return getProofSecurityWorkspace(userId, pilot.id);
+}
+
+export async function updateProofSecurityDocument(userId: number, input: { pilotId: number; documentId: number; reviewOwnerName?: string; reviewOwnerEmail?: string; status?: "uploaded" | "in_review" | "approved" | "needs_action" | "archived"; reviewNotes?: string }) {
+  const { db, pilot } = await ownedPilot(userId, input.pilotId);
+  const [document] = await db.select({ id: proofSecurityDocuments.id }).from(proofSecurityDocuments).where(and(eq(proofSecurityDocuments.id, input.documentId), eq(proofSecurityDocuments.pilotId, pilot.id))).limit(1);
+  if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Security document not found." });
+  await db.update(proofSecurityDocuments).set({ reviewOwnerName: input.reviewOwnerName ?? null, reviewOwnerEmail: input.reviewOwnerEmail || null, status: input.status, reviewNotes: input.reviewNotes ?? null, reviewedAt: input.status === "approved" ? new Date() : null }).where(eq(proofSecurityDocuments.id, input.documentId));
+  return getProofSecurityWorkspace(userId, pilot.id);
+}
+
+export async function createProofSecurityRequirement(userId: number, input: { pilotId: number; requirementKey: string; title: string; description: string }) {
+  const { db, pilot } = await ownedPilot(userId, input.pilotId);
+  await db.insert(proofSecurityRequirements).values({ pilotId: pilot.id, requirementKey: input.requirementKey, title: input.title, description: input.description });
+  return getProofSecurityWorkspace(userId, pilot.id);
+}
+
+export async function updateProofSecurityRequirement(userId: number, input: { pilotId: number; requirementId: number; status?: "not_started" | "in_review" | "approved" | "blocked" | "not_applicable"; ownerName?: string; ownerEmail?: string; evidenceDocumentId?: number | null; reviewNote?: string }) {
+  const { db, pilot } = await ownedPilot(userId, input.pilotId);
+  await db.update(proofSecurityRequirements).set({ status: input.status, ownerName: input.ownerName ?? null, ownerEmail: input.ownerEmail || null, evidenceDocumentId: input.evidenceDocumentId ?? null, reviewNote: input.reviewNote ?? null }).where(and(eq(proofSecurityRequirements.id, input.requirementId), eq(proofSecurityRequirements.pilotId, pilot.id)));
+  return getProofSecurityWorkspace(userId, pilot.id);
+}
+
+export async function getProofPackPayload(userId: number, pilotId: number) {
+  const proof = await getProofDay30(userId, pilotId);
+  const security = await getProofSecurityWorkspace(userId, pilotId);
+  const communication = await getProofCommunicationPack(userId, pilotId);
+  return { ...proof, security, communication: communication.pack };
+}

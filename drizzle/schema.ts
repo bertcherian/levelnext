@@ -5228,8 +5228,15 @@ export const proofPilots = mysqlTable(
     companyContext: varchar("companyContext", { length: 255 }),
     organisation: varchar("organisation", { length: 255 }),
     sponsorName: varchar("sponsorName", { length: 160 }),
+    sponsorRole: varchar("sponsorRole", { length: 160 }),
     businessProblem: text("businessProblem").notNull(),
     whyItMatters: text("whyItMatters"),
+    selectionRationale: text("selectionRationale"),
+    privacyConfig: json("privacyConfig").$type<{ privateToParticipant: string[]; visibleToOrganisation: string[]; notVisibleToOrganisation: string[]; retention: string; contact: string }>(),
+    invitationSubject: varchar("invitationSubject", { length: 240 }),
+    invitationMessage: text("invitationMessage"),
+    nudgeScheduleCronTaskUid: varchar("nudgeScheduleCronTaskUid", { length: 65 }),
+    nudgeEnabled: boolean("nudgeEnabled").default(true).notNull(),
     targetBehaviours: json("targetBehaviours").$type<string[]>().notNull(),
     observableActions: json("observableActions").$type<string[]>().notNull(),
     businessSignals: json("businessSignals").$type<string[]>().notNull(),
@@ -5251,6 +5258,7 @@ export const proofPilots = mysqlTable(
   },
   (table) => [
     index("proof_pilots_owner_created_idx").on(table.ownerUserId, table.createdAt),
+    index("proof_pilots_nudge_task_idx").on(table.nudgeScheduleCronTaskUid),
     index("proof_pilots_status_idx").on(table.status, table.updatedAt),
   ],
 );
@@ -5267,6 +5275,17 @@ export const proofPilotParticipants = mysqlTable(
     role: mysqlEnum("role", ["participant", "observer"]).default("participant").notNull(),
     inviteToken: varchar("inviteToken", { length: 96 }).notNull().unique(),
     inviteStatus: mysqlEnum("inviteStatus", ["pending", "opened", "active", "completed"]).default("pending").notNull(),
+    invitedAt: timestamp("invitedAt"),
+    inviteOpenedAt: timestamp("inviteOpenedAt"),
+    purposeUnderstoodAt: timestamp("purposeUnderstoodAt"),
+    privacyViewedAt: timestamp("privacyViewedAt"),
+    personalGoal: text("personalGoal"),
+    personalGoalAt: timestamp("personalGoalAt"),
+    firstValueAt: timestamp("firstValueAt"),
+    trustState: mysqlEnum("trustState", ["green", "amber", "red"]).default("amber").notNull(),
+    trustConcern: varchar("trustConcern", { length: 255 }),
+    nudgePreference: mysqlEnum("nudgePreference", ["normal", "fewer", "paused"]).default("normal").notNull(),
+    lastNudgeAt: timestamp("lastNudgeAt"),
     baselineCompletedAt: timestamp("baselineCompletedAt"),
     firstRepAt: timestamp("firstRepAt"),
     firstRealWorkAt: timestamp("firstRealWorkAt"),
@@ -5308,3 +5327,95 @@ export const proofObservations = mysqlTable(
 );
 export type ProofObservation = typeof proofObservations.$inferSelect;
 export type InsertProofObservation = typeof proofObservations.$inferInsert;
+
+
+// ─── 30-Day Behaviour Change Proof: Trust, Nudges, Reports & Security ─────────
+export const proofParticipantTrustEvents = mysqlTable(
+  "proof_participant_trust_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    participantId: int("participantId").notNull().references(() => proofPilotParticipants.id),
+    eventType: varchar("eventType", { length: 80 }).notNull(),
+    response: varchar("response", { length: 120 }),
+    detail: text("detail"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("proof_trust_events_participant_idx").on(table.participantId, table.createdAt),
+    index("proof_trust_events_pilot_type_idx").on(table.pilotId, table.eventType, table.createdAt),
+  ],
+);
+export type ProofParticipantTrustEvent = typeof proofParticipantTrustEvents.$inferSelect;
+export type InsertProofParticipantTrustEvent = typeof proofParticipantTrustEvents.$inferInsert;
+
+export const proofNudgeDeliveries = mysqlTable(
+  "proof_nudge_deliveries",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    participantId: int("participantId").references(() => proofPilotParticipants.id),
+    recipientType: mysqlEnum("recipientType", ["participant", "sponsor"]).notNull(),
+    milestoneDay: int("milestoneDay").notNull(),
+    deliveryKey: varchar("deliveryKey", { length: 180 }).notNull().unique(),
+    deliveredAt: timestamp("deliveredAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("proof_nudge_deliveries_pilot_idx").on(table.pilotId, table.milestoneDay),
+    uniqueIndex("proof_nudge_deliveries_recipient_uq").on(table.pilotId, table.participantId, table.recipientType, table.milestoneDay),
+  ],
+);
+export type ProofNudgeDelivery = typeof proofNudgeDeliveries.$inferSelect;
+export type InsertProofNudgeDelivery = typeof proofNudgeDeliveries.$inferInsert;
+
+export const proofSecurityDocuments = mysqlTable(
+  "proof_security_documents",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    uploadedByUserId: int("uploadedByUserId").notNull().references(() => users.id),
+    title: varchar("title", { length: 180 }).notNull(),
+    description: text("description"),
+    storageKey: varchar("storageKey", { length: 500 }).notNull(),
+    storageUrl: varchar("storageUrl", { length: 700 }).notNull(),
+    contentType: varchar("contentType", { length: 160 }).notNull(),
+    fileSize: int("fileSize").notNull(),
+    reviewOwnerName: varchar("reviewOwnerName", { length: 160 }),
+    reviewOwnerEmail: varchar("reviewOwnerEmail", { length: 320 }),
+    status: mysqlEnum("status", ["uploaded", "in_review", "approved", "needs_action", "archived"]).default("uploaded").notNull(),
+    reviewNotes: text("reviewNotes"),
+    reviewedAt: timestamp("reviewedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    index("proof_security_documents_pilot_idx").on(table.pilotId, table.status, table.createdAt),
+  ],
+);
+export type ProofSecurityDocument = typeof proofSecurityDocuments.$inferSelect;
+export type InsertProofSecurityDocument = typeof proofSecurityDocuments.$inferInsert;
+
+export const proofSecurityRequirements = mysqlTable(
+  "proof_security_requirements",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    requirementKey: varchar("requirementKey", { length: 100 }).notNull(),
+    title: varchar("title", { length: 180 }).notNull(),
+    description: text("description").notNull(),
+    status: mysqlEnum("status", ["not_started", "in_review", "approved", "blocked", "not_applicable"]).default("not_started").notNull(),
+    ownerName: varchar("ownerName", { length: 160 }),
+    ownerEmail: varchar("ownerEmail", { length: 320 }),
+    evidenceDocumentId: int("evidenceDocumentId").references(() => proofSecurityDocuments.id),
+    reviewNote: text("reviewNote"),
+    dueDate: timestamp("dueDate"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("proof_security_requirements_pilot_key_uq").on(table.pilotId, table.requirementKey),
+    index("proof_security_requirements_pilot_status_idx").on(table.pilotId, table.status),
+  ],
+);
+export type ProofSecurityRequirement = typeof proofSecurityRequirements.$inferSelect;
+export type InsertProofSecurityRequirement = typeof proofSecurityRequirements.$inferInsert;
