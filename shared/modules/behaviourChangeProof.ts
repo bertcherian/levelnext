@@ -1,4 +1,6 @@
 import { z } from "zod";
+export { anonymisePracticeText, safePracticeWarnings } from "./proofSafety";
+import { anonymisePracticeText } from "./proofSafety";
 
 export const PROOF_BEHAVIOURS = [
   "Difficult conversations",
@@ -14,6 +16,11 @@ export type ProofBehaviour = (typeof PROOF_BEHAVIOURS)[number];
 export const PROOF_MOMENTUM_STATES = ["flowing", "slowing", "stalled", "blocked", "disengaged"] as const;
 export type ProofMomentumState = (typeof PROOF_MOMENTUM_STATES)[number];
 
+export const PROOF_ACCESS_LANES = ["instant", "corporate_browser", "enterprise"] as const;
+export type ProofAccessLane = (typeof PROOF_ACCESS_LANES)[number];
+export const PROOF_HEALTH_STATES = ["green", "amber", "red"] as const;
+export type ProofHealthState = (typeof PROOF_HEALTH_STATES)[number];
+
 export const proofParticipantInputSchema = z.object({
   email: z.string().email(),
   name: z.string().trim().max(160).optional(),
@@ -26,10 +33,16 @@ export const proofPreviewSchema = z.object({
 export const proofCreatePilotSchema = z.object({
   name: z.string().trim().min(3).max(160),
   companyContext: z.string().trim().max(255).optional(),
+  organisation: z.string().trim().max(255).optional(),
+  sponsorName: z.string().trim().max(160).optional(),
   businessProblem: z.string().trim().min(12).max(1000),
+  whyItMatters: z.string().trim().min(8).max(600).optional(),
   targetBehaviours: z.array(z.string().trim().min(2).max(120)).min(1).max(3),
   observableActions: z.array(z.string().trim().min(2).max(240)).min(1).max(6),
   businessSignals: z.array(z.string().trim().min(2).max(240)).min(1).max(6),
+  cohortSize: z.number().int().min(1).max(10000).default(10),
+  accessLane: z.enum(PROOF_ACCESS_LANES).default("instant"),
+  pilotStartDate: z.string().trim().max(40).optional(),
   baselineMethod: z.string().trim().max(120).default("participant baseline + sponsor pulse"),
   nudgeCadence: z.string().trim().max(120).default("one useful action every 2–3 days"),
   observerPulse: z.string().trim().max(120).default("Day 15 and Day 30 observer pulse"),
@@ -67,6 +80,26 @@ export const proofObserverPulseSchema = z.object({
   token: z.string().trim().min(16).max(128),
   movement: z.enum(["not_yet", "early_signal", "consistent_signal"]),
 });
+
+export const proofDailyActionSchema = z.object({
+  token: z.string().trim().min(16).max(128),
+  completed: z.boolean(),
+  barrier: z.string().trim().max(400).optional(),
+});
+
+export const proofAccessIssueSchema = z.object({
+  token: z.string().trim().min(16).max(128),
+  issue: z.string().trim().min(4).max(255),
+});
+
+export const proofSecurityReviewSchema = z.object({ pilotId: z.number().int().positive() });
+
+export type ProofDailyAction = {
+  day: number;
+  title: string;
+  prompt: string;
+  durationMinutes: number;
+};
 
 export type ProofCreatePilotInput = z.infer<typeof proofCreatePilotSchema>;
 export type ProofParticipantInput = z.infer<typeof proofParticipantInputSchema>;
@@ -154,4 +187,22 @@ export function nextBestPilotAction(input: { participants: number; baselineCompl
   if (input.realWorkApplications === 0) return { key: "application", label: "Capture a real-work application", detail: "The proof is about what people do differently at work." };
   if (input.day >= 30) return { key: "review", label: "Review what changed in 30 days", detail: "Use the evidence mix to decide whether to continue or expand." };
   return { key: "observe", label: "Review the next useful action", detail: "Keep the loop moving without over-nudging participants." };
+}
+
+export function getProofDailyAction(day: number, behaviours: string[]): ProofDailyAction {
+  const focus = behaviours[day % Math.max(1, behaviours.length)] ?? "the target behaviour";
+  if (day <= 2) return { day, title: "Name one live moment", prompt: `Where today could you practise ${focus.toLowerCase()}? Keep the situation anonymous and specific.`, durationMinutes: 3 };
+  if (day <= 7) return { day, title: "Practise the opening", prompt: `Take 90 seconds to rehearse how you will start a ${focus.toLowerCase()} moment.`, durationMinutes: 4 };
+  if (day <= 14) return { day, title: "Try one small experiment", prompt: `Use ${focus.toLowerCase()} in one real conversation or handoff, then note what happened.`, durationMinutes: 5 };
+  if (day <= 21) return { day, title: "Raise the difficulty", prompt: `Choose a slightly harder ${focus.toLowerCase()} moment and make the outcome explicit.`, durationMinutes: 6 };
+  if (day <= 27) return { day, title: "Repeat what works", prompt: `Repeat the behaviour in a second context and look for a concrete signal of movement.`, durationMinutes: 4 };
+  return { day, title: "Prepare your proof reflection", prompt: `Compare your starting point with what you now do differently. Keep names, clients, and confidential details out.`, durationMinutes: 5 };
+}
+
+export function derivePilotHealth(input: { participants: number; baselineCompleted: number; firstReps: number; realWorkApplications: number; observerPulses: number; securityFriction: number; day: number }): { state: ProofHealthState; label: string; action: string } {
+  if (input.securityFriction > 0 || (input.day >= 7 && input.baselineCompleted === 0)) return { state: "red", label: "Pilot validity at risk", action: "Resolve access or activation friction before interpreting evidence." };
+  const activationRate = input.participants ? input.baselineCompleted / input.participants : 0;
+  const actionRate = input.participants ? input.realWorkApplications / input.participants : 0;
+  if (activationRate >= 0.7 && actionRate >= 0.4) return { state: "green", label: "Pilot progressing well", action: "Keep the loop moving and prepare the midpoint or Day-30 review." };
+  return { state: "amber", label: "Intervention required", action: "Use contextual prompts to move the next missing activation step." };
 }

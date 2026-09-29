@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { deriveEvidenceStrength, deriveMomentumState, nextBestPilotAction, recommendPilot } from "./behaviourChangeProof";
+import {
+  anonymisePracticeText,
+  deriveEvidenceStrength,
+  deriveMomentumState,
+  derivePilotHealth,
+  getProofDailyAction,
+  nextBestPilotAction,
+  recommendPilot,
+  safePracticeWarnings,
+} from "./behaviourChangeProof";
 
 describe("30-Day Behaviour Change Proof contracts", () => {
   it("turns a difficult-conversation business problem into a bounded three-behaviour pilot", () => {
@@ -25,5 +34,25 @@ describe("30-Day Behaviour Change Proof contracts", () => {
   it("does not label a fresh or inactive cohort as flowing", () => {
     expect(deriveMomentumState({ participants: 10, baselineCompleted: 0, firstReps: 0, realWorkApplications: 0 })).toBe("blocked");
     expect(deriveMomentumState({ participants: 10, baselineCompleted: 10, firstReps: 5, realWorkApplications: 6 })).toBe("flowing");
+  });
+
+  it("adapts daily actions through activation, practice, repetition, reinforcement, and proof", () => {
+    expect(getProofDailyAction(1, ["Timely feedback"]).title).toBe("Name one live moment");
+    expect(getProofDailyAction(6, ["Timely feedback"]).title).toBe("Practise the opening");
+    expect(getProofDailyAction(16, ["Timely feedback"]).title).toBe("Raise the difficulty");
+    expect(getProofDailyAction(30, ["Timely feedback"]).title).toBe("Prepare your proof reflection");
+  });
+
+  it("treats access or late activation friction as a validity risk before interpreting pilot evidence", () => {
+    expect(derivePilotHealth({ participants: 10, baselineCompleted: 0, firstReps: 0, realWorkApplications: 0, observerPulses: 0, securityFriction: 0, day: 8 }).state).toBe("red");
+    expect(derivePilotHealth({ participants: 10, baselineCompleted: 8, firstReps: 6, realWorkApplications: 5, observerPulses: 1, securityFriction: 0, day: 10 }).state).toBe("green");
+    expect(derivePilotHealth({ participants: 10, baselineCompleted: 8, firstReps: 6, realWorkApplications: 5, observerPulses: 1, securityFriction: 1, day: 10 }).state).toBe("red");
+  });
+
+  it("flags likely sensitive details and offers deterministic local anonymisation without claiming infallibility", () => {
+    const source = "Priya Shah emailed client@example.com about ₹3000000.";
+    expect(safePracticeWarnings(source)).toEqual(expect.arrayContaining(["This may contain a person’s name.", "This may contain an email address.", "This may contain a financial figure or account identifier."]));
+    expect(anonymisePracticeText(source)).toContain("[email removed]");
+    expect(anonymisePracticeText(source)).toContain("[amount removed]");
   });
 });
