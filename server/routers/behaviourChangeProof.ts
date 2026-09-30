@@ -41,6 +41,9 @@ import {
   recordProofSponsorConsent,
   saveProofBaselineMeasure,
   saveProofDay30Review,
+  withdrawProofParticipantConsent,
+  getProofSponsorNotifications,
+  markProofSponsorNotificationRead,
 } from "../behaviourChangeProof";
 import {
   proofAccessIssueSchema,
@@ -81,6 +84,8 @@ export const behaviourChangeProofRouter = router({
   recordSponsorConsent: protectedProcedure.input(proofSponsorConsentSchema).mutation(({ ctx, input }) => recordProofSponsorConsent(ctx.user.id, input)),
   saveBaselineMeasure: protectedProcedure.input(proofBaselineMeasureSchema).mutation(({ ctx, input }) => saveProofBaselineMeasure(ctx.user.id, input)),
   saveDay30Review: protectedProcedure.input(proofDay30ReviewSchema).mutation(({ ctx, input }) => saveProofDay30Review(ctx.user.id, input)),
+  sponsorNotifications: protectedProcedure.input(z.object({ pilotId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => getProofSponsorNotifications(ctx.user.id, input?.pilotId)),
+  markSponsorNotificationRead: protectedProcedure.input(z.object({ notificationId: z.number().int().positive() })).mutation(({ ctx, input }) => markProofSponsorNotificationRead(ctx.user.id, input.notificationId)),
 
   inviteParticipants: protectedProcedure.input(proofInviteSchema).mutation(async ({ ctx, input }) => {
     const result = await inviteProofParticipants(ctx.user.id, input.pilotId, input.participants, input.origin);
@@ -129,6 +134,7 @@ export const behaviourChangeProofRouter = router({
   recordMobileEvent: publicProcedure.input(proofMobileEventSchema).mutation(({ input }) => recordProofMobileEvent(input)),
   recordTrustEvent: publicProcedure.input(proofTrustEventSchema).mutation(({ input }) => recordProofTrustEvent(input.token, input.eventType, input.response, input.detail)),
   recordParticipantConsent: publicProcedure.input(proofParticipantConsentSchema).mutation(({ input }) => recordProofParticipantConsent(input.token)),
+  withdrawParticipantConsent: publicProcedure.input(proofTokenSchema).mutation(({ input }) => withdrawProofParticipantConsent(input.token)),
   savePersonalGoal: publicProcedure.input(proofParticipantProfileSchema).mutation(({ input }) => saveProofPersonalGoal(input.token, input.personalGoal)),
   completeBaseline: publicProcedure.input(proofBaselineSchema).mutation(({ input }) => recordProofBaseline(input.token, input.currentSituation, input.desiredMovement)),
   completeRep: publicProcedure.input(proofRepSchema).mutation(({ input }) => recordProofRep(input.token, input.practiceRole)),

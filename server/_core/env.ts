@@ -9,6 +9,8 @@ export const ENV = {
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   openAiApiKey: process.env.OPENAI_API_KEY ?? "",
   openRouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
+  typesafeApiUrl: process.env.TYPESAFE_API_URL ?? "https://api.typesafe.ai",
+  typesafeApiKey: process.env.TYPESAFE_API_KEY ?? "",
   sarvamApiKey: process.env.SARVAM_API_KEY ?? "",
   fireworksApiKey: process.env.FIREWORKS_API_KEY ?? "",
 };

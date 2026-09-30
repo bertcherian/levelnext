@@ -5611,3 +5611,83 @@ export const proofPilotDay30Reviews = mysqlTable(
 );
 export type ProofPilotDay30Review = typeof proofPilotDay30Reviews.$inferSelect;
 export type InsertProofPilotDay30Review = typeof proofPilotDay30Reviews.$inferInsert;
+
+export const proofSponsorNotifications = mysqlTable(
+  "proof_sponsor_notifications",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pilotId: int("pilotId").notNull().references(() => proofPilots.id),
+    ownerUserId: int("ownerUserId").notNull().references(() => users.id),
+    kind: varchar("kind", { length: 80 }).notNull(),
+    title: varchar("title", { length: 180 }).notNull(),
+    message: text("message").notNull(),
+    href: varchar("href", { length: 500 }),
+    readAt: timestamp("readAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("proof_sponsor_notifications_owner_idx").on(table.ownerUserId, table.readAt, table.createdAt),
+    index("proof_sponsor_notifications_pilot_idx").on(table.pilotId, table.createdAt),
+  ],
+);
+export type ProofSponsorNotification = typeof proofSponsorNotifications.$inferSelect;
+export type InsertProofSponsorNotification = typeof proofSponsorNotifications.$inferInsert;
+
+// ─── Intelligence Fabric: provider-neutral decisions & registry ─────────────
+export const intelligenceDecisionLogs = mysqlTable(
+  "intelligence_decision_logs",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    createdByUserId: int("createdByUserId").references(() => users.id),
+    feature: varchar("feature", { length: 100 }).notNull(),
+    task: varchar("task", { length: 160 }).notNull(),
+    decisionClass: varchar("decisionClass", { length: 80 }).notNull(),
+    provider: varchar("provider", { length: 80 }).notNull(),
+    model: varchar("model", { length: 160 }),
+    tier: int("tier").notNull(),
+    maturity: mysqlEnum("maturity", ["D0", "D1", "D2", "D3", "D4"]).default("D0").notNull(),
+    outcome: mysqlEnum("outcome", ["jev", "deterministic_fallback", "blocked", "error"]).notNull(),
+    confidence: float("confidence"),
+    latencyMs: int("latencyMs").notNull(),
+    inputTokens: int("inputTokens"),
+    outputTokens: int("outputTokens"),
+    contextFields: json("contextFields").$type<string[]>().notNull(),
+    answer: json("answer").$type<Record<string, unknown>>().notNull(),
+    fallbackReason: text("fallbackReason"),
+    explanation: text("explanation").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("intelligence_decisions_created_idx").on(table.createdAt),
+    index("intelligence_decisions_task_idx").on(table.decisionClass, table.createdAt),
+    index("intelligence_decisions_provider_idx").on(table.provider, table.outcome, table.createdAt),
+  ],
+);
+export type IntelligenceDecisionLog = typeof intelligenceDecisionLogs.$inferSelect;
+export type InsertIntelligenceDecisionLog = typeof intelligenceDecisionLogs.$inferInsert;
+
+export const intelligenceModelRegistry = mysqlTable(
+  "intelligence_model_registry",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    provider: varchar("provider", { length: 80 }).notNull(),
+    model: varchar("model", { length: 160 }).notNull(),
+    deploymentType: varchar("deploymentType", { length: 40 }).notNull(),
+    ownership: varchar("ownership", { length: 40 }).notNull(),
+    tier: int("tier").notNull(),
+    privacyClass: varchar("privacyClass", { length: 40 }).notNull(),
+    costNote: text("costNote").notNull(),
+    latencyNote: text("latencyNote").notNull(),
+    capabilities: json("capabilities").$type<string[]>().notNull(),
+    productionApproved: boolean("productionApproved").default(false).notNull(),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("intelligence_registry_provider_model_uq").on(table.provider, table.model),
+    index("intelligence_registry_active_idx").on(table.active, table.tier),
+  ],
+);
+export type IntelligenceModelRegistry = typeof intelligenceModelRegistry.$inferSelect;
+export type InsertIntelligenceModelRegistry = typeof intelligenceModelRegistry.$inferInsert;

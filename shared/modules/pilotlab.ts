@@ -430,13 +430,16 @@ export function evaluatePilotlabPredicates(event: PilotlabPredicateEvent): Pilot
   };
 
   if (event.scenarioCode.startsWith("OO-")) {
-    add("outcome_owner_next_action", "Outcome Orientation", includesAny(response, ["outcome", "ownership", "owner"]) && includesAny(response, ["action", "commitment", "decision"]), "Name an outcome or owner and a next observable action.", event.levelNextResponse ?? "No response recorded.");
+    const passed = includesAny(response, ["outcome", "success", "result"]) && includesAny(response, ["owner", "ownership", "accountable"]) && includesAny(response, ["next action", "next step", "commitment", "decision"]) && !includesAny(response, ["just activity", "activity alone"]);
+    add("outcome_owner_next_action", "Outcome Orientation", passed, "Connect the desired outcome to a named owner and a specific next step, not activity alone.", event.levelNextResponse ?? "No response recorded.");
   }
   if (event.scenarioCode.startsWith("FB-")) {
-    add("feedback_observable_specific", "Timely Feedback", includesAny(response, ["facts", "observable", "specific"]) && includesAny(response, ["action", "impact", "next step"]), "Ground feedback in observable facts and a next step.", event.levelNextResponse ?? "No response recorded.");
+    const passed = includesAny(response, ["facts", "observable", "specific"]) && includesAny(response, ["impact", "effect", "consequence"]) && includesAny(response, ["next step", "next action", "request"]) && includesAny(response, ["today", "now", "soon", "timely", "next conversation"]);
+    add("feedback_observable_specific", "Timely Feedback", passed, "Give feedback soon, ground it in observable facts and impact, and agree a next step.", event.levelNextResponse ?? "No response recorded.");
   }
   if (event.scenarioCode.startsWith("GF-")) {
-    add("conversation_clarity_boundary", "Difficult Conversations", includesAny(response, ["facts", "specific", "clear request", "boundary"]) && includesAny(response, ["action", "commitment", "outcome"]), "Support a specific request, boundary, or outcome without avoiding the tension.", event.levelNextResponse ?? "No response recorded.");
+    const passed = includesAny(response, ["facts", "observable", "impact"]) && includesAny(response, ["clear request", "specific request", "boundary", "ask"]) && includesAny(response, ["listen", "question", "agreement", "commitment", "next step"]);
+    add("conversation_clarity_boundary", "Difficult Conversations", passed, "Name the facts and impact, make a clear request or boundary, and leave room for dialogue and agreement.", event.levelNextResponse ?? "No response recorded.");
   }
 
   add("coaching_grounded_in_permitted_context", "Coaching Relevance", response.length > 20 && !includesAny(response, ["ground truth", "hidden narrative", "guaranteed roi"]), "Return an actionable response without hidden truth or an unbounded claim.", event.levelNextResponse ?? "No response recorded.");

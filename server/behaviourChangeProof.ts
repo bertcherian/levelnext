@@ -16,6 +16,7 @@ import {
   proofPilotBaselineMeasures,
   proofPilotDay30Reviews,
   proofPilotGovernance,
+  proofSponsorNotifications,
   users,
   type ProofPilot,
   type ProofPilotParticipant,
@@ -123,6 +124,15 @@ export async function recordProofParticipantConsent(tokenValue: string) {
   return getProofParticipant(tokenValue);
 }
 
+export async function withdrawProofParticipantConsent(tokenValue: string) {
+  const { db, pilot, participant } = await participantContext(tokenValue);
+  const now = new Date();
+  await db.update(proofParticipantConsents).set({ revokedAt: now, updatedAt: now }).where(and(eq(proofParticipantConsents.pilotId, pilot.id), eq(proofParticipantConsents.participantId, participant.id), isNull(proofParticipantConsents.revokedAt)));
+  await db.update(proofPilotParticipants).set({ trustState: "amber", lastActivityAt: now }).where(eq(proofPilotParticipants.id, participant.id));
+  await db.insert(proofParticipantTrustEvents).values({ pilotId: pilot.id, participantId: participant.id, eventType: "informed_consent_withdrawn", response: PROOF_CONSENT_VERSION });
+  return getProofParticipant(tokenValue);
+}
+
 export async function saveProofBaselineMeasure(userId: number, input: { pilotId: number; measureKey: string; label: string; baselineValue: number; targetValue?: number; unit: string; source: string; definition: string }) {
   const { db, pilot } = await ownedPilot(userId, input.pilotId);
   const now = new Date();
@@ -204,7 +214,33 @@ export async function saveProofDay30Review(userId: number, input: { pilotId: num
     reviewedAt: now,
     updatedAt: now,
   } });
+  if (input.status === "completed") {
+    const [existingNotification] = await db.select({ id: proofSponsorNotifications.id }).from(proofSponsorNotifications).where(and(eq(proofSponsorNotifications.pilotId, input.pilotId), eq(proofSponsorNotifications.kind, "day30_review_ready"))).limit(1);
+    if (!existingNotification) {
+      await db.insert(proofSponsorNotifications).values({
+        pilotId: input.pilotId,
+        ownerUserId: userId,
+        kind: "day30_review_ready",
+        title: "Day-30 review is ready",
+        message: "Your Day-30 review is complete. Open it to download the steering-committee PDF and review the guarded next decision.",
+        href: `/pilot/dashboard?pilotId=${input.pilotId}#day30`,
+      });
+    }
+  }
   return getProofLivePilotGovernance(userId, input.pilotId);
+}
+
+export async function getProofSponsorNotifications(userId: number, pilotId?: number) {
+  const db = await database();
+  const filters = [eq(proofSponsorNotifications.ownerUserId, userId)];
+  if (pilotId) filters.push(eq(proofSponsorNotifications.pilotId, pilotId));
+  return db.select().from(proofSponsorNotifications).where(and(...filters)).orderBy(desc(proofSponsorNotifications.createdAt)).limit(20);
+}
+
+export async function markProofSponsorNotificationRead(userId: number, notificationId: number) {
+  const db = await database();
+  await db.update(proofSponsorNotifications).set({ readAt: new Date() }).where(and(eq(proofSponsorNotifications.id, notificationId), eq(proofSponsorNotifications.ownerUserId, userId)));
+  return { ok: true };
 }
 
 function safeParticipant(participant: ProofPilotParticipant) {

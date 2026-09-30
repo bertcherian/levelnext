@@ -94,6 +94,7 @@ const AdminOrgContext = lazyWithRouteRecovery(() => import("@/pages/AdminOrgCont
 const WarRoom = lazyWithRouteRecovery(() => import("@/pages/WarRoom"), "admin-war-room");
 const AdminParticipantImport = lazyWithRouteRecovery(() => import("@/pages/AdminParticipantImport"), "admin-participant-import");
 const AdminModelEvaluator = lazyWithRouteRecovery(() => import("@/pages/AdminModelEvaluator"), "admin-model-evaluator");
+const AdminIntelligenceFabric = lazyWithRouteRecovery(() => import("@/pages/AdminIntelligenceFabric"), "admin-intelligence-fabric");
 const Pilotlab = lazyWithRouteRecovery(() => import("@/pages/Pilotlab"), "admin-pilotlab");
 const PilotBuilder = lazy(() => import("@/pages/PilotBuilder"));
 const PilotProofDashboard = lazy(() => import("@/pages/PilotProofDashboard"));
@@ -384,6 +385,7 @@ function Router() {
       <Route path="/admin/org-context" component={AdminOrgContext} />
       <Route path="/admin/participants/import" component={AdminParticipantImport} />
       <Route path="/admin/model-evaluator" component={AdminModelEvaluator} />
+      <Route path="/admin/intelligence-fabric" component={AdminIntelligenceFabric} />
       <Route path="/admin/pilotlab" component={Pilotlab} />
       <Route path="/next-chapter" component={NextChapter} />
       <Route path="/next-chapter/portfolio" component={NextChapterPortfolio} />

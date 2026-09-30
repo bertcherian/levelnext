@@ -66,6 +66,7 @@ import { earlyCareerRouter } from "./routers/earlyCareer";
 import { executiveIntelligenceRouter } from "./routers/executiveIntelligence";
 import { salesIntelligenceRouter } from "./routers/salesIntelligence";
 import { modelEvaluationRouter } from "./routers/modelEvaluation";
+import { intelligenceFabricRouter } from "./routers/intelligenceFabric";
 import { aiSuggestionFeedbackRouter } from "./routers/aiSuggestionFeedback";
 import { adminOperationsRouter } from "./routers/adminOperations";
 import { criticalThinkingRouter } from "./routers/criticalThinking";
@@ -160,6 +161,7 @@ export const appRouter = router({
   executiveIntelligence: executiveIntelligenceRouter,
   salesIntelligence: salesIntelligenceRouter,
   modelEvaluation: modelEvaluationRouter,
+  intelligenceFabric: intelligenceFabricRouter,
   aiSuggestionFeedback: aiSuggestionFeedbackRouter,
   criticalThinking: criticalThinkingRouter,
   clientTelemetry: clientTelemetryRouter,

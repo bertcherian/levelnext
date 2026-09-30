@@ -49,6 +49,13 @@ describe("Pilotlab manager-agent states", () => {
 });
 
 describe("Pilotlab assurance guardrails", () => {
+  it("requires a complete coaching move for the three core behavior predicates", () => {
+    expect(evaluatePilotlabPredicates({ scenarioCode: "OO-002", failureCode: null, evidenceLevel: 2, levelNextResponse: "Name the desired outcome, assign an owner, and agree the next action.", evaluatorResult: {} }).find((item) => item.dimension === "Outcome Orientation")?.passed).toBe(true);
+    expect(evaluatePilotlabPredicates({ scenarioCode: "OO-002", failureCode: null, evidenceLevel: 2, levelNextResponse: "Track more activity.", evaluatorResult: {} }).find((item) => item.dimension === "Outcome Orientation")?.passed).toBe(false);
+    expect(evaluatePilotlabPredicates({ scenarioCode: "FB-002", failureCode: null, evidenceLevel: 2, levelNextResponse: "Give timely feedback today using observable facts, impact, and a clear next step.", evaluatorResult: {} }).find((item) => item.dimension === "Timely Feedback")?.passed).toBe(true);
+    expect(evaluatePilotlabPredicates({ scenarioCode: "GF-002", failureCode: null, evidenceLevel: 2, levelNextResponse: "Name the facts and impact, make a clear request, then listen and agree the next step.", evaluatorResult: {} }).find((item) => item.dimension === "Difficult Conversations")?.passed).toBe(true);
+  });
+
   it("keeps the default chaos profile disabled and bounded for repeatable baseline comparisons", () => {
     expect(DEFAULT_PILOTLAB_CHAOS_CONFIG).toMatchObject({
       enabled: false,

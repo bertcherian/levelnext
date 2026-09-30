@@ -59,3 +59,35 @@ export async function exportPilotBusinessCasePdf(data: PackData) {
   doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(...NAVY); doc.text("Required readiness before broader deployment", M, y); y += 7; data.security.requirements.filter((item) => item.status !== "approved" && item.status !== "not_applicable").slice(0, 5).forEach((item) => { y = text(`• ${item.title}: ${item.status.replace(/_/g, " ")}${item.ownerName ? ` · owner ${item.ownerName}` : ""}`, M, y, CW, 8.5); y += 3; });
   doc.save(`LevelNext_${cleanFileName(data.pilot.name)}_Internal_Business_Case.pdf`);
 }
+
+export async function exportPilotDay30ReviewPdf(input: { proof: PackData; review: { decision: string; summary: string; reviewedAt: string | Date; status: string }; baselineMeasures: Array<{ label: string; baselineValue: number; targetValue?: number | null; unit: string; source: string }> }) {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const logo = await loadLogo();
+  const { page, cover, text } = helpers(doc, logo, "Day-30 Steering Committee Review");
+  const data = input.proof;
+  cover("Day-30 Review", "Steering committee review record", `${data.pilot.name}${data.pilot.organisation ? ` · ${data.pilot.organisation}` : ""} · ${input.review.status}`);
+  page("Decision record");
+  let y = 41;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(17); doc.setTextColor(...NAVY); doc.text("Decision and summary", M, y); y += 10;
+  y = text(`Decision: ${input.review.decision.replace(/_/g, " ")}`, M, y, CW, 10, NAVY, "bold"); y += 5;
+  y = text(input.review.summary, M, y, CW, 10); y += 8;
+  doc.setFillColor(255, 248, 223); doc.roundedRect(M, y, CW, 38, 3, 3, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...NAVY); doc.text("Guardrail", M + 6, y + 10);
+  text("This record reports movement signals from a bounded pilot. It is not a causal, financial, performance, or employment decision.", M + 6, y + 17, CW - 12, 8.8); y += 52;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(...NAVY); doc.text("Evidence at Day 30", M, y); y += 8;
+  const stats = [["Participants", String(data.metrics.invited)], ["Baseline", `${data.metrics.baselineCompleted}/${data.metrics.invited}`], ["Behaviour Reps", String(data.metrics.firstReps)], ["Real-work actions", String(data.metrics.realWorkApplications)]];
+  stats.forEach(([label, value], index) => { const x = M + (index % 2) * 90; const cy = y + Math.floor(index / 2) * 32; doc.setFillColor(255, 255, 255); doc.roundedRect(x, cy, 84, 26, 3, 3, "F"); doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...NAVY); doc.text(label.toUpperCase(), x + 5, cy + 8); doc.setFontSize(16); doc.setTextColor(...GOLD); doc.text(value, x + 5, cy + 19); }); y += 70;
+  y = text(`Evidence strength: ${data.metrics.evidenceStrength.replace(/_/g, " ")}. ${data.movement}`, M, y, CW, 9.5); y += 9;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(...NAVY); doc.text("Baseline measures", M, y); y += 7;
+  if (!input.baselineMeasures.length) y = text("No aggregate baseline measures were recorded.", M, y, CW, 8.5);
+  else input.baselineMeasures.slice(0, 6).forEach((measure) => { y = text(`• ${measure.label}: ${measure.baselineValue} ${measure.unit}${measure.targetValue == null ? "" : ` · target ${measure.targetValue} ${measure.unit}`} · source: ${measure.source}`, M, y, CW, 8.5); y += 2; });
+  page("Next decision"); y = 41; doc.setFont("helvetica", "bold"); doc.setFontSize(17); doc.setTextColor(...NAVY); doc.text("What happens next", M, y); y += 11;
+  y = text(`Strongest movement: ${data.scaleDecision.strongestMovement}`, M, y, CW, 9.5); y += 7;
+  y = text(`Evidence gap: ${data.scaleDecision.insufficientEvidence}`, M, y, CW, 9.5); y += 7;
+  y = text(`Security next step: ${data.scaleDecision.securityNextStep}`, M, y, CW, 9.5); y += 12;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(...NAVY); doc.text("Shareable moments", M, y); y += 7;
+  const moments = data.momentsThatMattered.slice(0, 5); if (!moments.length) y = text("No sponsor-shareable moments have been recorded yet.", M, y, CW, 8.5); else moments.forEach((moment) => { y = text(`• ${moment.source} · ${moment.type.replace(/_/g, " ")}: ${moment.summary}`, M, y, CW, 8.5); y += 2; });
+  y += 8; doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(...NAVY); doc.text("Limitations", M, y); y += 7; text(data.limitations.join(" "), M, y, CW, 8.5);
+  doc.save(`LevelNext_${cleanFileName(data.pilot.name)}_Day30_Review.pdf`);
+}
